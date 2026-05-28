@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+  }
+}
+
+@layer components {
+  .cat-tag {
+    @apply font-mono text-[10px] font-medium tracking-widest uppercase px-2 py-0.5 border;
+  }
+  .headline-hero {
+    @apply font-serif text-2xl md:text-3xl font-bold leading-tight;
+  }
+  .headline-lg {
+    @apply font-serif text-xl font-bold leading-tight;
+  }
+  .headline-md {
+    @apply font-serif text-base font-bold leading-snug;
+  }
+  .btn-primary {
+    @apply bg-beat-red text-white px-4 py-2 text-sm font-semibold hover:bg-red-700 transition-colors;
+  }
+  .btn-dark {
+    @apply bg-ink text-white px-4 py-2 text-sm font-semibold hover:bg-ink-2 transition-colors;
+  }
+  .section-label {
+    @apply font-mono text-[10px] font-medium tracking-[0.1em] uppercase text-ink-3 pb-2 border-b border-border mb-3;
+  }
+  .card-hover {
+    @apply transition-colors hover:bg-paper-2 cursor-pointer;
+  }
+}
+
+/* Breaking news ticker */
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-animate {
+  animation: ticker-scroll 20s linear infinite;
+  white-space: nowrap;
+}
+
+/* Live dot pulse */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.live-dot {
+  animation: live-pulse 1.2s infinite;
+}
