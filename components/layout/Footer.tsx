@@ -24,6 +24,12 @@ export function Footer() {
             <p className="text-ink-3 text-xs mt-3 max-w-xs leading-relaxed">
               Independent AI news and tool reviews for founders, freelancers, and builders. No sponsored rankings. Ever.
             </p>
+            <a
+              href="mailto:info@aibeat.dev"
+              className="font-mono text-[11px] text-ink-3 hover:text-white transition-colors mt-2 inline-block"
+            >
+              info@aibeat.dev
+            </a>
           </div>
           <div className="flex flex-col gap-2">
             <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest mb-1">Navigate</div>

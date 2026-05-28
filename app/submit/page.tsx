@@ -234,10 +234,10 @@ export default function SubmitPage() {
               Want guaranteed placement? We offer sponsored listings and newsletter placements.
             </p>
             <a
-              href="mailto:hello@aibeat.dev"
+              href="mailto:info@aibeat.dev"
               className="font-mono text-[11px] text-beat-red hover:underline mt-2 block"
             >
-              Email hello@aibeat.dev →
+              Email info@aibeat.dev →
             </a>
           </div>
         </div>
