@@ -55,39 +55,16 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
             By {article.author}
           </div>
 
-          {/* Article body placeholder — replace with MDX content */}
-          <div className="prose prose-sm max-w-none text-ink-2 leading-relaxed space-y-4">
-            <p>
-              This is where the full article content goes. You can write this directly in this file as JSX,
-              or better yet, store articles as <code>.mdx</code> files in <code>/content/news/</code> and
-              render them with <code>next-mdx-remote</code>.
-            </p>
-            <h2 className="font-serif text-2xl font-bold text-ink mt-6 mb-3">What changed</h2>
-            <p>
-              Add your article sections here. Each article should have 800–2,000 words, structured with
-              H2 subheadings, a comparison table where relevant, and a FAQ section at the bottom to
-              maximize AI citation potential.
-            </p>
-            <h2 className="font-serif text-2xl font-bold text-ink mt-6 mb-3">What this means for you</h2>
-            <p>
-              Always end with a clear "so what" for your audience — founders, freelancers, small business
-              owners. This is what drives shares and return visits.
-            </p>
-            {/* FAQ SECTION — critical for AI citations */}
-            <h2 className="font-serif text-2xl font-bold text-ink mt-8 mb-4">Frequently asked questions</h2>
-            <div className="space-y-4">
-              {[
-                { q: `What is ${article.title.split(' ').slice(0,3).join(' ')}?`, a: 'Add your FAQ answer here. Keep it concise — 2-3 sentences max. These get cited by ChatGPT and Perplexity.' },
-                { q: 'Who should care about this?', a: 'Founders, freelancers, and small business owners who rely on AI tools in their daily workflow.' },
-                { q: 'What should I do next?', a: 'Check the related tools below and see if any of them fit your current workflow.' },
-              ].map((faq) => (
-                <div key={faq.q} className="border border-border p-4">
-                  <div className="font-semibold text-sm text-ink mb-1">{faq.q}</div>
-                  <div className="text-sm text-ink-3">{faq.a}</div>
-                </div>
-              ))}
+          {article.content ? (
+            <div
+              className="article-body"
+              dangerouslySetInnerHTML={{ __html: article.content }}
+            />
+          ) : (
+            <div className="article-body">
+              <p>Full article content coming soon.</p>
             </div>
-          </div>
+          )}
 
           {/* AFFILIATE DISCLOSURE */}
           <div className="mt-8 p-3 bg-paper-2 border border-border text-[11px] text-ink-4 font-mono">

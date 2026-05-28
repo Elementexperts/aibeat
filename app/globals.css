@@ -40,6 +40,86 @@
   }
 }
 
+/* Article body content rendering */
+.article-body h2 {
+  @apply font-serif text-2xl font-bold text-ink mt-8 mb-4;
+}
+.article-body h3 {
+  @apply font-serif text-lg font-bold text-ink mt-5 mb-2;
+}
+.article-body p {
+  @apply text-base text-ink-2 leading-relaxed mb-4;
+}
+.article-body ul {
+  @apply list-disc list-inside space-y-1.5 mb-4 text-ink-2;
+}
+.article-body ol {
+  @apply list-decimal list-inside space-y-1.5 mb-4 text-ink-2;
+}
+.article-body li {
+  @apply text-base leading-relaxed text-ink-2;
+}
+.article-body strong {
+  @apply font-semibold text-ink;
+}
+.article-body a {
+  @apply text-beat-red hover:underline;
+}
+.article-body table {
+  @apply w-full border-collapse mb-6 text-sm;
+}
+.article-body th {
+  @apply bg-paper-2 text-left px-3 py-2 font-semibold text-ink border border-border;
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.article-body td {
+  @apply px-3 py-2.5 text-ink-2 border border-border text-sm;
+}
+.article-body tr:nth-child(even) td {
+  @apply bg-paper-2;
+}
+.article-body .faq-item {
+  @apply border border-border p-4 mb-3;
+}
+.article-body .faq-item h3 {
+  @apply font-semibold text-sm text-ink mb-2 mt-0;
+  font-family: inherit;
+}
+.article-body .faq-item p {
+  @apply text-sm text-ink-3 mb-0;
+}
+.article-body .pros-cons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 640px) {
+  .article-body .pros-cons {
+    grid-template-columns: 1fr;
+  }
+}
+.article-body .pros {
+  @apply p-4 bg-beat-green-light border border-beat-green;
+}
+.article-body .cons {
+  @apply p-4 bg-paper-2 border border-border;
+}
+.article-body .pros h3,
+.article-body .cons h3 {
+  @apply font-mono text-[10px] uppercase tracking-widest mb-2 mt-0 text-ink-3;
+  font-family: var(--font-mono, monospace) !important;
+}
+.article-body blockquote {
+  @apply border-l-2 border-beat-red pl-4 my-4 text-ink-2 italic;
+}
+.article-body code {
+  @apply font-mono text-xs bg-paper-2 px-1 py-0.5 border border-border text-ink;
+}
+
 /* Breaking news ticker */
 @keyframes ticker-scroll {
   0% { transform: translateX(0); }
