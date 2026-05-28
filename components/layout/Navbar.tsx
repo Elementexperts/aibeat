@@ -6,7 +6,6 @@ const NAV_LINKS = [
   { label: 'Compare', href: '/compare' },
   { label: 'Directory', href: '/directory' },
   { label: 'Free Tools', href: '/free-tools' },
-  { label: 'Deep Dives', href: '/deep-dives' },
   { label: 'Submit a Tool', href: '/submit' },
 ]
 
