@@ -1,10 +1,20 @@
 import { MetadataRoute } from 'next'
-import { ARTICLES, TOOLS } from '@/lib/data'
+import { ARTICLES, TOOLS, COMPARISONS } from '@/lib/data'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://aibeat.dev'
+  const base = 'https://www.aibeat.dev'
 
-  const staticPages = ['', '/news', '/tools', '/compare', '/directory', '/free-tools', '/newsletter'].map((path) => ({
+  const staticPages = [
+    '',
+    '/news',
+    '/tools',
+    '/compare',
+    '/directory',
+    '/free-tools',
+    '/free-tools/roi-calculator',
+    '/newsletter',
+    '/submit',
+  ].map((path) => ({
     url: `${base}${path}`,
     lastModified: new Date(),
     changeFrequency: 'daily' as const,
@@ -15,15 +25,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${base}/news/${article.slug}`,
     lastModified: new Date(article.publishedAt),
     changeFrequency: 'weekly' as const,
-    priority: 0.7,
+    priority: article.featured ? 0.9 : 0.7,
   }))
 
   const toolPages = TOOLS.map((tool) => ({
     url: `${base}/tools/${tool.slug}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
-    priority: 0.7,
+    priority: tool.featured ? 0.8 : 0.7,
   }))
 
-  return [...staticPages, ...articlePages, ...toolPages]
+  const comparisonPages = COMPARISONS.map((comp) => ({
+    url: `${base}/compare/${comp.slug}`,
+    lastModified: new Date(comp.publishedAt),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
+
+  return [...staticPages, ...articlePages, ...toolPages, ...comparisonPages]
 }
