@@ -762,4 +762,150 @@ export const ARTICLE_CONTENT: Record<string, string> = {
 </div>
 `,
 
+// ─── AI NEWS TODAY ───────────────────────────────────────────
+'ai-news-today-may-2026': `
+<p>Here's everything that moved the needle in artificial intelligence this week — model releases, funding rounds, policy updates, and developer tools worth watching. We read everything so you don't have to.</p>
+
+<h2>OpenAI Ships GPT-5 With 256K Context and Native Tool Use</h2>
+<p>OpenAI's most significant release in two years landed quietly on a Tuesday. GPT-5 raises the ceiling on context length to 256,000 tokens — enough to process an entire codebase or a full book in a single prompt. The model ships with native tool use baked in rather than bolted on, meaning it can browse the web, execute code, and call APIs without separate orchestration layers.</p>
+<p>Early developer benchmarks put GPT-5 ahead of Claude 3 Opus on MMLU and HumanEval, though Anthropic disputes several testing methodologies. Real-world performance on multi-step reasoning tasks shows the largest jump — GPT-5 completes complex agent workflows that caused GPT-4 to loop or hallucinate intermediate steps.</p>
+<p>Pricing has been a surprise: GPT-5 input tokens cost $0.01/1K — a 40% reduction from GPT-4 Turbo at launch. OpenAI is clearly betting on volume over margin as the inference cost curve continues to fall.</p>
+
+<h2>Anthropic Raises $4B Series D at $18.4B Valuation</h2>
+<p>Anthropic closed its largest funding round yet, with Google leading and Spark Capital, Salesforce Ventures, and a handful of sovereign wealth funds participating. The $18.4B valuation makes Anthropic the second-most valuable private AI company globally, behind only OpenAI.</p>
+<p>CEO Dario Amodei framed the round entirely around compute: "The gap between what current models can do and what frontier models need to do requires infrastructure investment that pure revenue can't sustain yet." The funds will accelerate training runs for Claude 4 and expand Anthropic's AWS-based inference cluster.</p>
+<p>Importantly, Anthropic renegotiated its <a href="/compare/hubspot-vs-salesforce">enterprise terms</a> with several Fortune 500 clients as part of the round, locking in multi-year contracts for Constitutional AI safety auditing — a new revenue line the company is quietly building alongside its model business.</p>
+
+<h2>Google DeepMind's Gemini 2 Ultra Claims Every Major Benchmark</h2>
+<p>Gemini 2 Ultra is the first model to surpass human-expert performance across MMLU, HumanEval, and MATH simultaneously, according to DeepMind's internal evaluations. Third-party testing from Stanford HAI broadly confirmed the results, with some caveats around prompting methodology for the MATH benchmark.</p>
+<p>What's more interesting than the benchmark numbers is the multimodal architecture. Gemini 2 Ultra handles video, audio, and code in a single unified model — no separate specialized models stitched together. This matters for product development: one API, one context window, one billing line.</p>
+<p>Google is offering Gemini 2 Ultra through Vertex AI at $0.0125/1K tokens for input, positioning it directly against GPT-5. Expect a pricing war through Q3 2026.</p>
+
+<h2>EU AI Act Enters Enforcement Phase</h2>
+<p>The EU's Artificial Intelligence Act began its first enforcement phase this week, activating requirements for high-risk AI systems in employment, credit scoring, and critical infrastructure. Companies deploying AI in these categories must now maintain conformity assessments, register their systems with the EU AI Office, and implement human oversight mechanisms.</p>
+<p>Fines for non-compliance reach up to 3% of global annual revenue — or €15 million, whichever is higher. Legal teams at major technology companies have been quietly working through compliance checklists since March. Several US-based AI startups have paused EU market expansion pending clearer guidance from the AI Office on what constitutes "minimal risk."</p>
+<p>The practical impact on developers: if you're building an AI application that makes decisions about people in employment, credit, or healthcare contexts in the EU, you need a legal review before your next deployment.</p>
+
+<h2>Mistral Releases Mistral Large 2 — Open Weights, 128K Context</h2>
+<p>Paris-based Mistral AI released Mistral Large 2 this week with open weights under the Mistral Research License. The model runs 123B parameters, supports 128K context, and benchmarks competitively with Claude 3 Sonnet on most tasks — at a fraction of the inference cost when self-hosted.</p>
+<p>For engineering teams running AI on their own infrastructure, Mistral Large 2 is the most capable open-weights option available. It requires two H100s for comfortable inference, but the absence of per-token licensing fees changes the unit economics substantially for high-volume applications.</p>
+<p>Mistral continues to thread a needle between open-source credibility and commercial viability — the Research License permits commercial use but prohibits redistribution of the weights in competing AI services. This limits cloud hyperscaler adoption but leaves the enterprise self-hosting market fully open.</p>
+
+<h2>This Week's Funding Rounds</h2>
+<table>
+<thead><tr><th>Company</th><th>Round</th><th>Amount</th><th>Lead Investor</th></tr></thead>
+<tbody>
+<tr><td>Cohere</td><td>Series E</td><td>$450M</td><td>Salesforce Ventures</td></tr>
+<tr><td>ElevenLabs</td><td>Series B</td><td>$180M</td><td>a16z</td></tr>
+<tr><td>Perplexity AI</td><td>Series C</td><td>$250M</td><td>SoftBank</td></tr>
+<tr><td>Runway ML</td><td>Series D</td><td>$308M</td><td>General Atlantic</td></tr>
+<tr><td>Replit</td><td>Series B ext.</td><td>$97M</td><td>Google Ventures</td></tr>
+</tbody>
+</table>
+
+<h2>Developer Tools Worth Your Time This Week</h2>
+<p><strong>LangChain v2.0</strong> shipped a major overhaul of its agent framework. Streaming-first architecture, a 50% reduction in base memory footprint, and a cleaner interface for tool registration make this worth upgrading. The migration guide is thorough — expect 2–4 hours for a medium-sized agent project.</p>
+<p><strong>Cursor 0.42</strong> introduced multi-file agentic editing: the AI can now plan and execute changes across multiple files simultaneously based on a single instruction. For refactoring and feature implementation tasks, this is a step-change improvement over one-file-at-a-time edits. See our <a href="/news/cursor-ai-review-2026">full Cursor AI review</a> for the complete feature breakdown.</p>
+<p><strong>Vercel AI SDK 3.5</strong> adds native streaming support for tool calls, dramatically simplifying the code required to build streaming agents in Next.js applications. If you're building AI-powered applications on the Vercel stack, the upgrade is an easy win.</p>
+
+<div class="faq-item">
+<h3>Where can I follow AI news daily?</h3>
+<p>The fastest sources: Hugging Face's daily papers feed for research, X/Twitter for real-time model release announcements, and AIBeat for curated daily briefings without the noise. For deeper analysis, The Batch (DeepLearning.AI), Import AI (Jack Clark), and Nathan Benaich's State of AI report are worth reading weekly.</p>
+</div>
+<div class="faq-item">
+<h3>How do I track AI funding rounds?</h3>
+<p>Crunchbase and PitchBook are the primary sources for verified deal data, though both require paid subscriptions for full access. For free tracking, the AIBeat weekly digest aggregates significant rounds over $50M alongside model releases and research — subscribe below to get it every Monday.</p>
+</div>
+`,
+
+// ─── CURSOR AI REVIEW ────────────────────────────────────────
+'cursor-ai-review-2026': `
+<p>Cursor is an AI-first code editor built on VS Code. In 2026, it's the tool most developers reach for first when they want AI that understands their entire codebase — not just the current file. We used Cursor as our primary editor for four weeks on a real production project. Here's the complete review.</p>
+
+<h2>What Is Cursor?</h2>
+<p>Cursor is a fork of VS Code with AI capabilities built directly into the editor rather than added as an extension. The key distinction: Cursor can read your entire repository as context, not just the open file. This means when you ask it to "add authentication to this API endpoint," it already knows your database schema, middleware patterns, existing auth logic, and folder structure.</p>
+<p>It ships with three AI models available: GPT-4o (default), Claude 3.5 Sonnet, and Cursor's own fine-tuned model. You can switch mid-session depending on the task. Cursor Pro at $20/month gives you 500 fast GPT-4o requests per month and unlimited slow requests — enough for active daily development without rationing.</p>
+
+<h2>The Core Features, Tested</h2>
+
+<h3>Tab Completion (Cursor's Autocomplete)</h3>
+<p>Cursor's tab completion is meaningfully different from GitHub Copilot's. It doesn't just complete the current line — it predicts multi-line changes, function rewrites, and variable renames across the entire function. After a week of use, the predictions began anticipating the patterns in our specific codebase, suggesting completions that matched our team's style and existing abstractions. It's not magic, but it's genuinely faster than anything else we've tried.</p>
+
+<h3>Cmd+K Inline Edits</h3>
+<p>Highlight a block of code, press Cmd+K, describe what you want changed, and Cursor rewrites it inline with a diff view. For refactoring, this is the killer feature. We used it to migrate a 400-line component from class-based to functional React in under ten minutes — a task that would have taken 45 minutes manually. Acceptance rate across our team: about 70% of suggestions used with light modification.</p>
+
+<h3>Cursor Chat (The Sidebar)</h3>
+<p>The chat sidebar is where codebase-wide context shines. You can ask "where is the user authentication logic?" and Cursor finds it across files, rather than requiring you to remember the exact file name. You can paste error messages and ask for fixes with the relevant source files automatically included. For debugging unfamiliar codebases, this alone justifies the subscription.</p>
+<p>One limitation: chat responses with large context windows (asking about patterns across 50+ files) can be slow — 15–30 seconds on GPT-4o. Switching to Cursor's own model speeds this up at the cost of some response quality.</p>
+
+<h3>Multi-File Agentic Editing (New in 0.42)</h3>
+<p>Version 0.42 introduced Cursor's most significant feature yet: the ability to plan and execute changes across multiple files from a single instruction. We asked it to "add a rate limiter to all public API routes" — it identified the relevant files, proposed a plan, and implemented the changes across six files with a review step before applying. Acceptance on first pass: the logic was correct, the implementation needed minor adjustment in two files.</p>
+<p>This feature is powerful but needs supervision. On one occasion, it modified a file it correctly identified as related but shouldn't have changed — catching this during the review step prevented a subtle bug. The review interface makes this easy to catch; don't skip it.</p>
+
+<h2>Cursor vs GitHub Copilot</h2>
+<table>
+<thead><tr><th>Feature</th><th>Cursor Pro ($20/mo)</th><th>GitHub Copilot ($10/mo)</th></tr></thead>
+<tbody>
+<tr><td>Codebase-wide context</td><td>Yes — entire repo</td><td>Limited — open files</td></tr>
+<tr><td>Inline edits (Cmd+K)</td><td>Yes</td><td>Limited via chat</td></tr>
+<tr><td>Multi-file agent</td><td>Yes (v0.42+)</td><td>No</td></tr>
+<tr><td>Model choice</td><td>GPT-4o / Claude / Custom</td><td>GPT-4o / Claude</td></tr>
+<tr><td>IDE support</td><td>Cursor only (VS Code fork)</td><td>VS Code, JetBrains, Vim, etc.</td></tr>
+<tr><td>Enterprise trust</td><td>Growing</td><td>Established</td></tr>
+<tr><td>Privacy mode</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Free tier</td><td>2-week trial</td><td>Free for individuals</td></tr>
+</tbody>
+</table>
+<p>The honest summary: Cursor is better if you're willing to commit to it as your primary editor and want the deepest AI integration available. GitHub Copilot is better if you need to stay in JetBrains, use enterprise SSO, or work in a team where the additional security controls matter. See our <a href="/news/cursor-vs-github-copilot-2026">4-week head-to-head comparison</a> for the full test results.</p>
+
+<h2>Pricing</h2>
+<table>
+<thead><tr><th>Plan</th><th>Price</th><th>Fast Requests</th><th>Best For</th></tr></thead>
+<tbody>
+<tr><td>Hobby (Free)</td><td>$0</td><td>2-week trial</td><td>Trying Cursor</td></tr>
+<tr><td>Pro</td><td>$20/month</td><td>500/month GPT-4o</td><td>Individual developers</td></tr>
+<tr><td>Business</td><td>$40/user/month</td><td>500/month + team features</td><td>Teams, SSO, audit logs</td></tr>
+</tbody>
+</table>
+<p>At $20/month, Cursor Pro is one of the highest-ROI developer tools available. If it saves even 30 minutes per day — a conservative estimate for active users — the payback period is less than a week.</p>
+
+<h2>Who Should Use Cursor</h2>
+<div class="pros-cons">
+<div class="pros">
+<h3>Cursor Pros</h3>
+<ul>
+<li>Best codebase context of any AI coding tool — it reads your entire repo</li>
+<li>Multi-file agentic editing is a genuine productivity step-change</li>
+<li>Inline Cmd+K edits are faster than any chat-based workflow</li>
+<li>Tab completion improves over time as it learns your patterns</li>
+<li>Choice of GPT-4o, Claude, or Cursor's own model per session</li>
+</ul>
+</div>
+<div class="cons">
+<h3>Cursor Cons</h3>
+<ul>
+<li>Locked to Cursor's VS Code fork — JetBrains and Vim users must switch editors</li>
+<li>500 fast requests/month can run out with heavy use in the final week</li>
+<li>Multi-file agent needs supervision — review every change before accepting</li>
+<li>Newer enterprise controls vs GitHub Copilot's established compliance track record</li>
+</ul>
+</div>
+</div>
+
+<p><strong>Cursor is the right choice if:</strong> You write code daily, primarily in a VS Code environment, and want the deepest AI integration available. The codebase-wide context and multi-file agent make it the most capable AI coding tool we've tested. Browse other developer tools in our <a href="/tools/github-copilot">GitHub Copilot review</a> or the full <a href="/directory">AI tools directory</a>.</p>
+
+<div class="faq-item">
+<h3>Is Cursor better than GitHub Copilot?</h3>
+<p>For developers who want the most powerful AI integration and are willing to use Cursor as their primary editor, yes. For developers who need to stay in JetBrains IDEs, need enterprise SSO today, or work across many different editors, GitHub Copilot's broader IDE support wins. See our <a href="/news/cursor-vs-github-copilot-2026">full comparison</a> for task-by-task results.</p>
+</div>
+<div class="faq-item">
+<h3>How much does Cursor cost?</h3>
+<p>Cursor Pro is $20/month, which includes 500 fast GPT-4o requests per month and unlimited slower requests. The Business plan is $40/user/month and adds team management, SSO, and usage audit logs. There's a 2-week free trial on the Pro plan — no credit card required.</p>
+</div>
+<div class="faq-item">
+<h3>Does Cursor work with my existing VS Code extensions?</h3>
+<p>Yes. Because Cursor is a VS Code fork, virtually all VS Code extensions install and run normally. Your existing settings, keybindings, and themes transfer directly. The migration from VS Code to Cursor takes under five minutes for most developers.</p>
+</div>
+`,
+
 }

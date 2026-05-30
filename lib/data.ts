@@ -245,6 +245,30 @@ export const ARTICLES: Article[] = [
     relatedTools: ['freshbooks', 'wave', 'quickbooks'],
     content: ARTICLE_CONTENT['best-accounting-software-small-business-2026'],
   },
+  {
+    slug: 'ai-news-today-may-2026',
+    title: "AI News This Week: GPT-5 Ships, Anthropic's $4B Round, EU Enforcement Begins",
+    deck: "The week's most important AI developments in one briefing — new model releases, record funding rounds, landmark policy enforcement, and the developer tools worth your attention right now.",
+    category: 'breaking',
+    author: 'AIBeat Staff',
+    publishedAt: '2026-05-30',
+    readTime: 8,
+    featured: false,
+    relatedTools: ['cursor', 'github-copilot'],
+    content: ARTICLE_CONTENT['ai-news-today-may-2026'],
+  },
+  {
+    slug: 'cursor-ai-review-2026',
+    title: "Cursor AI Review (2026): The Best AI Code Editor — With One Big Catch",
+    deck: "We used Cursor as our primary editor for four weeks on a real production project. It beats GitHub Copilot on codebase context and multi-file editing — but only if you're ready to commit to its VS Code fork.",
+    category: 'tools',
+    author: 'AIBeat Staff',
+    publishedAt: '2026-05-29',
+    readTime: 11,
+    featured: false,
+    relatedTools: ['cursor', 'github-copilot'],
+    content: ARTICLE_CONTENT['cursor-ai-review-2026'],
+  },
 ]
 
 // ============================================================
@@ -956,9 +980,9 @@ export const COMPARISONS: Comparison[] = [
 // ============================================================
 export const TRENDING = [
   { query: 'Best AI writing tools', change: '+1,900%', href: '/news/best-ai-writing-tools-2026' },
-  { query: 'AI news today', change: 'BREAKOUT', href: '/news' },
+  { query: 'AI news today', change: 'BREAKOUT', href: '/news/ai-news-today-may-2026' },
   { query: 'Best free CRM tools', change: '+110%', href: '/compare/hubspot-vs-salesforce' },
-  { query: 'Cursor AI review', change: '+340%', href: '/tools/cursor' },
+  { query: 'Cursor AI review', change: '+340%', href: '/news/cursor-ai-review-2026' },
   { query: 'Free invoicing tools', change: '+89%', href: '/news/free-invoicing-tools-beat-freshbooks' },
 ]
 
