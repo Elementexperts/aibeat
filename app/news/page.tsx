@@ -1,15 +1,19 @@
 import Link from 'next/link'
-import { ARTICLES, TRENDING, getFeaturedTools, CATEGORY_COLORS } from '@/lib/data'
+import { TRENDING, getFeaturedTools, CATEGORY_COLORS } from '@/lib/data'
+import { getArticles } from '@/lib/sanity'
 import type { Metadata } from 'next'
+
+export const revalidate = 3600 // refresh page every hour
 
 export const metadata: Metadata = {
   title: 'AI News — AIBeat.dev',
   description: 'Breaking AI news, tool launches, and analysis for founders and freelancers. Updated daily.',
 }
 
-export default function NewsPage() {
-  const heroArticle = ARTICLES[0]
-  const restArticles = ARTICLES.slice(1)
+export default async function NewsPage() {
+  const articles    = await getArticles()
+  const heroArticle = articles[0]
+  const restArticles = articles.slice(1)
   const featuredTools = getFeaturedTools()
 
   return (

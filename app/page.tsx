@@ -1,15 +1,18 @@
 import Link from 'next/link'
 import {
-  ARTICLES, TOOLS, TRENDING,
-  getFeaturedArticles, getFeaturedTools,
+  TOOLS, TRENDING,
+  getFeaturedTools,
   CATEGORY_COLORS
 } from '@/lib/data'
+import { getArticles } from '@/lib/sanity'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
 
-export default function HomePage() {
-  const featured = getFeaturedArticles()
-  const heroStory = featured[0]
-  const subStories = ARTICLES.slice(1, 5)
+export const revalidate = 3600 // refresh page every hour
+
+export default async function HomePage() {
+  const articles      = await getArticles()
+  const heroStory     = articles.find((a) => a.featured) ?? articles[0]
+  const subStories    = articles.filter((a) => a.slug !== heroStory.slug).slice(0, 4)
   const featuredTools = getFeaturedTools()
 
   return (
@@ -139,7 +142,7 @@ export default function HomePage() {
 
       {/* BOTTOM STORIES GRID */}
       <div className="grid grid-cols-1 md:grid-cols-3 border-t-2 border-ink">
-        {ARTICLES.slice(4, 7).map((article, i) => (
+        {articles.slice(4, 7).map((article, i) => (
           <Link key={article.slug} href={`/news/${article.slug}`}>
             <div className={`p-5 border-b border-border md:border-b-0 ${i < 2 ? 'md:border-r border-border' : ''} card-hover`}>
               <div className={`font-mono text-[10px] font-medium tracking-widest uppercase mb-2 ${

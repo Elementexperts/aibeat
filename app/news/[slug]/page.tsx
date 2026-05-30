@@ -1,14 +1,18 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getArticleBySlug, ARTICLES, TOOLS, CATEGORY_COLORS } from '@/lib/data'
+import { TOOLS, CATEGORY_COLORS } from '@/lib/data'
+import { getArticleBySlug, getArticles } from '@/lib/sanity'
 import type { Metadata } from 'next'
 
+export const revalidate = 3600 // refresh page every hour
+
 export async function generateStaticParams() {
-  return ARTICLES.map((a) => ({ slug: a.slug }))
+  const articles = await getArticles()
+  return articles.map((a) => ({ slug: a.slug }))
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const article = getArticleBySlug(params.slug)
+  const article = await getArticleBySlug(params.slug)
   if (!article) return {}
   return {
     title: article.title,
@@ -16,12 +20,15 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default function ArticlePage({ params }: { params: { slug: string } }) {
-  const article = getArticleBySlug(params.slug)
+export default async function ArticlePage({ params }: { params: { slug: string } }) {
+  const [article, allArticles] = await Promise.all([
+    getArticleBySlug(params.slug),
+    getArticles(),
+  ])
   if (!article) notFound()
 
-  const relatedTools = article.relatedTools?.map(slug => TOOLS.find(t => t.slug === slug)).filter(Boolean) || []
-  const moreArticles = ARTICLES.filter(a => a.slug !== article.slug).slice(0, 3)
+  const relatedTools = article.relatedTools?.map((slug: string) => TOOLS.find(t => t.slug === slug)).filter(Boolean) || []
+  const moreArticles = allArticles.filter(a => a.slug !== article.slug).slice(0, 3)
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
