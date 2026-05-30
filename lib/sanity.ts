@@ -9,7 +9,7 @@ export const sanityClient = createClient({
   dataset: 'production',
   apiVersion: '2026-05-30',
   useCdn: process.env.NODE_ENV === 'production',
-  token: process.env.SANITY_API_TOKEN,
+  token: process.env.SANITY_API_TOKEN?.trim(),
 })
 
 // ─── Query Helpers ───────────────────────────────────────────
