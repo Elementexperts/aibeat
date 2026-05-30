@@ -116,7 +116,17 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code blocks):
 
     const data = await res.json()
 
-    // Log API-level errors (wrong key, quota exceeded, etc.)
+    // Handle rate limits — extract retry delay and wait
+    if (data.error?.status === 'RESOURCE_EXHAUSTED') {
+      const msg      = data.error.message ?? ''
+      const match    = msg.match(/retry in ([\d.]+)s/i)
+      const waitSecs = match ? Math.ceil(parseFloat(match[1])) + 2 : 60
+      console.log(`  ⏳ Rate limited — waiting ${waitSecs}s then retrying...`)
+      await new Promise(r => setTimeout(r, waitSecs * 1000))
+      return writeArticle(item) // retry once after waiting
+    }
+
+    // Log other API-level errors (wrong key, etc.)
     if (data.error) {
       console.error(`  ⚠️  Gemini API error: ${data.error.message}`)
       return null
