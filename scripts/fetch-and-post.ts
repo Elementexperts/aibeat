@@ -29,7 +29,7 @@ const GEMINI_URL     =
 const RSS_FEEDS = [
   { url: 'https://techcrunch.com/category/artificial-intelligence/feed/', source: 'TechCrunch' },
   { url: 'https://feeds.feedburner.com/venturebeat/SZYF',                 source: 'VentureBeat' },
-  { url: 'https://www.theverge.com/ai-artificial-intelligence/rss/index.xml', source: 'The Verge' },
+  { url: 'https://www.theverge.com/rss/index.xml',                           source: 'The Verge' },
   { url: 'https://hnrss.org/frontpage?q=AI+LLM+GPT+Claude+Gemini',        source: 'Hacker News' },
 ]
 
@@ -109,17 +109,34 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code blocks):
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
           temperature:     0.7,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 8192,  // increased from 2048 — articles were truncating
         },
       }),
     })
 
     const data = await res.json()
-    const raw  = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
 
-    // Strip any accidental markdown code fences
+    // Log API-level errors (wrong key, quota exceeded, etc.)
+    if (data.error) {
+      console.error(`  ⚠️  Gemini API error: ${data.error.message}`)
+      return null
+    }
+
+    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+
+    // Strip markdown code fences if Gemini wraps in ```json ... ```
     const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-    return JSON.parse(cleaned)
+
+    // Extract JSON robustly — find first { and last } in case of extra text
+    const start = cleaned.indexOf('{')
+    const end   = cleaned.lastIndexOf('}')
+    if (start === -1 || end === -1) {
+      console.error(`  ⚠️  No JSON object found in Gemini response`)
+      return null
+    }
+    const jsonStr = cleaned.slice(start, end + 1)
+    return JSON.parse(jsonStr)
+
   } catch (err) {
     console.error(`  ⚠️  Gemini error for "${item.title}":`, err)
     return null
