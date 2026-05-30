@@ -955,11 +955,11 @@ export const COMPARISONS: Comparison[] = [
 // TRENDING SEARCHES
 // ============================================================
 export const TRENDING = [
-  { query: 'Best AI writing tools', change: '+1,900%', href: '/best/ai-writing-tools' },
+  { query: 'Best AI writing tools', change: '+1,900%', href: '/news/best-ai-writing-tools-2026' },
   { query: 'AI news today', change: 'BREAKOUT', href: '/news' },
-  { query: 'Best free CRM tools', change: '+110%', href: '/best/free-crm-tools' },
+  { query: 'Best free CRM tools', change: '+110%', href: '/compare/hubspot-vs-salesforce' },
   { query: 'Cursor AI review', change: '+340%', href: '/tools/cursor' },
-  { query: 'Free invoicing tools', change: '+89%', href: '/best/invoicing-tools' },
+  { query: 'Free invoicing tools', change: '+89%', href: '/news/free-invoicing-tools-beat-freshbooks' },
 ]
 
 // ============================================================
