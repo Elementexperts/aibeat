@@ -1,0 +1,235 @@
+[
+  {
+    "fields": [
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              },
+              {
+                "flag": "max",
+                "constraint": 120
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "title",
+        "type": "string",
+        "title": "Headline"
+      },
+      {
+        "options": {
+          "source": "title",
+          "maxLength": 96
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "custom"
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "slug",
+        "type": "slug"
+      },
+      {
+        "rows": 3,
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              },
+              {
+                "flag": "max",
+                "constraint": 300
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "deck",
+        "type": "text",
+        "title": "Deck (sub-headline)"
+      },
+      {
+        "options": {
+          "list": [
+            {
+              "title": "🔴 Breaking",
+              "value": "breaking"
+            },
+            {
+              "title": "📰 News",
+              "value": "news"
+            },
+            {
+              "title": "🛠 Tools",
+              "value": "tools"
+            },
+            {
+              "title": "⚖️ Compare",
+              "value": "compare"
+            },
+            {
+              "title": "🔬 Deep Dive",
+              "value": "deep-dive"
+            }
+          ],
+          "layout": "radio"
+        },
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "valid",
+                "constraint": [
+                  "breaking",
+                  "news",
+                  "tools",
+                  "compare",
+                  "deep-dive"
+                ]
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "category",
+        "type": "string"
+      },
+      {
+        "options": {
+          "list": [
+            {
+              "title": "📝 Draft",
+              "value": "draft"
+            },
+            {
+              "title": "👀 In Review",
+              "value": "review"
+            },
+            {
+              "title": "✅ Published",
+              "value": "published"
+            }
+          ],
+          "layout": "radio"
+        },
+        "initialValue": "draft",
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "valid",
+                "constraint": [
+                  "draft",
+                  "review",
+                  "published"
+                ]
+              },
+              {
+                "flag": "presence",
+                "constraint": "required"
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "status",
+        "type": "string"
+      },
+      {
+        "initialValue": "AIBeat Staff",
+        "name": "author",
+        "type": "string"
+      },
+      {
+        "options": {
+          "dateFormat": "YYYY-MM-DD",
+          "timeFormat": "HH:mm",
+          "calendarTodayLabel": "Today"
+        },
+        "name": "publishedAt",
+        "type": "datetime"
+      },
+      {
+        "validation": [
+          {
+            "rules": [
+              {
+                "flag": "presence",
+                "constraint": "required"
+              },
+              {
+                "flag": "min",
+                "constraint": 1
+              },
+              {
+                "flag": "max",
+                "constraint": 60
+              }
+            ],
+            "level": "error"
+          }
+        ],
+        "name": "readTime",
+        "type": "number",
+        "title": "Read Time (minutes)"
+      },
+      {
+        "initialValue": false,
+        "name": "featured",
+        "type": "boolean",
+        "title": "Featured (show on homepage hero)"
+      },
+      {
+        "rows": 20,
+        "description": "Paste HTML content here. Supports <h2>, <p>, <table>, <ul>, <blockquote> tags.",
+        "name": "content",
+        "type": "text",
+        "title": "Article Body (HTML)"
+      },
+      {
+        "description": "e.g. cursor, github-copilot, jasper",
+        "of": [
+          {
+            "type": "string"
+          }
+        ],
+        "name": "relatedTools",
+        "type": "array",
+        "title": "Related Tool Slugs"
+      },
+      {
+        "name": "seoTitle",
+        "type": "string",
+        "title": "SEO Title (optional override)"
+      },
+      {
+        "rows": 2,
+        "name": "seoDescription",
+        "type": "text",
+        "title": "SEO Description (optional override)"
+      }
+    ],
+    "name": "article",
+    "type": "document"
+  }
+]

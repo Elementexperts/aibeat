@@ -1,9 +1,7 @@
 import Link from 'next/link'
 import { TRENDING, getFeaturedTools, CATEGORY_COLORS } from '@/lib/data'
-import { getArticles } from '@/lib/sanity'
+import { getArticles } from '@/lib/articles'
 import type { Metadata } from 'next'
-
-export const revalidate = 3600 // refresh page every hour
 
 export const metadata: Metadata = {
   title: 'AI News — AIBeat.dev',

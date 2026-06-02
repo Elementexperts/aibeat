@@ -1,10 +1,8 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { TOOLS, CATEGORY_COLORS } from '@/lib/data'
-import { getArticleBySlug, getArticles } from '@/lib/sanity'
+import { getArticleBySlug, getArticles } from '@/lib/articles'
 import type { Metadata } from 'next'
-
-export const revalidate = 3600 // refresh page every hour
 
 export async function generateStaticParams() {
   const articles = await getArticles()
