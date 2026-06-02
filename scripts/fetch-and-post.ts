@@ -193,7 +193,6 @@ async function main() {
   let   skipped  = 0
   let   failed   = 0
 
-  feedLoop:
   for (const feed of RSS_FEEDS) {
     console.log(`📡 Fetching ${feed.source}...`)
 
@@ -236,7 +235,6 @@ async function main() {
 
       if (!generated) {
         failed++
-        if (geminiQuotaExhausted) break feedLoop
         continue
       }
 
@@ -252,8 +250,8 @@ async function main() {
         failed++
       }
 
-      // Avoid rate limiting Gemini
-      await new Promise(r => setTimeout(r, 1000))
+      // Avoid Groq TPM rate limit (12K tokens/min) — wait 6s between calls
+      await new Promise(r => setTimeout(r, 6000))
     }
   }
 
