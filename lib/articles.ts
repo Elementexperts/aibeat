@@ -8,7 +8,7 @@ export interface Article {
   slug: string
   title: string
   deck: string
-  category: string
+  category: 'breaking' | 'news' | 'tools' | 'compare' | 'deep-dive'
   author: string
   publishedAt: string
   readTime: number
