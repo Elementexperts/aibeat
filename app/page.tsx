@@ -4,7 +4,7 @@ import {
   getFeaturedTools,
   CATEGORY_COLORS
 } from '@/lib/data'
-import { getArticles } from '@/lib/sanity'
+import { getArticles } from '@/lib/articles'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
 
 export const revalidate = 3600 // refresh page every hour
