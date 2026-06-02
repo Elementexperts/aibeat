@@ -1,9 +1,10 @@
-// Querying with "sanityFetch" will keep content automatically updated
-// Before using it, import and render "<SanityLive />" in your layout, see
-// https://github.com/sanity-io/next-sanity#live-content-api for more information.
-import { defineLive } from "next-sanity/live";
-import { client } from './client'
+// Live content API requires next-sanity v10+ (Next.js 15+).
+// This project uses Next.js 14 with ISR revalidation instead.
+// This file is a stub to prevent build errors.
 
-export const { sanityFetch, SanityLive } = defineLive({
-  client,
-});
+export const sanityFetch = async (query: string, params?: Record<string, unknown>) => {
+  const { sanityClient } = await import('@/lib/sanity')
+  return sanityClient.fetch(query, params ?? {})
+}
+
+export const SanityLive = () => null
