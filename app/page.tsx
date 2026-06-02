@@ -11,9 +11,19 @@ export const revalidate = 3600 // refresh page every hour
 
 export default async function HomePage() {
   const articles      = await getArticles()
-  const heroStory     = articles.find((a) => a.featured) ?? articles[0]
-  const subStories    = articles.filter((a) => a.slug !== heroStory.slug).slice(0, 4)
   const featuredTools = getFeaturedTools()
+
+  if (articles.length === 0) {
+    return (
+      <div className="max-w-5xl mx-auto px-6 py-20 text-center">
+        <h1 className="font-serif text-3xl font-bold text-ink mb-4">First articles coming soon</h1>
+        <p className="text-ink-3 text-sm">The automation runs 3× daily — check back shortly.</p>
+      </div>
+    )
+  }
+
+  const heroStory  = articles.find((a) => a.featured) ?? articles[0]
+  const subStories = articles.filter((a) => a.slug !== heroStory.slug).slice(0, 4)
 
   return (
     <div className="max-w-5xl mx-auto px-0 border-x border-border">

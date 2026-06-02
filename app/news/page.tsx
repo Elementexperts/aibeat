@@ -9,8 +9,18 @@ export const metadata: Metadata = {
 }
 
 export default async function NewsPage() {
-  const articles    = await getArticles()
-  const heroArticle = articles[0]
+  const articles = await getArticles()
+
+  if (articles.length === 0) {
+    return (
+      <div className="max-w-5xl mx-auto px-6 py-20 text-center">
+        <h1 className="font-serif text-3xl font-bold text-ink mb-4">First articles coming soon</h1>
+        <p className="text-ink-3 text-sm">The automation runs 3× daily — check back shortly.</p>
+      </div>
+    )
+  }
+
+  const heroArticle  = articles[0]
   const restArticles = articles.slice(1)
   const featuredTools = getFeaturedTools()
 
