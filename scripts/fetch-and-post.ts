@@ -20,9 +20,9 @@ const SANITY = createClient({
   useCdn: false,
 })
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY!
-const GEMINI_URL     =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+const GROQ_API_KEY = process.env.GROQ_API_KEY
+const GROQ_URL     = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_MODEL   = 'llama-3.3-70b-versatile'
 
 // ─── RSS Feeds to monitor ────────────────────────────────────
 
@@ -68,7 +68,7 @@ async function alreadyExists(title: string): Promise<boolean> {
   return !!existing
 }
 
-// ─── Gemini Flash — Write Article ────────────────────────────
+// ─── Groq (Llama 3.3 70B) — Write Article ───────────────────
 
 async function writeArticle(item: {
   title: string
@@ -102,53 +102,49 @@ Respond ONLY with valid JSON in this exact format (no markdown, no code blocks):
 }`
 
   try {
-    const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+    const res = await fetch(GROQ_URL, {
       method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature:     0.7,
-          maxOutputTokens: 8192,  // increased from 2048 — articles were truncating
-        },
+        model:       GROQ_MODEL,
+        temperature: 0.7,
+        max_tokens:  4096,
+        messages: [
+          {
+            role:    'user',
+            content: prompt,
+          },
+        ],
       }),
     })
 
     const data = await res.json()
 
-    // Handle rate limits — extract retry delay and wait
-    if (data.error?.status === 'RESOURCE_EXHAUSTED') {
-      const msg      = data.error.message ?? ''
-      const match    = msg.match(/retry in ([\d.]+)s/i)
-      const waitSecs = match ? Math.ceil(parseFloat(match[1])) + 2 : 60
-      console.log(`  ⏳ Rate limited — waiting ${waitSecs}s then retrying...`)
-      await new Promise(r => setTimeout(r, waitSecs * 1000))
-      return writeArticle(item) // retry once after waiting
-    }
-
-    // Log other API-level errors (wrong key, etc.)
+    // Log API-level errors
     if (data.error) {
-      console.error(`  ⚠️  Gemini API error: ${data.error.message}`)
+      console.error(`  ⚠️  Groq API error: ${data.error.message}`)
       return null
     }
 
-    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+    const raw = data?.choices?.[0]?.message?.content ?? ''
 
-    // Strip markdown code fences if Gemini wraps in ```json ... ```
+    // Strip markdown code fences if model wraps in ```json ... ```
     const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
 
-    // Extract JSON robustly — find first { and last } in case of extra text
+    // Extract JSON robustly — find first { and last }
     const start = cleaned.indexOf('{')
     const end   = cleaned.lastIndexOf('}')
     if (start === -1 || end === -1) {
-      console.error(`  ⚠️  No JSON object found in Gemini response`)
+      console.error(`  ⚠️  No JSON found in Groq response`)
       return null
     }
-    const jsonStr = cleaned.slice(start, end + 1)
-    return JSON.parse(jsonStr)
+    return JSON.parse(cleaned.slice(start, end + 1))
 
   } catch (err) {
-    console.error(`  ⚠️  Gemini error for "${item.title}":`, err)
+    console.error(`  ⚠️  Groq error for "${item.title}":`, err)
     return null
   }
 }
@@ -183,12 +179,21 @@ async function main() {
   console.log('\n🤖 AIBeat Daily News Automation')
   console.log(`   ${new Date().toUTCString()}\n`)
 
+  if (!process.env.SANITY_API_TOKEN) {
+    throw new Error('Missing required SANITY_API_TOKEN secret')
+  }
+
+  if (!GROQ_API_KEY) {
+    throw new Error('Missing required GROQ_API_KEY secret')
+  }
+
   const parser   = new Parser()
   const cutoff   = Date.now() - 24 * 60 * 60 * 1000 // last 24 hours
   let   saved    = 0
   let   skipped  = 0
   let   failed   = 0
 
+  feedLoop:
   for (const feed of RSS_FEEDS) {
     console.log(`📡 Fetching ${feed.source}...`)
 
@@ -229,7 +234,11 @@ async function main() {
         link:    item.link ?? '',
       })
 
-      if (!generated) { failed++; continue }
+      if (!generated) {
+        failed++
+        if (geminiQuotaExhausted) break feedLoop
+        continue
+      }
 
       const slug     = slugify(generated.title)
       const category = detectCategory(generated.title, generated.content)
@@ -254,6 +263,10 @@ async function main() {
   if (failed > 0) console.log(`  ❌ Failed          : ${failed}`)
   console.log('\n📋 Review drafts at:')
   console.log('   https://sanity.io/manage/project/uk52fboh\n')
+
+  if (failed > 0) {
+    process.exitCode = 1
+  }
 }
 
 main().catch((err) => {
