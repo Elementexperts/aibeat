@@ -11,11 +11,13 @@ import Parser from 'rss-parser'
 import { writeFileSync, existsSync } from 'fs'
 import { join } from 'path'
 
-const GROQ_API_KEY  = process.env.GROQ_API_KEY
-const GROQ_URL      = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL    = 'llama-3.3-70b-versatile'
-const ARTICLE_LIMIT = parseInt(process.env.ARTICLE_LIMIT ?? '1', 10)
-const CONTENT_DIR   = resolve(process.cwd(), 'content/articles')
+const GROQ_API_KEY       = process.env.GROQ_API_KEY
+const GROQ_URL           = 'https://api.groq.com/openai/v1/chat/completions'
+const GROQ_MODEL         = 'llama-3.3-70b-versatile'
+const ARTICLE_LIMIT      = parseInt(process.env.ARTICLE_LIMIT ?? '1', 10)
+const CONTENT_DIR        = resolve(process.cwd(), 'content/articles')
+const LINKEDIN_TOKEN     = process.env.LINKEDIN_ACCESS_TOKEN
+const SITE_BASE          = 'https://www.aibeat.dev'
 
 const RSS_FEEDS = [
   { url: 'https://techcrunch.com/category/artificial-intelligence/feed/', source: 'TechCrunch' },
@@ -71,6 +73,25 @@ function pollinationsUrl(title: string): string {
   return `https://image.pollinations.ai/prompt/${prompt}?width=1200&height=630&nologo=true`
 }
 
+/** Escape bare control characters inside JSON string values without touching structural whitespace. */
+function sanitizeJsonControlChars(json: string): string {
+  let result = '', inString = false, escaped = false
+  for (const char of json) {
+    if (escaped)              { result += char; escaped = false; continue }
+    if (char === '\\' && inString) { result += char; escaped = true;  continue }
+    if (char === '"')         { inString = !inString; result += char; continue }
+    if (inString && char.charCodeAt(0) < 0x20) {
+      if      (char === '\n') result += '\\n'
+      else if (char === '\r') result += '\\r'
+      else if (char === '\t') result += '\\t'
+      // drop other non-printable control chars
+      continue
+    }
+    result += char
+  }
+  return result
+}
+
 async function writeArticleWithGroq(item: { title: string; summary: string; source: string; link: string }) {
   const prompt = `You are the editorial AI for AIBeat.dev — a daily AI news site for developers, founders, and researchers.
 
@@ -100,13 +121,27 @@ Respond ONLY with valid JSON (no markdown, no code blocks):
       body:    JSON.stringify({ model: GROQ_MODEL, temperature: 0.7, max_tokens: 4096, messages: [{ role: 'user', content: prompt }] }),
     })
     const data = await res.json()
-    if (data.error) { console.error(`  Groq error: ${data.error.message}`); return null }
+    if (data.error) {
+      // If rate-limited, parse the wait time and retry once
+      const msg: string = data.error.message ?? ''
+      const waitMatch   = msg.match(/try again in ([\d.]+)s/)
+      if (waitMatch) {
+        const waitMs = Math.ceil(parseFloat(waitMatch[1]) * 1000) + 1000
+        console.log(`  Rate limited — waiting ${(waitMs / 1000).toFixed(1)}s...`)
+        await new Promise(r => setTimeout(r, waitMs))
+        return writeArticleWithGroq(item) // single retry
+      }
+      console.error(`  Groq error: ${msg}`)
+      return null
+    }
     const raw     = data?.choices?.[0]?.message?.content ?? ''
     const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
     const start   = cleaned.indexOf('{')
     const end     = cleaned.lastIndexOf('}')
     if (start === -1 || end === -1) { console.error(`  No JSON in Groq response`); return null }
-    return JSON.parse(cleaned.slice(start, end + 1)) as { title: string; deck: string; content: string }
+    // Sanitize control characters inside JSON string values (Groq sometimes emits literal newlines)
+    const safe = sanitizeJsonControlChars(cleaned.slice(start, end + 1))
+    return JSON.parse(safe) as { title: string; deck: string; content: string }
   } catch (err) { console.error(`  Groq error:`, err); return null }
 }
 
@@ -134,6 +169,87 @@ function writeMdxFile(article: {
 
   writeFileSync(join(CONTENT_DIR, `${article.slug}.mdx`), fm + article.content)
 }
+
+// ── LinkedIn ──────────────────────────────────────────────────────────────────
+
+async function getLinkedInPersonUrn(token: string): Promise<string | null> {
+  // 1. Manual override via env (fastest)
+  if (process.env.LINKEDIN_PERSON_URN) return process.env.LINKEDIN_PERSON_URN
+
+  // 2. OpenID Connect userinfo (requires openid + profile scopes)
+  try {
+    const res = await fetch('https://api.linkedin.com/v2/userinfo', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.sub) return `urn:li:person:${data.sub}`
+    }
+  } catch {}
+
+  // 3. Legacy /v2/me (requires r_liteprofile scope)
+  try {
+    const res = await fetch('https://api.linkedin.com/v2/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (res.ok) {
+      const data = await res.json()
+      if (data.id) return `urn:li:person:${data.id}`
+    }
+  } catch {}
+
+  console.log(`  LinkedIn: could not resolve Person URN — add openid+profile scopes to your app and regenerate the token`)
+  return null
+}
+
+async function postToLinkedIn(article: {
+  slug: string; title: string; deck: string
+}, personUrn: string, token: string): Promise<void> {
+  const url     = `${SITE_BASE}/news/${article.slug}`
+  const caption = `${article.title}\n\n${article.deck}\n\nRead more → ${url}\n\n#AI #ArtificialIntelligence #AINews #AIBeat`
+
+  const body = {
+    author:          personUrn,
+    lifecycleState:  'PUBLISHED',
+    specificContent: {
+      'com.linkedin.ugc.ShareContent': {
+        shareCommentary:   { text: caption },
+        shareMediaCategory: 'ARTICLE',
+        media: [{
+          status:      'READY',
+          originalUrl: url,
+          title:       { text: article.title },
+          description: { text: article.deck },
+        }],
+      },
+    },
+    visibility: {
+      'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC',
+    },
+  }
+
+  try {
+    const res = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+      method:  'POST',
+      headers: {
+        Authorization:   `Bearer ${token}`,
+        'Content-Type':  'application/json',
+        'X-Restli-Protocol-Version': '2.0.0',
+      },
+      body: JSON.stringify(body),
+    })
+    if (res.ok) {
+      console.log(`  LinkedIn post published ✓`)
+    } else {
+      const err = await res.text()
+      console.log(`  LinkedIn post failed (${res.status}): ${err}`)
+    }
+  } catch (err) {
+    console.log(`  LinkedIn post error:`, err)
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function main() {
   console.log('\n AIBeat Daily News Automation')
@@ -198,7 +314,19 @@ async function main() {
     console.log(`  Saved: content/articles/${finalSlug}.mdx`)
     saved++
 
-    if (saved + failed < ARTICLE_LIMIT) await new Promise(r => setTimeout(r, 6000))
+    // Post to LinkedIn if token is configured
+    if (LINKEDIN_TOKEN) {
+      const personUrn = await getLinkedInPersonUrn(LINKEDIN_TOKEN)
+      if (personUrn) {
+        await postToLinkedIn(
+          { slug: finalSlug, title: generated.title, deck: generated.deck },
+          personUrn,
+          LINKEDIN_TOKEN,
+        )
+      }
+    }
+
+    if (saved < ARTICLE_LIMIT) await new Promise(r => setTimeout(r, 6000))
   }
 
   console.log('\n─────────────────────────')
