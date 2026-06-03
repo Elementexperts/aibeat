@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
+import { cache } from 'react'
 
 const ARTICLES_DIR = path.join(process.cwd(), 'content/articles')
 
@@ -20,7 +21,9 @@ export interface Article {
   relatedTools?: string[]
 }
 
-function readAllArticles(): Article[] {
+// cache() deduplicates calls within a single request — no matter how many
+// server components call getArticles(), the disk is read only once per render.
+const readAllArticles = cache((): Article[] => {
   if (!fs.existsSync(ARTICLES_DIR)) return []
 
   return fs
@@ -32,7 +35,7 @@ function readAllArticles(): Article[] {
       return { ...data, content } as Article
     })
     .sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
-}
+})
 
 export function getArticles(): Article[] {
   return readAllArticles()

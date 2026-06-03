@@ -160,7 +160,7 @@ async function main() {
   console.log(`\n Processing up to ${ARTICLE_LIMIT} article(s) from ${candidates.length} candidates...\n`)
 
   for (const { item, source } of candidates) {
-    if (saved + failed >= ARTICLE_LIMIT) break
+    if (saved >= ARTICLE_LIMIT) break
 
     const title = item.title?.trim() ?? ''
     if (!title) continue
@@ -183,6 +183,7 @@ async function main() {
     console.log(ogImage ? `     OG image found` : `     Using Pollinations fallback`)
 
     const finalSlug = slugify(generated.title)
+    if (alreadyExists(finalSlug)) { console.log(`  Already exists (rewritten slug): "${finalSlug.slice(0, 60)}"`); skipped++; continue }
     writeMdxFile({
       slug: finalSlug,
       title: generated.title,

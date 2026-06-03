@@ -40,7 +40,7 @@ export default async function HomePage() {
               <span className={`cat-tag ${CATEGORY_COLORS[heroStory.category]}`}>
                 {heroStory.category}
               </span>
-              <span className="font-mono text-[10px] text-ink-4">2 hours ago</span>
+              <span className="font-mono text-[10px] text-ink-4">{heroStory.publishedAt}</span>
             </div>
             {/* Hero image placeholder */}
             <div className="w-full h-44 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] rounded-sm mb-4 flex items-center justify-center relative overflow-hidden">
@@ -77,7 +77,7 @@ export default async function HomePage() {
                     <span className={`cat-tag ${CATEGORY_COLORS[article.category]} text-[9px] py-0.5 px-1.5`}>
                       {article.category}
                     </span>
-                    <span>Yesterday</span>
+                    <span>{article.publishedAt}</span>
                     <span>·</span>
                     <span>{article.readTime} min read</span>
                   </div>

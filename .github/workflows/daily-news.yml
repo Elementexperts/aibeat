@@ -56,11 +56,17 @@ jobs:
 
           SLUG=$(basename "$NEW_FILE" .mdx)
           BRANCH="draft/$SLUG"
-          TITLE=$(grep '^title:' "$NEW_FILE" | head -1 | sed 's/^title: *"//;s/"$//')
+          # Use python to safely extract the title — avoids sed quoting issues
+          TITLE=$(python3 -c "
+import re, sys
+text = open('$NEW_FILE').read()
+m = re.search(r'^title:\s*[\"\'](.*?)[\"\']', text, re.MULTILINE)
+print(m.group(1) if m else '$SLUG')
+")
 
           git checkout -b "$BRANCH"
           git add "$NEW_FILE"
-          git commit -m "draft: $TITLE"
+          git commit -m "draft: ${SLUG}"
           git push origin "$BRANCH"
 
           gh pr create \

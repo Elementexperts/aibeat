@@ -1,8 +1,6 @@
 // ============================================================
 // AIBeat.dev — Central Data Store
 // ============================================================
-import { ARTICLE_CONTENT } from './article-content'
-
 export type Category = 'breaking' | 'news' | 'tools' | 'compare' | 'deep-dive'
 
 export interface Article {
@@ -14,7 +12,6 @@ export interface Article {
   publishedAt: string
   readTime: number
   featured: boolean
-  content?: string
   relatedTools?: string[]
 }
 
@@ -115,7 +112,6 @@ export const ARTICLES: Article[] = [
     readTime: 9,
     featured: true,
     relatedTools: ['jasper', 'copy-ai'],
-    content: ARTICLE_CONTENT['jasper-vs-copy-ai-2026'],
   },
   {
     slug: 'hubspot-free-plan-update',
@@ -171,7 +167,6 @@ export const ARTICLES: Article[] = [
     readTime: 10,
     featured: false,
     relatedTools: ['notion', 'hubspot', 'wave', 'cursor', 'github-copilot'],
-    content: ARTICLE_CONTENT['best-free-ai-tools-freelancers-2026'],
   },
   {
     slug: 'hubspot-vs-salesforce-2026',
@@ -183,7 +178,6 @@ export const ARTICLES: Article[] = [
     readTime: 11,
     featured: false,
     relatedTools: ['hubspot', 'salesforce', 'pipedrive'],
-    content: ARTICLE_CONTENT['hubspot-vs-salesforce-2026'],
   },
   {
     slug: 'best-project-management-tools-2026',
@@ -195,7 +189,6 @@ export const ARTICLES: Article[] = [
     readTime: 12,
     featured: false,
     relatedTools: ['notion', 'monday'],
-    content: ARTICLE_CONTENT['best-project-management-tools-2026'],
   },
   {
     slug: 'ahrefs-vs-semrush-2026',
@@ -207,7 +200,6 @@ export const ARTICLES: Article[] = [
     readTime: 10,
     featured: false,
     relatedTools: ['ahrefs', 'semrush'],
-    content: ARTICLE_CONTENT['ahrefs-vs-semrush-2026'],
   },
   {
     slug: 'best-email-marketing-tools-2026',
@@ -219,7 +211,6 @@ export const ARTICLES: Article[] = [
     readTime: 11,
     featured: false,
     relatedTools: ['hubspot'],
-    content: ARTICLE_CONTENT['best-email-marketing-tools-2026'],
   },
   {
     slug: 'cursor-vs-github-copilot-2026',
@@ -231,7 +222,6 @@ export const ARTICLES: Article[] = [
     readTime: 10,
     featured: false,
     relatedTools: ['cursor', 'github-copilot'],
-    content: ARTICLE_CONTENT['cursor-vs-github-copilot-2026'],
   },
   {
     slug: 'best-accounting-software-small-business-2026',
@@ -243,7 +233,6 @@ export const ARTICLES: Article[] = [
     readTime: 9,
     featured: false,
     relatedTools: ['freshbooks', 'wave', 'quickbooks'],
-    content: ARTICLE_CONTENT['best-accounting-software-small-business-2026'],
   },
   {
     slug: 'ai-news-today-may-2026',
@@ -255,7 +244,6 @@ export const ARTICLES: Article[] = [
     readTime: 8,
     featured: false,
     relatedTools: ['cursor', 'github-copilot'],
-    content: ARTICLE_CONTENT['ai-news-today-may-2026'],
   },
   {
     slug: 'cursor-ai-review-2026',
@@ -267,7 +255,6 @@ export const ARTICLES: Article[] = [
     readTime: 11,
     featured: false,
     relatedTools: ['cursor', 'github-copilot'],
-    content: ARTICLE_CONTENT['cursor-ai-review-2026'],
   },
 ]
 
