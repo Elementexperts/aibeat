@@ -1,8 +1,7 @@
 # ============================================================
 # AIBeat — Daily News Automation
 # Runs 3x per day: 7:00, 12:00, 18:00 UTC
-# Fetches AI news → Groq writes article → opens GitHub PR for review
-# Merge the PR to publish. Close it to reject.
+# Fetches AI news → Groq writes article → commits to main → Vercel deploys
 # ============================================================
 
 name: Daily AI News Automation
@@ -20,7 +19,6 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       - name: Checkout repo
@@ -42,37 +40,28 @@ jobs:
           ARTICLE_LIMIT: 1
         run: npx tsx scripts/fetch-and-post.ts
 
-      - name: Open draft PR if article was written
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit and publish article
         run: |
           git config user.name "AIBeat Bot"
           git config user.email "bot@aibeat.dev"
 
           NEW_FILE=$(git ls-files --others --exclude-standard content/articles/ | head -1)
           if [ -z "$NEW_FILE" ]; then
-            echo "No new article (duplicate or failed). Skipping PR."
+            echo "No new article (duplicate or failed). Nothing to commit."
             exit 0
           fi
 
           SLUG=$(basename "$NEW_FILE" .mdx)
-          BRANCH="draft/$SLUG"
-          # Use python to safely extract the title — avoids sed quoting issues
           TITLE=$(python3 -c "
-import re, sys
+import re
 text = open('$NEW_FILE').read()
 m = re.search(r'^title:\s*[\"\'](.*?)[\"\']', text, re.MULTILINE)
 print(m.group(1) if m else '$SLUG')
 ")
 
-          git checkout -b "$BRANCH"
           git add "$NEW_FILE"
-          git commit -m "draft: ${SLUG}"
-          git push origin "$BRANCH"
+          git commit -m "publish: ${SLUG}"
+          git push origin main
 
-          gh pr create \
-            --title "Draft: $TITLE" \
-            --body "$(printf 'AI-generated article — review before merging.\n\n**To publish:** read through, edit if needed, then merge.\n**To reject:** close the PR without merging.\n\nFile: \`%s\`' "$NEW_FILE")" \
-            --base main
-
-          echo "PR opened for: $TITLE"
+          echo "Published: $TITLE"
+          echo "Live at: https://www.aibeat.dev/news/${SLUG}"
