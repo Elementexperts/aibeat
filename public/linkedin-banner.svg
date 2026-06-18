@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1128 191" width="1128" height="191">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0a0a0a"/>
+      <stop offset="70%" style="stop-color:#0f1520"/>
+      <stop offset="100%" style="stop-color:#1a0f0f"/>
+    </linearGradient>
+    <linearGradient id="redglow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#d4380d;stop-opacity:0"/>
+      <stop offset="100%" style="stop-color:#d4380d;stop-opacity:0.15"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1128" height="191" fill="url(#bg)"/>
+
+  <!-- Subtle red glow right side -->
+  <rect x="700" y="0" width="428" height="191" fill="url(#redglow)"/>
+
+  <!-- Grid lines horizontal -->
+  <line x1="0" y1="47" x2="1128" y2="47" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="0" y1="95" x2="1128" y2="95" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="0" y1="143" x2="1128" y2="143" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+
+  <!-- Grid lines vertical -->
+  <line x1="200" y1="0" x2="200" y2="191" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="450" y1="0" x2="450" y2="191" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="700" y1="0" x2="700" y2="191" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+  <line x1="950" y1="0" x2="950" y2="191" stroke="#ffffff" stroke-opacity="0.03" stroke-width="1"/>
+
+  <!-- Faint background ticker text -->
+  <text x="30" y="30" font-family="'IBM Plex Mono', monospace" font-size="9" fill="#ffffff" opacity="0.05" letter-spacing="1">GPT-5 · LLAMA-4 · CLAUDE-4 · GEMINI-2.5 · MISTRAL · GROQ · DEEPSEEK · QWEN · PHI-4 · GROK · COMMAND-R · YI · FALCON</text>
+  <text x="30" y="175" font-family="'IBM Plex Mono', monospace" font-size="9" fill="#ffffff" opacity="0.05" letter-spacing="1">TECHCRUNCH · VENTUREBEAT · THE VERGE · HACKER NEWS · ARXIV · HUGGINGFACE · OPENAI BLOG · ANTHROPIC · GOOGLE DEEPMIND</text>
+  <text x="500" y="102" font-family="'IBM Plex Mono', monospace" font-size="9" fill="#d4380d" opacity="0.08" letter-spacing="2">07:00 UTC · 12:00 UTC · 18:00 UTC · AUTOMATED · VERIFIED · PUBLISHED</text>
+
+  <!-- Left accent bar -->
+  <rect x="0" y="0" width="5" height="191" fill="#d4380d"/>
+
+  <!-- Logo mark — AI block -->
+  <rect x="40" y="55" width="58" height="58" fill="#d4380d"/>
+  <text x="69" y="93" font-family="Georgia, serif" font-size="28" font-weight="700" fill="#ffffff" text-anchor="middle">AI</text>
+
+  <!-- Wordmark -->
+  <text x="114" y="94" font-family="Georgia, serif" font-size="52" font-weight="700" fill="#f8f7f4" letter-spacing="-1">BEAT</text>
+  <text x="115" y="118" font-family="'IBM Plex Mono', monospace" font-size="11" fill="#999999" letter-spacing="4">.DEV</text>
+
+  <!-- Divider -->
+  <line x1="340" y1="60" x2="340" y2="138" stroke="#333333" stroke-width="1"/>
+
+  <!-- Tagline -->
+  <text x="365" y="88" font-family="Georgia, serif" font-size="22" font-style="italic" fill="#f8f7f4" opacity="0.9">The pulse of AI —</text>
+  <text x="365" y="118" font-family="Georgia, serif" font-size="22" font-style="italic" fill="#d4380d">daily news, tools &amp; insights</text>
+  <text x="365" y="142" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#666666" letter-spacing="2">FOR BUILDERS · FOUNDERS · DEVELOPERS</text>
+
+  <!-- Right side — live pulse indicator -->
+  <circle cx="1020" cy="75" r="28" fill="#d4380d" opacity="0.08"/>
+  <circle cx="1020" cy="75" r="18" fill="#d4380d" opacity="0.12"/>
+  <circle cx="1020" cy="75" r="9" fill="#d4380d" opacity="0.9" filter="url(#glow)"/>
+  <text x="1020" y="118" font-family="'IBM Plex Mono', monospace" font-size="9" fill="#d4380d" text-anchor="middle" letter-spacing="1">LIVE</text>
+
+  <!-- Right stats -->
+  <text x="1070" y="68" font-family="Georgia, serif" font-size="11" fill="#666666">3×</text>
+  <text x="1070" y="83" font-family="'IBM Plex Mono', monospace" font-size="8" fill="#444444" letter-spacing="1">DAILY</text>
+  <line x1="1065" y1="92" x2="1110" y2="92" stroke="#333333" stroke-width="0.5"/>
+  <text x="1070" y="106" font-family="Georgia, serif" font-size="11" fill="#666666">100%</text>
+  <text x="1070" y="121" font-family="'IBM Plex Mono', monospace" font-size="8" fill="#444444" letter-spacing="1">AUTO</text>
+
+  <!-- Bottom red line -->
+  <rect x="0" y="188" width="1128" height="3" fill="#d4380d" opacity="0.4"/>
+</svg>

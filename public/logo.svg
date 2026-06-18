@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 56" fill="none">
+  <!-- Red accent bar -->
+  <rect x="0" y="0" width="6" height="56" fill="#d4380d"/>
+
+  <!-- AI monogram block -->
+  <rect x="16" y="8" width="40" height="40" fill="#0a0a0a"/>
+  <text x="36" y="35" font-family="Georgia, serif" font-size="22" font-weight="700" fill="#f8f7f4" text-anchor="middle">AI</text>
+
+  <!-- Wordmark: BEAT -->
+  <text x="68" y="29" font-family="Georgia, serif" font-size="26" font-weight="700" fill="#0a0a0a" letter-spacing="-0.5">BEAT</text>
+
+  <!-- Tagline: dot dev -->
+  <text x="69" y="44" font-family="'IBM Plex Mono', monospace" font-size="9" fill="#999999" letter-spacing="2">.DEV</text>
+
+  <!-- Red pulse dot -->
+  <circle cx="222" cy="12" r="5" fill="#d4380d" opacity="0.9"/>
+  <circle cx="222" cy="12" r="9" fill="#d4380d" opacity="0.2"/>
+</svg>
