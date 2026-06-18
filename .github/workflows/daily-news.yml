@@ -1,8 +1,6 @@
-# ============================================================
-# AIBeat — Daily News Automation
-# Runs 3x per day: 7:00, 12:00, 18:00 UTC
-# Fetches AI news → Groq writes article → commits to main → Vercel deploys
-# ============================================================
+# AIBeat - Daily News Automation
+# Runs 3x per day: 07:00 / 12:00 / 18:00 UTC
+# Fetches AI news -> Groq writes article -> commits MDX -> Vercel deploys
 
 name: Daily AI News Automation
 
@@ -36,32 +34,28 @@ jobs:
       - name: Run news automation
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
           ARTICLE_LIMIT: 1
         run: npx tsx scripts/fetch-and-post.ts
 
-      - name: Commit and publish article
+      - name: Commit and push article
         run: |
           git config user.name "AIBeat Bot"
           git config user.email "bot@aibeat.dev"
 
-          NEW_FILE=$(git ls-files --others --exclude-standard content/articles/ | head -1)
-          if [ -z "$NEW_FILE" ]; then
-            echo "No new article (duplicate or failed). Nothing to commit."
+          git add content/articles/
+
+          if git diff --cached --quiet; then
+            echo "No new article this run (duplicate or failed). Skipping commit."
             exit 0
           fi
 
-          SLUG=$(basename "$NEW_FILE" .mdx)
-          TITLE=$(python3 -c "
-import re
-text = open('$NEW_FILE').read()
-m = re.search(r'^title:\s*[\"\'](.*?)[\"\']', text, re.MULTILINE)
-print(m.group(1) if m else '$SLUG')
-")
+          git pull --rebase origin main
 
-          git add "$NEW_FILE"
-          git commit -m "publish: ${SLUG}"
+          NEW_FILE=$(git diff --cached --name-only | grep 'content/articles/' | head -1)
+          SLUG=$(basename "$NEW_FILE" .mdx)
+
+          git commit -m "article: ${SLUG}"
           git push origin main
 
-          echo "Published: $TITLE"
+          echo "Published: ${SLUG}"
           echo "Live at: https://www.aibeat.dev/news/${SLUG}"
