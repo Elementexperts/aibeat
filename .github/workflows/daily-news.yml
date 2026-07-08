@@ -6,7 +6,7 @@ name: Daily AI News Automation
 
 on:
   schedule:
-    - cron: '0 7  * * *'
+    - cron: '0 7 * * *'
     - cron: '0 12 * * *'
     - cron: '0 18 * * *'
   workflow_dispatch:
@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -42,20 +44,24 @@ jobs:
           git config user.name "AIBeat Bot"
           git config user.email "bot@aibeat.dev"
 
+          # Sync with latest remote first
+          git fetch origin main
+          git pull --rebase origin main
+
+          # Stage generated content
           git add content/articles/
 
+          # Skip if nothing changed
           if git diff --cached --quiet; then
             echo "No new article this run (duplicate or failed). Skipping commit."
             exit 0
           fi
 
-          git pull --rebase origin main
-
-          NEW_FILE=$(git diff --cached --name-only | grep 'content/articles/' | head -1)
+          NEW_FILE=$(git diff --cached --name-only | grep '^content/articles/' | head -1)
           SLUG=$(basename "$NEW_FILE" .mdx)
 
           git commit -m "article: ${SLUG}"
-          git push origin main
+          git push origin HEAD:main
 
           echo "Published: ${SLUG}"
           echo "Live at: https://www.aibeat.dev/news/${SLUG}"
