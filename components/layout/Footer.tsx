@@ -1,6 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
-import { categories } from "@/lib/tools";
+
+const categories = [
+  { title: "Text Tools", slug: "text-tools" },
+  { title: "PDF Tools", slug: "pdf-tools" },
+  { title: "Image Tools", slug: "image-tools" },
+  { title: "Calculators", slug: "calculators" },
+  { title: "AI Tools", slug: "ai-tools" },
+  { title: "SEO Tools", slug: "seo-tools" },
+];
 
 export function Footer() {
   return (
@@ -70,4 +78,3 @@ export function Footer() {
     </footer>
   );
 }
-
