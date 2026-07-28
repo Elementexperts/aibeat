@@ -21,22 +21,12 @@ export function NewsBanner({
   if (resolvedVariant === 'pulse') {
     return (
       <div className="w-full h-44 rounded-sm mb-4 relative overflow-hidden bg-gradient-to-r from-[#0a1338] via-[#1b1a4b] to-[#3b1a63]">
-        {/* Futuristic Pulse visuals */}
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            backgroundImage:
-              'linear-gradient(to right, rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.12) 1px, transparent 1px)',
-            backgroundSize: '42px 42px',
-          }}
+        {/* Banner picture */}
+        <img
+          src="/banners/ai-news-banner.png"
+          alt="AI News — Latest Developments in Artificial Intelligence"
+          className="absolute inset-0 h-full w-full object-cover object-center"
         />
-        <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-cyan-400/30 blur-3xl" />
-        <div className="absolute left-20 bottom-2 h-24 w-24 rounded-full bg-purple-400/30 blur-3xl" />
-        <div className="absolute left-6 top-8">
-          <p className="font-mono text-[10px] tracking-[0.3em] text-cyan-200/90">LATEST NEWS</p>
-          <h2 className="mt-2 font-black text-white text-3xl leading-none tracking-tight">AI BEAT .DEV</h2>
-          <p className="mt-1 text-[11px] italic text-red-300">Real-time AI signals for builders and teams</p>
-        </div>
         <span className="absolute bottom-2 left-2 bg-beat-red text-white text-[10px] px-2 py-0.5 font-mono">EXCLUSIVE</span>
       </div>
     )
