@@ -42,9 +42,17 @@ export default async function HomePage() {
               </span>
               <span className="font-mono text-[10px] text-ink-4">{heroStory.publishedAt}</span>
             </div>
+
             {/* Hero visual: Futuristic Pulse */}
             <div className="w-full h-44 rounded-sm mb-4 relative overflow-hidden bg-gradient-to-r from-[#0a1338] via-[#1b1a4b] to-[#3b1a63]">
-              <div className="absolute inset-0 opacity-40" style={{ backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.12) 1px, transparent 1px)', backgroundSize: '42px 42px' }} />
+              <div
+                className="absolute inset-0 opacity-40"
+                style={{
+                  backgroundImage:
+                    'linear-gradient(to right, rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.12) 1px, transparent 1px)',
+                  backgroundSize: '42px 42px',
+                }}
+              />
               <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-cyan-400/30 blur-3xl" />
               <div className="absolute left-20 bottom-2 h-24 w-24 rounded-full bg-purple-400/30 blur-3xl" />
               <div className="absolute left-6 top-8">
@@ -54,6 +62,7 @@ export default async function HomePage() {
               </div>
               <span className="absolute bottom-2 left-2 bg-beat-red text-white text-[10px] px-2 py-0.5 font-mono">EXCLUSIVE</span>
             </div>
+
             <Link href={`/news/${heroStory.slug}`}>
               <h1 className="headline-hero hover:text-beat-red transition-colors cursor-pointer mb-3">
                 {heroStory.title}
