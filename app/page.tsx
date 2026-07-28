@@ -42,9 +42,16 @@ export default async function HomePage() {
               </span>
               <span className="font-mono text-[10px] text-ink-4">{heroStory.publishedAt}</span>
             </div>
-            {/* Hero image placeholder */}
-            <div className="w-full h-44 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] rounded-sm mb-4 flex items-center justify-center relative overflow-hidden">
-              <span className="font-serif text-5xl font-black text-white/10 tracking-tight">AI</span>
+            {/* Hero visual: Futuristic Pulse */}
+            <div className="w-full h-44 rounded-sm mb-4 relative overflow-hidden bg-gradient-to-r from-[#0a1338] via-[#1b1a4b] to-[#3b1a63]">
+              <div className="absolute inset-0 opacity-40" style={{ backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.12) 1px, transparent 1px)', backgroundSize: '42px 42px' }} />
+              <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-cyan-400/30 blur-3xl" />
+              <div className="absolute left-20 bottom-2 h-24 w-24 rounded-full bg-purple-400/30 blur-3xl" />
+              <div className="absolute left-6 top-8">
+                <p className="font-mono text-[10px] tracking-[0.3em] text-cyan-200/90">LATEST NEWS</p>
+                <h2 className="mt-2 font-black text-white text-3xl leading-none tracking-tight">AI BEAT .DEV</h2>
+                <p className="mt-1 text-[11px] italic text-red-300">Real-time AI signals for builders and teams</p>
+              </div>
               <span className="absolute bottom-2 left-2 bg-beat-red text-white text-[10px] px-2 py-0.5 font-mono">EXCLUSIVE</span>
             </div>
             <Link href={`/news/${heroStory.slug}`}>
