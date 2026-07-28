@@ -23,7 +23,7 @@ export function NewsBanner({
       <div className="w-full h-44 rounded-sm mb-4 relative overflow-hidden bg-gradient-to-r from-[#0a1338] via-[#1b1a4b] to-[#3b1a63]">
         {/* Banner picture */}
         <img
-          src="/banners/ai-news-banner.png"
+          src="/ai-news-banner.png"
           alt="AI News — Latest Developments in Artificial Intelligence"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
