@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { KitEmbedForm } from './KitEmbedForm'
+import { SubscribeForm } from './SubscribeForm'
 
 const STORAGE_KEY = 'aibeat_popup_shown'
-const DELAY_MS = 60_000
+const DELAY_MS = 10_000
 
 export function SubscribePopup() {
   const [show, setShow] = useState(false)
@@ -43,7 +43,7 @@ export function SubscribePopup() {
           Join 8,400+ founders and freelancers getting AI news + top tool
           picks every morning. Free.
         </p>
-        <KitEmbedForm formKey="site-popup" />
+        <SubscribeForm onSuccess={() => setTimeout(() => setShow(false), 1500)} />
       </div>
     </div>
   )
