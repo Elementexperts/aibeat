@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { KitEmbedForm } from './KitEmbedForm'
+import { SubscribeForm } from './SubscribeForm'
 
 export function DailyBriefButton() {
   const [open, setOpen] = useState(false)
@@ -39,7 +39,7 @@ export function DailyBriefButton() {
             <h3 className="font-serif text-xl font-bold text-ink mb-3">
               The AI Beat. Daily.
             </h3>
-            <KitEmbedForm formKey="navbar-modal" />
+            <SubscribeForm onSuccess={() => setTimeout(() => setOpen(false), 1500)} />
           </div>
         </div>
       )}
