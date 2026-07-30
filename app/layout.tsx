@@ -5,6 +5,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { TopBar } from '@/components/layout/TopBar'
 import { BreakingTicker } from '@/components/layout/BreakingTicker'
 import { Footer } from '@/components/layout/Footer'
+import { SubscribePopup } from '@/components/subscribe/SubscribePopup'
 
 export const metadata: Metadata = {
   title: {
@@ -64,6 +65,7 @@ export default function RootLayout({
         <BreakingTicker />
         <main>{children}</main>
         <Footer />
+        <SubscribePopup />
       </body>
     </html>
   )
