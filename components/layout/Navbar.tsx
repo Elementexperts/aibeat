@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { DailyBriefButton } from '@/components/subscribe/DailyBriefButton'
 
 const NAV_LINKS = [
   { label: 'News', href: '/news' },
@@ -23,12 +24,7 @@ export function Navbar() {
             </span>
           </div>
           <div className="flex flex-col items-end gap-2 pt-1">
-            <Link
-              href="/newsletter"
-              className="bg-beat-red text-white px-4 py-2 text-xs font-semibold hover:bg-red-700 transition-colors"
-            >
-              Get the daily brief →
-            </Link>
+            <DailyBriefButton />
           </div>
         </div>
         <div className="flex mt-3 border-t border-border overflow-x-auto">
