@@ -14,13 +14,30 @@ export default function NewsletterPage() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!email) return
     setLoading(true)
-    // TODO: Wire up Mailchimp / ConvertKit API
-    setTimeout(() => { setLoading(false); setSubmitted(true) }, 800)
+    setError(null)
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data?.error || 'Something went wrong. Please try again.')
+        return
+      }
+      setSubmitted(true)
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -68,6 +85,9 @@ export default function NewsletterPage() {
               </button>
             </div>
             <p className="font-mono text-[10px] text-ink-4 mt-3">Free forever. No spam. Unsubscribe in one click.</p>
+            {error && (
+              <p className="text-xs text-beat-red mt-2">{error}</p>
+            )}
           </form>
         )}
       </div>
@@ -124,6 +144,9 @@ export default function NewsletterPage() {
               {loading ? '…' : 'Subscribe →'}
             </button>
           </form>
+          {error && (
+            <p className="text-xs text-beat-red mt-2">{error}</p>
+          )}
         </div>
       )}
 
