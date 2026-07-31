@@ -1,3 +1,36 @@
 {
-  "posts": []
+  "posts": [
+    {
+      "id": "3cefe644-24a8-46fd-ae07-54c9bed35dc3",
+      "type": "weekly-tools",
+      "title": "What AI tools did you discover this week?",
+      "generatedAt": "2026-07-31T17:32:31.092Z",
+      "status": "drafted",
+      "contentHash": "a5e17d2acb6f5d55dd62b4f3e764bc138bdfad7f42182723e0b7d1a32e2c6b15"
+    },
+    {
+      "id": "7d56b5a7-b108-4245-9845-855931b5d69d",
+      "type": "show-and-tell",
+      "title": "Show us what you built with AI this week",
+      "generatedAt": "2026-07-31T17:33:18.623Z",
+      "status": "drafted",
+      "contentHash": "93c2e8317240fa19092ff50df6dba5d3bf7d0b850319562e814100306e5fcedd"
+    },
+    {
+      "id": "7c62178b-4a8f-492e-afc4-f8e2ecb43a31",
+      "type": "community-question",
+      "title": "Which AI tool has saved you the most time recently?",
+      "generatedAt": "2026-07-31T17:33:20.139Z",
+      "status": "drafted",
+      "contentHash": "d0990790bf2fe188f8ff5d3be7e625adcd9f0100a3084f054fcc406a482312c9"
+    },
+    {
+      "id": "35f35d41-f90b-41b0-bd69-de32e76b42ed",
+      "type": "ai-news-roundup",
+      "title": "This Week in AI: tools, platforms, and practical tradeoffs",
+      "generatedAt": "2026-07-31T17:33:21.692Z",
+      "status": "drafted",
+      "contentHash": "2ba3ad19985bfac55798a1cd4324fe7b29e1030c64a6dc39a736c5a51f42d62b"
+    }
+  ]
 }
