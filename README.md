@@ -88,5 +88,6 @@ Update affiliate URLs in `lib/data.ts`:
 # .env.local
 NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX        # Google Analytics
 NEXT_PUBLIC_ADSENSE_ID=ca-pub-XXXXX   # Google AdSense
-NEWSLETTER_API_KEY=your_convertkit_key # Newsletter provider
+KIT_API_KEY=your_kit_api_key           # Kit API key
+KIT_FORM_ID=your_kit_form_id           # Kit form ID
 ```

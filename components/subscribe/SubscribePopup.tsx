@@ -31,7 +31,7 @@ export function SubscribePopup() {
           aria-label="Close"
           className="absolute top-3 right-3 text-ink-3 hover:text-ink font-mono text-sm"
         >
-          ✕
+          x
         </button>
         <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest mb-2">
           Enjoying AIBeat?
@@ -43,7 +43,10 @@ export function SubscribePopup() {
           Join 8,400+ founders and freelancers getting AI news + top tool
           picks every morning. Free.
         </p>
-        <SubscribeForm onSuccess={() => setTimeout(() => setShow(false), 1500)} />
+        <SubscribeForm
+          buttonLabel="Get brief ->"
+          onSuccess={() => setTimeout(() => setShow(false), 1500)}
+        />
       </div>
     </div>
   )

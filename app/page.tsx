@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import {
-  TOOLS, TRENDING,
+  TRENDING,
   getFeaturedTools,
   CATEGORY_COLORS
 } from '@/lib/data'
@@ -11,31 +11,25 @@ import { NewsBanner } from '@/components/ui/NewsBanner'
 export const revalidate = 3600 // refresh page every hour
 
 export default async function HomePage() {
-  const articles      = await getArticles()
+  const articles = await getArticles()
   const featuredTools = getFeaturedTools()
 
   if (articles.length === 0) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-20 text-center">
         <h1 className="font-serif text-3xl font-bold text-ink mb-4">First articles coming soon</h1>
-        <p className="text-ink-3 text-sm">The automation runs 3× daily — check back shortly.</p>
+        <p className="text-ink-3 text-sm">The automation runs 3x daily - check back shortly.</p>
       </div>
     )
   }
 
-  const heroStory  = articles.find((a) => a.featured) ?? articles[0]
+  const heroStory = articles.find((a) => a.featured) ?? articles[0]
   const subStories = articles.filter((a) => a.slug !== heroStory.slug).slice(0, 4)
 
   return (
     <div className="max-w-5xl mx-auto px-0 border-x border-border">
-
-      {/* MAIN GRID */}
       <div className="grid grid-cols-1 md:grid-cols-[1fr_300px]">
-
-        {/* LEFT — STORIES */}
         <div className="border-r border-border">
-
-          {/* HERO STORY */}
           <div className="p-6 border-b border-border">
             <div className="flex items-center gap-2 mb-3">
               <span className={`cat-tag ${CATEGORY_COLORS[heroStory.category]}`}>
@@ -43,7 +37,6 @@ export default async function HomePage() {
               </span>
               <span className="font-mono text-[10px] text-ink-4">{heroStory.publishedAt}</span>
             </div>
-            {/* Hero visual */}
             <NewsBanner category={heroStory.category} />
             <Link href={`/news/${heroStory.slug}`}>
               <h1 className="headline-hero hover:text-beat-red transition-colors cursor-pointer mb-3">
@@ -53,14 +46,13 @@ export default async function HomePage() {
             <p className="text-sm text-ink-2 leading-relaxed mb-3">{heroStory.deck}</p>
             <div className="flex items-center gap-3 font-mono text-[10px] text-ink-4">
               <span>{heroStory.author}</span>
-              <span>·</span>
+              <span>.</span>
               <span>{heroStory.readTime} min read</span>
-              <span>·</span>
+              <span>.</span>
               <span>4,231 readers</span>
             </div>
           </div>
 
-          {/* SUB STORIES */}
           {subStories.map((article, i) => (
             <Link key={article.slug} href={`/news/${article.slug}`}>
               <div className="flex gap-3 p-5 border-b border-border card-hover">
@@ -76,7 +68,7 @@ export default async function HomePage() {
                       {article.category}
                     </span>
                     <span>{article.publishedAt}</span>
-                    <span>·</span>
+                    <span>.</span>
                     <span>{article.readTime} min read</span>
                   </div>
                 </div>
@@ -85,28 +77,9 @@ export default async function HomePage() {
           ))}
         </div>
 
-        {/* RIGHT SIDEBAR */}
         <div>
-          {/* Newsletter */}
-          <div className="bg-ink p-5 text-white">
-            <h3 className="font-serif text-xl font-bold mb-1.5 leading-tight">
-              The AI Beat.<br />Daily.
-            </h3>
-            <p className="text-xs text-ink-4 mb-4 leading-relaxed">
-              Join 8,400+ founders and freelancers getting AI news + top tool picks every morning. Free.
-            </p>
-            <input
-              type="email"
-              placeholder="your@email.com"
-              className="w-full bg-transparent border border-ink-3 text-white text-xs px-3 py-2 mb-2 outline-none placeholder:text-ink-4"
-            />
-            <button className="w-full bg-beat-red text-white text-xs py-2 font-semibold hover:bg-red-700 transition-colors">
-              Get the daily brief →
-            </button>
-            <p className="font-mono text-[10px] text-ink-4 mt-2">Free. No spam. Unsubscribe anytime.</p>
-          </div>
+          <NewsletterBox dark />
 
-          {/* Trending */}
           <div className="p-4 border-b border-border">
             <div className="section-label">Trending searches</div>
             {TRENDING.map((item, i) => (
@@ -122,7 +95,6 @@ export default async function HomePage() {
             ))}
           </div>
 
-          {/* Top Tools */}
           <div className="p-4">
             <div className="section-label">Top tools this week</div>
             {featuredTools.slice(0, 4).map((tool) => (
@@ -138,7 +110,7 @@ export default async function HomePage() {
                     <div className="text-xs font-semibold text-ink">{tool.name}</div>
                     <div className="text-[11px] text-ink-3 leading-snug">{tool.tagline}</div>
                     <div className="font-mono text-[10px] text-beat-green mt-0.5">
-                      ★ {tool.rating} · {tool.pricing}
+                      * {tool.rating} . {tool.pricing}
                     </div>
                   </div>
                 </div>
@@ -148,7 +120,6 @@ export default async function HomePage() {
         </div>
       </div>
 
-      {/* BOTTOM STORIES GRID */}
       <div className="grid grid-cols-1 md:grid-cols-3 border-t-2 border-ink">
         {articles.slice(4, 7).map((article, i) => (
           <Link key={article.slug} href={`/news/${article.slug}`}>
@@ -166,12 +137,11 @@ export default async function HomePage() {
         ))}
       </div>
 
-      {/* TOOLS DIRECTORY SECTION */}
       <div className="border-t-2 border-ink">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h2 className="font-serif text-xl font-bold">Featured in the directory</h2>
           <Link href="/directory" className="font-mono text-[11px] text-beat-red hover:underline">
-            Browse all 500+ tools →
+            Browse all 500+ tools {'->'}
           </Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4">
@@ -188,7 +158,7 @@ export default async function HomePage() {
                 <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1.5">{tool.category}</div>
                 <p className="text-[11px] text-ink-3 leading-relaxed mb-2 line-clamp-2">{tool.tagline}</p>
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] text-yellow-600">★ {tool.rating}</span>
+                  <span className="text-[11px] text-yellow-600">* {tool.rating}</span>
                   <span className={`font-mono text-[10px] px-1.5 py-0.5 ${
                     tool.pricingType === 'free' ? 'bg-beat-green-light text-beat-green' :
                     tool.pricingType === 'freemium' ? 'bg-yellow-50 text-yellow-700' :

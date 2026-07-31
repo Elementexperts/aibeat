@@ -13,7 +13,7 @@ export function DailyBriefButton() {
         onClick={() => setOpen(true)}
         className="btn-primary"
       >
-        Get the daily brief →
+        {'Get the daily brief ->'}
       </button>
 
       {open && (
@@ -31,7 +31,7 @@ export function DailyBriefButton() {
               aria-label="Close"
               className="absolute top-3 right-3 text-ink-3 hover:text-ink font-mono text-sm"
             >
-              ✕
+              x
             </button>
             <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest mb-2">
               Free newsletter
@@ -39,7 +39,10 @@ export function DailyBriefButton() {
             <h3 className="font-serif text-xl font-bold text-ink mb-3">
               The AI Beat. Daily.
             </h3>
-            <SubscribeForm onSuccess={() => setTimeout(() => setOpen(false), 1500)} />
+            <SubscribeForm
+              buttonLabel="Get brief ->"
+              onSuccess={() => setTimeout(() => setOpen(false), 1500)}
+            />
           </div>
         </div>
       )}

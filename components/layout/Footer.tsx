@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { SubscribeForm } from '@/components/subscribe/SubscribeForm'
 
 const FOOTER_LINKS = [
   { label: 'About', href: '/about' },
@@ -14,8 +15,6 @@ export function Footer() {
     <footer className="bg-ink text-white mt-0">
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="flex justify-between items-start gap-6 flex-wrap">
-
-          {/* Brand */}
           <div>
             <div className="font-serif text-2xl font-black">
               AI<span className="text-beat-red">Beat</span>.dev
@@ -37,7 +36,6 @@ export function Footer() {
               info@aibeat.dev
             </a>
 
-            {/* SellWithBoost Badge */}
             <a
               href="https://sellwithboost.com"
               target="_blank"
@@ -54,7 +52,6 @@ export function Footer() {
             </a>
           </div>
 
-          {/* Navigation */}
           <div className="flex flex-col gap-2">
             <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest mb-1">
               Navigate
@@ -71,7 +68,6 @@ export function Footer() {
             ))}
           </div>
 
-          {/* Newsletter */}
           <div className="max-w-xs">
             <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest mb-3">
               Daily brief
@@ -82,28 +78,20 @@ export function Footer() {
               morning.
             </p>
 
-            <div className="flex gap-0">
-              <input
-                type="email"
-                placeholder="your@email.com"
-                className="flex-1 bg-transparent border border-ink-3 text-white text-xs px-3 py-2 outline-none placeholder:text-ink-4 focus:border-white transition-colors"
-              />
-
-              <button className="bg-beat-red text-white text-xs px-3 py-2 font-semibold hover:bg-red-700 transition-colors whitespace-nowrap">
-                Subscribe
-              </button>
-            </div>
+            <SubscribeForm
+              dark
+              buttonLabel="Subscribe"
+              className="[&_input]:text-xs [&_button]:px-3 [&_button]:py-2"
+            />
 
             <p className="font-mono text-[10px] text-ink-4 mt-2">
               Free. No spam. Unsubscribe anytime.
             </p>
           </div>
-
         </div>
 
-        {/* Bottom Bar */}
         <div className="border-t border-ink-2 mt-6 pt-4 flex justify-between items-center text-[11px] text-ink-4 font-mono flex-wrap gap-2">
-          <span>© 2026 AIBeat.dev — Independent AI news & tool reviews</span>
+          <span>(c) 2026 AIBeat.dev - Independent AI news & tool reviews</span>
           <span>Built for founders, freelancers & builders worldwide</span>
         </div>
       </div>

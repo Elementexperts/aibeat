@@ -2,7 +2,19 @@
 
 import { useState } from 'react'
 
-export function SubscribeForm({ onSuccess }: { onSuccess?: () => void }) {
+type SubscribeFormProps = {
+  buttonLabel?: string
+  className?: string
+  dark?: boolean
+  onSuccess?: () => void
+}
+
+export function SubscribeForm({
+  buttonLabel = 'Subscribe ->',
+  className = '',
+  dark = false,
+  onSuccess,
+}: SubscribeFormProps) {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -10,20 +22,26 @@ export function SubscribeForm({ onSuccess }: { onSuccess?: () => void }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!email) return
+
+    const normalizedEmail = email.trim()
+    if (!normalizedEmail) return
+
     setLoading(true)
     setError(null)
+
     try {
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: normalizedEmail }),
       })
       const data = await res.json()
+
       if (!res.ok) {
         setError(data?.error || 'Something went wrong. Please try again.')
         return
       }
+
       setSubmitted(true)
       onSuccess?.()
     } catch {
@@ -35,15 +53,15 @@ export function SubscribeForm({ onSuccess }: { onSuccess?: () => void }) {
 
   if (submitted) {
     return (
-      <div className="bg-beat-green-light border border-beat-green p-4">
-        <p className="text-sm font-semibold text-beat-green mb-1">You're in.</p>
-        <p className="text-xs text-ink-2">Check your inbox to confirm.</p>
+      <div className={`border p-4 ${dark ? 'border-beat-green bg-ink-2 text-white' : 'bg-beat-green-light border-beat-green'}`}>
+        <p className={`text-sm font-semibold mb-1 ${dark ? 'text-white' : 'text-beat-green'}`}>You're in.</p>
+        <p className={`text-xs ${dark ? 'text-ink-4' : 'text-ink-2'}`}>Check your inbox to confirm.</p>
       </div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className={className}>
       <div className="flex gap-0">
         <input
           type="email"
@@ -51,14 +69,18 @@ export function SubscribeForm({ onSuccess }: { onSuccess?: () => void }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
-          className="flex-1 bg-transparent border border-border text-ink text-sm px-3 py-2.5 outline-none placeholder:text-ink-4 focus:border-ink-2 transition-colors"
+          className={`min-w-0 flex-1 bg-transparent border text-sm px-3 py-2.5 outline-none transition-colors ${
+            dark
+              ? 'border-ink-3 text-white placeholder:text-ink-4 focus:border-white'
+              : 'border-border text-ink placeholder:text-ink-4 focus:border-ink-2'
+          }`}
         />
         <button
           type="submit"
           disabled={loading}
           className="bg-beat-red text-white text-xs font-semibold px-4 py-2.5 hover:bg-red-700 transition-colors disabled:opacity-60 whitespace-nowrap"
         >
-          {loading ? '…' : 'Subscribe →'}
+          {loading ? '...' : buttonLabel}
         </button>
       </div>
       {error && <p className="text-xs text-beat-red mt-2">{error}</p>}
