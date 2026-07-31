@@ -102,6 +102,22 @@ export function Footer() {
                   className="w-[250px] h-auto"
                 />
               </a>
+
+              <a
+                href="https://fazier.com/launches/www.aibeat.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Fazier launch badge"
+                className="block w-fit transition-opacity hover:opacity-100 opacity-90"
+              >
+                <img
+                  src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=light"
+                  alt="Fazier badge"
+                  width="120"
+                  loading="lazy"
+                  className="w-[120px] h-auto"
+                />
+              </a>
             </div>
           </div>
 
