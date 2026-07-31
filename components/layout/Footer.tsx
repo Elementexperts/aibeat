@@ -85,6 +85,23 @@ export function Footer() {
                   className="h-[54px] w-auto"
                 />
               </a>
+
+              <a
+                href="https://www.uneed.best/tool/aibeat"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Launching Soon on Uneed"
+                className="block w-fit transition-opacity hover:opacity-100 opacity-90"
+              >
+                <img
+                  src="https://www.uneed.best/EMBED3.png"
+                  alt="Launching Soon on Uneed"
+                  width="250"
+                  height="auto"
+                  loading="lazy"
+                  className="w-[250px] h-auto"
+                />
+              </a>
             </div>
           </div>
 
