@@ -68,6 +68,23 @@ export function Footer() {
                   className="h-[62px] w-auto"
                 />
               </a>
+
+              <a
+                href="https://www.producthunt.com/products/aibeat?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-aibeat"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="AIBEAT on Product Hunt"
+                className="block w-fit transition-opacity hover:opacity-100 opacity-90"
+              >
+                <img
+                  src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1211561&theme=dark&t=1785500620557"
+                  alt="AIBEAT - Discover the best AI tools. Stay ahead with daily AI news. | Product Hunt"
+                  width="250"
+                  height="54"
+                  loading="lazy"
+                  className="h-[54px] w-auto"
+                />
+              </a>
             </div>
           </div>
 
