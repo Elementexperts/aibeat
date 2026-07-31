@@ -7,7 +7,6 @@ export function NewsBanner({
   variant?: BannerVariant
   category?: string
 }) {
-  // Auto-select variant based on category
   const resolvedVariant =
     variant ??
     (category === 'breaking'
@@ -16,15 +15,14 @@ export function NewsBanner({
       ? 'editorial'
       : category === 'international'
       ? 'global'
-      : 'pulse') // default fallback
+      : 'pulse')
 
   if (resolvedVariant === 'pulse') {
     return (
       <div className="w-full h-44 rounded-sm mb-4 relative overflow-hidden bg-gradient-to-r from-[#0a1338] via-[#1b1a4b] to-[#3b1a63]">
-        {/* Banner picture */}
         <img
           src="/ai-news-banner.png"
-          alt="AI News — Latest Developments in Artificial Intelligence"
+          alt="AI news and latest developments in artificial intelligence"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
         <span className="absolute bottom-2 left-2 bg-beat-red text-white text-[10px] px-2 py-0.5 font-mono">EXCLUSIVE</span>

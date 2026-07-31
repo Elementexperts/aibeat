@@ -12,9 +12,37 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const article = await getArticleBySlug(params.slug)
   if (!article) return {}
+  const url = `/news/${article.slug}`
+
   return {
     title: article.title,
     description: article.deck,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      type: 'article',
+      url,
+      title: article.title,
+      description: article.deck,
+      siteName: 'AIBeat.dev',
+      publishedTime: article.publishedAt,
+      authors: [article.author],
+      images: [
+        {
+          url: '/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: `${article.title} - AIBeat.dev`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.deck,
+      images: ['/og-image.png'],
+    },
   }
 }
 
