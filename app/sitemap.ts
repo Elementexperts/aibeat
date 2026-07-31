@@ -16,6 +16,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/free-tools/roi-calculator',
     '/newsletter',
     '/submit',
+    '/advertise',
+    '/affiliate-disclosure',
   ].map((path) => ({
     url: `${base}${path}`,
     lastModified: new Date(),
