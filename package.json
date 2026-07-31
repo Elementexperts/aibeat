@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/reddit/reddit-automation.test.ts",
+    "reddit:generate": "tsx scripts/reddit/index.ts",
+    "reddit:publish": "tsx scripts/reddit/index.ts --publish"
   },
   "dependencies": {
     "clsx": "^2.1.1",

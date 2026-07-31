@@ -1,0 +1,109 @@
+name: Reddit Community Automation
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+    - cron: '0 8 * * 3'
+    - cron: '0 8 * * 5'
+  workflow_dispatch:
+    inputs:
+      post_type:
+        description: Reddit post type
+        required: true
+        default: weekly-tools
+        type: choice
+        options:
+          - weekly-tools
+          - ai-news-roundup
+          - show-and-tell
+          - community-question
+      publish:
+        description: Publish directly to Reddit
+        required: true
+        default: false
+        type: boolean
+      force:
+        description: Ignore duplicate protection
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  reddit-community-post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Select scheduled post type
+        id: schedule
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            POST_TYPE="${{ inputs.post_type }}"
+          else
+            DAY="$(date -u +%u)"
+            case "$DAY" in
+              1) POST_TYPE="weekly-tools" ;;
+              3) POST_TYPE="ai-news-roundup" ;;
+              5) POST_TYPE="show-and-tell" ;;
+              *) POST_TYPE="community-question" ;;
+            esac
+          fi
+          echo "post_type=$POST_TYPE" >> "$GITHUB_OUTPUT"
+
+      - name: Generate Reddit draft
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_REFRESH_TOKEN: ${{ secrets.REDDIT_REFRESH_TOKEN }}
+          REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT || 'AIBeatCommunityBot/1.0 by u/Mother_Form7041' }}
+          REDDIT_SUBREDDIT: ${{ secrets.REDDIT_SUBREDDIT || 'AIBeat' }}
+          REDDIT_PUBLISH_ENABLED: ${{ vars.REDDIT_PUBLISH_ENABLED || 'false' }}
+          REDDIT_DRY_RUN: ${{ inputs.publish == true && 'false' || 'true' }}
+          AIBEAT_SITE_URL: ${{ vars.AIBEAT_SITE_URL || 'https://aibeat.dev' }}
+        run: |
+          ARGS="--type ${{ steps.schedule.outputs.post_type }}"
+          if [ "${{ inputs.force }}" = "true" ]; then
+            ARGS="$ARGS --force"
+          fi
+          if [ "${{ inputs.publish }}" = "true" ]; then
+            npm run reddit:publish -- $ARGS
+          else
+            npm run reddit:generate -- $ARGS --dry-run
+          fi
+
+      - name: Upload generated drafts
+        uses: actions/upload-artifact@v4
+        with:
+          name: reddit-drafts
+          path: data/reddit/drafts/*.md
+          if-no-files-found: warn
+
+      - name: Workflow summary
+        shell: bash
+        run: |
+          {
+            echo "## Reddit Community Automation"
+            echo ""
+            echo "- Post type: ${{ steps.schedule.outputs.post_type }}"
+            echo "- Publish requested: ${{ inputs.publish || false }}"
+            echo "- Live publishing remains controlled by REDDIT_PUBLISH_ENABLED."
+            echo "- Generated drafts are available as workflow artifacts."
+          } >> "$GITHUB_STEP_SUMMARY"
