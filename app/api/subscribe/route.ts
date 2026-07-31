@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const KIT_API_BASE = 'https://api.kit.com/v4'
+
+async function parseKitError(res: Response) {
+  try {
+    return await res.text()
+  } catch {
+    return 'Unable to read Kit error response'
+  }
+}
 
 export async function POST(req: NextRequest) {
   let email: string | undefined
@@ -12,7 +21,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  if (!email || !EMAIL_RE.test(email)) {
+  const normalizedEmail = email?.trim().toLowerCase()
+
+  if (!normalizedEmail || !EMAIL_RE.test(normalizedEmail)) {
     return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 })
   }
 
@@ -25,18 +36,40 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const res = await fetch(`https://api.kit.com/v4/forms/${formId}/subscribers`, {
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-Kit-Api-Key': apiKey,
+    }
+
+    const subscriberRes = await fetch(`${KIT_API_BASE}/subscribers`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Kit-Api-Key': apiKey,
-      },
-      body: JSON.stringify({ email_address: email }),
+      headers,
+      body: JSON.stringify({ email_address: normalizedEmail }),
     })
 
-    if (!res.ok) {
-      const detail = await res.text()
-      console.error('Kit subscribe failed:', res.status, detail)
+    if (!subscriberRes.ok) {
+      const detail = await parseKitError(subscriberRes)
+      console.error('Kit subscriber upsert failed:', subscriberRes.status, detail)
+      return NextResponse.json({ error: 'Could not subscribe right now' }, { status: 502 })
+    }
+
+    const subscriberData = await subscriberRes.json()
+    const subscriberId = subscriberData?.subscriber?.id
+
+    if (!subscriberId) {
+      console.error('Kit subscriber upsert returned no subscriber id')
+      return NextResponse.json({ error: 'Could not subscribe right now' }, { status: 502 })
+    }
+
+    const formRes = await fetch(`${KIT_API_BASE}/forms/${formId}/subscribers/${subscriberId}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ referrer: 'https://aibeat.dev' }),
+    })
+
+    if (!formRes.ok) {
+      const detail = await parseKitError(formRes)
+      console.error('Kit form subscribe failed:', formRes.status, detail)
       return NextResponse.json({ error: 'Could not subscribe right now' }, { status: 502 })
     }
 
