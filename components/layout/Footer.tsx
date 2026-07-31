@@ -36,20 +36,39 @@ export function Footer() {
               info@aibeat.dev
             </a>
 
-            <a
-              href="https://sellwithboost.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Listed on Sell With Boost"
-              className="block mt-5 w-fit transition-opacity hover:opacity-100 opacity-90"
-            >
-              <img
-                src="https://sellwithboost.com/badge/listing.svg"
-                alt="Listed on Sell With Boost"
-                loading="lazy"
-                className="h-10 w-auto"
-              />
-            </a>
+            <div className="mt-5 flex flex-col gap-3 items-start">
+              <a
+                href="https://sellwithboost.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Listed on Sell With Boost"
+                className="block w-fit transition-opacity hover:opacity-100 opacity-90"
+              >
+                <img
+                  src="https://sellwithboost.com/badge/listing.svg"
+                  alt="Listed on Sell With Boost"
+                  loading="lazy"
+                  className="h-10 w-auto"
+                />
+              </a>
+
+              <a
+                href="https://launchstag.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Featured on Launchstag"
+                className="block w-fit transition-opacity hover:opacity-100 opacity-90"
+              >
+                <img
+                  src="https://launchstag.com/badge-light.svg"
+                  alt="Featured on Launchstag"
+                  width="198"
+                  height="62"
+                  loading="lazy"
+                  className="h-[62px] w-auto"
+                />
+              </a>
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
