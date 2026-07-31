@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { TRENDING, getFeaturedTools, CATEGORY_COLORS } from '@/lib/data'
 import { getArticles } from '@/lib/articles'
+import { NewsBanner } from '@/components/ui/NewsBanner'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -55,12 +56,7 @@ export default async function NewsPage() {
               </span>
               <span className="font-mono text-[10px] text-ink-4">{heroArticle.publishedAt}</span>
             </div>
-            <div className="w-full h-44 bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] rounded-sm mb-4 flex items-center justify-center relative overflow-hidden">
-              <span className="font-serif text-5xl font-black text-white/10 tracking-tight">AI</span>
-              {heroArticle.category === 'breaking' && (
-                <span className="absolute bottom-2 left-2 bg-beat-red text-white text-[10px] px-2 py-0.5 font-mono">BREAKING</span>
-              )}
-            </div>
+            <NewsBanner category={heroArticle.category} title={heroArticle.title} />
             <Link href={`/news/${heroArticle.slug}`}>
               <h2 className="headline-hero hover:text-beat-red transition-colors cursor-pointer mb-3">
                 {heroArticle.title}
