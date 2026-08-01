@@ -30,10 +30,21 @@ export function SubscribeForm({
     setError(null)
 
     try {
+      const params = new URLSearchParams(window.location.search)
+      const attribution = {
+        page_url: window.location.href,
+        referrer: document.referrer || undefined,
+        utm_source: params.get('utm_source') || undefined,
+        utm_medium: params.get('utm_medium') || undefined,
+        utm_campaign: params.get('utm_campaign') || undefined,
+        utm_content: params.get('utm_content') || undefined,
+        utm_term: params.get('utm_term') || undefined,
+      }
+
       const res = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: normalizedEmail }),
+        body: JSON.stringify({ email: normalizedEmail, ...attribution }),
       })
       const data = await res.json()
 

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/reddit/reddit-automation.test.ts",
+    "test": "node --import tsx --test tests/reddit/reddit-automation.test.ts tests/newsletter-attribution.test.ts tests/kit-source-tags.test.ts",
+    "kit:setup-source-tags": "tsx scripts/setup-kit-source-tags.ts",
     "reddit:generate": "tsx scripts/reddit/index.ts",
     "reddit:publish": "tsx scripts/reddit/index.ts --publish"
   },
