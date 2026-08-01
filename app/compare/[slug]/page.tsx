@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { COMPARISONS, getComparisonBySlug } from '@/lib/data'
 import type { Metadata } from 'next'
+import { ToolLogo } from '@/components/ui/ToolLogo'
 
 export async function generateStaticParams() {
   return COMPARISONS.map((c) => ({ slug: c.slug }))
@@ -54,12 +55,7 @@ export default function ComparisonPage({ params }: { params: { slug: string } })
       <div className="grid grid-cols-[1fr_auto_1fr] border-b-2 border-ink">
         {/* Tool A */}
         <div className="p-5 md:p-6 flex flex-col items-center text-center border-r border-border">
-          <div
-            className="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold text-white mb-3"
-            style={{ background: comp.toolA.logo }}
-          >
-            {comp.toolA.logoInitials}
-          </div>
+          <ToolLogo tool={comp.toolA} className="w-14 h-14 rounded-xl text-xl mb-3" imageClassName="p-2" />
           <div className="font-serif text-xl font-bold text-ink mb-1">{comp.toolA.name}</div>
           <div className="text-xs text-ink-3 mb-2">{comp.toolA.tagline}</div>
           <ScoreBadge score={comp.toolA.score} />
@@ -87,12 +83,7 @@ export default function ComparisonPage({ params }: { params: { slug: string } })
 
         {/* Tool B */}
         <div className="p-5 md:p-6 flex flex-col items-center text-center border-l border-border">
-          <div
-            className="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-bold text-white mb-3"
-            style={{ background: comp.toolB.logo }}
-          >
-            {comp.toolB.logoInitials}
-          </div>
+          <ToolLogo tool={comp.toolB} className="w-14 h-14 rounded-xl text-xl mb-3" imageClassName="p-2" />
           <div className="font-serif text-xl font-bold text-ink mb-1">{comp.toolB.name}</div>
           <div className="text-xs text-ink-3 mb-2">{comp.toolB.tagline}</div>
           <ScoreBadge score={comp.toolB.score} />
@@ -133,9 +124,7 @@ export default function ComparisonPage({ params }: { params: { slug: string } })
             {[comp.toolA, comp.toolB].map((tool, idx) => (
               <div key={tool.slug} className={`p-5 ${idx === 0 ? 'md:border-r border-border' : ''}`}>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold text-white" style={{ background: tool.logo }}>
-                    {tool.logoInitials}
-                  </div>
+                  <ToolLogo tool={tool} className="w-6 h-6 rounded text-[10px]" imageClassName="p-1" />
                   <span className="font-mono text-[10px] uppercase tracking-widest text-ink-4">{tool.name}</span>
                 </div>
                 <p className="text-xs text-ink-2 leading-relaxed mb-3">{tool.verdict}</p>
@@ -163,11 +152,11 @@ export default function ComparisonPage({ params }: { params: { slug: string } })
               <div className="grid grid-cols-[1fr_1fr_1fr] bg-paper-2 border-b border-border">
                 <div className="p-2.5 font-mono text-[10px] uppercase tracking-widest text-ink-4">Feature</div>
                 <div className="p-2.5 font-mono text-[10px] uppercase tracking-widest text-ink-4 border-l border-border flex items-center gap-1.5">
-                  <span className="w-4 h-4 rounded inline-flex items-center justify-center text-[8px] font-bold text-white" style={{ background: comp.toolA.logo }}>{comp.toolA.logoInitials}</span>
+                  <ToolLogo tool={comp.toolA} className="w-4 h-4 rounded text-[8px]" imageClassName="p-0.5" />
                   {comp.toolA.name}
                 </div>
                 <div className="p-2.5 font-mono text-[10px] uppercase tracking-widest text-ink-4 border-l border-border flex items-center gap-1.5">
-                  <span className="w-4 h-4 rounded inline-flex items-center justify-center text-[8px] font-bold text-white" style={{ background: comp.toolB.logo }}>{comp.toolB.logoInitials}</span>
+                  <ToolLogo tool={comp.toolB} className="w-4 h-4 rounded text-[8px]" imageClassName="p-0.5" />
                   {comp.toolB.name}
                 </div>
               </div>
@@ -266,13 +255,9 @@ export default function ComparisonPage({ params }: { params: { slug: string } })
                 <Link key={related.slug} href={`/compare/${related.slug}`}>
                   <div className="py-3 border-b border-border last:border-0 card-hover">
                     <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold text-white" style={{ background: related.toolA.logo }}>
-                        {related.toolA.logoInitials}
-                      </div>
+                      <ToolLogo tool={related.toolA} className="w-5 h-5 rounded text-[9px]" imageClassName="p-0.5" />
                       <span className="font-mono text-[10px] text-ink-4">vs</span>
-                      <div className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold text-white" style={{ background: related.toolB.logo }}>
-                        {related.toolB.logoInitials}
-                      </div>
+                      <ToolLogo tool={related.toolB} className="w-5 h-5 rounded text-[9px]" imageClassName="p-0.5" />
                     </div>
                     <div className="text-xs font-semibold text-ink hover:text-beat-red transition-colors leading-snug">
                       {related.toolA.name} vs {related.toolB.name}
@@ -293,9 +278,7 @@ export default function ComparisonPage({ params }: { params: { slug: string } })
             {[comp.toolA, comp.toolB].map((tool) => (
               <Link key={tool.slug} href={`/tools/${tool.slug}`}>
                 <div className="flex items-center gap-2.5 py-2.5 border-b border-border last:border-0 card-hover">
-                  <div className="w-7 h-7 rounded flex items-center justify-center text-xs font-bold text-white" style={{ background: tool.logo }}>
-                    {tool.logoInitials}
-                  </div>
+                  <ToolLogo tool={tool} className="w-7 h-7 rounded text-xs" imageClassName="p-1" />
                   <div>
                     <div className="text-xs font-medium">{tool.name} review</div>
                     <div className="text-[10px] text-ink-4">{tool.pricing}</div>

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { COMPARISONS, TRENDING } from '@/lib/data'
 import type { Metadata } from 'next'
+import { ToolLogo } from '@/components/ui/ToolLogo'
 
 export const metadata: Metadata = {
   title: 'AI Tool Comparisons — AIBeat.dev',
@@ -43,19 +44,9 @@ export default function ComparePage() {
                 <div className="flex-1">
                   {/* Tool logos inline */}
                   <div className="flex items-center gap-2 mb-2">
-                    <div
-                      className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                      style={{ background: comp.toolA.logo }}
-                    >
-                      {comp.toolA.logoInitials}
-                    </div>
+                    <ToolLogo tool={comp.toolA} className="w-6 h-6 rounded text-[10px]" imageClassName="p-1" />
                     <span className="font-mono text-[10px] text-ink-4">vs</span>
-                    <div
-                      className="w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                      style={{ background: comp.toolB.logo }}
-                    >
-                      {comp.toolB.logoInitials}
-                    </div>
+                    <ToolLogo tool={comp.toolB} className="w-6 h-6 rounded text-[10px]" imageClassName="p-1" />
                     <span className="font-mono text-[10px] text-ink-3 ml-0.5">
                       {comp.toolA.name} vs {comp.toolB.name}
                     </span>

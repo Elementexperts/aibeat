@@ -7,6 +7,7 @@ import {
 import { getArticles } from '@/lib/articles'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
 import { NewsBanner } from '@/components/ui/NewsBanner'
+import { ToolLogo } from '@/components/ui/ToolLogo'
 
 export const revalidate = 3600 // refresh page every hour
 
@@ -100,12 +101,7 @@ export default async function HomePage() {
             {featuredTools.slice(0, 4).map((tool) => (
               <Link key={tool.slug} href={`/tools/${tool.slug}`}>
                 <div className="flex gap-2.5 py-2.5 border-b border-border last:border-0 card-hover">
-                  <div
-                    className="w-8 h-8 rounded flex items-center justify-center text-xs font-bold text-white shrink-0"
-                    style={{ background: tool.logo }}
-                  >
-                    {tool.logoInitials}
-                  </div>
+                  <ToolLogo tool={tool} className="w-8 h-8 rounded text-xs" imageClassName="p-1" />
                   <div>
                     <div className="text-xs font-semibold text-ink">{tool.name}</div>
                     <div className="text-[11px] text-ink-3 leading-snug">{tool.tagline}</div>
@@ -148,12 +144,7 @@ export default async function HomePage() {
           {featuredTools.map((tool, i) => (
             <Link key={tool.slug} href={`/tools/${tool.slug}`}>
               <div className={`p-4 border-b border-border card-hover ${i % 4 !== 3 ? 'md:border-r' : ''} border-border`}>
-                <div
-                  className="w-9 h-9 rounded-md flex items-center justify-center text-sm font-bold text-white mb-3"
-                  style={{ background: tool.logo }}
-                >
-                  {tool.logoInitials}
-                </div>
+                <ToolLogo tool={tool} className="w-9 h-9 rounded-md text-sm mb-3" />
                 <div className="text-sm font-semibold text-ink mb-0.5">{tool.name}</div>
                 <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1.5">{tool.category}</div>
                 <p className="text-[11px] text-ink-3 leading-relaxed mb-2 line-clamp-2">{tool.tagline}</p>

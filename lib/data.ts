@@ -23,6 +23,7 @@ export interface Tool {
   category: string
   logo: string
   logoInitials: string
+  logoUrl?: string
   rating: number
   pricing: string
   pricingType: 'free' | 'freemium' | 'paid'
@@ -39,6 +40,7 @@ export interface ComparisonTool {
   name: string
   logo: string
   logoInitials: string
+  logoUrl?: string
   tagline: string
   verdict: string
   score: number
@@ -325,15 +327,35 @@ export const TOOLS: Tool[] = [
     category: 'AI Writing',
     logo: '#10b981',
     logoInitials: 'Ry',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=rytr.me&sz=128',
     rating: 4.1,
     pricing: 'Free · From $9/mo',
     pricingType: 'freemium',
-    affiliateUrl: 'https://rytr.me?via=aibeat',
+    affiliateUrl: 'https://rytr.me/?via=aibeat',
     websiteUrl: 'https://rytr.me',
     featured: false,
     pros: ['Very affordable', 'Functional free tier', '40+ use cases', 'Chrome extension'],
     cons: ['Output quality below Jasper', 'No team features on cheap plans', 'Limited long-form'],
     alternatives: ['copy-ai', 'writesonic', 'jasper'],
+  },
+  {
+    slug: 'pictory',
+    name: 'Pictory',
+    tagline: 'AI video creation for turning content into clips',
+    description: 'Pictory helps creators and marketing teams turn scripts, blog posts, and long-form videos into short branded videos and social clips.',
+    category: 'AI Video',
+    logo: '#f97316',
+    logoInitials: 'Pi',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=pictory.ai&sz=128',
+    rating: 4.4,
+    pricing: 'Paid plans available',
+    pricingType: 'paid',
+    affiliateUrl: 'https://partners.pictory.ai/home',
+    websiteUrl: 'https://pictory.ai',
+    featured: true,
+    pros: ['Turns scripts into videos', 'Useful for social clips', 'Branding tools', 'Fast content repurposing'],
+    cons: ['Paid plan needed for serious use', 'Template quality varies', 'Still needs human editing'],
+    alternatives: ['jasper', 'writesonic', 'copy-ai'],
   },
   // — Project Management —
   {
@@ -344,10 +366,11 @@ export const TOOLS: Tool[] = [
     category: 'Project Management',
     logo: '#f7335c',
     logoInitials: 'Mo',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=monday.com&sz=128',
     rating: 4.7,
     pricing: 'Free plan available',
     pricingType: 'freemium',
-    affiliateUrl: 'https://monday.com?via=aibeat',
+    affiliateUrl: 'https://try.monday.com/5tty1ov5ld48',
     websiteUrl: 'https://monday.com',
     featured: true,
     pros: ['Visual boards', 'Strong automation', 'Many integrations', 'Free plan'],

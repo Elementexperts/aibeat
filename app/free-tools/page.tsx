@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { TOOLS, TRENDING } from '@/lib/data'
 import type { Metadata } from 'next'
+import { ToolLogo } from '@/components/ui/ToolLogo'
 
 export const metadata: Metadata = {
   title: 'Free AI Tools — AIBeat.dev',
@@ -68,12 +69,7 @@ export default function FreeToolsPage() {
                   <Link key={tool.slug} href={`/tools/${tool.slug}`}>
                     <div className={`p-5 border-b border-border card-hover ${i % 2 === 0 ? 'border-r' : ''}`}>
                       <div className="flex items-start gap-3">
-                        <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold text-white shrink-0"
-                          style={{ background: tool.logo }}
-                        >
-                          {tool.logoInitials}
-                        </div>
+                        <ToolLogo tool={tool} className="w-10 h-10 rounded-lg text-sm" />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-semibold text-ink mb-0.5">{tool.name}</div>
                           <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1">{tool.category}</div>
@@ -102,12 +98,7 @@ export default function FreeToolsPage() {
                   <Link key={tool.slug} href={`/tools/${tool.slug}`}>
                     <div className={`p-5 border-b border-border card-hover ${i % 2 === 0 ? 'border-r' : ''}`}>
                       <div className="flex items-start gap-3">
-                        <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold text-white shrink-0"
-                          style={{ background: tool.logo }}
-                        >
-                          {tool.logoInitials}
-                        </div>
+                        <ToolLogo tool={tool} className="w-10 h-10 rounded-lg text-sm" />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-semibold text-ink mb-0.5">{tool.name}</div>
                           <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1">{tool.category}</div>

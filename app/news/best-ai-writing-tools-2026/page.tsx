@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { TOOLS, ARTICLES } from '@/lib/data'
 import type { Metadata } from 'next'
+import { ToolLogo } from '@/components/ui/ToolLogo'
 
 export const metadata: Metadata = {
   title: '11 Best AI Writing Tools in 2026 (Tested & Ranked) — AIBeat.dev',
@@ -100,11 +101,12 @@ const RANKED_TOOLS = [
     slug: 'rytr',
     logo: '#10b981',
     initials: 'Ry',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=rytr.me&sz=128',
     tagline: 'Most affordable',
     rating: 4.1,
     pricing: 'Free · From $9/mo',
     freePlan: 'Yes (10,000 chars/mo)',
-    affiliateUrl: 'https://rytr.me?via=aibeat',
+    affiliateUrl: 'https://rytr.me/?via=aibeat',
     bestFor: 'High-volume, budget-conscious content creation',
     overview:
       'Rytr is the most affordable AI writing tool on the market that still produces usable output. The free plan is generous (10,000 characters/month), and the $9/month Saver plan is the lowest-cost entry to unlimited AI writing. Output quality is noticeably below Jasper and Writesonic, but for producing large volumes of first-draft content quickly — product descriptions, social snippets, email variations — it punches above its weight class.',
@@ -424,12 +426,11 @@ export default function BestAIWritingToolsPage() {
                       <td className="p-3 font-mono text-ink-4">{tool.rank}</td>
                       <td className="p-3">
                         <div className="flex items-center gap-2">
-                          <div
-                            className="w-6 h-6 rounded flex items-center justify-center text-[9px] font-bold text-white shrink-0"
-                            style={{ background: tool.logo }}
-                          >
-                            {tool.initials}
-                          </div>
+                          <ToolLogo
+                            tool={{ name: tool.name, logo: tool.logo, logoInitials: tool.initials, logoUrl: tool.logoUrl }}
+                            className="w-6 h-6 rounded text-[9px]"
+                            imageClassName="p-1"
+                          />
                           <span className="font-semibold text-ink">
                             {tool.slug ? (
                               <Link href={`/tools/${tool.slug}`} className="hover:text-beat-red transition-colors">
@@ -463,9 +464,10 @@ export default function BestAIWritingToolsPage() {
             <section key={tool.name} className="mb-10 pb-10 border-b border-border last:border-0">
               {/* Tool header */}
               <div className="flex items-start gap-4 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg font-bold text-sm text-white shrink-0" style={{ background: tool.logo }}>
-                  {tool.initials}
-                </div>
+                <ToolLogo
+                  tool={{ name: tool.name, logo: tool.logo, logoInitials: tool.initials, logoUrl: tool.logoUrl }}
+                  className="w-10 h-10 rounded-lg text-sm"
+                />
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">#{tool.rank}</span>
@@ -582,12 +584,7 @@ export default function BestAIWritingToolsPage() {
             {relatedTools.map((tool) => (
               <Link key={tool.slug} href={`/tools/${tool.slug}`}>
                 <div className="flex items-center gap-2.5 py-2.5 border-b border-border last:border-0 card-hover">
-                  <div
-                    className="w-8 h-8 rounded flex items-center justify-center text-xs font-bold text-white shrink-0"
-                    style={{ background: tool.logo }}
-                  >
-                    {tool.logoInitials}
-                  </div>
+                  <ToolLogo tool={tool} className="w-8 h-8 rounded text-xs" imageClassName="p-1" />
                   <div>
                     <div className="text-xs font-semibold">{tool.name}</div>
                     <div className="font-mono text-[10px] text-ink-4">{tool.pricing}</div>

@@ -4,6 +4,7 @@ import type { Category } from '@/lib/data'
 import { getArticles } from '@/lib/articles'
 import { NewsBanner } from '@/components/ui/NewsBanner'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
+import { ToolLogo } from '@/components/ui/ToolLogo'
 import type { Metadata } from 'next'
 
 const ARTICLES_PER_PAGE = 10
@@ -258,12 +259,7 @@ export default async function NewsPage({
               {featuredTools.slice(0, 4).map((tool) => (
                 <Link key={tool.slug} href={`/tools/${tool.slug}`}>
                   <div className="flex gap-2.5 py-2.5 border-b border-border last:border-0 card-hover">
-                    <div
-                      className="w-8 h-8 rounded flex items-center justify-center text-xs font-bold text-white shrink-0"
-                      style={{ background: tool.logo }}
-                    >
-                      {tool.logoInitials}
-                    </div>
+                    <ToolLogo tool={tool} className="w-8 h-8 rounded text-xs" imageClassName="p-1" />
                     <div>
                       <div className="text-xs font-semibold text-ink">{tool.name}</div>
                       <div className="text-[11px] text-ink-3 leading-snug">{tool.tagline}</div>

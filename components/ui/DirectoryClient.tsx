@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { TOOLS } from '@/lib/data'
+import { ToolLogo } from '@/components/ui/ToolLogo'
 
 const ALL = 'All'
 const PRICING_OPTIONS = [ALL, 'Free', 'Freemium', 'Paid'] as const
@@ -173,12 +174,7 @@ function ToolCard({ tool, i }: { tool: typeof TOOLS[number]; i: number }) {
   return (
     <Link href={`/tools/${tool.slug}`}>
       <div className={`p-4 border-b border-border card-hover ${i % 4 !== 3 ? 'md:border-r' : ''} border-border`}>
-        <div
-          className="w-9 h-9 rounded-md flex items-center justify-center text-sm font-bold text-white mb-3"
-          style={{ background: tool.logo }}
-        >
-          {tool.logoInitials}
-        </div>
+        <ToolLogo tool={tool} className="w-9 h-9 rounded-md text-sm mb-3" />
         <div className="text-sm font-semibold text-ink mb-0.5">{tool.name}</div>
         <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1.5">{tool.category}</div>
         <p className="text-[11px] text-ink-3 leading-relaxed mb-2 line-clamp-2">{tool.tagline}</p>

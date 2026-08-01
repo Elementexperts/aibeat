@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getToolBySlug, TOOLS, CATEGORY_COLORS } from '@/lib/data'
 import type { Metadata } from 'next'
+import { ToolLogo } from '@/components/ui/ToolLogo'
 
 export async function generateStaticParams() {
   return TOOLS.map((t) => ({ slug: t.slug }))
@@ -40,12 +41,7 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
         <div>
           {/* Header */}
           <div className="flex items-start gap-4 mb-6">
-            <div
-              className="w-16 h-16 rounded-xl flex items-center justify-center text-xl font-bold text-white shrink-0"
-              style={{ background: tool.logo }}
-            >
-              {tool.logoInitials}
-            </div>
+            <ToolLogo tool={tool} className="w-16 h-16 rounded-xl text-xl" imageClassName="p-2.5" />
             <div>
               <h1 className="font-serif text-3xl font-bold text-ink leading-tight">{tool.name}</h1>
               <p className="text-ink-3 text-sm mt-1">{tool.tagline}</p>
@@ -118,9 +114,7 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
               return (
                 <Link key={alt} href={`/tools/${alt}`}>
                   <div className="flex items-center gap-2.5 py-2 border-b border-border last:border-0 card-hover">
-                    <div className="w-7 h-7 rounded flex items-center justify-center text-xs font-bold text-white" style={{ background: altTool.logo }}>
-                      {altTool.logoInitials}
-                    </div>
+                    <ToolLogo tool={altTool} className="w-7 h-7 rounded text-xs" imageClassName="p-1" />
                     <div>
                       <div className="text-xs font-medium">{altTool.name}</div>
                       <div className="text-[10px] text-ink-4">{altTool.pricing}</div>
