@@ -65,7 +65,7 @@ export function SubscribeForm({
   if (submitted) {
     return (
       <div className={`border p-4 ${dark ? 'border-beat-green bg-ink-2 text-white' : 'bg-beat-green-light border-beat-green'}`}>
-        <p className={`text-sm font-semibold mb-1 ${dark ? 'text-white' : 'text-beat-green'}`}>You're in.</p>
+        <p className={`text-sm font-semibold mb-1 ${dark ? 'text-white' : 'text-beat-green'}`}>You&apos;re in.</p>
         <p className={`text-xs ${dark ? 'text-ink-4' : 'text-ink-2'}`}>Check your inbox to confirm.</p>
       </div>
     )

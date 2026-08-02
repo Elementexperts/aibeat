@@ -534,12 +534,12 @@ export default function BestAIWritingToolsPage() {
             <p className="text-sm text-ink-2 leading-relaxed mb-4">
               The best AI writing tool in 2026 is the one that fits your workflow — not the one
               with the best marketing. For most freelancers and small teams, the right starting
-              point is <strong>Copy.ai's free plan</strong> to learn how AI writing tools work in
+              point is <strong>Copy.ai&apos;s free plan</strong> to learn how AI writing tools work in
               practice, then upgrading to <strong>Jasper</strong> or <strong>Writesonic</strong>
               once you know what you need.
             </p>
             <p className="text-sm text-ink-2 leading-relaxed mb-4">
-              If you're doing any long-form writing — articles, reports, proposals — run{' '}
+              If you&apos;re doing any long-form writing — articles, reports, proposals — run{' '}
               <strong>Claude</strong> or <strong>ChatGPT Plus</strong> alongside your dedicated
               writing tool. The general-purpose LLMs produce better raw prose than the specialized
               tools; the specialized tools are better at templates, volume, and workflow

@@ -30,6 +30,18 @@ module.exports = {
           DEFAULT: '#ddd9d2',
           dark: '#c8c2b8',
         },
+        midnight: {
+          DEFAULT: '#07080B',
+          2: '#0D0F14',
+          3: '#13161D',
+        },
+        nebula: {
+          purple: '#8B5CF6',
+          blue: '#3B82F6',
+          cyan: '#22D3EE',
+          green: '#34D399',
+          amber: '#F59E0B',
+        },
       },
       fontFamily: {
         serif: ['Playfair Display', 'Georgia', 'serif'],

@@ -1,15 +1,63 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --aibeat-bg: #07080b;
+  --aibeat-bg-elevated: #0d0f14;
+  --aibeat-surface: #13161d;
+  --aibeat-card: rgba(255, 255, 255, 0.035);
+  --aibeat-border: rgba(255, 255, 255, 0.08);
+  --aibeat-border-strong: rgba(255, 255, 255, 0.14);
+  --aibeat-text: #f7f8fa;
+  --aibeat-text-secondary: #a7adba;
+  --aibeat-text-muted: #747b8a;
+  --aibeat-purple: #8b5cf6;
+  --aibeat-blue: #3b82f6;
+  --aibeat-cyan: #22d3ee;
+  --aibeat-green: #34d399;
+  --aibeat-amber: #f59e0b;
+  --aibeat-gradient: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 52%, #22d3ee 100%);
+}
+
+:root[data-site-theme='light'] {
+  --aibeat-bg: #f7f8fb;
+  --aibeat-bg-elevated: #ffffff;
+  --aibeat-surface: #edf1f7;
+  --aibeat-card: rgba(15, 23, 42, 0.045);
+  --aibeat-text: #0f172a;
+  --aibeat-text-secondary: #475569;
+  --aibeat-text-muted: #64748b;
+  --aibeat-border: rgba(15, 23, 42, 0.1);
+  --aibeat-border-strong: rgba(15, 23, 42, 0.18);
+}
 
 @layer base {
   html {
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-paper text-ink font-sans antialiased;
+    @apply bg-midnight text-white font-sans antialiased;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at top left, rgba(139, 92, 246, 0.18), transparent 30rem),
+      radial-gradient(circle at 85% 10%, rgba(34, 211, 238, 0.14), transparent 26rem),
+      #07080b;
+  }
+  :root[data-site-theme='light'] body {
+    background:
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.13), transparent 30rem),
+      radial-gradient(circle at 85% 10%, rgba(34, 211, 238, 0.12), transparent 26rem),
+      #f7f8fb;
+    color: #0f172a;
+  }
+  ::selection {
+    background: rgba(34, 211, 238, 0.3);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid var(--aibeat-cyan);
+    outline-offset: 3px;
   }
 }
 
@@ -36,7 +84,96 @@
     @apply font-mono text-[10px] font-medium tracking-[0.1em] uppercase text-ink-3 pb-2 border-b border-border mb-3;
   }
   .card-hover {
-    @apply transition-colors hover:bg-paper-2 cursor-pointer;
+    @apply transition-colors cursor-pointer;
+  }
+  .site-shell {
+    @apply mx-auto w-full max-w-[1380px] px-4 sm:px-6 lg:px-8;
+  }
+  .glass-card {
+    background: var(--aibeat-card);
+    border: 1px solid var(--aibeat-border);
+    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.28);
+    backdrop-filter: blur(18px);
+  }
+  .gradient-text {
+    background: var(--aibeat-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .gradient-button {
+    background: var(--aibeat-gradient);
+    color: #fff;
+    box-shadow: 0 16px 42px rgba(59, 130, 246, 0.28);
+  }
+  .premium-card {
+    @apply rounded-xl border border-white/10 bg-white/[0.035] transition duration-200;
+  }
+  .premium-card:hover {
+    border-color: rgba(34, 211, 238, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 70px rgba(34, 211, 238, 0.08);
+  }
+  .dark-page {
+    color: var(--aibeat-text);
+  }
+  :root[data-site-theme='light'] .dark-page {
+    background: #f7f8fb;
+    color: #0f172a;
+  }
+  :root[data-site-theme='light'] nav,
+  :root[data-site-theme='light'] header,
+  :root[data-site-theme='light'] footer,
+  :root[data-site-theme='light'] .dark-page section,
+  :root[data-site-theme='light'] .glass-card,
+  :root[data-site-theme='light'] .premium-card {
+    border-color: rgba(15, 23, 42, 0.1) !important;
+  }
+  :root[data-site-theme='light'] nav,
+  :root[data-site-theme='light'] footer {
+    background: rgba(255, 255, 255, 0.9) !important;
+  }
+  :root[data-site-theme='light'] .glass-card,
+  :root[data-site-theme='light'] .premium-card {
+    background: rgba(255, 255, 255, 0.74) !important;
+    box-shadow: 0 20px 70px rgba(15, 23, 42, 0.08);
+  }
+  :root[data-site-theme='light'] .dark-page .text-white,
+  :root[data-site-theme='light'] nav .text-white,
+  :root[data-site-theme='light'] footer .text-white {
+    color: #0f172a !important;
+  }
+  :root[data-site-theme='light'] .dark-page .text-slate-200,
+  :root[data-site-theme='light'] .dark-page .text-slate-300,
+  :root[data-site-theme='light'] nav .text-slate-200,
+  :root[data-site-theme='light'] nav .text-slate-300,
+  :root[data-site-theme='light'] footer .text-slate-200,
+  :root[data-site-theme='light'] footer .text-slate-300 {
+    color: #334155 !important;
+  }
+  :root[data-site-theme='light'] .dark-page .text-slate-400,
+  :root[data-site-theme='light'] .dark-page .text-slate-500,
+  :root[data-site-theme='light'] nav .text-slate-400,
+  :root[data-site-theme='light'] nav .text-slate-500,
+  :root[data-site-theme='light'] footer .text-slate-400,
+  :root[data-site-theme='light'] footer .text-slate-500 {
+    color: #64748b !important;
+  }
+  :root[data-site-theme='light'] .dark-page .border-white\/10,
+  :root[data-site-theme='light'] nav .border-white\/10,
+  :root[data-site-theme='light'] footer .border-white\/10 {
+    border-color: rgba(15, 23, 42, 0.1) !important;
+  }
+  :root[data-site-theme='light'] .dark-page .bg-white\/\[0\.03\],
+  :root[data-site-theme='light'] .dark-page .bg-white\/\[0\.035\],
+  :root[data-site-theme='light'] .dark-page .bg-white\/\[0\.04\],
+  :root[data-site-theme='light'] .dark-page .bg-white\/\[0\.06\],
+  :root[data-site-theme='light'] nav .bg-white\/\[0\.04\],
+  :root[data-site-theme='light'] footer .bg-white\/\[0\.04\] {
+    background-color: rgba(255, 255, 255, 0.74) !important;
+  }
+  main > div:not(.dark-page) {
+    @apply bg-paper text-ink;
   }
 }
 
@@ -137,4 +274,40 @@
 }
 .live-dot {
   animation: live-pulse 1.2s infinite;
+}
+
+@keyframes orbit-drift {
+  0% { transform: rotate(0deg) translate3d(0, 0, 0); }
+  100% { transform: rotate(360deg) translate3d(0, 0, 0); }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.hero-orbit {
+  animation: orbit-drift 24s linear infinite;
+}
+
+.discovery-marquee {
+  animation: marquee 28s linear infinite;
+}
+
+.discovery-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
 }

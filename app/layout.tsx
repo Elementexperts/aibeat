@@ -14,11 +14,11 @@ const logoImage = '/aibeat-logo.png'
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'AIBeat.dev - The Pulse of Artificial Intelligence',
+    default: 'AIBeat - Discover Tomorrow\'s AI Today',
     template: '%s | AIBeat.dev',
   },
-  description: 'Daily AI news, honest tool reviews, and side-by-side comparisons. Free forever. Trusted by 8,400+ founders and freelancers.',
-  keywords: ['AI news', 'AI tools', 'artificial intelligence', 'SaaS reviews', 'AI tool comparisons'],
+  description: 'Explore useful AI tools, emerging startups, important industry news, and new product launches-all curated in one place.',
+  keywords: ['AI news', 'AI tools', 'artificial intelligence', 'AI startup launches', 'AI tool directory', 'AI product discovery'],
   authors: [{ name: 'AIBeat Staff' }],
   creator: 'AIBeat.dev',
   alternates: {
@@ -41,8 +41,8 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName: 'AIBeat.dev',
-    title: 'AIBeat.dev - The Pulse of Artificial Intelligence',
-    description: 'Daily AI news, honest tool reviews, and side-by-side comparisons.',
+    title: 'AIBeat - Discover Tomorrow\'s AI Today',
+    description: 'Explore useful AI tools, emerging startups, important industry news, and new product launches.',
     images: [
       {
         url: previewImage,
@@ -54,8 +54,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AIBeat.dev - The Pulse of Artificial Intelligence',
-    description: 'Daily AI news, honest tool reviews, and side-by-side comparisons.',
+    title: 'AIBeat - Discover Tomorrow\'s AI Today',
+    description: 'Explore useful AI tools, emerging startups, important industry news, and new product launches.',
     creator: '@aibeat_dev',
     images: [previewImage],
   },

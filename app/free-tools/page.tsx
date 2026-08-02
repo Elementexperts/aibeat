@@ -40,7 +40,7 @@ export default function FreeToolsPage() {
               ROI Calculator — Is a Paid Tool Worth It?
             </h2>
             <p className="text-xs text-ink-4">
-              Enter your hourly rate + time saved and we'll tell you if it pays for itself.
+              Enter your hourly rate + time saved and we&apos;ll tell you if it pays for itself.
             </p>
           </div>
           <Link

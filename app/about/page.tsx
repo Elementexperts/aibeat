@@ -40,10 +40,10 @@ export default function AboutPage() {
               The AI tools industry is flooded with affiliate-first review sites that rank tools based on commission rates, not quality. We built AIBeat.dev as the antidote: a publication where editorial integrity is non-negotiable and the people paying attention are the ones making real decisions about their software stack.
             </p>
             <p className="text-base text-ink-2 leading-relaxed mb-4">
-              Our commitment: we never accept payment for reviews, never let affiliate commissions influence rankings, and never publish content we wouldn't stand behind publicly with our names attached. If a tool is bad, we say so — even if it pays a high commission.
+              Our commitment: we never accept payment for reviews, never let affiliate commissions influence rankings, and never publish content we wouldn&apos;t stand behind publicly with our names attached. If a tool is bad, we say so — even if it pays a high commission.
             </p>
             <p className="text-base text-ink-2 leading-relaxed">
-              AIBeat.dev is free to read. Always. No paywalls, no metered articles, no "premium" tiers. We think good journalism about technology should be accessible to everyone building something, regardless of budget.
+              AIBeat.dev is free to read. Always. No paywalls, no metered articles, no &quot;premium&quot; tiers. We think good journalism about technology should be accessible to everyone building something, regardless of budget.
             </p>
           </section>
 
@@ -61,13 +61,13 @@ export default function AboutPage() {
               <div className="border border-border p-5">
                 <div className="font-mono text-[10px] uppercase tracking-widest text-beat-green mb-2">Reviews</div>
                 <h3 className="font-serif text-lg font-bold text-ink mb-2">Tool Reviews</h3>
-                <p className="text-sm text-ink-3 leading-relaxed">Hands-on testing of AI tools, SaaS products, and business software. Each review is based on real usage — not feature lists copied from the vendor's website.</p>
+                <p className="text-sm text-ink-3 leading-relaxed">Hands-on testing of AI tools, SaaS products, and business software. Each review is based on real usage — not feature lists copied from the vendor&apos;s website.</p>
                 <Link href="/tools" className="font-mono text-[11px] text-beat-green mt-3 inline-block hover:underline">Browse tools →</Link>
               </div>
               <div className="border border-border p-5">
                 <div className="font-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Comparisons</div>
                 <h3 className="font-serif text-lg font-bold text-ink mb-2">Head-to-Head Comparisons</h3>
-                <p className="text-sm text-ink-3 leading-relaxed">Side-by-side breakdowns of competing tools with structured feature tables, pricing comparisons, and clear "who should choose which" recommendations.</p>
+                <p className="text-sm text-ink-3 leading-relaxed">Side-by-side breakdowns of competing tools with structured feature tables, pricing comparisons, and clear &quot;who should choose which&quot; recommendations.</p>
                 <Link href="/compare" className="font-mono text-[11px] text-ink-3 mt-3 inline-block hover:underline">Browse comparisons →</Link>
               </div>
               <div className="border border-border p-5">
@@ -84,18 +84,18 @@ export default function AboutPage() {
             <div className="section-label">How we make money</div>
             <h2 className="font-serif text-2xl font-bold text-ink mb-4">Transparent about revenue</h2>
             <p className="text-base text-ink-2 leading-relaxed mb-4">
-              AIBeat.dev generates revenue through two sources: affiliate commissions and display advertising. We believe in being explicit about this because it's the information readers need to evaluate our credibility.
+              AIBeat.dev generates revenue through two sources: affiliate commissions and display advertising. We believe in being explicit about this because it&apos;s the information readers need to evaluate our credibility.
             </p>
 
             <div className="border border-border p-5 mb-4">
               <h3 className="font-semibold text-sm text-ink mb-2">Affiliate commissions</h3>
-              <p className="text-sm text-ink-3 leading-relaxed">When you click certain links on AIBeat.dev and sign up for a tool or service, we may earn a commission from the vendor. This commission comes from the vendor's marketing budget — it does not add any cost to you. Affiliate links are disclosed on every page that contains them.</p>
-              <p className="text-sm text-ink-3 leading-relaxed mt-2"><strong className="text-ink">Our policy:</strong> Affiliate relationships do not influence rankings, scores, or editorial coverage. We have turned down affiliate programs from tools we don't recommend. We have recommended tools with no affiliate program and criticized tools with high-paying affiliate programs. Our editorial and commercial operations are separate.</p>
+              <p className="text-sm text-ink-3 leading-relaxed">When you click certain links on AIBeat.dev and sign up for a tool or service, we may earn a commission from the vendor. This commission comes from the vendor&apos;s marketing budget — it does not add any cost to you. Affiliate links are disclosed on every page that contains them.</p>
+              <p className="text-sm text-ink-3 leading-relaxed mt-2"><strong className="text-ink">Our policy:</strong> Affiliate relationships do not influence rankings, scores, or editorial coverage. We have turned down affiliate programs from tools we don&apos;t recommend. We have recommended tools with no affiliate program and criticized tools with high-paying affiliate programs. Our editorial and commercial operations are separate.</p>
             </div>
 
             <div className="border border-border p-5">
               <h3 className="font-semibold text-sm text-ink mb-2">Display advertising (Google AdSense)</h3>
-              <p className="text-sm text-ink-3 leading-relaxed">We display contextual advertising through Google AdSense. These are standard display ads served by Google's advertising network. Ad placement does not influence editorial content — advertisers have no input into our reviews, news coverage, or tool recommendations.</p>
+              <p className="text-sm text-ink-3 leading-relaxed">We display contextual advertising through Google AdSense. These are standard display ads served by Google&apos;s advertising network. Ad placement does not influence editorial content — advertisers have no input into our reviews, news coverage, or tool recommendations.</p>
               <p className="text-sm text-ink-3 leading-relaxed mt-2">We do not accept direct advertising deals, sponsored posts, paid reviews, or any arrangement where a company pays for editorial coverage. If you see a paid placement on AIBeat.dev, it will be clearly labeled as an advertisement.</p>
             </div>
           </section>

@@ -1,30 +1,30 @@
-const TICKER_ITEMS = [
-  'OpenAI announces GPT-5 pricing update',
-  'Google Gemini Ultra beats all benchmarks',
-  'Anthropic raises $3B Series E',
-  'Meta releases open-source Llama 4',
-  'Microsoft Copilot now free for all users',
-  'AI writing tool market hits $2.4B valuation',
-  'Cursor surpasses GitHub Copilot in developer surveys',
-  'HubSpot adds AI assistant to free CRM tier',
+import Link from 'next/link'
+
+const STRIP_ITEMS = [
+  { label: 'New AI tools', href: '/directory' },
+  { label: 'Startup launches', href: '/launches' },
+  { label: 'AI news', href: '/news' },
+  { label: 'Free tools', href: '/free-tools' },
+  { label: 'Founder services', href: '/launch' },
+  { label: 'Spotlight options', href: '/spotlight' },
+  { label: 'Submit your product', href: '/submit' },
 ]
 
 export function BreakingTicker() {
-  const repeated = [...TICKER_ITEMS, ...TICKER_ITEMS]
+  const repeated = [...STRIP_ITEMS, ...STRIP_ITEMS]
 
   return (
-    <div className="bg-beat-red text-white py-1.5 px-6 flex items-center gap-3 overflow-hidden text-xs">
-      <span className="bg-white text-beat-red px-2 py-0.5 font-mono text-[10px] font-bold tracking-widest uppercase shrink-0">
-        BREAKING
-      </span>
-      <div className="overflow-hidden flex-1">
-        <div className="ticker-animate flex gap-8">
-          {repeated.map((item, i) => (
-            <span key={i} className="shrink-0">
-              {item} &nbsp;·
-            </span>
-          ))}
-        </div>
+    <div className="overflow-hidden border-b border-white/10 bg-white/[0.025] py-2 text-xs text-slate-300">
+      <div className="discovery-marquee flex w-max gap-3 px-4">
+        {repeated.map((item, index) => (
+          <Link
+            key={`${item.href}-${index}`}
+            href={item.href}
+            className="shrink-0 rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 transition hover:border-cyan-300/40 hover:text-white"
+          >
+            {item.label}
+          </Link>
+        ))}
       </div>
     </div>
   )

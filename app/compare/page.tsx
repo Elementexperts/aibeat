@@ -5,7 +5,7 @@ import { ToolLogo } from '@/components/ui/ToolLogo'
 
 export const metadata: Metadata = {
   title: 'AI Tool Comparisons — AIBeat.dev',
-  description: "Head-to-head AI tool comparisons. We test both so you don't have to.",
+  description: "Head-to-head AI tool comparisons. We test both so you don&apos;t have to.",
 }
 
 export default function ComparePage() {
@@ -23,7 +23,7 @@ export default function ComparePage() {
           <h1 className="font-serif text-3xl font-bold text-ink">Head-to-Head Comparisons</h1>
         </div>
         <p className="text-xs text-ink-3 max-w-xs text-right hidden md:block">
-          We test both so you don't have to.
+          We test both so you don&apos;t have to.
         </p>
       </div>
 
@@ -103,7 +103,7 @@ export default function ComparePage() {
           <div className="p-5">
             <div className="section-label">Request a comparison</div>
             <p className="text-xs text-ink-3 mb-4 leading-relaxed">
-              Can't find the matchup you need? Tell us what to compare next.
+              Can&apos;t find the matchup you need? Tell us what to compare next.
             </p>
             <Link
               href="/submit"
