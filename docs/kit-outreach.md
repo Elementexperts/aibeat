@@ -49,7 +49,9 @@ KIT_FROM_EMAIL=hello@aibeat.dev
 KIT_REPLY_TO_EMAIL=hello@aibeat.dev
 KIT_FROM_NAME=Nomoz Fayzullaev | AIBeat
 AUTOMATED_KIT_SEND_ENABLED=false
+DAILY_LEAD_DISCOVERY_SOURCES=product_hunt,betalist
 DAILY_LEAD_DISCOVERY_FEED_URL=https://www.producthunt.com/feed
+DAILY_LEAD_DISCOVERY_BETALIST_URL=https://betalist.com
 DAILY_LEAD_DISCOVERY_LOOKBACK_HOURS=48
 DAILY_LEAD_DISCOVERY_MAX_CANDIDATES=30
 DAILY_LEAD_DISCOVERY_MAX_LEADS=5
@@ -152,7 +154,7 @@ The workflow uploads `data/outreach/store.json` as an artifact and never deploys
 
 Run `AIBeat Daily Lead Discovery` manually or let the daily schedule run at 04:00 UTC. It:
 
-- Reads recent Product Hunt feed entries.
+- Reads recent Product Hunt feed entries and public BetaList startup listings.
 - Keeps AI-related candidates only.
 - Looks for product websites and public contact pages.
 - Accepts public business inboxes such as `hello@`, `contact@`, `press@`, `partnerships@`, and `sales@`.
@@ -164,6 +166,7 @@ Run `AIBeat Daily Lead Discovery` manually or let the daily schedule run at 04:0
 The daily report includes a `candidateInspections` section for every discovered product. Use it to see:
 
 - Product Hunt URL.
+- BetaList URL.
 - Detected website URL.
 - Pages checked.
 - Contact-like links found from the site.

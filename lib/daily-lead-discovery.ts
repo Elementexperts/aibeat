@@ -11,9 +11,11 @@ export type LeadCandidate = {
   toolName: string
   description?: string
   productHuntUrl?: string
+  betaListUrl?: string
   websiteUrl?: string
   launchDate?: string
   category?: string
+  sourceName: string
   sourceUrl: string
 }
 
@@ -33,7 +35,9 @@ export type ScoredLead = {
 
 export type CandidateInspection = {
   toolName: string
+  sourceName: string
   productHuntUrl?: string
+  betaListUrl?: string
   websiteUrl?: string
   pagesChecked: string[]
   contactLinksFound: string[]
@@ -60,6 +64,7 @@ type DiscoveryOptions = {
   now?: Date
   fetchImpl?: typeof fetch
   feedUrl?: string
+  betaListUrl?: string
   lookbackHours?: number
   maxCandidates?: number
   maxLeads?: number
@@ -68,9 +73,11 @@ type DiscoveryOptions = {
   dryRun?: boolean
   storePath?: string
   reportDir?: string
+  sources?: string[]
 }
 
 const DEFAULT_FEED_URL = 'https://www.producthunt.com/feed'
+const DEFAULT_BETALIST_URL = 'https://betalist.com'
 const AI_KEYWORDS = ['ai', 'artificial intelligence', 'llm', 'gpt', 'agent', 'automation', 'chatbot', 'copilot', 'prompt', 'machine learning', 'generative']
 const BLOCKED_EMAIL_DOMAINS = new Set(['gmail.com', 'googlemail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com', 'proton.me', 'protonmail.com'])
 const BUSINESS_LOCALS: Array<{ match: RegExp; type: OutreachContactType }> = [
@@ -81,7 +88,7 @@ const BUSINESS_LOCALS: Array<{ match: RegExp; type: OutreachContactType }> = [
   { match: /^(support|help)$/, type: 'support' },
   { match: /^(founders?|founder)$/, type: 'founder_public' },
 ]
-const BLOCKED_WEBSITE_HOSTS = ['producthunt.com', 'twitter.com', 'x.com', 'linkedin.com', 'facebook.com', 'instagram.com', 'youtube.com', 'github.com', 'medium.com']
+const BLOCKED_WEBSITE_HOSTS = ['producthunt.com', 'betalist.com', 'twitter.com', 'x.com', 'linkedin.com', 'facebook.com', 'instagram.com', 'youtube.com', 'github.com', 'medium.com']
 const CONTACT_PATHS = ['/', '/contact', '/contact-us', '/about', '/company', '/team', '/press', '/media', '/partnerships', '/partners', '/support', '/help', '/pricing', '/terms']
 const CONTACT_LINK_RE = /(contact|about|company|team|press|media|partner|support|help|sales|pricing|terms)/i
 
@@ -159,6 +166,31 @@ function chooseExternalWebsite(productHuntHtml: string, productHuntUrl: string) 
   })
 }
 
+function titleFromHtml(html: string) {
+  const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1]
+  const title = h1 || html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]
+  return title ? stripHtml(decodeBasicEntities(title)).replace(/\s+\|\s+BetaList.*$/i, '').trim() : undefined
+}
+
+function descriptionFromHtml(html: string) {
+  const h2 = html.match(/<h2[^>]*>([\s\S]*?)<\/h2>/i)?.[1]
+  const meta = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["'][^>]*>/i)?.[1]
+  const description = h2 || meta
+  return description ? stripHtml(decodeBasicEntities(description)) : undefined
+}
+
+function betaListStartupLinks(html: string, baseUrl: string) {
+  const baseHost = host(baseUrl)
+  return extractLinks(html, baseUrl).filter((link) => {
+    try {
+      const url = new URL(link)
+      return url.hostname.replace(/^www\./, '').toLowerCase() === baseHost && /^\/startups\/[^/?#]+\/?$/.test(url.pathname)
+    } catch {
+      return false
+    }
+  })
+}
+
 function contactPageUrls(websiteUrl: string) {
   const origin = new URL(websiteUrl).origin
   const directPages = CONTACT_PATHS.map((path) => new URL(path, origin).toString())
@@ -224,9 +256,70 @@ async function fetchProductHuntCandidates(options: Required<Pick<DiscoveryOption
       productHuntUrl: link,
       launchDate: new Date(timestamp).toISOString().slice(0, 10),
       category: 'AI tools',
+      sourceName: 'Product Hunt',
       sourceUrl: link,
     }]
   }).filter(isAiTool).slice(0, options.maxCandidates)
+}
+
+async function fetchBetaListCandidates(options: { fetchImpl: typeof fetch; betaListUrl: string; maxCandidates: number; now: Date }) {
+  const homepage = await fetchText(options.betaListUrl, options.fetchImpl)
+  const links = betaListStartupLinks(homepage, options.betaListUrl).slice(0, options.maxCandidates * 2)
+  const candidates: LeadCandidate[] = []
+
+  for (const link of links) {
+    if (candidates.length >= options.maxCandidates) break
+    try {
+      const html = await fetchText(link, options.fetchImpl)
+      const toolName = titleFromHtml(html)
+      if (!toolName) continue
+      const description = descriptionFromHtml(html)
+      const candidate: LeadCandidate = {
+        toolName,
+        description,
+        betaListUrl: link,
+        websiteUrl: sanitizeUrl(chooseExternalWebsite(html, link)),
+        launchDate: options.now.toISOString().slice(0, 10),
+        category: 'AI tools',
+        sourceName: 'BetaList',
+        sourceUrl: link,
+      }
+      if (isAiTool(candidate)) candidates.push(candidate)
+    } catch {
+      // Individual startup pages may fail; keep the daily source scan moving.
+    }
+  }
+
+  return candidates
+}
+
+async function fetchDiscoveryCandidates(input: {
+  fetchImpl: typeof fetch
+  feedUrl: string
+  betaListUrl: string
+  lookbackHours: number
+  maxCandidates: number
+  now: Date
+  sources: string[]
+}) {
+  const candidates: LeadCandidate[] = []
+  const normalizedSources = new Set(input.sources.map((source) => source.trim().toLowerCase()).filter(Boolean))
+
+  if (normalizedSources.has('product_hunt') || normalizedSources.has('producthunt')) {
+    candidates.push(...await fetchProductHuntCandidates(input))
+  }
+
+  if (normalizedSources.has('betalist') || normalizedSources.has('beta_list')) {
+    candidates.push(...await fetchBetaListCandidates({ fetchImpl: input.fetchImpl, betaListUrl: input.betaListUrl, maxCandidates: input.maxCandidates, now: input.now }))
+  }
+
+  const seen = new Set<string>()
+  return candidates.filter((candidate) => {
+    const key = `${candidate.sourceName}:${candidate.toolName}`.toLowerCase()
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  }).slice(0, input.maxCandidates)
 }
 
 async function validateContact(candidate: LeadCandidate, fetchImpl: typeof fetch): Promise<{ contacts: ValidatedContact[]; inspection: CandidateInspection }> {
@@ -249,7 +342,9 @@ async function validateContact(candidate: LeadCandidate, fetchImpl: typeof fetch
       contacts: [],
       inspection: {
         toolName: candidate.toolName,
+        sourceName: candidate.sourceName,
         productHuntUrl: candidate.productHuntUrl,
+        betaListUrl: candidate.betaListUrl,
         pagesChecked,
         contactLinksFound: [],
         emailsFound: [],
@@ -290,7 +385,9 @@ async function validateContact(candidate: LeadCandidate, fetchImpl: typeof fetch
     contacts,
     inspection: {
       toolName: candidate.toolName,
+      sourceName: candidate.sourceName,
       productHuntUrl: candidate.productHuntUrl,
+      betaListUrl: candidate.betaListUrl,
       websiteUrl,
       pagesChecked,
       contactLinksFound: Array.from(contactLinksFound),
@@ -309,11 +406,11 @@ function leadFromScored(scored: ScoredLead, runId: string, now: Date): OutreachL
     tool_name: scored.candidate.toolName,
     company_name: scored.candidate.toolName,
     website_url: scored.candidate.websiteUrl,
-    product_hunt_url: scored.candidate.productHuntUrl,
+    product_hunt_url: scored.candidate.productHuntUrl || scored.candidate.betaListUrl,
     launch_date: scored.candidate.launchDate,
     category: scored.candidate.category,
     contact_type: scored.contact.contactType,
-    source: 'Product Hunt daily discovery',
+    source: `${scored.candidate.sourceName} daily discovery`,
     public_contact_source_url: scored.contact.sourceUrl,
     personalized_opening: opening,
     priority: scored.score >= 85 ? 'high' : scored.score >= 70 ? 'medium' : 'low',
@@ -356,8 +453,9 @@ function writeReport(report: DailyLeadDiscoveryReport, reportDir: string) {
     '',
     '## Candidate Inspections',
     ...report.candidateInspections.map((item) => [
-      `- ${item.toolName}: ${item.status} - ${item.reason}`,
+      `- ${item.toolName} (${item.sourceName}): ${item.status} - ${item.reason}`,
       `  - Product Hunt: ${item.productHuntUrl || 'unknown'}`,
+      `  - BetaList: ${item.betaListUrl || 'unknown'}`,
       `  - Website: ${item.websiteUrl || 'unknown'}`,
       `  - Pages checked: ${item.pagesChecked.length}`,
       `  - Contact links found: ${item.contactLinksFound.length}`,
@@ -377,6 +475,8 @@ export async function runDailyLeadDiscovery(options: DiscoveryOptions = {}): Pro
   const runId = `daily_${now.toISOString().slice(0, 10)}_${now.getTime()}`
   const fetchImpl = options.fetchImpl || fetch
   const feedUrl = options.feedUrl || process.env.DAILY_LEAD_DISCOVERY_FEED_URL || DEFAULT_FEED_URL
+  const betaListUrl = options.betaListUrl || process.env.DAILY_LEAD_DISCOVERY_BETALIST_URL || DEFAULT_BETALIST_URL
+  const sources = options.sources || (process.env.DAILY_LEAD_DISCOVERY_SOURCES || 'product_hunt,betalist').split(',')
   const lookbackHours = options.lookbackHours || Number(process.env.DAILY_LEAD_DISCOVERY_LOOKBACK_HOURS || 48)
   const maxCandidates = options.maxCandidates || Number(process.env.DAILY_LEAD_DISCOVERY_MAX_CANDIDATES || 30)
   const maxLeads = options.maxLeads || Number(process.env.DAILY_LEAD_DISCOVERY_MAX_LEADS || 5)
@@ -389,7 +489,7 @@ export async function runDailyLeadDiscovery(options: DiscoveryOptions = {}): Pro
   const skipped: DailyLeadDiscoveryReport['skipped'] = []
   const candidateInspections: CandidateInspection[] = []
 
-  const candidates = await fetchProductHuntCandidates({ fetchImpl, feedUrl, lookbackHours, maxCandidates, now })
+  const candidates = await fetchDiscoveryCandidates({ fetchImpl, feedUrl, betaListUrl, lookbackHours, maxCandidates, now, sources })
   const scored: ScoredLead[] = []
 
   for (const candidate of candidates) {

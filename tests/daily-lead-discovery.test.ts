@@ -41,6 +41,7 @@ test('qualified AI launches score above the default threshold', () => {
     websiteUrl: 'https://usefulai.dev',
     launchDate: '2026-08-02',
     category: 'AI tools',
+    sourceName: 'Product Hunt',
     sourceUrl: 'https://www.producthunt.com/posts/useful-ai',
   }
   const contact: ValidatedContact = {
@@ -54,6 +55,45 @@ test('qualified AI launches score above the default threshold', () => {
 
   assert.equal(result.score >= 70, true)
   assert.equal(result.reasons.includes('AI-related product positioning'), true)
+})
+
+test('daily discovery can qualify BetaList startup contacts', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'aibeat-betalist-leads-'))
+  const reportDir = join(dir, 'reports')
+  const feed = `<?xml version="1.0"?><rss version="2.0"><channel></channel></rss>`
+
+  const fetchImpl = async (input: string | URL | Request): Promise<Response> => {
+    const url = input.toString()
+    if (url === 'https://example.test/feed') return response(feed, 200)
+    if (url === 'https://betalist.test') {
+      return response('<a href="/startups/beta-ai">Beta AI</a>', 200)
+    }
+    if (url === 'https://betalist.test/startups/beta-ai') {
+      return response('<h1>Beta AI</h1><h2>AI workspace assistant for startup teams</h2><a href="https://betaai.test">Visit Site</a>', 200)
+    }
+    if (url === 'https://betaai.test/') return response('<a href="/contact">Contact</a>', 200)
+    if (url === 'https://betaai.test/contact') return response('<a href="mailto:hello@betaai.test">hello@betaai.test</a>', 200)
+    return response('missing', 404)
+  }
+
+  const report = await runDailyLeadDiscovery({
+    now: new Date('2026-08-02T12:00:00Z'),
+    fetchImpl,
+    feedUrl: 'https://example.test/feed',
+    betaListUrl: 'https://betalist.test',
+    dryRun: true,
+    maxCandidates: 5,
+    maxLeads: 2,
+    reportDir,
+    storePath: join(dir, 'store.json'),
+    sources: ['betalist'],
+  })
+
+  assert.equal(report.candidatesFound, 1)
+  assert.equal(report.qualifiedLeads, 1)
+  assert.equal(report.candidateInspections[0].sourceName, 'BetaList')
+  assert.equal(report.candidateInspections[0].betaListUrl, 'https://betalist.test/startups/beta-ai')
+  assert.deepEqual(report.candidateInspections[0].validatedEmails, ['hello@betaai.test'])
 })
 
 test('daily discovery dry run validates leads and writes a report only', async () => {
@@ -92,6 +132,7 @@ test('daily discovery dry run validates leads and writes a report only', async (
     maxLeads: 2,
     reportDir,
     storePath: join(dir, 'store.json'),
+    sources: ['product_hunt'],
   })
 
   assert.equal(report.candidatesFound, 1)

@@ -47,7 +47,9 @@ jobs:
           AUTOMATED_KIT_SEND_ENABLED: 'false'
           OUTREACH_SAFETY_LIMIT: ${{ vars.OUTREACH_SAFETY_LIMIT || '25' }}
           OUTREACH_TIMEZONE: ${{ vars.OUTREACH_TIMEZONE || 'America/New_York' }}
+          DAILY_LEAD_DISCOVERY_SOURCES: ${{ vars.DAILY_LEAD_DISCOVERY_SOURCES || 'product_hunt,betalist' }}
           DAILY_LEAD_DISCOVERY_FEED_URL: ${{ vars.DAILY_LEAD_DISCOVERY_FEED_URL || 'https://www.producthunt.com/feed' }}
+          DAILY_LEAD_DISCOVERY_BETALIST_URL: ${{ vars.DAILY_LEAD_DISCOVERY_BETALIST_URL || 'https://betalist.com' }}
           DAILY_LEAD_DISCOVERY_LOOKBACK_HOURS: ${{ vars.DAILY_LEAD_DISCOVERY_LOOKBACK_HOURS || '48' }}
           DAILY_LEAD_DISCOVERY_MAX_CANDIDATES: ${{ vars.DAILY_LEAD_DISCOVERY_MAX_CANDIDATES || '30' }}
           DAILY_LEAD_DISCOVERY_MAX_LEADS: ${{ inputs.max_leads || vars.DAILY_LEAD_DISCOVERY_MAX_LEADS || '5' }}
