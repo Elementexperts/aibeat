@@ -1,0 +1,66 @@
+{
+  "createdAt": "2026-08-01T18:38:25.834Z",
+  "productionSendingEnabled": false,
+  "results": [
+    {
+      "broadcastId": "25257801",
+      "campaignName": "CapWords - Editorial Outreach",
+      "recipient": "press@capwords.app",
+      "draftUrl": null,
+      "validationStatus": "valid",
+      "tagId": "21787050",
+      "tagCreated": true,
+      "status": "draft",
+      "scheduled": false,
+      "published": false
+    },
+    {
+      "broadcastId": "25257803",
+      "campaignName": "PaneFlow - Featured Tool",
+      "recipient": "hello@paneflow.com",
+      "draftUrl": null,
+      "validationStatus": "valid",
+      "tagId": "21787051",
+      "tagCreated": true,
+      "status": "draft",
+      "scheduled": false,
+      "published": false
+    },
+    {
+      "broadcastId": "25257804",
+      "campaignName": "Migma AI - Marketing Feature",
+      "recipient": "info@migma.ai",
+      "draftUrl": null,
+      "validationStatus": "valid",
+      "tagId": "21787052",
+      "tagCreated": true,
+      "status": "draft",
+      "scheduled": false,
+      "published": false
+    },
+    {
+      "broadcastId": "25257805",
+      "campaignName": "Cleanlist AI - Productivity Feature",
+      "recipient": "support@cleanlist.ai",
+      "draftUrl": null,
+      "validationStatus": "valid",
+      "tagId": "21787053",
+      "tagCreated": true,
+      "status": "draft",
+      "scheduled": false,
+      "published": false
+    },
+    {
+      "broadcastId": "25257806",
+      "campaignName": "Fluree AI - Enterprise AI Feature",
+      "recipient": "sales@flur.ee",
+      "draftUrl": null,
+      "validationStatus": "valid",
+      "tagId": "21787054",
+      "tagCreated": true,
+      "status": "draft",
+      "scheduled": false,
+      "published": false
+    }
+  ]
+}

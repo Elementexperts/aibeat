@@ -1,0 +1,99 @@
+name: Product Hunt Outreach Manager
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Outreach action
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - sync-kit
+          - create-draft
+          - schedule
+      send_at:
+        description: ISO timestamp for schedule action only
+        required: false
+        default: ''
+      confirm_schedule:
+        description: Explicitly confirm scheduling
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  outreach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Run outreach action
+        env:
+          KIT_API_KEY: ${{ secrets.KIT_API_KEY }}
+          KIT_OUTREACH_TAG_ID: ${{ vars.KIT_OUTREACH_TAG_ID }}
+          KIT_DEFAULT_EMAIL_TEMPLATE_ID: ${{ vars.KIT_DEFAULT_EMAIL_TEMPLATE_ID }}
+          OUTREACH_SEND_ENABLED: ${{ vars.OUTREACH_SEND_ENABLED || 'false' }}
+          OUTREACH_SAFETY_LIMIT: ${{ vars.OUTREACH_SAFETY_LIMIT || '25' }}
+          OUTREACH_TIMEZONE: ${{ vars.OUTREACH_TIMEZONE || 'America/New_York' }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.aibeat.dev' }}
+        shell: bash
+        run: |
+          case "${{ inputs.action }}" in
+            preview)
+              npm run outreach -- preview
+              ;;
+            sync-kit)
+              npm run outreach -- sync-kit
+              ;;
+            create-draft)
+              npm run outreach -- create-draft
+              ;;
+            schedule)
+              if [ "${{ inputs.confirm_schedule }}" != "true" ]; then
+                echo "Scheduling requires confirm_schedule=true."
+                exit 1
+              fi
+              if [ -z "${{ inputs.send_at }}" ]; then
+                echo "Scheduling requires send_at."
+                exit 1
+              fi
+              npm run outreach -- schedule --send-at "${{ inputs.send_at }}" --confirm
+              ;;
+          esac
+
+      - name: Upload outreach store snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: outreach-store
+          path: data/outreach/store.json
+          if-no-files-found: warn
+
+      - name: Workflow summary
+        shell: bash
+        run: |
+          {
+            echo "## Product Hunt Outreach Manager"
+            echo ""
+            echo "- Action: ${{ inputs.action }}"
+            echo "- Sending enabled: ${{ vars.OUTREACH_SEND_ENABLED || 'false' }}"
+            echo "- Draft-first safety remains enforced by the server CLI."
+          } >> "$GITHUB_STEP_SUMMARY"

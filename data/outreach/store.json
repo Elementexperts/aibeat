@@ -1,0 +1,94 @@
+{
+  "leads": [
+    {
+      "id": "lead_aW5mb0BhaWJlYXQu",
+      "email": "info@aibeat.dev",
+      "first_name": "Nomoz",
+      "founder_name": "Nomoz Fayzullaev",
+      "company_name": "AIBeat",
+      "tool_name": "AIBeat Test",
+      "website_url": "https://www.aibeat.dev/",
+      "product_hunt_url": "https://www.producthunt.com/products/aibeat",
+      "launch_date": "2026-07-31",
+      "category": "AI tools",
+      "contact_type": "partnerships",
+      "source": "Product Hunt",
+      "public_contact_source_url": "https://www.aibeat.dev/",
+      "personalized_opening": "Testing the outreach workflow safely before using real contacts.",
+      "status": "synced",
+      "priority": "high",
+      "consent_status": "legitimate_business_interest_reviewed",
+      "lawful_basis": "legitimate_business_interest_reviewed",
+      "approved_for_outreach": true,
+      "created_at": "2026-08-01T18:04:02.414Z",
+      "updated_at": "2026-08-01T18:06:47.984Z",
+      "approved_at": "2026-08-01T18:06:30.611Z",
+      "approved_by": "info@aibeat.dev",
+      "kit_subscriber_id": "4234037079",
+      "kit_tag_id": "21785142"
+    }
+  ],
+  "campaigns": [
+    {
+      "id": "campaign_product_hunt",
+      "name": "AIBeat Product Hunt Outreach",
+      "slug": "product-hunt-outreach",
+      "subject_template": "Would love to feature {{tool_name}} on AIBeat",
+      "preview_text": "A possible AIBeat feature for {{tool_name}}",
+      "body_template_html": "Hi {{first_name}},\n\n{{personalized_opening}}\n\nI'm Nomoz, founder of AIBeat, a platform covering useful AI tools, startup launches and important developments across the AI industry.\n\nI believe {{tool_name}} could be a strong fit for our readers. We would be interested in exploring an AIBeat feature, which may include an editorial listing, newsletter placement, product review or broader promotional coverage.\n\nOur goal is to introduce useful AI products to people actively looking for new tools and solutions.\n\nYou can learn more about AIBeat here:\nhttps://www.aibeat.dev\n\nWould you be open to receiving our media kit and available feature options?\n\nBest regards,\n\nNomoz Fayzullaev\nFounder, AIBeat\nhttps://www.aibeat.dev\nhello@aibeat.dev",
+      "body_template_text": "Hi {{first_name}},\n\n{{personalized_opening}}\n\nI'm Nomoz, founder of AIBeat, a platform covering useful AI tools, startup launches and important developments across the AI industry.\n\nI believe {{tool_name}} could be a strong fit for our readers. We would be interested in exploring an AIBeat feature, which may include an editorial listing, newsletter placement, product review or broader promotional coverage.\n\nOur goal is to introduce useful AI products to people actively looking for new tools and solutions.\n\nYou can learn more about AIBeat here:\nhttps://www.aibeat.dev\n\nWould you be open to receiving our media kit and available feature options?\n\nBest regards,\n\nNomoz Fayzullaev\nFounder, AIBeat\nhttps://www.aibeat.dev\nhello@aibeat.dev",
+      "follow_up_1_subject": "Following up about {{tool_name}}",
+      "follow_up_1_body_html": "Hi {{first_name}},\n\nI wanted to follow up on my earlier message about featuring {{tool_name}} on AIBeat.\n\nYour Product Hunt launch looked relevant to our audience, and we would still be glad to explore an editorial feature or optional promotional placement.\n\nWould it be useful if I sent our media kit and available feature options?\n\nBest regards,\n\nNomoz\nAIBeat\nhttps://www.aibeat.dev",
+      "follow_up_2_subject": "One last note about {{tool_name}}",
+      "follow_up_2_body_html": "Hi {{first_name}},\n\nI know things can be busy after a product launch, so I'll keep this brief.\n\nI wanted to make one final follow-up regarding a possible AIBeat feature for {{tool_name}}. If additional exposure is useful, I would be glad to share the available options.\n\nIf this is not relevant at the moment, no action is needed and I won't continue following up.\n\nWishing you continued success with the product.\n\nBest regards,\n\nNomoz\nAIBeat",
+      "status": "draft",
+      "send_enabled": false,
+      "safety_limit": 25,
+      "timezone": "America/New_York",
+      "created_at": "2026-08-01T18:04:02.410Z",
+      "updated_at": "2026-08-01T18:16:15.650Z",
+      "kit_tag_id": "21785142",
+      "initial_broadcast_id": "25257611"
+    }
+  ],
+  "events": [
+    {
+      "id": "evt_1785607442411_1",
+      "created_at": "2026-08-01T18:04:02.411Z",
+      "campaign_id": "campaign_product_hunt",
+      "event_type": "campaign_created",
+      "metadata": {
+        "tag": "AIBeat Outreach � Product Hunt � July 2026"
+      }
+    },
+    {
+      "id": "evt_1785607442416_2",
+      "created_at": "2026-08-01T18:04:02.416Z",
+      "lead_id": "lead_aW5mb0BhaWJlYXQu",
+      "event_type": "lead_created"
+    },
+    {
+      "id": "evt_1785607590612_manual_approval",
+      "lead_id": "lead_aW5mb0BhaWJlYXQu",
+      "event_type": "lead_approved",
+      "created_by": "info@aibeat.dev",
+      "created_at": "2026-08-01T18:06:30.611Z"
+    },
+    {
+      "id": "evt_1785607607987_4",
+      "created_at": "2026-08-01T18:06:47.987Z",
+      "lead_id": "lead_aW5mb0BhaWJlYXQu",
+      "campaign_id": "campaign_product_hunt",
+      "event_type": "kit_sync_completed"
+    },
+    {
+      "id": "evt_1785608175651_draft_created",
+      "campaign_id": "campaign_product_hunt",
+      "event_type": "draft_created",
+      "created_at": "2026-08-01T18:16:15.650Z",
+      "metadata": {
+        "broadcast_id": "25257611"
+      }
+    }
+  ]
+}

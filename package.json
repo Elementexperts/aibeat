@@ -8,8 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/reddit/reddit-automation.test.ts tests/newsletter-attribution.test.ts tests/kit-source-tags.test.ts",
+    "test": "node --import tsx --test tests/reddit/reddit-automation.test.ts tests/newsletter-attribution.test.ts tests/kit-source-tags.test.ts tests/daily-lead-discovery.test.ts",
     "kit:setup-source-tags": "tsx scripts/setup-kit-source-tags.ts",
+    "leads:daily": "tsx scripts/daily-lead-discovery.ts",
+    "outreach": "tsx lib/outreach-cli.ts",
     "reddit:generate": "tsx scripts/reddit/index.ts",
     "reddit:publish": "tsx scripts/reddit/index.ts --publish"
   },

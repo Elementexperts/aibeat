@@ -1,0 +1,80 @@
+name: AIBeat Daily Lead Discovery
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Run discovery without writing leads or creating Kit drafts
+        required: true
+        default: false
+        type: boolean
+      max_leads:
+        description: Maximum qualified leads to draft
+        required: false
+        default: '5'
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Run daily lead discovery
+        env:
+          KIT_API_KEY: ${{ secrets.KIT_API_KEY }}
+          KIT_OUTREACH_TAG_ID: ${{ vars.KIT_OUTREACH_TAG_ID }}
+          KIT_DEFAULT_EMAIL_TEMPLATE_ID: ${{ vars.KIT_DEFAULT_EMAIL_TEMPLATE_ID }}
+          OUTREACH_SEND_ENABLED: 'false'
+          AUTOMATED_KIT_SEND_ENABLED: 'false'
+          OUTREACH_SAFETY_LIMIT: ${{ vars.OUTREACH_SAFETY_LIMIT || '25' }}
+          OUTREACH_TIMEZONE: ${{ vars.OUTREACH_TIMEZONE || 'America/New_York' }}
+          DAILY_LEAD_DISCOVERY_FEED_URL: ${{ vars.DAILY_LEAD_DISCOVERY_FEED_URL || 'https://www.producthunt.com/feed' }}
+          DAILY_LEAD_DISCOVERY_LOOKBACK_HOURS: ${{ vars.DAILY_LEAD_DISCOVERY_LOOKBACK_HOURS || '48' }}
+          DAILY_LEAD_DISCOVERY_MAX_CANDIDATES: ${{ vars.DAILY_LEAD_DISCOVERY_MAX_CANDIDATES || '30' }}
+          DAILY_LEAD_DISCOVERY_MAX_LEADS: ${{ inputs.max_leads || vars.DAILY_LEAD_DISCOVERY_MAX_LEADS || '5' }}
+          DAILY_LEAD_DISCOVERY_MIN_SCORE: ${{ vars.DAILY_LEAD_DISCOVERY_MIN_SCORE || '70' }}
+          DAILY_LEAD_DISCOVERY_CREATE_DRAFTS: 'true'
+          DAILY_LEAD_DISCOVERY_DRY_RUN: ${{ inputs.dry_run || 'false' }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.aibeat.dev' }}
+        run: npm run leads:daily -- --max-leads "${DAILY_LEAD_DISCOVERY_MAX_LEADS}"
+
+      - name: Upload daily lead report
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-lead-discovery-report
+          path: |
+            data/outreach/reports/*.json
+            data/outreach/reports/*.md
+            data/outreach/store.json
+          if-no-files-found: warn
+
+      - name: Workflow summary
+        shell: bash
+        run: |
+          {
+            echo "## AIBeat Daily Lead Discovery"
+            echo ""
+            echo "- Schedule: daily at 04:00 UTC"
+            echo "- Production sending: disabled"
+            echo "- Kit behavior: one-recipient draft broadcasts only"
+            echo "- Reports: uploaded as workflow artifacts"
+          } >> "$GITHUB_STEP_SUMMARY"
