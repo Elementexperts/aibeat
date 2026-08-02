@@ -4,7 +4,7 @@
 
 - Framework: Next.js 14 App Router.
 - React: 18.
-- Runtime target: Node.js 20 or 22 LTS. Node 24 is not used for production validation because local Next.js 14 startup/build can freeze before compilation on that runtime.
+- Runtime target: Node.js 22.x.
 - Styling: Tailwind CSS 3 plus global CSS utilities.
 - Icons: `lucide-react`.
 - Animation: CSS keyframes only for the first redesign phase.
@@ -47,3 +47,7 @@ The redesign preserves existing URLs, Kit newsletter signup, tool submission API
 ## Compatibility
 
 New premium pages opt into the dark system with `dark-page`. Older pages remain readable through a compatibility surface until they are redesigned in later phases.
+
+## Deployment
+
+AIBeat production builds use Node.js 22.x. GitHub Actions and Vercel should use the same Node major version so validation matches production. New production deployments are triggered automatically by pushes to `main`.
