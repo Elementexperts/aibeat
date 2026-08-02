@@ -253,14 +253,14 @@ export default async function HomePage() {
                 <span className="rounded-full bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">{heroArticle.category}</span>
                 <h3 className="mt-6 text-3xl font-black leading-tight text-white md:text-5xl">{heroArticle.title}</h3>
                 <p className="mt-5 max-w-2xl text-base leading-7 text-slate-400">{heroArticle.deck}</p>
-                <div className="mt-6 text-xs text-slate-500">{heroArticle.author} Â- {heroArticle.publishedAt} Â- {heroArticle.readTime} min read</div>
+                <div className="mt-6 text-xs text-slate-500">{heroArticle.author} Ã‚- {heroArticle.publishedAt} Ã‚- {heroArticle.readTime} min read</div>
               </Link>
               <div className="grid gap-4">
                 {secondaryArticles.map((article) => (
                   <Link key={article.slug} href={`/news/${article.slug}`} className="premium-card p-5">
                     <div className="text-xs uppercase tracking-[0.18em] text-slate-500">{article.category}</div>
                     <h3 className="mt-3 text-lg font-semibold leading-snug text-white">{article.title}</h3>
-                    <div className="mt-3 text-xs text-slate-500">{article.publishedAt} Â- {article.readTime} min read</div>
+                    <div className="mt-3 text-xs text-slate-500">{article.publishedAt} Ã‚- {article.readTime} min read</div>
                   </Link>
                 ))}
               </div>
