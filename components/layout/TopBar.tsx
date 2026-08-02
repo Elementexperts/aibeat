@@ -27,7 +27,7 @@ export function TopBar() {
           </span>
         </div>
         <div className="hidden sm:block">
-          {TOOLS.length} indexed tools Â- daily news Â- founder submissions open
+          {TOOLS.length} indexed tools Ã‚- daily news Ã‚- founder submissions open
         </div>
       </div>
     </div>
