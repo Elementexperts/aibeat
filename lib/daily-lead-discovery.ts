@@ -88,9 +88,10 @@ const BUSINESS_LOCALS: Array<{ match: RegExp; type: OutreachContactType }> = [
   { match: /^(support|help)$/, type: 'support' },
   { match: /^(founders?|founder)$/, type: 'founder_public' },
 ]
-const BLOCKED_WEBSITE_HOSTS = ['producthunt.com', 'betalist.com', 'twitter.com', 'x.com', 'linkedin.com', 'facebook.com', 'instagram.com', 'youtube.com', 'github.com', 'medium.com']
+const BLOCKED_WEBSITE_HOSTS = ['producthunt.com', 'betalist.com', 'feedburner.com', 'feeds.feedburner.com', 'twitter.com', 'x.com', 'linkedin.com', 'facebook.com', 'instagram.com', 'youtube.com', 'github.com', 'medium.com']
 const CONTACT_PATHS = ['/', '/contact', '/contact-us', '/about', '/company', '/team', '/press', '/media', '/partnerships', '/partners', '/support', '/help', '/pricing', '/terms']
 const CONTACT_LINK_RE = /(contact|about|company|team|press|media|partner|support|help|sales|pricing|terms)/i
+const FEED_LINK_RE = /(^|\/)(feed|rss|atom)(\/|$)|\.(rss|xml|atom)(\?|#|$)|feedburner/i
 
 function stripHtml(value: string) {
   return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
@@ -149,6 +150,19 @@ function extractLinks(html: string, baseUrl: string) {
   return Array.from(new Set(links))
 }
 
+function isBlockedWebsiteUrl(link: string, sourceUrl: string) {
+  try {
+    const url = new URL(link)
+    const hostname = url.hostname.replace(/^www\./, '').toLowerCase()
+    if (hostname === host(sourceUrl)) return true
+    if (BLOCKED_WEBSITE_HOSTS.some((blocked) => hostname === blocked || hostname.endsWith(`.${blocked}`))) return true
+    if (FEED_LINK_RE.test(url.href)) return true
+    return false
+  } catch {
+    return true
+  }
+}
+
 function sameSite(link: string, websiteUrl: string) {
   return rootDomain(host(link)) === rootDomain(host(websiteUrl))
 }
@@ -160,10 +174,7 @@ function contactLinksFromHtml(html: string, pageUrl: string, websiteUrl: string)
 }
 
 function chooseExternalWebsite(productHuntHtml: string, productHuntUrl: string) {
-  return extractLinks(productHuntHtml, productHuntUrl).find((link) => {
-    const hostname = host(link)
-    return hostname && !BLOCKED_WEBSITE_HOSTS.some((blocked) => hostname === blocked || hostname.endsWith(`.${blocked}`))
-  })
+  return extractLinks(productHuntHtml, productHuntUrl).find((link) => !isBlockedWebsiteUrl(link, productHuntUrl))
 }
 
 function titleFromHtml(html: string) {

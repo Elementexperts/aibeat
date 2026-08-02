@@ -69,7 +69,7 @@ test('daily discovery can qualify BetaList startup contacts', async () => {
       return response('<a href="/startups/beta-ai">Beta AI</a>', 200)
     }
     if (url === 'https://betalist.test/startups/beta-ai') {
-      return response('<h1>Beta AI</h1><h2>AI workspace assistant for startup teams</h2><a href="https://betaai.test">Visit Site</a>', 200)
+      return response('<h1>Beta AI</h1><h2>AI workspace assistant for startup teams</h2><a href="https://feeds.feedburner.com/BetaList">RSS</a><a href="https://betaai.test">Visit Site</a>', 200)
     }
     if (url === 'https://betaai.test/') return response('<a href="/contact">Contact</a>', 200)
     if (url === 'https://betaai.test/contact') return response('<a href="mailto:hello@betaai.test">hello@betaai.test</a>', 200)
@@ -93,6 +93,7 @@ test('daily discovery can qualify BetaList startup contacts', async () => {
   assert.equal(report.qualifiedLeads, 1)
   assert.equal(report.candidateInspections[0].sourceName, 'BetaList')
   assert.equal(report.candidateInspections[0].betaListUrl, 'https://betalist.test/startups/beta-ai')
+  assert.equal(report.candidateInspections[0].websiteUrl, 'https://betaai.test/')
   assert.deepEqual(report.candidateInspections[0].validatedEmails, ['hello@betaai.test'])
 })
 
