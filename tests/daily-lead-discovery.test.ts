@@ -69,7 +69,7 @@ test('daily discovery can qualify BetaList startup contacts', async () => {
       return response('<a href="/startups/beta-ai">Beta AI</a>', 200)
     }
     if (url === 'https://betalist.test/startups/beta-ai') {
-      return response('<h1>Beta AI</h1><h2>AI workspace assistant for startup teams</h2><a href="https://feeds.feedburner.com/BetaList">RSS</a><a href="https://betaai.test">Visit Site</a>', 200)
+      return response('<h1>Beta AI</h1><h2>AI workspace assistant for startup teams</h2><a href="https://feeds.feedburner.com/BetaList">RSS</a><a href="https://startup.jobs">Jobs</a><a href="https://betaai.test">Visit Site</a>', 200)
     }
     if (url === 'https://betaai.test/') return response('<a href="/contact">Contact</a>', 200)
     if (url === 'https://betaai.test/contact') return response('<a href="mailto:hello@betaai.test">hello@betaai.test</a>', 200)
@@ -95,6 +95,54 @@ test('daily discovery can qualify BetaList startup contacts', async () => {
   assert.equal(report.candidateInspections[0].betaListUrl, 'https://betalist.test/startups/beta-ai')
   assert.equal(report.candidateInspections[0].websiteUrl, 'https://betaai.test/')
   assert.deepEqual(report.candidateInspections[0].validatedEmails, ['hello@betaai.test'])
+})
+
+test('website detection ignores assets analytics and generic jobs links', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'aibeat-link-filter-leads-'))
+  const reportDir = join(dir, 'reports')
+  const feed = `<?xml version="1.0"?>
+    <rss version="2.0">
+      <channel>
+        <item>
+          <title>Signal AI</title>
+          <link>https://www.producthunt.com/posts/signal-ai</link>
+          <description>AI agent for sales automation</description>
+          <pubDate>Sun, 02 Aug 2026 08:00:00 GMT</pubDate>
+        </item>
+      </channel>
+    </rss>`
+
+  const fetchImpl = async (input: string | URL | Request): Promise<Response> => {
+    const url = input.toString()
+    if (url === 'https://example.test/feed') return response(feed, 200)
+    if (url === 'https://www.producthunt.com/posts/signal-ai') {
+      return response([
+        '<a href="https://ph-files.imgix.net/logo.gif">Logo</a>',
+        '<a href="https://www.googletagmanager.com/gtag/js?id=G-WZ46833KH9">Analytics</a>',
+        '<a href="https://startup.jobs">Jobs</a>',
+        '<a href="https://signalai.test">Visit Website</a>',
+      ].join(''), 200)
+    }
+    if (url === 'https://signalai.test/') return response('<a href="/contact">Contact</a>', 200)
+    if (url === 'https://signalai.test/contact') return response('<a href="mailto:sales@signalai.test">sales@signalai.test</a>', 200)
+    return response('missing', 404)
+  }
+
+  const report = await runDailyLeadDiscovery({
+    now: new Date('2026-08-02T12:00:00Z'),
+    fetchImpl,
+    feedUrl: 'https://example.test/feed',
+    dryRun: true,
+    maxCandidates: 5,
+    maxLeads: 2,
+    reportDir,
+    storePath: join(dir, 'store.json'),
+    sources: ['product_hunt'],
+  })
+
+  assert.equal(report.qualifiedLeads, 1)
+  assert.equal(report.candidateInspections[0].websiteUrl, 'https://signalai.test/')
+  assert.deepEqual(report.candidateInspections[0].validatedEmails, ['sales@signalai.test'])
 })
 
 test('daily discovery dry run validates leads and writes a report only', async () => {

@@ -88,10 +88,36 @@ const BUSINESS_LOCALS: Array<{ match: RegExp; type: OutreachContactType }> = [
   { match: /^(support|help)$/, type: 'support' },
   { match: /^(founders?|founder)$/, type: 'founder_public' },
 ]
-const BLOCKED_WEBSITE_HOSTS = ['producthunt.com', 'betalist.com', 'feedburner.com', 'feeds.feedburner.com', 'twitter.com', 'x.com', 'linkedin.com', 'facebook.com', 'instagram.com', 'youtube.com', 'github.com', 'medium.com']
+const BLOCKED_WEBSITE_HOSTS = [
+  'producthunt.com',
+  'betalist.com',
+  'feedburner.com',
+  'feeds.feedburner.com',
+  'ph-files.imgix.net',
+  'imgix.net',
+  'googletagmanager.com',
+  'google-analytics.com',
+  'startup.jobs',
+  'twitter.com',
+  'x.com',
+  'linkedin.com',
+  'facebook.com',
+  'instagram.com',
+  'youtube.com',
+  'github.com',
+  'medium.com',
+]
 const CONTACT_PATHS = ['/', '/contact', '/contact-us', '/about', '/company', '/team', '/press', '/media', '/partnerships', '/partners', '/support', '/help', '/pricing', '/terms']
 const CONTACT_LINK_RE = /(contact|about|company|team|press|media|partner|support|help|sales|pricing|terms)/i
 const FEED_LINK_RE = /(^|\/)(feed|rss|atom)(\/|$)|\.(rss|xml|atom)(\?|#|$)|feedburner/i
+const ASSET_LINK_RE = /\.(gif|png|jpe?g|webp|svg|ico|css|js|mjs|map|json|txt|pdf|zip|mp4|mov|webm)(\?|#|$)/i
+const WEBSITE_INTENT_RE = /\b(website|visit site|visit website|launch|open app|get started|try it|try now|learn more|homepage|official site)\b/i
+const LOW_INTENT_RE = /\b(rss|feed|jobs?|careers?|privacy|terms|login|sign in|sign up|subscribe|newsletter|blog|press kit|media kit)\b/i
+
+type ExtractedLink = {
+  url: string
+  text: string
+}
 
 function stripHtml(value: string) {
   return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
@@ -140,14 +166,23 @@ export function isPublicBusinessEmail(email: string, websiteUrl?: string) {
 }
 
 function extractLinks(html: string, baseUrl: string) {
-  const links = Array.from(decodeBasicEntities(html).matchAll(/href=["']([^"']+)["']/gi)).flatMap((match) => {
+  return extractLinkRecords(html, baseUrl).map((link) => link.url)
+}
+
+function extractLinkRecords(html: string, baseUrl: string): ExtractedLink[] {
+  const links = Array.from(decodeBasicEntities(html).matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)).flatMap((match) => {
     try {
-      return [new URL(match[1], baseUrl).toString()]
+      return [{ url: new URL(match[1], baseUrl).toString(), text: stripHtml(match[2] || '') }]
     } catch {
       return []
     }
   })
-  return Array.from(new Set(links))
+  const seen = new Set<string>()
+  return links.filter((link) => {
+    if (seen.has(link.url)) return false
+    seen.add(link.url)
+    return true
+  })
 }
 
 function isBlockedWebsiteUrl(link: string, sourceUrl: string) {
@@ -157,10 +192,20 @@ function isBlockedWebsiteUrl(link: string, sourceUrl: string) {
     if (hostname === host(sourceUrl)) return true
     if (BLOCKED_WEBSITE_HOSTS.some((blocked) => hostname === blocked || hostname.endsWith(`.${blocked}`))) return true
     if (FEED_LINK_RE.test(url.href)) return true
+    if (ASSET_LINK_RE.test(url.pathname)) return true
     return false
   } catch {
     return true
   }
+}
+
+function websiteIntentScore(link: ExtractedLink) {
+  let score = 0
+  if (WEBSITE_INTENT_RE.test(link.text)) score += 20
+  if (/^https?:\/\/[^/?#]+\/?$/i.test(link.url)) score += 8
+  if (/producthunt|betalist/i.test(link.text)) score -= 10
+  if (LOW_INTENT_RE.test(link.text) || LOW_INTENT_RE.test(link.url)) score -= 10
+  return score
 }
 
 function sameSite(link: string, websiteUrl: string) {
@@ -174,7 +219,12 @@ function contactLinksFromHtml(html: string, pageUrl: string, websiteUrl: string)
 }
 
 function chooseExternalWebsite(productHuntHtml: string, productHuntUrl: string) {
-  return extractLinks(productHuntHtml, productHuntUrl).find((link) => !isBlockedWebsiteUrl(link, productHuntUrl))
+  const candidates = extractLinkRecords(productHuntHtml, productHuntUrl)
+    .filter((link) => !isBlockedWebsiteUrl(link.url, productHuntUrl))
+    .map((link, index) => ({ link, index, score: websiteIntentScore(link) }))
+    .filter((item) => item.score >= 0 || WEBSITE_INTENT_RE.test(item.link.text))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+  return candidates[0]?.link.url
 }
 
 function titleFromHtml(html: string) {
