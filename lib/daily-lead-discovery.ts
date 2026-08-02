@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { resolve } from 'node:path'
 import Parser from 'rss-parser'
 import { KitClient } from './kit/client'
 import { getDefaultCampaign, readOutreachStore, upsertLeads, writeOutreachStore } from './outreach-store'
@@ -31,6 +31,18 @@ export type ScoredLead = {
   reasons: string[]
 }
 
+export type CandidateInspection = {
+  toolName: string
+  productHuntUrl?: string
+  websiteUrl?: string
+  pagesChecked: string[]
+  contactLinksFound: string[]
+  emailsFound: string[]
+  validatedEmails: string[]
+  status: 'qualified' | 'needs_manual_review' | 'skipped'
+  reason: string
+}
+
 export type DailyLeadDiscoveryReport = {
   runId: string
   createdAt: string
@@ -40,6 +52,7 @@ export type DailyLeadDiscoveryReport = {
   qualifiedLeads: number
   leadsStored: number
   draftsCreated: Array<{ email: string; toolName: string; broadcastId: string; tagId?: string; reused: boolean }>
+  candidateInspections: CandidateInspection[]
   skipped: Array<{ toolName?: string; reason: string }>
 }
 
@@ -69,6 +82,8 @@ const BUSINESS_LOCALS: Array<{ match: RegExp; type: OutreachContactType }> = [
   { match: /^(founders?|founder)$/, type: 'founder_public' },
 ]
 const BLOCKED_WEBSITE_HOSTS = ['producthunt.com', 'twitter.com', 'x.com', 'linkedin.com', 'facebook.com', 'instagram.com', 'youtube.com', 'github.com', 'medium.com']
+const CONTACT_PATHS = ['/', '/contact', '/contact-us', '/about', '/company', '/team', '/press', '/media', '/partnerships', '/partners', '/support', '/help', '/pricing', '/terms']
+const CONTACT_LINK_RE = /(contact|about|company|team|press|media|partner|support|help|sales|pricing|terms)/i
 
 function stripHtml(value: string) {
   return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
@@ -127,6 +142,16 @@ function extractLinks(html: string, baseUrl: string) {
   return Array.from(new Set(links))
 }
 
+function sameSite(link: string, websiteUrl: string) {
+  return rootDomain(host(link)) === rootDomain(host(websiteUrl))
+}
+
+function contactLinksFromHtml(html: string, pageUrl: string, websiteUrl: string) {
+  return extractLinks(html, pageUrl)
+    .filter((link) => sameSite(link, websiteUrl) && CONTACT_LINK_RE.test(link))
+    .slice(0, 20)
+}
+
 function chooseExternalWebsite(productHuntHtml: string, productHuntUrl: string) {
   return extractLinks(productHuntHtml, productHuntUrl).find((link) => {
     const hostname = host(link)
@@ -136,7 +161,8 @@ function chooseExternalWebsite(productHuntHtml: string, productHuntUrl: string) 
 
 function contactPageUrls(websiteUrl: string) {
   const origin = new URL(websiteUrl).origin
-  return [websiteUrl, `${origin}/contact`, `${origin}/about`, `${origin}/press`, `${origin}/media`]
+  const directPages = CONTACT_PATHS.map((path) => new URL(path, origin).toString())
+  return Array.from(new Set([websiteUrl, ...directPages]))
 }
 
 async function fetchText(url: string, fetchImpl: typeof fetch) {
@@ -203,8 +229,11 @@ async function fetchProductHuntCandidates(options: Required<Pick<DiscoveryOption
   }).filter(isAiTool).slice(0, options.maxCandidates)
 }
 
-async function validateContact(candidate: LeadCandidate, fetchImpl: typeof fetch): Promise<ValidatedContact | undefined> {
+async function validateContact(candidate: LeadCandidate, fetchImpl: typeof fetch): Promise<{ contacts: ValidatedContact[]; inspection: CandidateInspection }> {
   let websiteUrl = candidate.websiteUrl
+  const pagesChecked: string[] = []
+  const contactLinksFound = new Set<string>()
+  const emailsFound = new Set<string>()
 
   if (!websiteUrl && candidate.productHuntUrl) {
     try {
@@ -215,19 +244,62 @@ async function validateContact(candidate: LeadCandidate, fetchImpl: typeof fetch
     }
   }
 
-  if (!websiteUrl) return undefined
+  if (!websiteUrl) {
+    return {
+      contacts: [],
+      inspection: {
+        toolName: candidate.toolName,
+        productHuntUrl: candidate.productHuntUrl,
+        pagesChecked,
+        contactLinksFound: [],
+        emailsFound: [],
+        validatedEmails: [],
+        status: 'needs_manual_review',
+        reason: 'No product website URL found from the feed or Product Hunt page.',
+      },
+    }
+  }
 
-  for (const pageUrl of contactPageUrls(websiteUrl)) {
+  const queued = contactPageUrls(websiteUrl)
+  const seenPages = new Set<string>()
+  const contacts: ValidatedContact[] = []
+
+  for (let index = 0; index < queued.length && index < 30; index += 1) {
+    const pageUrl = queued[index]
+    if (seenPages.has(pageUrl)) continue
+    seenPages.add(pageUrl)
+    pagesChecked.push(pageUrl)
     try {
       const html = await fetchText(pageUrl, fetchImpl)
-      const email = extractEmailsFromHtml(html).find((item) => isPublicBusinessEmail(item, websiteUrl))
-      if (email) return { email, contactType: inferContactType(email), sourceUrl: pageUrl, notes: `Email found on public page: ${pageUrl}` }
+      for (const link of contactLinksFromHtml(html, pageUrl, websiteUrl)) {
+        contactLinksFound.add(link)
+        if (!seenPages.has(link) && !queued.includes(link)) queued.push(link)
+      }
+      for (const email of extractEmailsFromHtml(html)) {
+        emailsFound.add(email)
+        if (isPublicBusinessEmail(email, websiteUrl) && !contacts.some((contact) => contact.email === email)) {
+          contacts.push({ email, contactType: inferContactType(email), sourceUrl: pageUrl, notes: `Email found on public page: ${pageUrl}` })
+        }
+      }
     } catch {
       // Some contact routes will not exist; the next likely public page is tried.
     }
   }
 
-  return undefined
+  return {
+    contacts,
+    inspection: {
+      toolName: candidate.toolName,
+      productHuntUrl: candidate.productHuntUrl,
+      websiteUrl,
+      pagesChecked,
+      contactLinksFound: Array.from(contactLinksFound),
+      emailsFound: Array.from(emailsFound),
+      validatedEmails: contacts.map((contact) => contact.email),
+      status: contacts.length > 0 ? 'qualified' : 'needs_manual_review',
+      reason: contacts.length > 0 ? 'Validated public business contact found.' : 'Website inspected, but no validated public business email was found.',
+    },
+  }
 }
 
 function leadFromScored(scored: ScoredLead, runId: string, now: Date): OutreachLead | undefined {
@@ -282,6 +354,17 @@ function writeReport(report: DailyLeadDiscoveryReport, reportDir: string) {
     '## Drafts',
     ...report.draftsCreated.map((draft) => `- ${draft.toolName} <${draft.email}>: broadcast ${draft.broadcastId}`),
     '',
+    '## Candidate Inspections',
+    ...report.candidateInspections.map((item) => [
+      `- ${item.toolName}: ${item.status} - ${item.reason}`,
+      `  - Product Hunt: ${item.productHuntUrl || 'unknown'}`,
+      `  - Website: ${item.websiteUrl || 'unknown'}`,
+      `  - Pages checked: ${item.pagesChecked.length}`,
+      `  - Contact links found: ${item.contactLinksFound.length}`,
+      `  - Emails found: ${item.emailsFound.length ? item.emailsFound.join(', ') : 'none'}`,
+      `  - Validated emails: ${item.validatedEmails.length ? item.validatedEmails.join(', ') : 'none'}`,
+    ].join('\n')),
+    '',
     '## Skipped',
     ...report.skipped.map((item) => `- ${item.toolName || 'candidate'}: ${item.reason}`),
     '',
@@ -304,22 +387,27 @@ export async function runDailyLeadDiscovery(options: DiscoveryOptions = {}): Pro
   const storePath = options.storePath || undefined
   const store: OutreachStore = readOutreachStore(storePath)
   const skipped: DailyLeadDiscoveryReport['skipped'] = []
+  const candidateInspections: CandidateInspection[] = []
 
   const candidates = await fetchProductHuntCandidates({ fetchImpl, feedUrl, lookbackHours, maxCandidates, now })
   const scored: ScoredLead[] = []
 
   for (const candidate of candidates) {
-    const contact = await validateContact(candidate, fetchImpl)
-    if (!contact) {
-      skipped.push({ toolName: candidate.toolName, reason: 'No public business contact found.' })
+    const validation = await validateContact(candidate, fetchImpl)
+    candidateInspections.push(validation.inspection)
+    if (validation.contacts.length === 0) {
+      skipped.push({ toolName: candidate.toolName, reason: validation.inspection.reason })
       continue
     }
-    const score = scoreLead(candidate, contact, now)
-    if (score.score < minScore) {
-      skipped.push({ toolName: candidate.toolName, reason: `Score ${score.score} below threshold ${minScore}.` })
-      continue
+    for (const contact of validation.contacts) {
+      const score = scoreLead(candidate, contact, now)
+      if (score.score < minScore) {
+        skipped.push({ toolName: candidate.toolName, reason: `Score ${score.score} below threshold ${minScore} for ${contact.email}.` })
+        continue
+      }
+      scored.push({ candidate, contact, ...score })
+      if (scored.length >= maxLeads) break
     }
-    scored.push({ candidate, contact, ...score })
     if (scored.length >= maxLeads) break
   }
 
@@ -365,6 +453,7 @@ export async function runDailyLeadDiscovery(options: DiscoveryOptions = {}): Pro
     qualifiedLeads: leads.length,
     leadsStored: dryRun ? 0 : leads.length,
     draftsCreated,
+    candidateInspections,
     skipped,
   }
 

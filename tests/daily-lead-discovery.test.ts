@@ -77,7 +77,8 @@ test('daily discovery dry run validates leads and writes a report only', async (
     if (url === 'https://www.producthunt.com/posts/useful-ai') {
       return response('<a href="https://usefulai.dev">Website</a>', 200)
     }
-    if (url === 'https://usefulai.dev/') return response('<main>No email here</main>', 200)
+    if (url === 'https://usefulai.dev/') return response('<main><a href="/contact-sales">Contact us</a></main>', 200)
+    if (url === 'https://usefulai.dev/contact-sales') return response('<a href="mailto:press@usefulai.dev">press@usefulai.dev</a>', 200)
     if (url === 'https://usefulai.dev/contact') return response('<a href="mailto:press@usefulai.dev">press@usefulai.dev</a>', 200)
     return response('missing', 404)
   }
@@ -97,6 +98,8 @@ test('daily discovery dry run validates leads and writes a report only', async (
   assert.equal(report.qualifiedLeads, 1)
   assert.equal(report.leadsStored, 0)
   assert.equal(report.draftsCreated.length, 0)
+  assert.equal(report.candidateInspections[0].contactLinksFound.includes('https://usefulai.dev/contact-sales'), true)
+  assert.deepEqual(report.candidateInspections[0].validatedEmails, ['press@usefulai.dev'])
   assert.equal(existsSync(join(reportDir, '2026-08-02.json')), true)
   assert.equal(existsSync(join(dir, 'store.json')), false)
 })

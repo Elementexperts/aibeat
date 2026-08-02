@@ -161,6 +161,16 @@ Run `AIBeat Daily Lead Discovery` manually or let the daily schedule run at 04:0
 - Creates one-recipient Kit draft broadcasts using individual per-lead tags.
 - Uploads `data/outreach/reports/*.json`, `data/outreach/reports/*.md`, and the store snapshot as artifacts.
 
+The daily report includes a `candidateInspections` section for every discovered product. Use it to see:
+
+- Product Hunt URL.
+- Detected website URL.
+- Pages checked.
+- Contact-like links found from the site.
+- Emails found.
+- Emails that passed public business-contact validation.
+- Whether the product qualified or needs manual review.
+
 Required GitHub configuration:
 
 - Secret: `KIT_API_KEY`
