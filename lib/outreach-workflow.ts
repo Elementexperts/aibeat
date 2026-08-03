@@ -170,10 +170,15 @@ export async function createIndividualLeadDraft(input: { store: OutreachStore; c
   return { reused: false, broadcastId: broadcast.id, tagId: individualTag.id }
 }
 
-export async function createIndividualLeadDrafts(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient; limit?: number; source?: string }) {
+export async function createIndividualLeadDrafts(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient; limit?: number; source?: string; emails?: string[] }) {
   const limit = Math.min(input.limit || input.campaign.safety_limit, input.campaign.safety_limit)
   const source = input.source?.trim().toLowerCase()
-  const scopedLeads = source ? input.store.leads.filter((lead) => lead.source.toLowerCase() === source) : input.store.leads
+  const emails = input.emails ? new Set(input.emails.map((email) => email.trim().toLowerCase())) : undefined
+  const scopedLeads = input.store.leads.filter((lead) => {
+    if (source && lead.source.toLowerCase() !== source) return false
+    if (emails && !emails.has(lead.email.toLowerCase())) return false
+    return true
+  })
   const eligible = scopedLeads.filter((lead) => canSyncLead(lead).ok && !lead.initial_broadcast_id).slice(0, limit)
   const results: Array<{ email: string; toolName: string; broadcastId: string; tagId?: string; reused: boolean }> = []
 

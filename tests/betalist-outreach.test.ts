@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import { BETALIST_CAMPAIGN_BODY, BETALIST_CAMPAIGN_PREVIEW, BETALIST_CAMPAIGN_SUBJECT, getBetaListOutreachLeads } from '../lib/betalist-outreach-leads'
+import { parseDailyManualLeads } from '../lib/daily-manual-outreach-leads'
 import type { KitClient, KitTag } from '../lib/kit/client'
 import type { OutreachCampaign, OutreachLead, OutreachStore } from '../lib/outreach-types'
 import { canSyncLead } from '../lib/outreach-validation'
@@ -143,4 +144,24 @@ test('individual drafts can be limited to BetaList leads only', async () => {
   assert.match(broadcasts[0].subject, /Hitabi/)
   assert.match(broadcasts[0].content, /BetaList/)
   assert.notEqual(broadcasts[0].filterTagId, 'campaign-tag')
+})
+
+test('daily manual lead file accepts Excel-style rows and suppresses blocked inboxes', () => {
+  const csv = [
+    'website,email,source,tool_name,category,personalized_opening',
+    'example.ai,hello@example.ai,Beta List,Example AI,AI video,"I saw Example AI on Beta List and liked the launch angle."',
+    'privacy.example.ai,privacy@privacy.example.ai,Beta List,Privacy Example,AI startup,',
+  ].join('\n')
+
+  const result = parseDailyManualLeads(csv, new Date('2026-08-04T00:00:00.000Z'))
+
+  assert.equal(result.rowsProcessed, 2)
+  assert.deepEqual(result.errors, [])
+  assert.equal(result.leads[0].email, 'hello@example.ai')
+  assert.equal(result.leads[0].source, 'Beta List')
+  assert.equal(result.leads[0].approved_for_outreach, true)
+  assert.equal(result.leads[0].website_url, 'https://example.ai/')
+  assert.equal(result.leads[1].email, 'privacy@privacy.example.ai')
+  assert.equal(result.leads[1].status, 'suppressed')
+  assert.equal(canSyncLead(result.leads[1]).ok, false)
 })

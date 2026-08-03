@@ -116,6 +116,45 @@ npm run outreach -- create-individual-drafts --source "Beta List" --limit 15
 
 The BetaList seed currently contains 19 rows from the manually supplied table. Eighteen are approved for draft creation. `privacy@vidrip.app` is intentionally suppressed because privacy inboxes are not appropriate for promotional outreach.
 
+## Daily Manual Lead File
+
+Use this file for daily Excel-style leads:
+
+```text
+data/outreach/daily-manual-leads.csv
+```
+
+Required columns:
+
+```csv
+website,email,source
+```
+
+Optional columns for better personalization:
+
+```csv
+tool_name,category,personalized_opening
+```
+
+Recommended Excel export format:
+
+```csv
+website,email,source,tool_name,category,personalized_opening
+example.ai,hello@example.ai,Beta List,Example AI,AI video generation,"I saw Example AI on Beta List and liked the clear video workflow for founders."
+```
+
+The scheduled `Product Hunt Outreach Manager` workflow reads this file every day at `04:30 UTC` and runs:
+
+```bash
+npm run outreach -- create-daily-file-drafts --file data/outreach/daily-manual-leads.csv --limit 15
+```
+
+Add or update the daily rows before `04:00 UTC` to give GitHub enough time to use the latest committed file. In Uzbekistan time, that is `09:00` during UTC+5.
+
+Important: changes to this CSV must be committed and pushed to `main`; GitHub Actions reads the file from the repository, not from your local computer.
+
+Privacy, legal, security, abuse, DPO, no-reply, and noreply addresses are automatically suppressed and will not receive Kit drafts.
+
 Run daily lead discovery locally as a dry run:
 
 ```bash
@@ -168,9 +207,13 @@ Run `Product Hunt Outreach Manager` manually from GitHub Actions. It supports:
 - `preview`
 - `sync-kit`
 - `create-draft`
+- `import-daily-file`
+- `create-daily-file-drafts`
 - `seed-betalist`
 - `create-individual-drafts`
 - `schedule`
+
+The scheduled run uses `create-daily-file-drafts` automatically. Manual runs can use the same action to test the current daily CSV file.
 
 For BetaList outreach, choose `create-individual-drafts`. The workflow first saves the reviewed BetaList seed, then creates unpublished one-recipient Kit broadcast drafts for leads with source `Beta List`, up to `max_drafts`.
 

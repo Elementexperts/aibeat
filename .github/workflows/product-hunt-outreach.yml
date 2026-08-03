@@ -1,6 +1,8 @@
 name: Product Hunt Outreach Manager
 
 on:
+  schedule:
+    - cron: '30 4 * * *'
   workflow_dispatch:
     inputs:
       action:
@@ -12,6 +14,8 @@ on:
           - preview
           - sync-kit
           - create-draft
+          - import-daily-file
+          - create-daily-file-drafts
           - seed-betalist
           - create-individual-drafts
           - schedule
@@ -62,9 +66,12 @@ jobs:
           OUTREACH_SAFETY_LIMIT: ${{ vars.OUTREACH_SAFETY_LIMIT || '25' }}
           OUTREACH_TIMEZONE: ${{ vars.OUTREACH_TIMEZONE || 'America/New_York' }}
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.aibeat.dev' }}
+          OUTREACH_ACTION: ${{ github.event_name == 'schedule' && 'create-daily-file-drafts' || inputs.action }}
+          OUTREACH_MAX_DRAFTS: ${{ inputs.max_drafts || vars.DAILY_MANUAL_OUTREACH_MAX_DRAFTS || '15' }}
+          DAILY_MANUAL_LEADS_FILE: data/outreach/daily-manual-leads.csv
         shell: bash
         run: |
-          case "${{ inputs.action }}" in
+          case "${OUTREACH_ACTION}" in
             preview)
               npm run outreach -- preview
               ;;
@@ -74,12 +81,18 @@ jobs:
             create-draft)
               npm run outreach -- create-draft
               ;;
+            import-daily-file)
+              npm run outreach -- import-daily-file --file "${DAILY_MANUAL_LEADS_FILE}" --save
+              ;;
+            create-daily-file-drafts)
+              npm run outreach -- create-daily-file-drafts --file "${DAILY_MANUAL_LEADS_FILE}" --limit "${OUTREACH_MAX_DRAFTS}"
+              ;;
             seed-betalist)
               npm run outreach -- seed-betalist --save
               ;;
             create-individual-drafts)
               npm run outreach -- seed-betalist --save
-              npm run outreach -- create-individual-drafts --source "Beta List" --limit "${{ inputs.max_drafts }}"
+              npm run outreach -- create-individual-drafts --source "Beta List" --limit "${OUTREACH_MAX_DRAFTS}"
               ;;
             schedule)
               if [ "${{ inputs.confirm_schedule }}" != "true" ]; then
@@ -103,12 +116,17 @@ jobs:
 
       - name: Workflow summary
         shell: bash
+        env:
+          OUTREACH_ACTION: ${{ github.event_name == 'schedule' && 'create-daily-file-drafts' || inputs.action }}
+          OUTREACH_MAX_DRAFTS: ${{ inputs.max_drafts || vars.DAILY_MANUAL_OUTREACH_MAX_DRAFTS || '15' }}
         run: |
           {
             echo "## Product Hunt Outreach Manager"
             echo ""
-            echo "- Action: ${{ inputs.action }}"
-            echo "- Max individual drafts: ${{ inputs.max_drafts }}"
+            echo "- Action: ${OUTREACH_ACTION}"
+            echo "- Schedule: daily at 04:30 UTC for daily manual lead drafts"
+            echo "- Daily file: data/outreach/daily-manual-leads.csv"
+            echo "- Max individual drafts: ${OUTREACH_MAX_DRAFTS}"
             echo "- Sending enabled: ${{ vars.OUTREACH_SEND_ENABLED || 'false' }}"
             echo "- Automated Kit sending enabled: ${{ vars.AUTOMATED_KIT_SEND_ENABLED || 'false' }}"
             echo "- Draft-first safety remains enforced by the server CLI."
