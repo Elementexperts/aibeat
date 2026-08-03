@@ -102,7 +102,7 @@ export async function createCampaignDraft(input: { store: OutreachStore; campaig
     preview_text: input.campaign.preview_text,
     public: false,
     send_at: null,
-    subscriber_filter: { all: [{ type: 'tag', ids: [tag.id] }] },
+    subscriber_filter: [{ all: [{ type: 'tag', ids: [tag.id] }] }],
   })
   input.campaign.initial_broadcast_id = broadcast.id
   input.campaign.status = 'draft'
@@ -159,7 +159,7 @@ export async function createIndividualLeadDraft(input: { store: OutreachStore; c
     preview_text: input.campaign.preview_text,
     public: false,
     send_at: null,
-    subscriber_filter: { all: [{ type: 'tag', ids: [individualTag.id] }] },
+    subscriber_filter: [{ all: [{ type: 'tag', ids: [individualTag.id] }] }],
   })
 
   input.lead.initial_broadcast_id = broadcast.id

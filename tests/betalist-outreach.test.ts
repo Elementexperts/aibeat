@@ -85,11 +85,11 @@ function mockKitClient() {
     async tagSubscriber() {
       return undefined
     },
-    async createBroadcast(input: { subject: string; content: string; subscriber_filter: { all?: Array<{ ids: string[] }> } }) {
+    async createBroadcast(input: { subject: string; content: string; subscriber_filter: Array<{ all?: Array<{ ids: string[] }> }> }) {
       broadcasts.push({
         subject: input.subject,
         content: input.content,
-        filterTagId: input.subscriber_filter.all?.[0]?.ids[0] || '',
+        filterTagId: input.subscriber_filter[0]?.all?.[0]?.ids[0] || '',
       })
       return { id: `broadcast-${nextBroadcast++}` }
     },

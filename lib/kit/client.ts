@@ -47,11 +47,12 @@ export type KitBroadcastStats = {
   progress?: number
 }
 
-export type KitSubscriberFilter = {
-  all?: Array<{ type: 'tag'; ids: string[] }>
-  any?: Array<{ type: 'tag'; ids: string[] }>
-  none?: Array<{ type: 'tag'; ids: string[] }>
-}
+export type KitSubscriberFilterCondition = { type: 'tag'; ids: Array<string | number> }
+export type KitSubscriberFilter = Array<{
+  all?: KitSubscriberFilterCondition[]
+  any?: KitSubscriberFilterCondition[]
+  none?: KitSubscriberFilterCondition[]
+}>
 
 type ClientOptions = {
   apiKey?: string
