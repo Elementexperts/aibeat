@@ -170,9 +170,11 @@ export async function createIndividualLeadDraft(input: { store: OutreachStore; c
   return { reused: false, broadcastId: broadcast.id, tagId: individualTag.id }
 }
 
-export async function createIndividualLeadDrafts(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient; limit?: number }) {
+export async function createIndividualLeadDrafts(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient; limit?: number; source?: string }) {
   const limit = Math.min(input.limit || input.campaign.safety_limit, input.campaign.safety_limit)
-  const eligible = input.store.leads.filter((lead) => canSyncLead(lead).ok && !lead.initial_broadcast_id).slice(0, limit)
+  const source = input.source?.trim().toLowerCase()
+  const scopedLeads = source ? input.store.leads.filter((lead) => lead.source.toLowerCase() === source) : input.store.leads
+  const eligible = scopedLeads.filter((lead) => canSyncLead(lead).ok && !lead.initial_broadcast_id).slice(0, limit)
   const results: Array<{ email: string; toolName: string; broadcastId: string; tagId?: string; reused: boolean }> = []
 
   for (const lead of eligible) {
@@ -180,7 +182,7 @@ export async function createIndividualLeadDrafts(input: { store: OutreachStore; 
     results.push({ email: lead.email, toolName: lead.tool_name, broadcastId: result.broadcastId, tagId: result.tagId, reused: result.reused })
   }
 
-  return { created: results, skipped: input.store.leads.length - eligible.length }
+  return { created: results, skipped: scopedLeads.length - eligible.length }
 }
 
 export async function scheduleCampaign(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient; sendAt: string; confirmed: boolean }) {

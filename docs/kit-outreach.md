@@ -96,6 +96,26 @@ Create a Kit draft broadcast:
 npm run outreach -- create-draft
 ```
 
+Preview the manually reviewed BetaList lead seed:
+
+```bash
+npm run outreach -- seed-betalist
+```
+
+Save the reviewed BetaList leads and apply the BetaList-specific outreach copy:
+
+```bash
+npm run outreach -- seed-betalist --save
+```
+
+Create one-recipient Kit draft broadcasts for saved BetaList leads only:
+
+```bash
+npm run outreach -- create-individual-drafts --source "Beta List" --limit 15
+```
+
+The BetaList seed currently contains 19 rows from the manually supplied table. Eighteen are approved for draft creation. `privacy@vidrip.app` is intentionally suppressed because privacy inboxes are not appropriate for promotional outreach.
+
 Run daily lead discovery locally as a dry run:
 
 ```bash
@@ -148,7 +168,13 @@ Run `Product Hunt Outreach Manager` manually from GitHub Actions. It supports:
 - `preview`
 - `sync-kit`
 - `create-draft`
+- `seed-betalist`
+- `create-individual-drafts`
 - `schedule`
+
+For BetaList outreach, choose `create-individual-drafts`. The workflow first saves the reviewed BetaList seed, then creates unpublished one-recipient Kit broadcast drafts for leads with source `Beta List`, up to `max_drafts`.
+
+If you want to reuse a Kit design, set `KIT_DEFAULT_EMAIL_TEMPLATE_ID` to the actual Kit email template/layout ID. Do not use a previous campaign broadcast ID unless Kit confirms it is also a reusable template ID.
 
 The workflow uploads `data/outreach/store.json` as an artifact and never deploys or commits generated data.
 

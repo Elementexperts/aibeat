@@ -12,7 +12,13 @@ on:
           - preview
           - sync-kit
           - create-draft
+          - seed-betalist
+          - create-individual-drafts
           - schedule
+      max_drafts:
+        description: Maximum one-recipient drafts for create-individual-drafts
+        required: false
+        default: '15'
       send_at:
         description: ISO timestamp for schedule action only
         required: false
@@ -52,6 +58,7 @@ jobs:
           KIT_OUTREACH_TAG_ID: ${{ vars.KIT_OUTREACH_TAG_ID }}
           KIT_DEFAULT_EMAIL_TEMPLATE_ID: ${{ vars.KIT_DEFAULT_EMAIL_TEMPLATE_ID }}
           OUTREACH_SEND_ENABLED: ${{ vars.OUTREACH_SEND_ENABLED || 'false' }}
+          AUTOMATED_KIT_SEND_ENABLED: ${{ vars.AUTOMATED_KIT_SEND_ENABLED || 'false' }}
           OUTREACH_SAFETY_LIMIT: ${{ vars.OUTREACH_SAFETY_LIMIT || '25' }}
           OUTREACH_TIMEZONE: ${{ vars.OUTREACH_TIMEZONE || 'America/New_York' }}
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.aibeat.dev' }}
@@ -66,6 +73,13 @@ jobs:
               ;;
             create-draft)
               npm run outreach -- create-draft
+              ;;
+            seed-betalist)
+              npm run outreach -- seed-betalist --save
+              ;;
+            create-individual-drafts)
+              npm run outreach -- seed-betalist --save
+              npm run outreach -- create-individual-drafts --source "Beta List" --limit "${{ inputs.max_drafts }}"
               ;;
             schedule)
               if [ "${{ inputs.confirm_schedule }}" != "true" ]; then
@@ -94,6 +108,9 @@ jobs:
             echo "## Product Hunt Outreach Manager"
             echo ""
             echo "- Action: ${{ inputs.action }}"
+            echo "- Max individual drafts: ${{ inputs.max_drafts }}"
             echo "- Sending enabled: ${{ vars.OUTREACH_SEND_ENABLED || 'false' }}"
+            echo "- Automated Kit sending enabled: ${{ vars.AUTOMATED_KIT_SEND_ENABLED || 'false' }}"
             echo "- Draft-first safety remains enforced by the server CLI."
+            echo "- BetaList actions create one-recipient unpublished Kit drafts only."
           } >> "$GITHUB_STEP_SUMMARY"
