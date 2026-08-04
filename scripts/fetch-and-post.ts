@@ -17,6 +17,7 @@ const GROQ_MODEL     = 'llama-3.3-70b-versatile'
 const ARTICLE_LIMIT  = parseInt(process.env.ARTICLE_LIMIT ?? '1', 10)
 const CONTENT_DIR    = resolve(process.cwd(), 'content/articles')
 const LINKEDIN_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN
+const LINKEDIN_PUBLISH_ENABLED = process.env.LINKEDIN_PUBLISH_ENABLED === 'true'
 const SITE_BASE      = 'https://www.aibeat.dev'
 
 const RSS_FEEDS = [
@@ -378,8 +379,8 @@ async function main() {
     console.log(`  ✅ Saved: content/articles/${finalSlug}.mdx`)
     saved++
 
-    // Post to LinkedIn if token is configured
-    if (LINKEDIN_TOKEN) {
+    // Post to LinkedIn only when explicitly enabled.
+    if (LINKEDIN_TOKEN && LINKEDIN_PUBLISH_ENABLED) {
       const personUrn = await getLinkedInPersonUrn(LINKEDIN_TOKEN)
       if (personUrn) {
         await postToLinkedIn(

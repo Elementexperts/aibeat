@@ -1,0 +1,79 @@
+name: LinkedIn Daily Drafts
+
+on:
+  schedule:
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Generate local draft artifacts only'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      create_linkedin_drafts:
+        description: 'Attempt LinkedIn API draft creation'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  linkedin-drafts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate LinkedIn drafts
+        env:
+          AIBEAT_SITE_URL: ${{ vars.AIBEAT_SITE_URL || 'https://www.aibeat.dev' }}
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_AUTHOR_URN: ${{ secrets.LINKEDIN_AUTHOR_URN }}
+          LINKEDIN_VERSION: ${{ vars.LINKEDIN_VERSION || '202604' }}
+          LINKEDIN_DAILY_DRAFT_COUNT: ${{ vars.LINKEDIN_DAILY_DRAFT_COUNT || '3' }}
+          LINKEDIN_ARTICLE_LOOKBACK_DAYS: ${{ vars.LINKEDIN_ARTICLE_LOOKBACK_DAYS || '1' }}
+          LINKEDIN_TONE: ${{ vars.LINKEDIN_TONE || 'humanized' }}
+          LINKEDIN_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'true' }}
+          LINKEDIN_CREATE_DRAFTS_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.create_linkedin_drafts || 'false' }}
+        run: |
+          ARGS=""
+          if [ "${LINKEDIN_CREATE_DRAFTS_ENABLED}" = "true" ]; then
+            ARGS="$ARGS --create-drafts"
+          fi
+          if [ "${LINKEDIN_DRY_RUN}" = "false" ]; then
+            ARGS="$ARGS --no-dry-run"
+          else
+            ARGS="$ARGS --dry-run"
+          fi
+          npx tsx scripts/linkedin/index.ts $ARGS
+
+      - name: Upload LinkedIn draft artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linkedin-daily-drafts
+          path: |
+            data/linkedin/drafts/
+            data/linkedin/history.json
+          if-no-files-found: warn

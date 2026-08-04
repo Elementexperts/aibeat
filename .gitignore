@@ -27,3 +27,8 @@ yarn-debug.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated social drafts
+data/linkedin/history.json
+data/linkedin/drafts/*
+!data/linkedin/drafts/.gitkeep
