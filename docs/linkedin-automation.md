@@ -94,7 +94,7 @@ To discover the personal profile author URN without exposing tokens:
 resolve_author_urn=true
 ```
 
-The workflow will refresh the token, call LinkedIn `/v2/me`, and print only:
+The workflow will refresh the token, call LinkedIn `/v2/userinfo` first, fall back to `/v2/me` when available, and print only:
 
 ```text
 linkedInAuthorUrn: urn:li:person:...

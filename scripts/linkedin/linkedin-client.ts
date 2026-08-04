@@ -23,6 +23,7 @@ export type LinkedInProfileResult = {
   id?: string
   name?: string
   message?: string
+  endpoint?: 'userinfo' | 'me'
 }
 
 export async function refreshLinkedInAccessToken(input: {
@@ -79,6 +80,36 @@ export async function getLinkedInPersonalProfile(input: {
   fetchImpl?: typeof fetch
 }): Promise<LinkedInProfileResult> {
   const fetchImpl = input.fetchImpl || fetch
+  const userInfo = await fetchImpl('https://api.linkedin.com/v2/userinfo', {
+    headers: {
+      Authorization: `Bearer ${input.accessToken}`,
+    },
+    signal: AbortSignal.timeout(12000),
+  })
+
+  const userInfoText = await userInfo.text().catch(() => '')
+  if (userInfo.ok) {
+    try {
+      const data = JSON.parse(userInfoText) as {
+        sub?: string
+        name?: string
+        given_name?: string
+        family_name?: string
+      }
+      if (!data.sub) return { ok: false, status: userInfo.status, endpoint: 'userinfo', message: 'LinkedIn /v2/userinfo response did not include sub' }
+      return {
+        ok: true,
+        status: userInfo.status,
+        id: data.sub,
+        personUrn: `urn:li:person:${data.sub}`,
+        name: data.name || [data.given_name, data.family_name].filter(Boolean).join(' ') || undefined,
+        endpoint: 'userinfo',
+      }
+    } catch {
+      return { ok: false, status: userInfo.status, endpoint: 'userinfo', message: 'LinkedIn /v2/userinfo response was not valid JSON' }
+    }
+  }
+
   const res = await fetchImpl('https://api.linkedin.com/v2/me', {
     headers: {
       Authorization: `Bearer ${input.accessToken}`,
@@ -104,9 +135,10 @@ export async function getLinkedInPersonalProfile(input: {
       id: data.id,
       personUrn: `urn:li:person:${data.id}`,
       name: [data.localizedFirstName, data.localizedLastName].filter(Boolean).join(' ') || data.vanityName,
+      endpoint: 'me',
     }
   } catch {
-    return { ok: false, status: res.status, message: 'LinkedIn /v2/me response was not valid JSON' }
+    return { ok: false, status: res.status, endpoint: 'me', message: `LinkedIn /v2/userinfo failed (${userInfo.status}): ${userInfoText.slice(0, 240)}; LinkedIn /v2/me response was not valid JSON` }
   }
 }
 

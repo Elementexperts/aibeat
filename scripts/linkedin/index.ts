@@ -158,6 +158,7 @@ async function main() {
       linkedInAuthorUrn: profile.personUrn,
       id: profile.id,
       name: profile.name,
+      endpoint: profile.endpoint,
       nextStep: 'Copy linkedInAuthorUrn into the GitHub secret LINKEDIN_AUTHOR_URN.',
     }, null, 2))
     return

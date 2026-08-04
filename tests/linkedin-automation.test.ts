@@ -201,14 +201,13 @@ test('LinkedIn refresh token request uses OAuth refresh grant', async () => {
   assert.doesNotMatch(String(calls[0]?.init.body), /fresh-access-token/)
 })
 
-test('LinkedIn profile lookup resolves personal author URN', async () => {
+test('LinkedIn profile lookup resolves personal author URN through OIDC userinfo', async () => {
   const calls: Array<{ url: string; init: RequestInit }> = []
   const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
     calls.push({ url: String(url), init: init || {} })
     return new Response(JSON.stringify({
-      id: 'person-id-123',
-      localizedFirstName: 'Nomoz',
-      localizedLastName: 'Fayzullaev',
+      sub: 'person-id-123',
+      name: 'Nomoz Fayzullaev',
     }), { status: 200 })
   }
 
@@ -220,9 +219,35 @@ test('LinkedIn profile lookup resolves personal author URN', async () => {
   assert.equal(result.ok, true)
   assert.equal(result.personUrn, 'urn:li:person:person-id-123')
   assert.equal(result.name, 'Nomoz Fayzullaev')
-  assert.equal(calls[0]?.url, 'https://api.linkedin.com/v2/me')
+  assert.equal(result.endpoint, 'userinfo')
+  assert.equal(calls[0]?.url, 'https://api.linkedin.com/v2/userinfo')
   const headers = calls[0]?.init.headers as Record<string, string>
   assert.equal(headers.Authorization, 'Bearer fresh-access-token')
+})
+
+test('LinkedIn profile lookup falls back to /v2/me when userinfo is unavailable', async () => {
+  const calls: string[] = []
+  const fetchImpl = async (url: string | URL | Request) => {
+    calls.push(String(url))
+    if (String(url).endsWith('/v2/userinfo')) {
+      return new Response('missing openid scope', { status: 403 })
+    }
+    return new Response(JSON.stringify({
+      id: 'legacy-person-id',
+      localizedFirstName: 'Nomoz',
+      localizedLastName: 'Fayzullaev',
+    }), { status: 200 })
+  }
+
+  const result = await getLinkedInPersonalProfile({
+    accessToken: 'fresh-access-token',
+    fetchImpl: fetchImpl as typeof fetch,
+  })
+
+  assert.equal(result.ok, true)
+  assert.equal(result.personUrn, 'urn:li:person:legacy-person-id')
+  assert.equal(result.endpoint, 'me')
+  assert.deepEqual(calls, ['https://api.linkedin.com/v2/userinfo', 'https://api.linkedin.com/v2/me'])
 })
 
 test('author URN resolver refreshes token and returns only profile identity', async () => {
@@ -233,7 +258,7 @@ test('author URN resolver refreshes token and returns only profile identity', as
     if (String(url).includes('/oauth/v2/accessToken')) {
       return new Response(JSON.stringify({ access_token: 'fresh-access-token', expires_in: 5184000 }), { status: 200 })
     }
-    return new Response(JSON.stringify({ id: 'person-id-456' }), { status: 200 })
+    return new Response(JSON.stringify({ sub: 'person-id-456' }), { status: 200 })
   }) as typeof fetch
 
   try {
@@ -249,7 +274,7 @@ test('author URN resolver refreshes token and returns only profile identity', as
     assert.equal(result.personUrn, 'urn:li:person:person-id-456')
     assert.deepEqual(calls, [
       'https://www.linkedin.com/oauth/v2/accessToken',
-      'https://api.linkedin.com/v2/me',
+      'https://api.linkedin.com/v2/userinfo',
     ])
     assert.equal('accessToken' in result, false)
   } finally {
