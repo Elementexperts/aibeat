@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { formatPlanPrice, getPlanById } from '@/data/founder-services'
+import { verifyAibeatLink, type VerificationMethod } from '@/lib/aibeat-link-verification'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const URL_RE = /^https?:\/\/.+\..+/i
@@ -9,10 +11,25 @@ type SubmitPayload = {
   type?: string
   name?: string
   url?: string
+  shortDescription?: string
   category?: string
   description?: string
   email?: string
   website?: string
+  selectedPlan?: string
+  verificationPageUrl?: string
+  verificationMethod?: VerificationMethod
+  contactName?: string
+  company?: string
+  role?: string
+  country?: string
+  preferredChannel?: string
+  launchInterest?: string
+  newsletterInterest?: string
+  articleInterest?: string
+  affiliateInterest?: string
+  preferredTiming?: string
+  notes?: string
 }
 
 function clean(value: unknown) {
@@ -35,7 +52,9 @@ function submissionHtml({
   category,
   description,
   email,
-}: Required<Omit<SubmitPayload, 'website'>>) {
+  selectedPlan,
+  verificationPageUrl,
+}: Required<Pick<SubmitPayload, 'type' | 'name' | 'url' | 'category' | 'description' | 'email'>> & { selectedPlan: string; verificationPageUrl: string }) {
   const safeName = escapeHtml(name)
   const safeUrl = escapeHtml(url)
   const safeDescription = escapeHtml(description)
@@ -44,6 +63,8 @@ function submissionHtml({
     ['Tool name', name],
     ['Tool URL', `<a href="${safeUrl}" style="color:#d4380d;text-decoration:none">${safeUrl}</a>`],
     ['Category', category],
+    ['Selected plan', selectedPlan],
+    ['Verification page', verificationPageUrl || 'Not required or not provided'],
     ['Submitter email', email || 'Not provided'],
   ]
 
@@ -121,7 +142,9 @@ function submissionText({
   category,
   description,
   email,
-}: Required<Omit<SubmitPayload, 'website'>>) {
+  selectedPlan,
+  verificationPageUrl,
+}: Required<Pick<SubmitPayload, 'type' | 'name' | 'url' | 'category' | 'description' | 'email'>> & { selectedPlan: string; verificationPageUrl: string }) {
   return [
     'New AIBeat tool submission',
     '',
@@ -129,6 +152,8 @@ function submissionText({
     `Tool name: ${name}`,
     `Tool URL: ${url}`,
     `Category: ${category}`,
+    `Selected plan: ${selectedPlan}`,
+    `Verification page: ${verificationPageUrl || 'Not required or not provided'}`,
     `Submitter email: ${email || 'Not provided'}`,
     '',
     'Why review it?',
@@ -155,6 +180,10 @@ export async function POST(req: NextRequest) {
   const category = clean(body.category)
   const description = clean(body.description)
   const email = clean(body.email).toLowerCase()
+  const plan = getPlanById(clean(body.selectedPlan || body.type || 'free'))
+  const selectedPlan = `${plan.name} (${formatPlanPrice(plan)})`
+  const verificationPageUrl = clean(body.verificationPageUrl)
+  const verificationMethod = body.verificationMethod === 'text' ? 'text' : 'badge'
 
   if (!type || !name || !url || !category || !description) {
     return NextResponse.json({ error: 'Please complete all required fields' }, { status: 400 })
@@ -166,6 +195,16 @@ export async function POST(req: NextRequest) {
 
   if (email && !EMAIL_RE.test(email)) {
     return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 })
+  }
+
+  if (plan.verificationRequired) {
+    if (!verificationPageUrl) {
+      return NextResponse.json({ error: 'Free Listing requires a verification page URL before review.' }, { status: 400 })
+    }
+    const verification = await verifyAibeatLink({ websiteUrl: url, verificationPageUrl, verificationMethod })
+    if (!verification.ok) {
+      return NextResponse.json({ error: verification.reason || 'AIBeat badge or text-link verification failed.' }, { status: 422 })
+    }
   }
 
   const apiKey = process.env.RESEND_API_KEY
@@ -188,9 +227,9 @@ export async function POST(req: NextRequest) {
         from: fromEmail,
         to: [toEmail],
         reply_to: email || undefined,
-        subject: `New AIBeat submission: ${name}`,
-        html: submissionHtml({ type, name, url, category, description, email }),
-        text: submissionText({ type, name, url, category, description, email }),
+        subject: `New AIBeat ${plan.name} request: ${name}`,
+        html: submissionHtml({ type, name, url, category, description, email, selectedPlan, verificationPageUrl }),
+        text: submissionText({ type, name, url, category, description, email, selectedPlan, verificationPageUrl }),
       }),
     })
 

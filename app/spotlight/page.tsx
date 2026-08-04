@@ -1,50 +1,104 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { ArrowRight, Eye, Layers, Sparkles, Target } from 'lucide-react'
+import { ComparisonTable, DisclosureSection, FounderHero, InquiryCTA, NotIncludedList, ServiceGrid } from '@/components/founders/ServiceBlocks'
+import { getPlanById } from '@/lib/founder-services'
 
 export const metadata: Metadata = {
   title: 'AIBeat Spotlight',
-  description: 'Featured placement, enhanced listings, newsletter consideration, and editorial opportunities for relevant AI products.',
+  description: 'Featured placement, enhanced listings, newsletter consideration, and clearly labeled promotional opportunities for relevant AI products.',
+  alternates: { canonical: '/spotlight' },
 }
 
-const PLANS = [
-  { name: 'Directory', body: 'A clear AIBeat listing with category placement and searchable product context.', price: 'Free review' },
-  { name: 'Spotlight', body: 'Enhanced presentation and featured placement for relevant AI tools and launches.', price: 'Contact for availability' },
-  { name: 'Launch Feature', body: 'A launch-focused story with product benefits, use cases, media, and founder context.', price: 'Contact for availability' },
-  { name: 'Editorial Partnership', body: 'Newsletter, article, founder interview, or clearly labeled partner-content opportunities.', price: 'Contact for availability' },
+const spotlight = getPlanById('spotlight')
+
+const BENEFITS = [
+  {
+    icon: Eye,
+    title: 'More visible discovery surfaces',
+    body: 'Spotlight can help a relevant product stand out on homepage, category, launch, or directory surfaces when available.',
+  },
+  {
+    icon: Layers,
+    title: 'Better product context',
+    body: 'Move beyond a plain listing with use cases, audience fit, screenshots, founder notes, and a clearer CTA.',
+  },
+  {
+    icon: Target,
+    title: 'Founder-friendly positioning',
+    body: 'Frame the product around the problem it solves and the people most likely to care.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Transparent promotion',
+    body: 'Sponsored or featured status is clearly labeled so readers understand the format.',
+  },
 ]
 
 export default function SpotlightPage() {
   return (
-    <div className="dark-page">
-      <section className="site-shell py-20">
-        <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">AIBeat Spotlight</p>
-          <h1 className="mt-4 text-5xl font-black leading-tight text-white md:text-7xl">Put your AI product in the spotlight</h1>
-          <p className="mt-6 text-lg leading-8 text-slate-400">
-            Give your launch or growing product a stronger presence across AIBeat through enhanced listings, editorial opportunities, and targeted exposure.
-          </p>
-        </div>
+    <div className="dark-page overflow-hidden">
+      <FounderHero
+        eyebrow="AIBeat Spotlight"
+        title="Put your AI product in the spotlight"
+        description="Give your launch or growing product a stronger presence across AIBeat through enhanced listings, featured placement, editorial opportunities, and transparent promotional exposure."
+        primaryHref="/advertise"
+        primaryLabel="Request Spotlight"
+        secondaryHref="/submit"
+        secondaryLabel="Start With Free Submission"
+      />
 
-        <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {PLANS.map((plan) => (
-            <article key={plan.name} className="premium-card flex min-h-[260px] flex-col p-6">
-              <h2 className="text-2xl font-black text-white">{plan.name}</h2>
-              <p className="mt-4 flex-1 text-sm leading-7 text-slate-400">{plan.body}</p>
-              <div className="mt-6 rounded-full border border-white/10 px-3 py-2 text-xs text-slate-300">{plan.price}</div>
+      <section className="site-shell py-16">
+        <div className="grid gap-4 md:grid-cols-4">
+          {BENEFITS.map(({ icon: Icon, title, body }) => (
+            <article key={title} className="premium-card p-5">
+              <Icon className="h-5 w-5 text-cyan-200" />
+              <h2 className="mt-5 text-lg font-semibold text-white">{title}</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-400">{body}</p>
             </article>
           ))}
         </div>
+      </section>
 
-        <div className="mt-12 rounded-3xl border border-white/10 bg-white/[0.035] p-6 md:p-8">
-          <h2 className="text-2xl font-black text-white">Transparent placement rules</h2>
+      <section className="border-y border-white/10 bg-white/[0.025] py-16">
+        <div className="site-shell">
+          <div className="mb-10 max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">Spotlight packages</p>
+            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">From enhanced listings to launch features</h2>
+          </div>
+          <ServiceGrid ids={['enhanced', 'spotlight', 'launch-feature', 'newsletter-feature', 'sponsored-article', 'growth-campaign']} />
+        </div>
+      </section>
+
+      <section className="site-shell grid gap-6 py-16 lg:grid-cols-[1fr_0.8fr]">
+        <div>
+          <div className="mb-8 max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Compare options</p>
+            <h2 className="mt-3 text-4xl font-black text-white">Choose the right level of visibility</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <ComparisonTable ids={['free', 'enhanced', 'spotlight', 'launch-feature']} />
+          </div>
+        </div>
+        {spotlight && <NotIncludedList item={spotlight} />}
+      </section>
+
+      <DisclosureSection />
+
+      <section className="site-shell py-16">
+        <div className="premium-card p-6 md:p-8">
+          <h2 className="text-2xl font-black text-white">Editorial standards stay separate</h2>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-400">
-            AIBeat labels sponsored or partner content clearly. Spotlight does not guarantee rankings, traffic, sales, leads, or editorial endorsements.
+            Spotlight can improve presentation and placement availability, but it does not buy a ranking, review score, recommendation, or guaranteed outcome. Reader trust is more valuable than a short-term placement.
           </p>
-          <Link href="/advertise" className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">
-            Ask about availability
+          <Link href="/affiliate-disclosure" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-cyan-200 hover:text-white">
+            Read disclosure policy
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
+
+      <InquiryCTA title="Check Spotlight availability" goal="Spotlight" />
     </div>
   )
 }

@@ -1,150 +1,135 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { ArrowRight, BadgeDollarSign, Megaphone, Newspaper, ShieldCheck, Target } from 'lucide-react'
+import { ComparisonTable, DisclosureSection, FounderHero, InquiryCTA, ServiceGrid } from '@/components/founders/ServiceBlocks'
+import { inquiryHref } from '@/lib/founder-services'
 
 export const metadata: Metadata = {
-  title: 'Advertise With AIBeat.dev',
-  description: 'Partner with AIBeat.dev to reach founders, freelancers, and builders interested in AI tools, software, and automation.',
+  title: 'Advertise With AIBeat',
+  description: 'Explore clearly labeled AIBeat advertising packages, newsletter sponsorships, Spotlight placements, sponsored articles, and custom founder campaigns.',
+  alternates: { canonical: '/advertise' },
 }
 
-const AUDIENCE = [
-  { number: '8,400+', label: 'Newsletter readers' },
-  { number: '500+', label: 'AI tools tracked' },
-  { number: 'Daily', label: 'News cadence' },
-  { number: 'Builders', label: 'Core audience' },
+const BEST_FIT = [
+  'AI product launches and major updates',
+  'SaaS tools for founders, marketers, developers, and creators',
+  'Developer tools, automation products, and workflow software',
+  'Newsletter, community, and marketplace partnership',
+  'Educational campaigns that help readers understand a useful AI workflow',
 ]
 
-const OPTIONS = [
-  {
-    title: 'Newsletter Placement',
-    body: 'Reach readers inside the daily AI brief with a clearly labeled placement.',
-  },
-  {
-    title: 'Directory Sponsorship',
-    body: 'Promote an AI tool to readers browsing software by category and use case.',
-  },
-  {
-    title: 'Launch Collaboration',
-    body: 'Share a relevant product launch, offer, or update with a focused builder audience.',
-  },
+const NOT_A_FIT = [
+  'Paid reviews or paid rankings',
+  'Undisclosed sponsored posts',
+  'Misleading, unsafe, or irrelevant products',
+  'Bulk link insertions without reader value',
+  'Guaranteed traffic, sales, or SEO outcome requests',
 ]
 
 export default function AdvertisePage() {
-  const subject = encodeURIComponent('AIBeat advertising inquiry')
-  const body = encodeURIComponent([
-    'Hi AIBeat team,',
-    '',
-    'I am interested in advertising or collaborating with AIBeat.dev.',
-    '',
-    'Company:',
-    'Website:',
-    'Campaign goal:',
-    'Budget range:',
-    'Timeline:',
-    '',
-    'Thanks,',
-  ].join('\n'))
-
   return (
-    <div className="max-w-5xl mx-auto px-0 border-x border-border min-h-screen">
-      <div className="font-mono text-[11px] text-ink-4 px-6 py-4 border-b border-border flex items-center gap-2">
-        <Link href="/" className="hover:text-ink">Home</Link>
-        <span>/</span>
-        <span className="text-ink">Advertise</span>
-      </div>
+    <div className="dark-page overflow-hidden">
+      <FounderHero
+        eyebrow="Advertise with AIBeat"
+        title="Promote your AI product without compromising reader trust"
+        description="AIBeat offers clearly labeled advertising, newsletter, Spotlight, sponsored article, and custom campaign opportunities for relevant AI companies and founder-focused tools."
+        primaryHref={inquiryHref('AIBeat advertising inquiry', 'Advertising or sponsorship')}
+        primaryLabel="Email AIBeat"
+        secondaryHref="/for-founders"
+        secondaryLabel="Compare All Options"
+      />
 
-      <div className="px-6 py-8 border-b-2 border-ink">
-        <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest mb-3">Partner with AIBeat.dev</div>
-        <h1 className="font-serif text-3xl md:text-5xl font-black text-ink leading-tight mb-4">
-          Reach builders who care about AI tools.
-        </h1>
-        <p className="text-base md:text-lg text-ink-2 leading-relaxed max-w-2xl">
-          AIBeat.dev covers AI news, software, and practical tools for founders, freelancers, and people building with AI. We keep advertising clearly labeled and separate from editorial coverage.
-        </p>
-      </div>
+      <section className="site-shell py-16">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            {
+              icon: Megaphone,
+              title: 'Clearly labeled placements',
+              body: 'Sponsored and partner formats are identified so readers understand the commercial relationship.',
+            },
+            {
+              icon: Target,
+              title: 'Relevant audience fit',
+              body: 'Campaigns are reviewed for relevance to AI tool discovery, founders, builders, marketers, and technical professionals.',
+            },
+            {
+              icon: ShieldCheck,
+              title: 'No paid editorial opinion',
+              body: 'Advertising does not buy a ranking, review score, recommendation, or hidden endorsement.',
+            },
+          ].map(({ icon: Icon, title, body }) => (
+            <article key={title} className="premium-card p-6">
+              <Icon className="h-5 w-5 text-cyan-200" />
+              <h2 className="mt-5 text-xl font-semibold text-white">{title}</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-400">{body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_300px]">
-        <main className="p-6 border-r border-border">
-          <section className="mb-8">
-            <div className="section-label">Audience</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {AUDIENCE.map((item) => (
-                <div key={item.label} className="border border-border p-4 text-center">
-                  <div className="font-serif text-2xl font-black text-ink mb-1">{item.number}</div>
-                  <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">{item.label}</div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="mb-8">
-            <div className="section-label">Available collaborations</div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {OPTIONS.map((option) => (
-                <div key={option.title} className="border border-border p-4">
-                  <h2 className="font-serif text-lg font-bold text-ink mb-2">{option.title}</h2>
-                  <p className="text-xs text-ink-3 leading-relaxed">{option.body}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className="mb-8">
-            <div className="section-label">Our rules</div>
-            <div className="space-y-3 text-sm text-ink-2 leading-relaxed">
-              <p>Sponsored placements are always labeled. We do not sell rankings, reviews, or editorial opinions.</p>
-              <p>We only consider sponsors that are relevant to AIBeat readers: AI tools, SaaS products, founder services, developer tools, education, and productivity software.</p>
-              <p>Editorial coverage and advertising are separate. A sponsorship does not guarantee a review, ranking, recommendation, or article.</p>
-            </div>
-          </section>
-
-          <section className="border-2 border-ink bg-paper-2 p-5">
-            <div className="font-mono text-[10px] text-beat-red uppercase tracking-widest mb-2">Start a conversation</div>
-            <h2 className="font-serif text-2xl font-bold text-ink mb-3">Tell us what you want to promote.</h2>
-            <p className="text-sm text-ink-3 leading-relaxed mb-5">
-              Include your company, website, target audience, campaign goal, timeline, and budget range. We will reply if it looks like a good fit.
-            </p>
-            <a
-              href={`mailto:info@aibeat.dev?subject=${subject}&body=${body}`}
-              className="inline-block bg-ink text-white text-sm font-semibold px-5 py-3 hover:bg-beat-red transition-colors"
-            >
-              Email info@aibeat.dev
-            </a>
-          </section>
-        </main>
-
-        <aside className="p-5 space-y-5">
-          <div>
-            <div className="section-label">Best fit</div>
-            <ul className="space-y-2 text-xs text-ink-2">
-              <li>AI product launches</li>
-              <li>SaaS tools for founders</li>
-              <li>Developer and automation tools</li>
-              <li>Newsletter or event partnerships</li>
-              <li>Relevant founder services</li>
-            </ul>
+      <section className="border-y border-white/10 bg-white/[0.025] py-16">
+        <div className="site-shell">
+          <div className="mb-10 max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">Advertising packages</p>
+            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Choose the format that matches your campaign goal</h2>
           </div>
+          <ServiceGrid ids={['spotlight', 'newsletter-feature', 'sponsored-article', 'launch-feature', 'partnership', 'growth-campaign']} />
+        </div>
+      </section>
 
-          <div className="border-t border-border pt-4">
-            <div className="section-label">Not a fit</div>
-            <ul className="space-y-2 text-xs text-ink-2">
-              <li>Paid reviews</li>
-              <li>Undisclosed sponsored posts</li>
-              <li>Casino, adult, or misleading products</li>
-              <li>Bulk link insertions</li>
-            </ul>
-          </div>
+      <section className="site-shell grid gap-6 py-16 lg:grid-cols-2">
+        <div className="premium-card p-6">
+          <BadgeDollarSign className="h-6 w-6 text-green-300" />
+          <h2 className="mt-5 text-2xl font-black text-white">Best fit</h2>
+          <ul className="mt-5 space-y-3">
+            {BEST_FIT.map((item) => (
+              <li key={item} className="flex gap-3 text-sm leading-6 text-slate-300">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-green-300" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="premium-card p-6">
+          <Newspaper className="h-6 w-6 text-amber-200" />
+          <h2 className="mt-5 text-2xl font-black text-white">Not a fit</h2>
+          <ul className="mt-5 space-y-3">
+            {NOT_A_FIT.map((item) => (
+              <li key={item} className="flex gap-3 text-sm leading-6 text-slate-300">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-200" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
 
-          <div className="border-t border-border pt-4">
-            <div className="section-label">Submit a tool</div>
-            <p className="text-xs text-ink-3 leading-relaxed mb-3">
-              Want editorial consideration instead of advertising?
-            </p>
-            <Link href="/submit" className="font-mono text-[11px] text-beat-red hover:underline">
-              Submit a tool for review {'->'}
-            </Link>
-          </div>
-        </aside>
-      </div>
+      <section className="site-shell pb-16">
+        <div className="mb-8 max-w-2xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Package comparison</p>
+          <h2 className="mt-3 text-4xl font-black text-white">Advertising, editorial, and partnership formats</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <ComparisonTable ids={['newsletter-feature', 'spotlight', 'sponsored-article', 'partnership', 'growth-campaign']} />
+        </div>
+      </section>
+
+      <DisclosureSection />
+
+      <section className="site-shell py-16">
+        <div className="premium-card p-6 md:p-8">
+          <h2 className="text-2xl font-black text-white">What to include in your inquiry</h2>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-400">
+            Send your company, website, campaign goal, target audience, launch or campaign timing, preferred format, and budget range if you have one. AIBeat replies when the fit is relevant.
+          </p>
+          <Link href="/submit" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-cyan-200 hover:text-white">
+            Need free editorial review instead?
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
+      <InquiryCTA title="Start a sponsored or partner campaign conversation" goal="Advertising" />
     </div>
   )
 }

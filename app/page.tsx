@@ -297,8 +297,8 @@ export default async function HomePage() {
               <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Launching an AI product?</h2>
               <p className="mt-4 text-slate-400">Reach people actively searching for new AI tools, products, and solutions.</p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:flex-col">
-                <Link href="/launch" className="gradient-button inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold">Launch Your Product</Link>
-                <Link href="/spotlight" className="inline-flex items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white">View Promotion Options</Link>
+              <Link href="/launch" className="gradient-button inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold">Launch Your Product</Link>
+                <Link href="/for-founders" className="inline-flex items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white">View Promotion Options</Link>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">

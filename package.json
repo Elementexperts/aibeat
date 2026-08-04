@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/reddit/reddit-automation.test.ts tests/newsletter-attribution.test.ts tests/kit-source-tags.test.ts tests/daily-lead-discovery.test.ts tests/betalist-outreach.test.ts",
+    "test": "node --import tsx --test tests/reddit/reddit-automation.test.ts tests/newsletter-attribution.test.ts tests/kit-source-tags.test.ts tests/daily-lead-discovery.test.ts tests/betalist-outreach.test.ts tests/founder-services.test.ts",
     "kit:setup-source-tags": "tsx scripts/setup-kit-source-tags.ts",
     "leads:daily": "tsx scripts/daily-lead-discovery.ts",
     "outreach": "tsx lib/outreach-cli.ts",

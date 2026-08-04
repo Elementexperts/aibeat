@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/directory',
     '/categories',
     '/launches',
+    '/for-founders',
     '/launch',
     '/spotlight',
     '/free-tools',

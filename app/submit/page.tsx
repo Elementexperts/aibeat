@@ -1,273 +1,120 @@
-'use client'
-
-import { useState } from 'react'
+import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import Link from 'next/link'
+import { ArrowRight, CheckCircle2, FileCheck2, ShieldCheck, Sparkles } from 'lucide-react'
+import { SubmitToolForm } from '@/components/founders/SubmitToolForm'
+import { DisclosureSection, ServiceGrid } from '@/components/founders/ServiceBlocks'
 
-const CATEGORIES = [
-  'AI Writing', 'AI Coding', 'CRM', 'Project Management', 'Invoicing',
-  'Accounting', 'SEO', 'Productivity', 'Email Marketing', 'Design',
-  'Analytics', 'Customer Support', 'HR & Recruiting', 'Other',
+export const metadata: Metadata = {
+  title: 'Submit an AI Tool',
+  description: 'Submit an AI tool to AIBeat for free review, listing consideration, editorial review, updates, or promotional interest.',
+  alternates: { canonical: '/submit' },
+}
+
+const REVIEW_CRITERIA = [
+  'Useful for a clear audience or workflow',
+  'Public website with enough product context',
+  'Honest pricing and claims',
+  'Active product or credible launch',
+  'Not misleading, unsafe, or purely duplicative',
 ]
 
-const TYPES = [
-  { value: 'new-tool', label: 'Submit a new tool for review' },
-  { value: 'comparison', label: 'Request a comparison' },
-  { value: 'update', label: 'Update an existing listing' },
-  { value: 'bug', label: 'Report incorrect information' },
+const REQUIRED_CONTEXT = [
+  'Product name and website',
+  'Primary category or niche',
+  'Who the product is best for',
+  'What use case it solves',
+  'Founder or team email if you want follow-up',
 ]
-
-const EMPTY_FORM = { name: '', url: '', category: '', description: '', email: '', website: '' }
 
 export default function SubmitPage() {
-  const [type, setType] = useState('new-tool')
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [submitted, setSubmitted] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  function set(field: string, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      const res = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, type }),
-      })
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data?.error || 'Could not submit right now. Please try again.')
-        return
-      }
-
-      setSubmitted(true)
-    } catch {
-      setError('Could not submit right now. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
-    <div className="max-w-5xl mx-auto px-0 border-x border-border">
-      <div className="font-mono text-[11px] text-ink-4 px-6 py-4 border-b border-border flex items-center gap-2">
-        <Link href="/" className="hover:text-ink">Home</Link>
-        <span>/</span>
-        <span className="text-ink">Submit</span>
-      </div>
-
-      <div className="px-6 py-6 border-b-2 border-ink">
-        <h1 className="font-serif text-3xl font-bold text-ink mb-1">Submit a Tool</h1>
-        <p className="text-sm text-ink-3">
-          We review 10-15 new tools per month. Submissions are free and there is no guarantee of coverage.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_280px]">
-        <div className="p-6 border-r border-border">
-          {submitted ? (
-            <div className="py-8 text-center">
-              <div className="font-serif text-2xl font-bold text-ink mb-2">Thanks - we got it.</div>
-              <p className="text-sm text-ink-3 mb-6 max-w-sm mx-auto leading-relaxed">
-                We review every submission. If it is a good fit, we will reach out within 2-4 weeks.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href="/directory" className="font-mono text-xs text-white bg-ink px-5 py-2.5 hover:bg-beat-red transition-colors">
-                  Browse the directory {'->'}
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => { setSubmitted(false); setForm(EMPTY_FORM); setError(null) }}
-                  className="font-mono text-xs border border-border px-5 py-2.5 hover:bg-paper-2 transition-colors"
-                >
-                  Submit another
-                </button>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="font-mono text-[10px] text-ink-4 uppercase tracking-widest block mb-2">
-                  Type of submission
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {TYPES.map((t) => (
-                    <button
-                      key={t.value}
-                      type="button"
-                      onClick={() => setType(t.value)}
-                      className={`text-left text-xs p-3 border transition-colors ${
-                        type === t.value
-                          ? 'border-ink bg-paper-2 font-semibold text-ink'
-                          : 'border-border text-ink-3 hover:bg-paper-2'
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <input
-                type="text"
-                value={form.website}
-                onChange={(e) => set('website', e.target.value)}
-                tabIndex={-1}
-                autoComplete="off"
-                className="hidden"
-                aria-hidden="true"
-              />
-
-              <div>
-                <label className="font-mono text-[10px] text-ink-4 uppercase tracking-widest block mb-1.5">
-                  Tool name *
-                </label>
-                <input
-                  required
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => set('name', e.target.value)}
-                  placeholder="e.g. Notion, Jasper AI, Cursor"
-                  className="w-full bg-transparent border border-border text-ink text-sm px-3 py-2.5 outline-none placeholder:text-ink-4 focus:border-ink-2 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="font-mono text-[10px] text-ink-4 uppercase tracking-widest block mb-1.5">
-                  Tool URL *
-                </label>
-                <input
-                  required
-                  type="url"
-                  value={form.url}
-                  onChange={(e) => set('url', e.target.value)}
-                  placeholder="https://yourtool.com"
-                  className="w-full bg-transparent border border-border text-ink text-sm px-3 py-2.5 outline-none placeholder:text-ink-4 focus:border-ink-2 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="font-mono text-[10px] text-ink-4 uppercase tracking-widest block mb-1.5">
-                  Category *
-                </label>
-                <select
-                  required
-                  value={form.category}
-                  onChange={(e) => set('category', e.target.value)}
-                  className="w-full bg-paper border border-border text-ink text-sm px-3 py-2.5 outline-none focus:border-ink-2 transition-colors"
-                >
-                  <option value="">Select a category</option>
-                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="font-mono text-[10px] text-ink-4 uppercase tracking-widest block mb-1.5">
-                  Why should we review this? *
-                </label>
-                <textarea
-                  required
-                  value={form.description}
-                  onChange={(e) => set('description', e.target.value)}
-                  placeholder="What makes this tool unique? Who is it for? Any notable customers or case studies?"
-                  rows={4}
-                  className="w-full bg-transparent border border-border text-ink text-sm px-3 py-2.5 outline-none placeholder:text-ink-4 focus:border-ink-2 transition-colors resize-none"
-                />
-              </div>
-
-              <div>
-                <label className="font-mono text-[10px] text-ink-4 uppercase tracking-widest block mb-1.5">
-                  Your email (optional)
-                </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => set('email', e.target.value)}
-                  placeholder="If you would like us to follow up"
-                  className="w-full bg-transparent border border-border text-ink text-sm px-3 py-2.5 outline-none placeholder:text-ink-4 focus:border-ink-2 transition-colors"
-                />
-              </div>
-
-              {error && (
-                <div className="border border-beat-red bg-beat-red-light px-3 py-2 text-xs text-beat-red">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-ink text-white text-sm font-semibold py-3 hover:bg-beat-red transition-colors disabled:opacity-60"
-              >
-                {loading ? 'Submitting...' : 'Submit ->'}
-              </button>
-
-              <p className="font-mono text-[10px] text-ink-4">
-                Submissions are reviewed weekly. We do not guarantee coverage or respond to every submission.
-              </p>
-            </form>
-          )}
+    <div className="dark-page overflow-hidden">
+      <section className="relative border-b border-white/10">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute left-8 top-8 h-80 w-80 rounded-full bg-cyan-300/10 blur-3xl" />
+          <div className="absolute right-0 top-20 h-96 w-96 rounded-full bg-purple-500/10 blur-3xl" />
         </div>
-
-        <div className="p-5 space-y-5">
-          <div>
-            <div className="section-label">What we look for</div>
-            <ul className="mt-3 space-y-2">
-              {[
-                'Genuinely useful for founders or freelancers',
-                'Has a free plan or fair trial',
-                'Actively maintained and updated',
-                'Honest, transparent pricing',
-                'Not a pure copycat with no differentiation',
-              ].map((item) => (
-                <li key={item} className="flex gap-2 text-xs text-ink-2">
-                  <span className="text-beat-green shrink-0">✓</span>{item}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="border-t border-border pt-4">
-            <div className="section-label">Timeline</div>
-            <div className="mt-3 space-y-3">
-              {[
-                { step: '1', label: 'You submit', desc: 'Takes 2 minutes' },
-                { step: '2', label: 'We review', desc: '2-4 weeks' },
-                { step: '3', label: 'If accepted', desc: 'We reach out' },
-                { step: '4', label: 'Published', desc: 'In the directory + newsletter' },
-              ].map((s) => (
-                <div key={s.step} className="flex gap-3">
-                  <span className="font-mono text-[10px] text-ink-4 min-w-[16px]">{s.step}.</span>
-                  <div>
-                    <div className="text-xs font-semibold text-ink">{s.label}</div>
-                    <div className="font-mono text-[10px] text-ink-4">{s.desc}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-4">
-            <div className="section-label">Advertising</div>
-            <p className="text-xs text-ink-3 mt-2 leading-relaxed">
-              Want guaranteed placement? We offer sponsored listings and newsletter placements.
+        <div className="site-shell grid gap-10 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div className="lg:sticky lg:top-28">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Submit a tool</p>
+            <h1 className="mt-5 text-5xl font-black leading-tight text-white md:text-7xl">Start with free AIBeat review</h1>
+            <p className="mt-6 text-lg leading-8 text-slate-400">
+              Submit your AI product for directory consideration, editorial review, listing updates, claim requests, or promotional interest.
             </p>
-            <a
-              href="mailto:info@aibeat.dev"
-              className="font-mono text-[11px] text-beat-red hover:underline mt-2 block"
-            >
-              Email info@aibeat.dev {'->'}
-            </a>
+            <div className="mt-8 grid gap-3">
+              {REQUIRED_CONTEXT.map((item) => (
+                <div key={item} className="flex gap-3 text-sm leading-6 text-slate-300">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-300" />
+                  <span>{item}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/for-founders" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white hover:border-cyan-300/40">
+                Compare founder services
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/spotlight" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">
+                View Spotlight
+              </Link>
+            </div>
           </div>
+
+          <Suspense fallback={<div className="premium-card p-8 text-sm text-slate-400">Loading submission form...</div>}>
+            <SubmitToolForm />
+          </Suspense>
         </div>
-      </div>
+      </section>
+
+      <section className="site-shell grid gap-6 py-16 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="premium-card p-6">
+          <FileCheck2 className="h-6 w-6 text-cyan-200" />
+          <h2 className="mt-5 text-2xl font-black text-white">What AIBeat looks for</h2>
+          <ul className="mt-5 space-y-3">
+            {REVIEW_CRITERIA.map((item) => (
+              <li key={item} className="flex gap-3 text-sm leading-6 text-slate-300">
+                <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-200" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="premium-card p-6">
+          <ShieldCheck className="h-6 w-6 text-green-300" />
+          <h2 className="mt-5 text-2xl font-black text-white">Free does not mean guaranteed</h2>
+          <p className="mt-4 text-sm leading-7 text-slate-400">
+            Free submissions are reviewed manually. AIBeat may accept, decline, request more context, or suggest a better path such as Spotlight, launch promotion, newsletter sponsorship, or a partner article. Sponsored options are labeled separately from editorial consideration.
+          </p>
+        </div>
+      </section>
+
+      <section className="border-y border-white/10 bg-white/[0.025] py-16">
+        <div className="site-shell">
+          <div className="mb-10 max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">After submission</p>
+            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Choose promotion only if it fits your goal</h2>
+          </div>
+          <ServiceGrid ids={['free', 'enhanced', 'spotlight', 'launch-feature', 'newsletter-feature']} compact />
+        </div>
+      </section>
+
+      <section className="site-shell py-16">
+        <div className="premium-card p-6 md:p-8">
+          <Sparkles className="h-6 w-6 text-cyan-200" />
+          <h2 className="mt-5 text-3xl font-black text-white">Want to be featured faster?</h2>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-400">
+            If your goal is launch visibility, newsletter exposure, homepage/category Spotlight, or a sponsored article, choose promotional interest in the form or email AIBeat with your campaign timing.
+          </p>
+          <Link href="/advertise" className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">
+            View promotion options
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
+      <DisclosureSection />
     </div>
   )
 }

@@ -24,6 +24,7 @@ const FOOTER_GROUPS = [
   {
     title: 'For Founders',
     links: [
+      { label: 'Founder Services', href: '/for-founders' },
       { label: 'Submit a Tool', href: '/submit' },
       { label: 'Launch on AIBeat', href: '/launch' },
       { label: 'Spotlight', href: '/spotlight' },

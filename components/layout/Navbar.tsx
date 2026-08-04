@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { label: 'Launches', href: '/launches' },
   { label: 'Categories', href: '/categories' },
   { label: 'Spotlight', href: '/spotlight' },
-  { label: 'For Founders', href: '/launch' },
+  { label: 'For Founders', href: '/for-founders' },
   { label: 'Newsletter', href: '/newsletter' },
 ]
 
