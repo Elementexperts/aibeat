@@ -78,10 +78,25 @@ test('generates humanized LinkedIn drafts with engagement question and source li
   })
 
   assert.match(draft.body, /I saw this AI story today/)
+  assert.match(draft.body, /today and it feels worth discussing:\n\nAI agents reshape/)
   assert.match(draft.body, /Why it matters:/)
   assert.match(draft.body, /Full AIBeat story: https:\/\/www\.aibeat\.dev\/news\/ai-agents/)
   assert.match(draft.body, /Image\/source reference: https:\/\/example\.com\/story/)
   assert.ok(draft.hashtags.includes('#AI'))
+})
+
+test('site URL is normalized when GitHub variables contain line breaks', () => {
+  writeArticle('line-break-url-story')
+
+  const items = loadRecentAIBeatNews({
+    limit: 20,
+    days: 7,
+    siteUrl: 'https://aibeat.dev\r\n',
+    now: new Date('2026-08-04T12:00:00Z'),
+  })
+
+  const item = items.find((entry) => entry.slug === 'line-break-url-story')
+  assert.equal(item?.url, 'https://aibeat.dev/news/line-break-url-story')
 })
 
 test('LinkedIn draft payload uses DRAFT lifecycle and never publishes by default', () => {
@@ -117,6 +132,28 @@ test('dry run writes exactly three local drafts and does not call LinkedIn', asy
   assert.equal(results.length, 3)
   assert.equal(results.every((item) => item.status === 'drafted'), true)
   assert.equal(results.every((item) => item.draftPath && existsSync(item.draftPath)), true)
+})
+
+test('automation falls back to older recent articles when one-day content is thin', async () => {
+  writeArticle('fresh-story', '2026-09-10')
+  writeArticle('fallback-story-one', '2026-09-08')
+  writeArticle('fallback-story-two', '2026-09-07')
+
+  const results = await runLinkedInAutomation({
+    now: new Date('2026-09-10T12:00:00Z'),
+    config: {
+      siteUrl: 'https://www.aibeat.dev',
+      dataDir: 'data/linkedin-fallback-test',
+      draftCount: 3,
+      lookbackDays: 1,
+      dryRun: true,
+      createDraftsEnabled: false,
+    },
+  })
+
+  assert.equal(results.length, 3)
+  assert.ok(results.some((item) => item.draft.articleSlug === 'fresh-story'))
+  assert.ok(results.some((item) => item.draft.articleSlug === 'fallback-story-one' || item.draft.articleSlug === 'fallback-story-two'))
 })
 
 test('missing credentials are detected before LinkedIn API draft creation', () => {

@@ -13,7 +13,7 @@ function parseDate(value: unknown) {
 }
 
 function cleanSiteUrl(value: string) {
-  return value.replace(/\/$/, '')
+  return value.replace(/\s+/g, '').replace(/\/$/, '')
 }
 
 export function loadRecentAIBeatNews(input: {

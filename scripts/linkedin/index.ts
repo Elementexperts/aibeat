@@ -34,11 +34,25 @@ export async function runLinkedInAutomation(input?: {
 }): Promise<RunResult[]> {
   const config = getLinkedInConfig(input?.config)
   const createDrafts = input?.createDrafts ?? config.createDraftsEnabled
-  const articles = loadRecentAIBeatNews({
+  const primaryArticles = loadRecentAIBeatNews({
     limit: config.draftCount * 3,
     days: config.lookbackDays,
     siteUrl: config.siteUrl,
     now: input?.now,
+  })
+  const fallbackArticles = primaryArticles.length >= config.draftCount
+    ? []
+    : loadRecentAIBeatNews({
+      limit: config.draftCount * 4,
+      days: Math.max(config.lookbackDays, 7),
+      siteUrl: config.siteUrl,
+      now: input?.now,
+    })
+  const seen = new Set<string>()
+  const articles = [...primaryArticles, ...fallbackArticles].filter((article) => {
+    if (seen.has(article.slug)) return false
+    seen.add(article.slug)
+    return true
   })
 
   const results: RunResult[] = []

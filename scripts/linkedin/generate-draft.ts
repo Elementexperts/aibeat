@@ -75,7 +75,7 @@ export function generateLinkedInDraft(input: {
     imageLine(article),
     '',
     hashtags.join(' '),
-  ].filter(Boolean).join('\n')
+  ].filter((line): line is string => line !== undefined).join('\n')
 
   return {
     id,

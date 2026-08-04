@@ -16,7 +16,7 @@ function numberFromEnv(value: string | undefined, fallback: number) {
 }
 
 function cleanSiteUrl(value: string | undefined) {
-  return (value || 'https://www.aibeat.dev').replace(/\/$/, '')
+  return (value || 'https://www.aibeat.dev').replace(/\s+/g, '').replace(/\/$/, '')
 }
 
 function toneFromEnv(value: string | undefined): LinkedInTone {
