@@ -110,10 +110,12 @@ The new LinkedIn workflow creates API drafts with:
 
 ```text
 lifecycleState: DRAFT
-feedDistribution: NONE
+feedDistribution: MAIN_FEED
 ```
 
 It does not schedule or publish posts.
+
+`MAIN_FEED` is used so LinkedIn treats the draft as an organic member post. `NONE` is reserved for Direct Sponsored Content/dark-share style posts and requires an ad account context.
 
 ## Important API Note
 

@@ -107,7 +107,7 @@ test('LinkedIn draft payload uses DRAFT lifecycle and never publishes by default
   }))
 
   assert.equal(payload.lifecycleState, 'DRAFT')
-  assert.equal(payload.distribution.feedDistribution, 'NONE')
+  assert.equal(payload.distribution.feedDistribution, 'MAIN_FEED')
   assert.equal(payload.author, 'urn:li:person:test')
 })
 

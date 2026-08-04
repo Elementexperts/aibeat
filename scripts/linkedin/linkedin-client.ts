@@ -150,7 +150,7 @@ export function buildLinkedInDraftPayload(draft: LinkedInDraft, config: LinkedIn
     commentary: draft.body.slice(0, 3000),
     visibility: 'PUBLIC',
     distribution: {
-      feedDistribution: 'NONE',
+      feedDistribution: 'MAIN_FEED',
       targetEntities: [],
       thirdPartyDistributionChannels: [],
     },
