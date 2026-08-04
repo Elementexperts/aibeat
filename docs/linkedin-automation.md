@@ -88,6 +88,24 @@ dry_run=false
 create_linkedin_drafts=true
 ```
 
+To discover the personal profile author URN without exposing tokens:
+
+```text
+resolve_author_urn=true
+```
+
+The workflow will refresh the token, call LinkedIn `/v2/me`, and print only:
+
+```text
+linkedInAuthorUrn: urn:li:person:...
+```
+
+Copy that value into the GitHub secret:
+
+```text
+LINKEDIN_AUTHOR_URN
+```
+
 The new LinkedIn workflow creates API drafts with:
 
 ```text

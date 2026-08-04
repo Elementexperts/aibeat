@@ -16,6 +16,15 @@ export type LinkedInRefreshTokenResult = {
   message?: string
 }
 
+export type LinkedInProfileResult = {
+  ok: boolean
+  status: number
+  personUrn?: string
+  id?: string
+  name?: string
+  message?: string
+}
+
 export async function refreshLinkedInAccessToken(input: {
   config: LinkedInAutomationConfig
   fetchImpl?: typeof fetch
@@ -62,6 +71,42 @@ export async function refreshLinkedInAccessToken(input: {
     }
   } catch {
     return { ok: false, status: res.status, message: 'LinkedIn refresh response was not valid JSON' }
+  }
+}
+
+export async function getLinkedInPersonalProfile(input: {
+  accessToken: string
+  fetchImpl?: typeof fetch
+}): Promise<LinkedInProfileResult> {
+  const fetchImpl = input.fetchImpl || fetch
+  const res = await fetchImpl('https://api.linkedin.com/v2/me', {
+    headers: {
+      Authorization: `Bearer ${input.accessToken}`,
+      'X-Restli-Protocol-Version': '2.0.0',
+    },
+    signal: AbortSignal.timeout(12000),
+  })
+
+  const text = await res.text().catch(() => '')
+  if (!res.ok) return { ok: false, status: res.status, message: text.slice(0, 500) }
+
+  try {
+    const data = JSON.parse(text) as {
+      id?: string
+      localizedFirstName?: string
+      localizedLastName?: string
+      vanityName?: string
+    }
+    if (!data.id) return { ok: false, status: res.status, message: 'LinkedIn /v2/me response did not include id' }
+    return {
+      ok: true,
+      status: res.status,
+      id: data.id,
+      personUrn: `urn:li:person:${data.id}`,
+      name: [data.localizedFirstName, data.localizedLastName].filter(Boolean).join(' ') || data.vanityName,
+    }
+  } catch {
+    return { ok: false, status: res.status, message: 'LinkedIn /v2/me response was not valid JSON' }
   }
 }
 

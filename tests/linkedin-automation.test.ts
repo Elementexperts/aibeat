@@ -5,10 +5,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 import { getLinkedInConfig, getMissingLinkedInCredentials } from '../scripts/linkedin/config'
-import { buildLinkedInDraftPayload, createLinkedInDraft, refreshLinkedInAccessToken } from '../scripts/linkedin/linkedin-client'
+import { buildLinkedInDraftPayload, createLinkedInDraft, getLinkedInPersonalProfile, refreshLinkedInAccessToken } from '../scripts/linkedin/linkedin-client'
 import { generateLinkedInDraft } from '../scripts/linkedin/generate-draft'
 import { loadRecentAIBeatNews } from '../scripts/linkedin/load-aibeat-news'
-import { runLinkedInAutomation } from '../scripts/linkedin'
+import { resolveLinkedInAuthorUrn, runLinkedInAutomation } from '../scripts/linkedin'
 import type { LinkedInArticleSource } from '../scripts/linkedin/types'
 
 const originalCwd = process.cwd()
@@ -199,6 +199,62 @@ test('LinkedIn refresh token request uses OAuth refresh grant', async () => {
   assert.match(String(calls[0]?.init.body), /grant_type=refresh_token/)
   assert.match(String(calls[0]?.init.body), /refresh_token=refresh-token/)
   assert.doesNotMatch(String(calls[0]?.init.body), /fresh-access-token/)
+})
+
+test('LinkedIn profile lookup resolves personal author URN', async () => {
+  const calls: Array<{ url: string; init: RequestInit }> = []
+  const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
+    calls.push({ url: String(url), init: init || {} })
+    return new Response(JSON.stringify({
+      id: 'person-id-123',
+      localizedFirstName: 'Nomoz',
+      localizedLastName: 'Fayzullaev',
+    }), { status: 200 })
+  }
+
+  const result = await getLinkedInPersonalProfile({
+    accessToken: 'fresh-access-token',
+    fetchImpl: fetchImpl as typeof fetch,
+  })
+
+  assert.equal(result.ok, true)
+  assert.equal(result.personUrn, 'urn:li:person:person-id-123')
+  assert.equal(result.name, 'Nomoz Fayzullaev')
+  assert.equal(calls[0]?.url, 'https://api.linkedin.com/v2/me')
+  const headers = calls[0]?.init.headers as Record<string, string>
+  assert.equal(headers.Authorization, 'Bearer fresh-access-token')
+})
+
+test('author URN resolver refreshes token and returns only profile identity', async () => {
+  const calls: string[] = []
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = (async (url: string | URL | Request) => {
+    calls.push(String(url))
+    if (String(url).includes('/oauth/v2/accessToken')) {
+      return new Response(JSON.stringify({ access_token: 'fresh-access-token', expires_in: 5184000 }), { status: 200 })
+    }
+    return new Response(JSON.stringify({ id: 'person-id-456' }), { status: 200 })
+  }) as typeof fetch
+
+  try {
+    const result = await resolveLinkedInAuthorUrn({
+      config: {
+        accessToken: 'expired-token',
+        clientId: 'client-id',
+        clientSecret: 'client-secret',
+        refreshToken: 'refresh-token',
+      },
+    })
+
+    assert.equal(result.personUrn, 'urn:li:person:person-id-456')
+    assert.deepEqual(calls, [
+      'https://www.linkedin.com/oauth/v2/accessToken',
+      'https://api.linkedin.com/v2/me',
+    ])
+    assert.equal('accessToken' in result, false)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
 })
 
 test('automation reports refresh failure without falling back to expired token', async () => {

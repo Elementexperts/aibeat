@@ -21,6 +21,14 @@ on:
         options:
           - 'false'
           - 'true'
+      resolve_author_urn:
+        description: 'Print personal LinkedIn author URN only'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   linkedin-drafts:
@@ -59,7 +67,13 @@ jobs:
           LINKEDIN_TONE: ${{ vars.LINKEDIN_TONE || 'humanized' }}
           LINKEDIN_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'true' }}
           LINKEDIN_CREATE_DRAFTS_ENABLED: ${{ github.event_name == 'workflow_dispatch' && inputs.create_linkedin_drafts || 'false' }}
+          LINKEDIN_RESOLVE_AUTHOR_URN: ${{ github.event_name == 'workflow_dispatch' && inputs.resolve_author_urn || 'false' }}
         run: |
+          if [ "${LINKEDIN_RESOLVE_AUTHOR_URN}" = "true" ]; then
+            npx tsx scripts/linkedin/index.ts --whoami
+            exit 0
+          fi
+
           ARGS=""
           if [ "${LINKEDIN_CREATE_DRAFTS_ENABLED}" = "true" ]; then
             ARGS="$ARGS --create-drafts"

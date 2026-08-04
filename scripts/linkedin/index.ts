@@ -2,7 +2,7 @@ import { isAbsolute, join } from 'path'
 import { getLinkedInConfig, getMissingLinkedInCredentials } from './config'
 import { loadRecentAIBeatNews } from './load-aibeat-news'
 import { generateLinkedInDraft } from './generate-draft'
-import { createLinkedInDraft, refreshLinkedInAccessToken } from './linkedin-client'
+import { createLinkedInDraft, getLinkedInPersonalProfile, refreshLinkedInAccessToken } from './linkedin-client'
 import {
   findDuplicateDraft,
   saveLinkedInDraft,
@@ -24,7 +24,32 @@ function parseArgs(argv: string[]) {
   return {
     createDrafts: args.has('--create-drafts'),
     dryRun: args.has('--dry-run') ? true : args.has('--no-dry-run') ? false : undefined,
+    whoami: args.has('--whoami'),
   }
+}
+
+export async function resolveLinkedInAuthorUrn(input?: {
+  config?: Partial<LinkedInAutomationConfig>
+}) {
+  const config = getLinkedInConfig(input?.config)
+  let accessToken = config.accessToken
+
+  if (config.refreshToken && config.clientId && config.clientSecret) {
+    const refreshed = await refreshLinkedInAccessToken({ config })
+    if (!refreshed.ok || !refreshed.accessToken) {
+      throw new Error(`LinkedIn token refresh failed (${refreshed.status}): ${refreshed.message || 'Unknown error'}`)
+    }
+    accessToken = refreshed.accessToken
+  }
+
+  if (!accessToken) throw new Error('Missing LINKEDIN_ACCESS_TOKEN or refresh-token credentials.')
+
+  const profile = await getLinkedInPersonalProfile({ accessToken })
+  if (!profile.ok || !profile.personUrn) {
+    throw new Error(`LinkedIn profile lookup failed (${profile.status}): ${profile.message || 'Unknown error'}`)
+  }
+
+  return profile
 }
 
 export async function runLinkedInAutomation(input?: {
@@ -126,6 +151,18 @@ export async function runLinkedInAutomation(input?: {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2))
+  if (args.whoami) {
+    const profile = await resolveLinkedInAuthorUrn()
+    console.log(JSON.stringify({
+      ok: true,
+      linkedInAuthorUrn: profile.personUrn,
+      id: profile.id,
+      name: profile.name,
+      nextStep: 'Copy linkedInAuthorUrn into the GitHub secret LINKEDIN_AUTHOR_URN.',
+    }, null, 2))
+    return
+  }
+
   const results = await runLinkedInAutomation({
     config: args.dryRun === undefined ? undefined : { dryRun: args.dryRun },
     createDrafts: args.createDrafts,

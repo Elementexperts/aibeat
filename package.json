@@ -17,7 +17,8 @@
     "outreach": "tsx lib/outreach-cli.ts",
     "reddit:generate": "tsx scripts/reddit/index.ts",
     "reddit:publish": "tsx scripts/reddit/index.ts --publish",
-    "linkedin:drafts": "tsx scripts/linkedin/index.ts --dry-run"
+    "linkedin:drafts": "tsx scripts/linkedin/index.ts --dry-run",
+    "linkedin:whoami": "tsx scripts/linkedin/index.ts --whoami"
   },
   "dependencies": {
     "clsx": "^2.1.1",
