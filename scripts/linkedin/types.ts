@@ -47,6 +47,9 @@ export type LinkedInHistory = {
 
 export type LinkedInAutomationConfig = {
   accessToken?: string
+  clientId?: string
+  clientSecret?: string
+  refreshToken?: string
   authorUrn?: string
   siteUrl: string
   dataDir: string

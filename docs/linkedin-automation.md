@@ -55,6 +55,9 @@ editorial
 
 ```text
 LINKEDIN_ACCESS_TOKEN
+LINKEDIN_CLIENT_ID
+LINKEDIN_CLIENT_SECRET
+LINKEDIN_REFRESH_TOKEN
 LINKEDIN_AUTHOR_URN
 ```
 
@@ -64,6 +67,8 @@ LINKEDIN_AUTHOR_URN
 urn:li:person:...
 urn:li:organization:...
 ```
+
+If `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET`, and `LINKEDIN_REFRESH_TOKEN` are present, the workflow refreshes a temporary access token at the start of the run. The refreshed access token is used only during that GitHub Actions run and is not written back to the repository.
 
 ## Safe Toggles
 

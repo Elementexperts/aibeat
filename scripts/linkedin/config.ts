@@ -27,6 +27,9 @@ function toneFromEnv(value: string | undefined): LinkedInTone {
 export function getLinkedInConfig(overrides?: Partial<LinkedInAutomationConfig>): LinkedInAutomationConfig {
   return {
     accessToken: process.env.LINKEDIN_ACCESS_TOKEN,
+    clientId: process.env.LINKEDIN_CLIENT_ID,
+    clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
+    refreshToken: process.env.LINKEDIN_REFRESH_TOKEN,
     authorUrn: process.env.LINKEDIN_AUTHOR_URN || process.env.LINKEDIN_PERSON_URN,
     siteUrl: cleanSiteUrl(process.env.AIBEAT_SITE_URL),
     dataDir: process.env.LINKEDIN_DATA_DIR || 'data/linkedin',
@@ -42,7 +45,10 @@ export function getLinkedInConfig(overrides?: Partial<LinkedInAutomationConfig>)
 
 export function getMissingLinkedInCredentials(config: LinkedInAutomationConfig) {
   const missing: string[] = []
-  if (!config.accessToken) missing.push('LINKEDIN_ACCESS_TOKEN')
+  const canRefresh = Boolean(config.refreshToken && config.clientId && config.clientSecret)
+  if (!config.accessToken && !canRefresh) {
+    missing.push('LINKEDIN_ACCESS_TOKEN or LINKEDIN_REFRESH_TOKEN + LINKEDIN_CLIENT_ID + LINKEDIN_CLIENT_SECRET')
+  }
   if (!config.authorUrn) missing.push('LINKEDIN_AUTHOR_URN')
   return missing
 }

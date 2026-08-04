@@ -49,6 +49,9 @@ jobs:
         env:
           AIBEAT_SITE_URL: ${{ vars.AIBEAT_SITE_URL || 'https://www.aibeat.dev' }}
           LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_CLIENT_ID: ${{ secrets.LINKEDIN_CLIENT_ID }}
+          LINKEDIN_CLIENT_SECRET: ${{ secrets.LINKEDIN_CLIENT_SECRET }}
+          LINKEDIN_REFRESH_TOKEN: ${{ secrets.LINKEDIN_REFRESH_TOKEN }}
           LINKEDIN_AUTHOR_URN: ${{ secrets.LINKEDIN_AUTHOR_URN }}
           LINKEDIN_VERSION: ${{ vars.LINKEDIN_VERSION || '202604' }}
           LINKEDIN_DAILY_DRAFT_COUNT: ${{ vars.LINKEDIN_DAILY_DRAFT_COUNT || '3' }}

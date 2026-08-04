@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 import { getLinkedInConfig, getMissingLinkedInCredentials } from '../scripts/linkedin/config'
-import { buildLinkedInDraftPayload, createLinkedInDraft } from '../scripts/linkedin/linkedin-client'
+import { buildLinkedInDraftPayload, createLinkedInDraft, refreshLinkedInAccessToken } from '../scripts/linkedin/linkedin-client'
 import { generateLinkedInDraft } from '../scripts/linkedin/generate-draft'
 import { loadRecentAIBeatNews } from '../scripts/linkedin/load-aibeat-news'
 import { runLinkedInAutomation } from '../scripts/linkedin'
@@ -158,7 +158,79 @@ test('automation falls back to older recent articles when one-day content is thi
 
 test('missing credentials are detected before LinkedIn API draft creation', () => {
   const config = getLinkedInConfig({ accessToken: undefined, authorUrn: undefined })
-  assert.deepEqual(getMissingLinkedInCredentials(config), ['LINKEDIN_ACCESS_TOKEN', 'LINKEDIN_AUTHOR_URN'])
+  assert.deepEqual(getMissingLinkedInCredentials(config), ['LINKEDIN_ACCESS_TOKEN or LINKEDIN_REFRESH_TOKEN + LINKEDIN_CLIENT_ID + LINKEDIN_CLIENT_SECRET', 'LINKEDIN_AUTHOR_URN'])
+})
+
+test('refresh credentials satisfy LinkedIn access-token requirement', () => {
+  const config = getLinkedInConfig({
+    accessToken: undefined,
+    clientId: 'client-id',
+    clientSecret: 'client-secret',
+    refreshToken: 'refresh-token',
+    authorUrn: 'urn:li:person:test',
+  })
+
+  assert.deepEqual(getMissingLinkedInCredentials(config), [])
+})
+
+test('LinkedIn refresh token request uses OAuth refresh grant', async () => {
+  const calls: Array<{ url: string; init: RequestInit }> = []
+  const fetchImpl = async (url: string | URL | Request, init?: RequestInit) => {
+    calls.push({ url: String(url), init: init || {} })
+    return new Response(JSON.stringify({
+      access_token: 'fresh-access-token',
+      expires_in: 5184000,
+      refresh_token_expires_in: 31536000,
+    }), { status: 200 })
+  }
+
+  const result = await refreshLinkedInAccessToken({
+    config: getLinkedInConfig({
+      clientId: 'client-id',
+      clientSecret: 'client-secret',
+      refreshToken: 'refresh-token',
+    }),
+    fetchImpl: fetchImpl as typeof fetch,
+  })
+
+  assert.equal(result.ok, true)
+  assert.equal(result.accessToken, 'fresh-access-token')
+  assert.equal(calls[0]?.url, 'https://www.linkedin.com/oauth/v2/accessToken')
+  assert.match(String(calls[0]?.init.body), /grant_type=refresh_token/)
+  assert.match(String(calls[0]?.init.body), /refresh_token=refresh-token/)
+  assert.doesNotMatch(String(calls[0]?.init.body), /fresh-access-token/)
+})
+
+test('automation reports refresh failure without falling back to expired token', async () => {
+  writeArticle('refresh-failure-story', '2026-10-01')
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = (async () => new Response('invalid refresh token', { status: 401 })) as typeof fetch
+
+  try {
+    const results = await runLinkedInAutomation({
+      now: new Date('2026-10-01T12:00:00Z'),
+      createDrafts: true,
+      config: {
+        siteUrl: 'https://www.aibeat.dev',
+        dataDir: 'data/linkedin-refresh-failure-test',
+        draftCount: 1,
+        lookbackDays: 1,
+        dryRun: false,
+        createDraftsEnabled: true,
+        accessToken: 'expired-token',
+        clientId: 'client-id',
+        clientSecret: 'client-secret',
+        refreshToken: 'bad-refresh-token',
+        authorUrn: 'urn:li:person:test',
+      },
+    })
+
+    assert.equal(results[0]?.status, 'failed')
+    assert.match(results[0]?.message || '', /LinkedIn token refresh failed/)
+    assert.doesNotMatch(results[0]?.message || '', /EXPIRED_ACCESS_TOKEN/)
+  } finally {
+    globalThis.fetch = originalFetch
+  }
 })
 
 test('LinkedIn client sends required versioned Posts API headers', async () => {

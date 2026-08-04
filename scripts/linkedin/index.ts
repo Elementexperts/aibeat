@@ -2,7 +2,7 @@ import { isAbsolute, join } from 'path'
 import { getLinkedInConfig, getMissingLinkedInCredentials } from './config'
 import { loadRecentAIBeatNews } from './load-aibeat-news'
 import { generateLinkedInDraft } from './generate-draft'
-import { createLinkedInDraft } from './linkedin-client'
+import { createLinkedInDraft, refreshLinkedInAccessToken } from './linkedin-client'
 import {
   findDuplicateDraft,
   saveLinkedInDraft,
@@ -56,6 +56,22 @@ export async function runLinkedInAutomation(input?: {
   })
 
   const results: RunResult[] = []
+  let refreshedAccessToken: string | undefined
+  let refreshMessage: string | undefined
+  let refreshFailed = false
+
+  if (createDrafts && !config.dryRun && config.refreshToken && config.clientId && config.clientSecret) {
+    const refreshed = await refreshLinkedInAccessToken({ config })
+    if (refreshed.ok) {
+      refreshedAccessToken = refreshed.accessToken
+      refreshMessage = `Refreshed LinkedIn access token for this run. Access token TTL: ${refreshed.expiresIn ?? 'unknown'} seconds.`
+      console.log(refreshMessage)
+    } else {
+      refreshFailed = true
+      refreshMessage = `LinkedIn token refresh failed (${refreshed.status}): ${refreshed.message || 'Unknown error'}`
+      console.log(refreshMessage)
+    }
+  }
 
   for (const article of articles) {
     if (results.length >= config.draftCount) break
@@ -74,15 +90,18 @@ export async function runLinkedInAutomation(input?: {
 
     if (createDrafts && !config.dryRun) {
       const missing = getMissingLinkedInCredentials(config)
-      if (missing.length) {
+      if (refreshFailed) {
+        status = 'failed'
+        message = refreshMessage || 'LinkedIn token refresh failed.'
+      } else if (missing.length) {
         status = 'failed'
         message = `Missing LinkedIn credentials: ${missing.join(', ')}`
       } else {
-        const created = await createLinkedInDraft({ draft, config })
+        const created = await createLinkedInDraft({ draft, config, accessToken: refreshedAccessToken })
         status = created.ok ? 'created' : 'failed'
         linkedInPostUrn = created.postUrn
         message = created.ok
-          ? 'Created LinkedIn API draft.'
+          ? `Created LinkedIn API draft.${refreshMessage ? ` ${refreshMessage}` : ''}`
           : `LinkedIn API draft failed (${created.status}): ${created.message || 'Unknown error'}`
       }
     }
