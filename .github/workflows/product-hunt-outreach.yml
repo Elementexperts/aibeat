@@ -8,30 +8,15 @@ on:
       action:
         description: Outreach action
         required: true
-        default: preview
+        default: create-daily-file-drafts
         type: choice
         options:
-          - preview
-          - sync-kit
-          - create-draft
           - import-daily-file
           - create-daily-file-drafts
-          - seed-betalist
-          - create-individual-drafts
-          - schedule
       max_drafts:
-        description: Maximum one-recipient drafts for create-individual-drafts
+        description: Maximum one-recipient Kit draft broadcasts for create-daily-file-drafts
         required: false
         default: '15'
-      send_at:
-        description: ISO timestamp for schedule action only
-        required: false
-        default: ''
-      confirm_schedule:
-        description: Explicitly confirm scheduling
-        required: true
-        default: false
-        type: boolean
 
 jobs:
   outreach:
@@ -72,38 +57,15 @@ jobs:
         shell: bash
         run: |
           case "${OUTREACH_ACTION}" in
-            preview)
-              npm run outreach -- preview
-              ;;
-            sync-kit)
-              npm run outreach -- sync-kit
-              ;;
-            create-draft)
-              npm run outreach -- create-draft
-              ;;
             import-daily-file)
               npm run outreach -- import-daily-file --file "${DAILY_MANUAL_LEADS_FILE}" --save
               ;;
             create-daily-file-drafts)
               npm run outreach -- create-daily-file-drafts --file "${DAILY_MANUAL_LEADS_FILE}" --limit "${OUTREACH_MAX_DRAFTS}"
               ;;
-            seed-betalist)
-              npm run outreach -- seed-betalist --save
-              ;;
-            create-individual-drafts)
-              npm run outreach -- seed-betalist --save
-              npm run outreach -- create-individual-drafts --source "Beta List" --limit "${OUTREACH_MAX_DRAFTS}"
-              ;;
-            schedule)
-              if [ "${{ inputs.confirm_schedule }}" != "true" ]; then
-                echo "Scheduling requires confirm_schedule=true."
-                exit 1
-              fi
-              if [ -z "${{ inputs.send_at }}" ]; then
-                echo "Scheduling requires send_at."
-                exit 1
-              fi
-              npm run outreach -- schedule --send-at "${{ inputs.send_at }}" --confirm
+            *)
+              echo "Unsupported outreach action: ${OUTREACH_ACTION}"
+              exit 1
               ;;
           esac
 
@@ -130,5 +92,5 @@ jobs:
             echo "- Sending enabled: ${{ vars.OUTREACH_SEND_ENABLED || 'false' }}"
             echo "- Automated Kit sending enabled: ${{ vars.AUTOMATED_KIT_SEND_ENABLED || 'false' }}"
             echo "- Draft-first safety remains enforced by the server CLI."
-            echo "- BetaList actions create one-recipient unpublished Kit drafts only."
+            echo "- Manual menu is limited to daily CSV import and daily CSV draft creation."
           } >> "$GITHUB_STEP_SUMMARY"

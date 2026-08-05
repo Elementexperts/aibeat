@@ -167,14 +167,6 @@ Run daily lead discovery and create one-recipient Kit drafts:
 npm run leads:daily -- --max-leads 5
 ```
 
-Attempt scheduling:
-
-```bash
-npm run outreach -- schedule --send-at 2026-08-05T14:00:00Z --confirm
-```
-
-Scheduling is rejected unless `OUTREACH_SEND_ENABLED=true`, campaign sending is enabled, the timestamp is in the future, and a draft already exists.
-
 ## CSV Headers
 
 ```csv
@@ -204,18 +196,14 @@ Suppressed, unsubscribed, bounced, declined, replied, and interested leads are e
 
 Run `Product Hunt Outreach Manager` manually from GitHub Actions. It supports:
 
-- `preview`
-- `sync-kit`
-- `create-draft`
 - `import-daily-file`
 - `create-daily-file-drafts`
-- `seed-betalist`
-- `create-individual-drafts`
-- `schedule`
 
-The scheduled run uses `create-daily-file-drafts` automatically. Manual runs can use the same action to test the current daily CSV file.
+Use `import-daily-file` when you only want to validate and save the current CSV leads without creating Kit drafts.
 
-For BetaList outreach, choose `create-individual-drafts`. The workflow first saves the reviewed BetaList seed, then creates unpublished one-recipient Kit broadcast drafts for leads with source `Beta List`, up to `max_drafts`.
+Use `create-daily-file-drafts` when you want to create one-recipient unpublished Kit draft broadcasts from `data/outreach/daily-manual-leads.csv`.
+
+The scheduled run uses `create-daily-file-drafts` automatically. Manual runs do not replace the scheduled run.
 
 If you want to reuse a Kit design, set `KIT_DEFAULT_EMAIL_TEMPLATE_ID` to the actual Kit email template/layout ID. Do not use a previous campaign broadcast ID unless Kit confirms it is also a reusable template ID.
 
