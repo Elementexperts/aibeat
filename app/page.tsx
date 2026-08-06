@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, Newspaper, Rocket, Search, Sparkles, Zap } from 'lucide-react'
-import { TOOLS, TRENDING, getFeaturedTools } from '@/lib/data'
+import { TOOLS, getPopularTools } from '@/lib/data'
 import { getArticles } from '@/lib/articles'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
 import { PremiumToolCard } from '@/components/ui/PremiumToolCard'
@@ -52,7 +52,7 @@ function categorySummary() {
 
 export default async function HomePage() {
   const articles = await getArticles()
-  const featuredTools = getFeaturedTools()
+  const popularTools = getPopularTools(8)
   const categories = categorySummary()
   const heroArticle = articles[0]
   const secondaryArticles = articles.slice(1, 4)
@@ -161,9 +161,9 @@ export default async function HomePage() {
       <section className="site-shell py-20">
         <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Featured Launches</p>
-            <h2 className="mt-3 text-balance text-4xl font-black text-white md:text-5xl">Meet the AI products launching now</h2>
-            <p className="mt-4 max-w-2xl text-slate-400">Discover new tools, ambitious teams, and emerging products before they become widely known.</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Popular Now</p>
+            <h2 className="mt-3 text-balance text-4xl font-black text-white md:text-5xl">AI products people are exploring now</h2>
+            <p className="mt-4 max-w-2xl text-slate-400">A ranked snapshot of practical AI tools and platforms with strong category fit, broad usefulness, and AIBeat editorial signal.</p>
           </div>
           <div className="flex gap-3">
             <Link href="/launches" className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-cyan-300/40">View All Launches</Link>
@@ -172,7 +172,7 @@ export default async function HomePage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          {featuredTools.slice(0, 5).map((tool, index) => (
+          {popularTools.slice(0, 5).map((tool, index) => (
             <PremiumToolCard key={tool.slug} tool={tool} variant={index === 0 ? 'featured' : 'standard'} />
           ))}
         </div>
@@ -193,9 +193,9 @@ export default async function HomePage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-            <PremiumToolCard tool={TOOLS[0]} variant="featured" />
+            <PremiumToolCard tool={popularTools[0]} variant="featured" />
             <div className="grid gap-3">
-              {TOOLS.slice(1, 6).map((tool, index) => (
+              {popularTools.slice(1, 6).map((tool, index) => (
                 <Link key={tool.slug} href={`/tools/${tool.slug}`} className="premium-card flex items-center gap-4 p-4">
                   <span className="text-sm font-mono text-slate-500">{String(index + 1).padStart(2, '0')}</span>
                   <ToolLogo tool={tool} className="h-10 w-10 rounded-xl text-xs" imageClassName="p-2" />

@@ -1284,6 +1284,120 @@ export const TOOLS: Tool[] = [
     cons: ['Advanced governance needs setup', 'Public/private workflow choices matter', 'Large repos need good maintenance habits'],
     alternatives: ['git', 'github-copilot', 'vercel'],
   },
+  {
+    slug: 'meta-ai',
+    name: 'Meta AI',
+    tagline: 'Meta assistant for search, chat, image generation, and social AI experiences',
+    description: 'Meta AI is Meta’s consumer-facing AI assistant across Meta products and the web, built around conversational help, search-style answers, image generation, and everyday creative tasks.',
+    category: 'AI Assistants',
+    logo: '#0668e1',
+    logoInitials: 'MA',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=meta.ai&sz=128',
+    rating: 4.4,
+    pricing: 'Free access available',
+    pricingType: 'free',
+    affiliateUrl: 'https://www.meta.ai',
+    websiteUrl: 'https://www.meta.ai',
+    featured: false,
+    pros: ['Easy consumer access', 'Useful for social workflows', 'Image generation support', 'Connected to Meta ecosystem'],
+    cons: ['Availability varies by region', 'Less developer-focused than Llama', 'Outputs still need verification'],
+    alternatives: ['chatgpt', 'gemini', 'claude'],
+  },
+  {
+    slug: 'meta-llama',
+    name: 'Meta Llama',
+    tagline: 'Open model family for developers building AI applications',
+    description: 'Meta Llama gives developers access to openly available language models, tools, and resources for building assistants, agents, retrieval workflows, and custom AI products.',
+    category: 'AI Infrastructure',
+    logo: '#0668e1',
+    logoInitials: 'La',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=ai.meta.com&sz=128',
+    rating: 4.7,
+    pricing: 'Open model access',
+    pricingType: 'freemium',
+    affiliateUrl: 'https://ai.meta.com/llama/',
+    websiteUrl: 'https://ai.meta.com/llama/',
+    featured: false,
+    pros: ['Open model ecosystem', 'Developer resources', 'Broad cloud and platform support', 'Useful for custom AI apps'],
+    cons: ['Requires technical implementation', 'Hosting and safety choices matter', 'Model selection can be complex'],
+    alternatives: ['openai-api', 'hugging-face', 'langchain'],
+  },
+  {
+    slug: 'meta-ai-studio',
+    name: 'Meta AI Studio',
+    tagline: 'Create custom AI characters and assistant experiences for Meta platforms',
+    description: 'Meta AI Studio helps creators and businesses experiment with custom AI characters and assistant-style experiences for audience engagement.',
+    category: 'AI Agents',
+    logo: '#0668e1',
+    logoInitials: 'AS',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=ai.meta.com&sz=128',
+    rating: 4.2,
+    pricing: 'Free access available',
+    pricingType: 'free',
+    affiliateUrl: 'https://ai.meta.com/ai-studio/',
+    websiteUrl: 'https://ai.meta.com/ai-studio/',
+    featured: false,
+    pros: ['Creator-friendly AI setup', 'Useful for audience engagement', 'Meta ecosystem fit', 'No-code direction'],
+    cons: ['Platform availability can vary', 'Best for Meta-native audiences', 'Not a general backend automation tool'],
+    alternatives: ['lindy', 'chatgpt', 'gemini'],
+  },
+  {
+    slug: 'segment-anything',
+    name: 'Segment Anything',
+    tagline: 'Meta vision model for image and video object segmentation',
+    description: 'Segment Anything is a Meta AI model family for selecting and segmenting objects in images and videos, useful for computer vision research, editing, annotation, and product workflows.',
+    category: 'AI Image',
+    logo: '#0668e1',
+    logoInitials: 'SA',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=ai.meta.com&sz=128',
+    rating: 4.5,
+    pricing: 'Open research model',
+    pricingType: 'free',
+    affiliateUrl: 'https://ai.meta.com/sam2/',
+    websiteUrl: 'https://ai.meta.com/sam2/',
+    featured: false,
+    pros: ['Strong segmentation workflow', 'Useful for image and video tasks', 'Research-friendly', 'Practical computer vision use cases'],
+    cons: ['Developer implementation required', 'Not a full design app', 'Output review still needed'],
+    alternatives: ['stable-diffusion', 'leonardo-ai', 'hugging-face'],
+  },
+  {
+    slug: 'seamless',
+    name: 'Seamless',
+    tagline: 'Meta speech and text translation research models',
+    description: 'Seamless is Meta’s family of speech and text translation models aimed at multilingual translation, transcription, and speech-to-speech research workflows.',
+    category: 'AI Audio',
+    logo: '#0668e1',
+    logoInitials: 'Se',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=ai.meta.com&sz=128',
+    rating: 4.3,
+    pricing: 'Open research model',
+    pricingType: 'free',
+    affiliateUrl: 'https://ai.meta.com/resources/models-and-libraries/seamless-communication/',
+    websiteUrl: 'https://ai.meta.com/resources/models-and-libraries/seamless-communication/',
+    featured: false,
+    pros: ['Multilingual translation focus', 'Speech and text support', 'Research-friendly', 'Useful accessibility direction'],
+    cons: ['Technical integration required', 'Research model expectations apply', 'Production use needs evaluation'],
+    alternatives: ['elevenlabs', 'hugging-face', 'openai-api'],
+  },
+  {
+    slug: 'audiocraft',
+    name: 'AudioCraft',
+    tagline: 'Meta generative audio research toolkit',
+    description: 'AudioCraft is Meta’s open-source toolkit for developing generative audio models and experimenting with music, sound, and audio generation workflows.',
+    category: 'AI Audio',
+    logo: '#0668e1',
+    logoInitials: 'AC',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=ai.meta.com&sz=128',
+    rating: 4.2,
+    pricing: 'Open-source toolkit',
+    pricingType: 'free',
+    affiliateUrl: 'https://ai.meta.com/resources/models-and-libraries/audiocraft/',
+    websiteUrl: 'https://ai.meta.com/resources/models-and-libraries/audiocraft/',
+    featured: false,
+    pros: ['Open-source audio toolkit', 'Good for research experiments', 'Music and sound generation focus', 'Developer-friendly direction'],
+    cons: ['Requires technical setup', 'Not a polished consumer editor', 'Rights and usage need review'],
+    alternatives: ['suno', 'elevenlabs', 'hugging-face'],
+  },
 ]
 
 // ============================================================
@@ -1694,6 +1808,23 @@ export function getArticleBySlug(slug: string) {
 
 export function getFeaturedTools() {
   return TOOLS.filter((t) => t.featured)
+}
+
+export function getToolPopularityScore(tool: Tool) {
+  const featuredBoost = tool.featured ? 8 : 0
+  const freeAccessBoost = tool.pricingType === 'free' ? 1 : tool.pricingType === 'freemium' ? 2 : 0
+  const categoryBoost = ['AI Assistants', 'AI Coding', 'AI Infrastructure', 'Developer Platforms', 'AI Image', 'AI Video'].includes(tool.category) ? 1.5 : 0
+  return tool.rating * 10 + featuredBoost + freeAccessBoost + categoryBoost
+}
+
+export function getPopularTools(limit?: number) {
+  const tools = [...TOOLS].sort((a, b) => {
+    const scoreDifference = getToolPopularityScore(b) - getToolPopularityScore(a)
+    if (scoreDifference !== 0) return scoreDifference
+    return a.name.localeCompare(b.name)
+  })
+
+  return typeof limit === 'number' ? tools.slice(0, limit) : tools
 }
 
 export function getToolBySlug(slug: string) {

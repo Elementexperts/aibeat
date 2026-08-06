@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { TOOLS } from '@/lib/data'
+import { TOOLS, getPopularTools } from '@/lib/data'
 import { ToolLogo } from '@/components/ui/ToolLogo'
 
 const ALL = 'All'
@@ -12,11 +12,12 @@ export default function DirectoryClient() {
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState(ALL)
   const [activePricing, setActivePricing] = useState<string>(ALL)
+  const rankedTools = useMemo(() => getPopularTools(), [])
 
-  const categories = useMemo(() => [ALL, ...Array.from(new Set(TOOLS.map((t) => t.category)))], [])
+  const categories = useMemo(() => [ALL, ...Array.from(new Set(rankedTools.map((t) => t.category)))], [rankedTools])
 
   const filtered = useMemo(() => {
-    return TOOLS.filter((tool) => {
+    return rankedTools.filter((tool) => {
       const q = search.toLowerCase()
       const matchSearch = !q ||
         tool.name.toLowerCase().includes(q) ||
@@ -30,7 +31,7 @@ export default function DirectoryClient() {
         (activePricing === 'Paid' && tool.pricingType === 'paid')
       return matchSearch && matchCat && matchPrice
     })
-  }, [search, activeCategory, activePricing])
+  }, [search, activeCategory, activePricing, rankedTools])
 
   const isFiltering = search || activeCategory !== ALL || activePricing !== ALL
 
@@ -39,9 +40,9 @@ export default function DirectoryClient() {
     if (isFiltering) return null
     const seen = new Set<string>()
     const order: string[] = []
-    TOOLS.forEach((t) => { if (!seen.has(t.category)) { seen.add(t.category); order.push(t.category) } })
-    return order.map((cat) => ({ cat, tools: TOOLS.filter((t) => t.category === cat) }))
-  }, [isFiltering])
+    rankedTools.forEach((t) => { if (!seen.has(t.category)) { seen.add(t.category); order.push(t.category) } })
+    return order.map((cat) => ({ cat, tools: rankedTools.filter((t) => t.category === cat) }))
+  }, [isFiltering, rankedTools])
 
   return (
     <div className="max-w-5xl mx-auto px-0 border-x border-border">
@@ -130,7 +131,7 @@ export default function DirectoryClient() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4">
               {filtered.map((tool, i) => (
-                <ToolCard key={tool.slug} tool={tool} i={i} />
+                <ToolCard key={tool.slug} tool={tool} i={i} rank={rankedTools.findIndex((ranked) => ranked.slug === tool.slug) + 1} />
               ))}
             </div>
           )}
@@ -145,7 +146,7 @@ export default function DirectoryClient() {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4">
               {tools.map((tool, i) => (
-                <ToolCard key={tool.slug} tool={tool} i={i} />
+                <ToolCard key={tool.slug} tool={tool} i={i} rank={rankedTools.findIndex((ranked) => ranked.slug === tool.slug) + 1} />
               ))}
             </div>
           </div>
@@ -170,11 +171,14 @@ export default function DirectoryClient() {
   )
 }
 
-function ToolCard({ tool, i }: { tool: typeof TOOLS[number]; i: number }) {
+function ToolCard({ tool, i, rank }: { tool: typeof TOOLS[number]; i: number; rank: number }) {
   return (
     <Link href={`/tools/${tool.slug}`}>
       <div className={`p-4 border-b border-border card-hover ${i % 4 !== 3 ? 'md:border-r' : ''} border-border`}>
-        <ToolLogo tool={tool} className="w-9 h-9 rounded-md text-sm mb-3" />
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <ToolLogo tool={tool} className="w-9 h-9 rounded-md text-sm" />
+          <span className="font-mono text-[10px] text-ink-4">#{rank}</span>
+        </div>
         <div className="text-sm font-semibold text-ink mb-0.5">{tool.name}</div>
         <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1.5">{tool.category}</div>
         <p className="text-[11px] text-ink-3 leading-relaxed mb-2 line-clamp-2">{tool.tagline}</p>

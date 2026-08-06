@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowUpRight, Bookmark, Sparkles } from 'lucide-react'
+import { ArrowUpRight, Bookmark, Check, Sparkles } from 'lucide-react'
 import type { Tool } from '@/lib/data'
 import { ToolLogo } from './ToolLogo'
 
@@ -45,6 +45,25 @@ export function PremiumToolCard({ tool, variant = 'standard' }: PremiumToolCardP
           </h3>
           <p className={`mt-3 leading-6 text-slate-400 ${featured ? 'text-base' : 'text-sm line-clamp-2'}`}>{tool.tagline}</p>
         </Link>
+
+        {featured && (
+          <div className="mt-5 space-y-5">
+            <p className="text-sm leading-7 text-slate-300">{tool.description}</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {tool.pros.slice(0, 3).map((pro) => (
+                <div key={pro} className="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                  <Check className="mb-2 h-4 w-4 text-emerald-300" />
+                  <p className="text-xs leading-5 text-slate-300">{pro}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-slate-300">AIBeat score {tool.rating}</span>
+              <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-slate-300">{pricingLabel(tool)}</span>
+              <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-slate-300">{tool.category}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-6 flex items-center justify-between gap-3">
