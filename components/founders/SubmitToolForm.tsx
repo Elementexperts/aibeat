@@ -51,7 +51,7 @@ const EMPTY_FORM = {
   verificationMethod: 'badge' as VerificationMethod,
 }
 
-const STEPS = ['Product basics', 'Media and product info', 'Founder and contact', 'Promotion preferences', 'Review and submit']
+const STEPS = ['Product', 'Contact', 'Review']
 
 declare global {
   interface Window {
@@ -122,19 +122,14 @@ export function SubmitToolForm() {
   }
 
   function currentStepValid() {
-    if (step === 0) return form.name && form.url && form.shortDescription && form.description && form.category && form.pricingModel && form.productStatus
-    if (step === 2) return form.contactName && form.email && form.company
-    if (step === 4 && freeRequiresVerification) return verification.ok
+    if (step === 0) return form.name && form.url && form.shortDescription && form.category && form.pricingModel && form.productStatus
+    if (step === 1) return form.contactName && form.email && form.company
     return true
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
-    if (freeRequiresVerification && !verification.ok) {
-      setError('Free Listing requires verified AIBeat badge or text-link placement before review.')
-      return
-    }
     setLoading(true)
 
     try {
@@ -175,7 +170,7 @@ export function SubmitToolForm() {
 
   return (
     <form onSubmit={handleSubmit} className="premium-card p-5 md:p-6">
-      <div className="mb-6 grid gap-2 sm:grid-cols-5">
+      <div className="mb-6 grid gap-2 sm:grid-cols-3">
         {STEPS.map((label, index) => (
           <button key={label} type="button" onClick={() => setStep(index)} className={`rounded-full border px-3 py-2 text-xs ${step === index ? 'border-cyan-300/50 bg-cyan-300/10 text-cyan-100' : 'border-white/10 text-slate-500'}`}>
             {index + 1}. {label}
@@ -187,76 +182,64 @@ export function SubmitToolForm() {
 
       {step === 0 && (
         <div className="grid gap-5">
-          <FormInput label="Tool name *" value={form.name} onChange={(value) => set('name', value)} placeholder="e.g. TapVid" required />
+          <FormInput label="Tool name *" value={form.name} onChange={(value) => set('name', value)} placeholder="e.g. Toolsvio" required />
           <FormInput label="Website URL *" type="url" value={form.url} onChange={(value) => set('url', value)} placeholder="https://yourtool.com" required />
-          <FormInput label="Short description *" value={form.shortDescription} onChange={(value) => set('shortDescription', value)} placeholder="One clear sentence about what the product does" required />
-          <FormTextarea label="Detailed description *" value={form.description} onChange={(value) => set('description', value)} placeholder="Who is it for? What workflow does it improve? What makes it different?" required />
-          <FormSelect label="Primary category *" value={form.category} onChange={(value) => set('category', value)} options={CATEGORIES} required />
-          <FormInput label="Secondary categories" value={form.secondaryCategories} onChange={(value) => set('secondaryCategories', value)} placeholder="Marketing, video, productivity" />
+          <FormInput label="One-line description *" value={form.shortDescription} onChange={(value) => set('shortDescription', value)} placeholder="What does the product help people do?" required />
           <div className="grid gap-5 sm:grid-cols-2">
+            <FormSelect label="Primary category *" value={form.category} onChange={(value) => set('category', value)} options={CATEGORIES} required />
             <FormSelect label="Pricing model *" value={form.pricingModel} onChange={(value) => set('pricingModel', value)} options={PRICING_MODELS} required />
             <FormSelect label="Product status *" value={form.productStatus} onChange={(value) => set('productStatus', value)} options={PRODUCT_STATUSES} required />
+            <FormInput label="Launch date" type="date" value={form.launchDate} onChange={(value) => set('launchDate', value)} />
           </div>
-          <FormInput label="Launch date" type="date" value={form.launchDate} onChange={(value) => set('launchDate', value)} />
+          <FormTextarea label="More details (optional)" value={form.description} onChange={(value) => set('description', value)} placeholder="Who is it for? What workflow does it improve? What makes it different?" />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FormInput label="Logo URL (optional)" type="url" value={form.logoUrl} onChange={(value) => set('logoUrl', value)} placeholder="https://..." />
+            <FormInput label="Product Hunt or launch link (optional)" type="url" value={form.productHuntUrl} onChange={(value) => set('productHuntUrl', value)} />
+          </div>
         </div>
       )}
 
       {step === 1 && (
         <div className="grid gap-5">
-          <FormInput label="Logo URL" type="url" value={form.logoUrl} onChange={(value) => set('logoUrl', value)} placeholder="https://..." />
-          <FormTextarea label="Screenshots" value={form.screenshots} onChange={(value) => set('screenshots', value)} placeholder="Paste public screenshot URLs, one per line" />
-          <FormInput label="Demo video" type="url" value={form.demoVideo} onChange={(value) => set('demoVideo', value)} placeholder="YouTube, Loom, product demo URL" />
-          <FormTextarea label="Feature list" value={form.featureList} onChange={(value) => set('featureList', value)} placeholder="List key features, one per line" />
-          <FormTextarea label="Use cases" value={form.useCases} onChange={(value) => set('useCases', value)} placeholder="List practical use cases" />
-          <FormInput label="Integrations" value={form.integrations} onChange={(value) => set('integrations', value)} placeholder="Slack, Shopify, GitHub, Zapier..." />
-          <FormInput label="Founder or company name" value={form.founderName} onChange={(value) => set('founderName', value)} />
-          <FormTextarea label="Public social links" value={form.socialLinks} onChange={(value) => set('socialLinks', value)} placeholder="LinkedIn, X, founder profile URLs" />
-          <FormInput label="Product Hunt link" type="url" value={form.productHuntUrl} onChange={(value) => set('productHuntUrl', value)} />
-          <FormInput label="GitHub link" type="url" value={form.githubUrl} onChange={(value) => set('githubUrl', value)} />
+          <FormInput label="Contact name *" value={form.contactName} onChange={(value) => set('contactName', value)} required />
+          <FormInput label="Business email *" type="email" value={form.email} onChange={(value) => set('email', value)} placeholder="Use a domain email when possible" required />
+          <FormInput label="Company *" value={form.company} onChange={(value) => set('company', value)} required />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <FormSelect label="Selected plan" value={form.selectedPlan} onChange={(value) => set('selectedPlan', value)} options={FOUNDER_SERVICE_PLANS.filter((plan) => plan.active).map((plan) => ({ label: `${plan.name} - ${formatPlanPrice(plan)}`, value: plan.id }))} />
+            <FormSelect label="Preferred contact" value={form.preferredChannel} onChange={(value) => set('preferredChannel', value)} options={CHANNELS} />
+          </div>
+          <FormTextarea label="Anything else? (optional)" value={form.notes} onChange={(value) => set('notes', value)} placeholder="Mention launch goals, newsletter interest, special use cases, or anything AIBeat should know." />
         </div>
       )}
 
       {step === 2 && (
-        <div className="grid gap-5">
-          <FormInput label="Contact name *" value={form.contactName} onChange={(value) => set('contactName', value)} required />
-          <FormInput label="Business email *" type="email" value={form.email} onChange={(value) => set('email', value)} placeholder="Use a domain email when possible" required />
-          <FormInput label="Company *" value={form.company} onChange={(value) => set('company', value)} required />
-          <FormInput label="Role" value={form.role} onChange={(value) => set('role', value)} placeholder="Founder, marketer, partnerships..." />
-          <FormInput label="Country" value={form.country} onChange={(value) => set('country', value)} />
-          <FormSelect label="Preferred communication channel" value={form.preferredChannel} onChange={(value) => set('preferredChannel', value)} options={CHANNELS} />
-        </div>
-      )}
-
-      {step === 3 && (
-        <div className="grid gap-5">
-          <FormSelect label="Selected plan" value={form.selectedPlan} onChange={(value) => set('selectedPlan', value)} options={FOUNDER_SERVICE_PLANS.filter((plan) => plan.active).map((plan) => ({ label: `${plan.name} - ${formatPlanPrice(plan)}`, value: plan.id }))} />
-          <ToggleSelect label="Launch interest" value={form.launchInterest} onChange={(value) => set('launchInterest', value)} />
-          <ToggleSelect label="Newsletter interest" value={form.newsletterInterest} onChange={(value) => set('newsletterInterest', value)} />
-          <ToggleSelect label="Sponsored article interest" value={form.articleInterest} onChange={(value) => set('articleInterest', value)} />
-          <ToggleSelect label="Affiliate partnership interest" value={form.affiliateInterest} onChange={(value) => set('affiliateInterest', value)} />
-          <FormInput label="Preferred timing" value={form.preferredTiming} onChange={(value) => set('preferredTiming', value)} placeholder="This week, next month, launch date..." />
-          <FormTextarea label="Notes" value={form.notes} onChange={(value) => set('notes', value)} placeholder="Anything else AIBeat should know?" />
-        </div>
-      )}
-
-      {step === 4 && (
         <div className="grid gap-5">
           <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
             <div className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-200">Selected plan</div>
             <h2 className="mt-3 text-2xl font-black text-white">{selectedPlan.name}</h2>
             <p className="mt-2 text-sm text-slate-400">{formatPlanPrice(selectedPlan)} - {selectedPlan.shortDescription}</p>
             <ul className="mt-4 grid gap-2">
-              {selectedPlan.features.slice(0, 6).map((feature) => <li key={feature} className="text-sm text-slate-300">- {feature}</li>)}
+              {selectedPlan.features.slice(0, 4).map((feature) => <li key={feature} className="text-sm text-slate-300">- {feature}</li>)}
             </ul>
             <p className="mt-4 text-xs leading-6 text-slate-500">{selectedPlan.disclosure}</p>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+            <div className="text-sm font-semibold uppercase tracking-[0.16em] text-cyan-200">Submission summary</div>
+            <dl className="mt-4 grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
+              <div><dt className="text-slate-500">Tool</dt><dd>{form.name}</dd></div>
+              <div><dt className="text-slate-500">Website</dt><dd className="break-all">{form.url}</dd></div>
+              <div><dt className="text-slate-500">Category</dt><dd>{form.category}</dd></div>
+              <div><dt className="text-slate-500">Contact</dt><dd>{form.email}</dd></div>
+            </dl>
           </div>
 
           {freeRequiresVerification && (
             <div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5">
               <ShieldCheck className="h-5 w-5 text-cyan-100" />
-              <h3 className="mt-4 text-xl font-black text-white">Free Listing Verification Required</h3>
+              <h3 className="mt-4 text-xl font-black text-white">Optional now, checked before approval</h3>
               <p className="mt-3 text-sm leading-7 text-slate-300">
-                To qualify for a free AIBeat listing, add the supplied Listed on AIBeat badge or text link to a publicly accessible page on your official website. AIBeat will verify the link before reviewing or publishing the listing.
+                Free listings may need a Listed on AIBeat badge or text link before approval. You can submit now and add it later, or add the page URL here if it is already live.
               </p>
 
               <div className="mt-5 grid gap-3 md:grid-cols-2">
@@ -274,14 +257,13 @@ export function SubmitToolForm() {
                   {verifying ? 'Checking...' : verification.status === 'failed' ? 'Check Again' : 'Verify Placement'}
                 </button>
                 <span className={`text-sm ${verification.ok ? 'text-green-200' : 'text-slate-400'}`}>
-                  Status: {verification.ok ? 'Verified' : verification.status}
+                  Status: {verification.ok ? 'Verified' : verification.status}. Submission is allowed either way.
                 </span>
               </div>
             </div>
           )}
         </div>
       )}
-
       {error && <div role="alert" className="mt-5 rounded-2xl border border-red-300/30 bg-red-300/10 px-4 py-3 text-sm text-red-100">{error}</div>}
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -328,10 +310,6 @@ function FormSelect({ label, value, onChange, options, required = false }: { lab
       </select>
     </label>
   )
-}
-
-function ToggleSelect({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <FormSelect label={label} value={value} onChange={onChange} options={['No', 'Yes', 'Not sure']} />
 }
 
 function SnippetBox({ title, value, onCopy }: { title: string; value: string; onCopy: () => void }) {

@@ -39,7 +39,7 @@ const PATHS = [
 ]
 
 const FAQS = [
-  ['Is submitting a tool free?', 'Yes. Free Listing review is free, but it requires a public AIBeat badge or text link to verify website control before review.'],
+  ['Is submitting a tool free?', 'Yes. Free Listing review is free. AIBeat may request a public badge or text link before approval to verify website control.'],
   ['Does payment guarantee approval?', 'No. Paid requests still require AIBeat review for quality, relevance, accuracy, and safety.'],
   ['How long does review take?', 'Free submissions are reviewed as capacity allows. Launch Feature turnaround is listed as 3-5 business days after all assets are received.'],
   ['What is the difference between Enhanced and Spotlight?', 'Enhanced improves the product listing. Spotlight adds clearly labeled promotional visibility such as category or homepage placement when scheduled.'],

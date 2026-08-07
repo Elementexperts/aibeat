@@ -54,7 +54,8 @@ function submissionHtml({
   email,
   selectedPlan,
   verificationPageUrl,
-}: Required<Pick<SubmitPayload, 'type' | 'name' | 'url' | 'category' | 'description' | 'email'>> & { selectedPlan: string; verificationPageUrl: string }) {
+  verificationStatus,
+}: Required<Pick<SubmitPayload, 'type' | 'name' | 'url' | 'category' | 'description' | 'email'>> & { selectedPlan: string; verificationPageUrl: string; verificationStatus: string }) {
   const safeName = escapeHtml(name)
   const safeUrl = escapeHtml(url)
   const safeDescription = escapeHtml(description)
@@ -65,6 +66,7 @@ function submissionHtml({
     ['Category', category],
     ['Selected plan', selectedPlan],
     ['Verification page', verificationPageUrl || 'Not required or not provided'],
+    ['Verification status', verificationStatus],
     ['Submitter email', email || 'Not provided'],
   ]
 
@@ -144,7 +146,8 @@ function submissionText({
   email,
   selectedPlan,
   verificationPageUrl,
-}: Required<Pick<SubmitPayload, 'type' | 'name' | 'url' | 'category' | 'description' | 'email'>> & { selectedPlan: string; verificationPageUrl: string }) {
+  verificationStatus,
+}: Required<Pick<SubmitPayload, 'type' | 'name' | 'url' | 'category' | 'description' | 'email'>> & { selectedPlan: string; verificationPageUrl: string; verificationStatus: string }) {
   return [
     'New AIBeat tool submission',
     '',
@@ -154,6 +157,7 @@ function submissionText({
     `Category: ${category}`,
     `Selected plan: ${selectedPlan}`,
     `Verification page: ${verificationPageUrl || 'Not required or not provided'}`,
+    `Verification status: ${verificationStatus}`,
     `Submitter email: ${email || 'Not provided'}`,
     '',
     'Why review it?',
@@ -197,13 +201,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 })
   }
 
-  if (plan.verificationRequired) {
-    if (!verificationPageUrl) {
-      return NextResponse.json({ error: 'Free Listing requires a verification page URL before review.' }, { status: 400 })
-    }
-    const verification = await verifyAibeatLink({ websiteUrl: url, verificationPageUrl, verificationMethod })
-    if (!verification.ok) {
-      return NextResponse.json({ error: verification.reason || 'AIBeat badge or text-link verification failed.' }, { status: 422 })
+  let verificationStatus = plan.verificationRequired ? 'Pending - not provided yet' : 'Not required'
+
+  if (plan.verificationRequired && verificationPageUrl) {
+    try {
+      const verification = await verifyAibeatLink({ websiteUrl: url, verificationPageUrl, verificationMethod })
+      verificationStatus = verification.ok ? 'Verified' : `Manual review needed - ${verification.reason || 'verification did not pass'}`
+    } catch {
+      verificationStatus = 'Manual review needed - verification check could not be completed'
     }
   }
 
@@ -228,8 +233,8 @@ export async function POST(req: NextRequest) {
         to: [toEmail],
         reply_to: email || undefined,
         subject: `New AIBeat ${plan.name} request: ${name}`,
-        html: submissionHtml({ type, name, url, category, description, email, selectedPlan, verificationPageUrl }),
-        text: submissionText({ type, name, url, category, description, email, selectedPlan, verificationPageUrl }),
+        html: submissionHtml({ type, name, url, category, description, email, selectedPlan, verificationPageUrl, verificationStatus }),
+        text: submissionText({ type, name, url, category, description, email, selectedPlan, verificationPageUrl, verificationStatus }),
       }),
     })
 

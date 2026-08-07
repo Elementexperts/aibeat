@@ -81,7 +81,7 @@ Do not create a duplicate submission API unless a full intake database, admin re
 
 ## Free Listing Verification
 
-Free Listing requires website-control verification before review. The submit form provides:
+Free Listing can be submitted before website-control verification is complete. AIBeat may request verification before approval or publication. The submit form provides:
 
 - visual badge snippet;
 - text-link snippet;

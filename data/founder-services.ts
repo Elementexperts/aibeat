@@ -65,7 +65,7 @@ export const FOUNDER_SERVICE_PLANS: FounderServicePlan[] = [
       'Primary category',
       'Directory search inclusion',
       'Listing update requests',
-      'AIBeat badge/backlink verification required',
+      'AIBeat badge/backlink verification before approval',
       'Editorial review before approval',
     ],
     exclusions: [
@@ -80,8 +80,8 @@ export const FOUNDER_SERVICE_PLANS: FounderServicePlan[] = [
     ctaHref: '/submit?plan=free',
     category: 'listing',
     active: true,
-    disclosure: 'Badge or backlink verification is required before a Free Listing can be reviewed and published.',
-    primaryAudience: 'Founders who want free directory consideration and can verify website control.',
+    disclosure: 'Badge or backlink verification may be requested before a Free Listing is approved and published.',
+    primaryAudience: 'Founders who want simple free directory consideration.',
     verificationRequired: true,
   },
   {
