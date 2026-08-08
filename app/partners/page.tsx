@@ -54,6 +54,29 @@ export default function PartnersPage() {
         secondaryLabel="Read Disclosure Policy"
       />
 
+      <section className="site-shell py-10">
+        <div className="premium-card flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Founder ecosystem</p>
+            <h2 className="mt-3 text-2xl font-black text-white">Featured on DanielLaunches</h2>
+            <p className="mt-2 max-w-xl text-sm leading-7 text-slate-400">
+              AIBeat participates in founder and launch communities where builders discover useful tools, products, and launch resources.
+            </p>
+          </div>
+          <a
+            href="https://daniellaunches.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex shrink-0 rounded-2xl border border-white/10 bg-white p-3 transition hover:border-cyan-300/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.16)]"
+            aria-label="Featured on DanielLaunches"
+          >
+            {/* External SVG badge is provided by DanielLaunches for verification. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="https://daniellaunches.com/badge-light.svg" alt="Featured on DanielLaunches" width="220" height="48" />
+          </a>
+        </div>
+      </section>
+
       <section className="site-shell py-16">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {PARTNER_TYPES.map(({ icon: Icon, title, body }) => (
