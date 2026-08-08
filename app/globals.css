@@ -277,8 +277,19 @@
 }
 
 @keyframes orbit-drift {
-  0% { transform: rotate(0deg) translate3d(0, 0, 0); }
-  100% { transform: rotate(360deg) translate3d(0, 0, 0); }
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes core-breathe {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    filter: saturate(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.04) rotate(5deg);
+    filter: saturate(1.25);
+  }
 }
 
 @keyframes marquee {
@@ -288,6 +299,37 @@
 
 .hero-orbit {
   animation: orbit-drift 24s linear infinite;
+  transform-origin: center;
+}
+
+.hero-orbit::before,
+.hero-orbit::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  background: var(--aibeat-cyan);
+  box-shadow: 0 0 24px rgba(34, 211, 238, 0.75);
+}
+
+.hero-orbit::before {
+  left: 50%;
+  top: -0.35rem;
+  height: 0.7rem;
+  width: 0.7rem;
+  transform: translateX(-50%);
+}
+
+.hero-orbit::after {
+  bottom: 2.1rem;
+  right: 2.6rem;
+  height: 0.45rem;
+  width: 0.45rem;
+  opacity: 0.75;
+}
+
+.hero-core {
+  animation: core-breathe 8s ease-in-out infinite;
+  transform-origin: center;
 }
 
 .discovery-marquee {

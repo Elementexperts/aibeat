@@ -127,7 +127,7 @@ export default async function HomePage() {
           <div className="relative hidden min-h-[560px] lg:block" aria-hidden="true">
             <div className="absolute left-1/2 top-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-300/15 bg-cyan-300/[0.03]" />
             <div className="hero-orbit absolute left-1/2 top-1/2 h-[22rem] w-[22rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-purple-300/15" />
-            <div className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-300 p-px shadow-[0_0_120px_rgba(34,211,238,0.28)]">
+            <div className="hero-core absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-300 p-px shadow-[0_0_120px_rgba(34,211,238,0.28)]">
               <div className="flex h-full w-full items-center justify-center rounded-full bg-[#080A10]">
                 <Zap className="h-16 w-16 text-cyan-200" />
               </div>
