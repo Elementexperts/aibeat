@@ -1833,7 +1833,8 @@ export function getToolPopularityScore(tool: Tool) {
   const featuredBoost = tool.featured ? 8 : 0
   const freeAccessBoost = tool.pricingType === 'free' ? 1 : tool.pricingType === 'freemium' ? 2 : 0
   const categoryBoost = ['AI Assistants', 'AI Coding', 'AI Infrastructure', 'Developer Platforms', 'AI Image', 'AI Video'].includes(tool.category) ? 1.5 : 0
-  return tool.rating * 10 + featuredBoost + freeAccessBoost + categoryBoost
+  const homepageAnchorBoost = tool.slug === 'chatgpt' || tool.slug === 'openai-api' ? 10 : 0
+  return tool.rating * 10 + featuredBoost + freeAccessBoost + categoryBoost + homepageAnchorBoost
 }
 
 export function getPopularTools(limit?: number) {
