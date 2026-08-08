@@ -1398,6 +1398,25 @@ export const TOOLS: Tool[] = [
     cons: ['Requires technical setup', 'Not a polished consumer editor', 'Rights and usage need review'],
     alternatives: ['suno', 'elevenlabs', 'hugging-face'],
   },
+  {
+    slug: 'local-basics',
+    name: 'Local Basics',
+    tagline: 'Local business visibility toolkit for getting discovered online',
+    description: 'Local Basics helps local businesses create a stronger online presence and improve how customers discover them through practical local marketing workflows.',
+    category: 'AI Marketing',
+    logo: '#16a34a',
+    logoInitials: 'LB',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=localbasics.com&sz=128',
+    rating: 4.4,
+    pricing: 'Free featured option',
+    pricingType: 'free',
+    affiliateUrl: 'https://app.localbasics.com/checkout?via=ai-beat&dub_id=QNa2qTxRlgkZa7g2',
+    websiteUrl: 'https://app.localbasics.com/checkout?via=ai-beat&dub_id=QNa2qTxRlgkZa7g2',
+    featured: true,
+    pros: ['Built for local visibility', 'Simple business-friendly workflow', 'Useful for small businesses', 'AIBeat featured option'],
+    cons: ['Public product details should be reviewed', 'Best fit depends on local business goals', 'May need manual setup details'],
+    alternatives: ['hubspot', 'semrush', 'ahrefs'],
+  },
 ]
 
 // ============================================================
