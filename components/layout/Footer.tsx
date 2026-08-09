@@ -68,6 +68,14 @@ const FEATURED_BADGES = [
     tone: 'light',
   },
   {
+    href: 'https://dailypings.com/p/aibeat',
+    label: 'Featured on DailyPings',
+    src: 'https://dailypings.com/badge.svg',
+    width: 179,
+    height: 32,
+    tone: 'light',
+  },
+  {
     href: 'https://sellwithboost.com',
     label: 'Listed on Sell With boost',
     src: 'https://sellwithboost.com/badge/listing-dark.svg',
