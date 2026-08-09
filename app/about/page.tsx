@@ -1,165 +1,290 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { BadgeCheck, Eye, Handshake, Mail, Newspaper, Rocket, Search, ShieldCheck, Sparkles, Workflow } from 'lucide-react'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
 
 export const metadata: Metadata = {
-  title: 'About AIBeat.dev',
-  description: 'Independent AI journalism for builders. Honest tool reviews, no sponsored rankings, free forever. Learn how AIBeat works and how we make money.',
+  title: 'About AIBeat',
+  description: 'Learn how AIBeat helps people discover AI tools, follow AI news, explore launches, and connect founders with relevant audiences through transparent listings, newsletters, and promotional services.',
+  alternates: { canonical: '/about' },
+  openGraph: {
+    title: 'About AIBeat',
+    description: 'AIBeat is a modern AI discovery and media platform for tools, news, launches, newsletters, and founder services.',
+    url: '/about',
+    type: 'website',
+  },
 }
+
+const WHAT_WE_DO = [
+  {
+    icon: Search,
+    label: 'Discover',
+    title: 'AI tool discovery',
+    body: 'AIBeat organizes useful AI products by category, use case, pricing model, and practical context so readers can find tools worth exploring.',
+    href: '/tools',
+    cta: 'Browse tools',
+  },
+  {
+    icon: Newspaper,
+    label: 'Read',
+    title: 'AI news and explainers',
+    body: 'AIBeat follows important AI developments and turns them into clear, readable updates for builders, marketers, founders, and operators.',
+    href: '/news',
+    cta: 'Read news',
+  },
+  {
+    icon: Rocket,
+    label: 'Launch',
+    title: 'Startup launches',
+    body: 'AIBeat highlights emerging products, launch stories, and founder-friendly promotional paths without copying generic launch-board formats.',
+    href: '/launch',
+    cta: 'Launch on AIBeat',
+  },
+  {
+    icon: Mail,
+    label: 'Newsletter',
+    title: 'AIBeat Daily',
+    body: 'The newsletter gives readers selected AI tools, launches, and industry updates without making them search across the whole AI ecosystem.',
+    href: '/newsletter',
+    cta: 'Join the newsletter',
+  },
+]
+
+const SERVICES = [
+  {
+    title: 'Free tool submission',
+    body: 'Founders can submit AI products for review and possible inclusion in the directory. Free listings may require badge or backlink verification before approval.',
+  },
+  {
+    title: 'Enhanced listings and Spotlight',
+    body: 'Relevant products can request richer listing presentation, priority review, and clearly labeled promotional visibility when approved.',
+  },
+  {
+    title: 'Launch and newsletter promotion',
+    body: 'AIBeat offers launch features, newsletter placements, and campaign options with transparent expectations and no unsupported performance promises.',
+  },
+  {
+    title: 'Sponsored articles and partnerships',
+    body: 'Sponsored, partner, affiliate, and featured content is labeled clearly so readers can distinguish editorial coverage from commercial placement.',
+  },
+]
+
+const WORKFLOWS = [
+  {
+    icon: Workflow,
+    title: 'Daily discovery workflows',
+    body: 'AIBeat uses automation to help surface recent AI products, inspect public business contact pages, score qualified leads, and prepare review-ready reports.',
+  },
+  {
+    icon: Sparkles,
+    title: 'Founder outreach drafts',
+    body: 'Outreach workflows create one-recipient draft messages in Kit for manual review. Production sending remains disabled by default.',
+  },
+  {
+    icon: Newspaper,
+    title: 'Content and social drafts',
+    body: 'News and social workflows help turn AIBeat articles into reusable drafts, reports, and review artifacts before anything is published externally.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Human review first',
+    body: 'Automation supports research and drafting, but AIBeat keeps review, approval, publishing, and commercial decisions under human control.',
+  },
+]
+
+const PRINCIPLES = [
+  'No fake traffic, subscriber, ranking, rating, or partner claims.',
+  'Paid promotion does not guarantee positive editorial coverage.',
+  'Sponsored, partner, affiliate, and featured placements should be visibly labeled.',
+  'Editor’s Pick is not purchasable.',
+  'Free Listing verification confirms website control only; it does not guarantee publication.',
+  'Reader usefulness and founder transparency matter more than hype.',
+]
+
+const QUICK_LINKS = [
+  { label: 'AI Tools Directory', href: '/tools' },
+  { label: 'Latest AI News', href: '/news' },
+  { label: 'For Founders', href: '/for-founders' },
+  { label: 'Submit a Tool', href: '/submit' },
+  { label: 'Spotlight', href: '/spotlight' },
+  { label: 'Advertise', href: '/advertise' },
+  { label: 'Partners', href: '/partners' },
+  { label: 'Privacy Policy', href: '/privacy' },
+]
 
 export default function AboutPage() {
   return (
-    <div className="max-w-5xl mx-auto px-6 py-10 border-x border-border min-h-screen">
-
-      {/* BREADCRUMB */}
-      <div className="font-mono text-[11px] text-ink-4 mb-8 flex items-center gap-2">
-        <Link href="/" className="hover:text-ink">Home</Link>
-        <span>/</span>
-        <span className="text-ink">About</span>
-      </div>
-
-      {/* HERO */}
-      <div className="border-b border-border pb-10 mb-10">
-        <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest mb-3">About AIBeat.dev</div>
-        <h1 className="font-serif text-3xl md:text-5xl font-black text-ink leading-tight mb-4">
-          Independent AI journalism<br className="hidden md:block" /> for builders.
-        </h1>
-        <p className="text-lg text-ink-2 leading-relaxed max-w-2xl">
-          AIBeat.dev covers artificial intelligence tools, news, and comparisons for founders, freelancers, and builders who need honest information — not marketing copy dressed up as reviews.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-10">
-        <div>
-
-          {/* MISSION */}
-          <section className="mb-10">
-            <div className="section-label">Our mission</div>
-            <h2 className="font-serif text-2xl font-bold text-ink mb-4">Honest reviews. No sponsored rankings. Free forever.</h2>
-            <p className="text-base text-ink-2 leading-relaxed mb-4">
-              The AI tools industry is flooded with affiliate-first review sites that rank tools based on commission rates, not quality. We built AIBeat.dev as the antidote: a publication where editorial integrity is non-negotiable and the people paying attention are the ones making real decisions about their software stack.
-            </p>
-            <p className="text-base text-ink-2 leading-relaxed mb-4">
-              Our commitment: we never accept payment for reviews, never let affiliate commissions influence rankings, and never publish content we wouldn&apos;t stand behind publicly with our names attached. If a tool is bad, we say so — even if it pays a high commission.
-            </p>
-            <p className="text-base text-ink-2 leading-relaxed">
-              AIBeat.dev is free to read. Always. No paywalls, no metered articles, no &quot;premium&quot; tiers. We think good journalism about technology should be accessible to everyone building something, regardless of budget.
-            </p>
-          </section>
-
-          {/* WHAT WE COVER */}
-          <section className="mb-10">
-            <div className="section-label">What we cover</div>
-            <h2 className="font-serif text-2xl font-bold text-ink mb-6">Four editorial pillars</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="border border-border p-5">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-beat-red mb-2">News</div>
-                <h3 className="font-serif text-lg font-bold text-ink mb-2">AI News Daily</h3>
-                <p className="text-sm text-ink-3 leading-relaxed">Breaking developments from OpenAI, Anthropic, Google, and the broader AI ecosystem — explained for people who build products, not AI researchers.</p>
-                <Link href="/news" className="font-mono text-[11px] text-beat-red mt-3 inline-block hover:underline">Browse news →</Link>
-              </div>
-              <div className="border border-border p-5">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-beat-green mb-2">Reviews</div>
-                <h3 className="font-serif text-lg font-bold text-ink mb-2">Tool Reviews</h3>
-                <p className="text-sm text-ink-3 leading-relaxed">Hands-on testing of AI tools, SaaS products, and business software. Each review is based on real usage — not feature lists copied from the vendor&apos;s website.</p>
-                <Link href="/tools" className="font-mono text-[11px] text-beat-green mt-3 inline-block hover:underline">Browse tools →</Link>
-              </div>
-              <div className="border border-border p-5">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Comparisons</div>
-                <h3 className="font-serif text-lg font-bold text-ink mb-2">Head-to-Head Comparisons</h3>
-                <p className="text-sm text-ink-3 leading-relaxed">Side-by-side breakdowns of competing tools with structured feature tables, pricing comparisons, and clear &quot;who should choose which&quot; recommendations.</p>
-                <Link href="/compare" className="font-mono text-[11px] text-ink-3 mt-3 inline-block hover:underline">Browse comparisons →</Link>
-              </div>
-              <div className="border border-border p-5">
-                <div className="font-mono text-[10px] uppercase tracking-widest text-ink-3 mb-2">Free Tools</div>
-                <h3 className="font-serif text-lg font-bold text-ink mb-2">Free Tools</h3>
-                <p className="text-sm text-ink-3 leading-relaxed">Calculators, templates, and resources built directly into the site. No email required, no upsell. Just useful tools for freelancers and founders.</p>
-                <Link href="/free-tools" className="font-mono text-[11px] text-ink-3 mt-3 inline-block hover:underline">Browse free tools →</Link>
-              </div>
-            </div>
-          </section>
-
-          {/* HOW WE MAKE MONEY */}
-          <section className="mb-10">
-            <div className="section-label">How we make money</div>
-            <h2 className="font-serif text-2xl font-bold text-ink mb-4">Transparent about revenue</h2>
-            <p className="text-base text-ink-2 leading-relaxed mb-4">
-              AIBeat.dev generates revenue through two sources: affiliate commissions and display advertising. We believe in being explicit about this because it&apos;s the information readers need to evaluate our credibility.
-            </p>
-
-            <div className="border border-border p-5 mb-4">
-              <h3 className="font-semibold text-sm text-ink mb-2">Affiliate commissions</h3>
-              <p className="text-sm text-ink-3 leading-relaxed">When you click certain links on AIBeat.dev and sign up for a tool or service, we may earn a commission from the vendor. This commission comes from the vendor&apos;s marketing budget — it does not add any cost to you. Affiliate links are disclosed on every page that contains them.</p>
-              <p className="text-sm text-ink-3 leading-relaxed mt-2"><strong className="text-ink">Our policy:</strong> Affiliate relationships do not influence rankings, scores, or editorial coverage. We have turned down affiliate programs from tools we don&apos;t recommend. We have recommended tools with no affiliate program and criticized tools with high-paying affiliate programs. Our editorial and commercial operations are separate.</p>
-            </div>
-
-            <div className="border border-border p-5">
-              <h3 className="font-semibold text-sm text-ink mb-2">Display advertising (Google AdSense)</h3>
-              <p className="text-sm text-ink-3 leading-relaxed">We display contextual advertising through Google AdSense. These are standard display ads served by Google&apos;s advertising network. Ad placement does not influence editorial content — advertisers have no input into our reviews, news coverage, or tool recommendations.</p>
-              <p className="text-sm text-ink-3 leading-relaxed mt-2">We do not accept direct advertising deals, sponsored posts, paid reviews, or any arrangement where a company pays for editorial coverage. If you see a paid placement on AIBeat.dev, it will be clearly labeled as an advertisement.</p>
-            </div>
-          </section>
-
-          {/* STATS */}
-          <section className="mb-10">
-            <div className="section-label">By the numbers</div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {[
-                { number: '500+', label: 'Tools reviewed' },
-                { number: '40+', label: 'Published pages' },
-                { number: '8,400+', label: 'Newsletter readers' },
-                { number: 'Daily', label: 'Update frequency' },
-              ].map((stat) => (
-                <div key={stat.label} className="border border-border p-4 text-center">
-                  <div className="font-serif text-2xl font-black text-ink mb-1">{stat.number}</div>
-                  <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* CONTACT */}
-          <section className="mb-10">
-            <div className="section-label">Get in touch</div>
-            <h2 className="font-serif text-2xl font-bold text-ink mb-4">Contact us</h2>
-            <div className="space-y-2 text-sm text-ink-2">
-              <p><strong className="text-ink">General inquiries:</strong> <a href="mailto:info@aibeat.dev" className="text-beat-red hover:underline">info@aibeat.dev</a></p>
-              <p><strong className="text-ink">Privacy requests:</strong> <a href="mailto:privacy@aibeat.dev" className="text-beat-red hover:underline">privacy@aibeat.dev</a></p>
-              <p><strong className="text-ink">Submit a tool:</strong> <Link href="/submit" className="text-beat-red hover:underline">Submit your tool for review →</Link></p>
-              <p><strong className="text-ink">Privacy policy:</strong> <Link href="/privacy" className="text-beat-red hover:underline">Read our full privacy policy →</Link></p>
-            </div>
-          </section>
-
+    <div className="dark-page overflow-hidden">
+      <section className="site-shell py-10 md:py-16">
+        <div className="font-mono text-[11px] text-slate-500 mb-8 flex items-center gap-2">
+          <Link href="/" className="hover:text-white">Home</Link>
+          <span>/</span>
+          <span className="text-slate-300">About</span>
         </div>
 
-        {/* SIDEBAR */}
-        <div className="space-y-4">
-          <NewsletterBox />
+        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-sm font-semibold text-cyan-100">
+              <Sparkles className="h-4 w-4" />
+              AI discovery and media
+            </div>
+            <h1 className="mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-tight text-white md:text-7xl">
+              Helping people discover what AI can actually do.
+            </h1>
+            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300">
+              AIBeat is a modern platform for discovering AI tools, following important AI developments, exploring startup launches, and helping AI founders reach relevant audiences through transparent listings, newsletters, editorial formats, and partnership opportunities.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/tools" className="gradient-button rounded-full px-5 py-3 text-sm font-semibold">
+                Explore AI Tools
+              </Link>
+              <Link href="/for-founders" className="rounded-full border border-white/15 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white transition hover:border-cyan-300/40">
+                See Founder Services
+              </Link>
+            </div>
+          </div>
 
-          <div className="border border-border p-4">
-            <div className="section-label">Quick links</div>
-            <div className="space-y-1">
-              {[
-                { label: 'AI Tools Directory', href: '/directory' },
-                { label: 'Latest News', href: '/news' },
-                { label: 'Tool Comparisons', href: '/compare' },
-                { label: 'Free Tools', href: '/free-tools' },
-                { label: 'Submit a Tool', href: '/submit' },
-                { label: 'Privacy Policy', href: '/privacy' },
-              ].map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="flex items-center justify-between py-2 border-b border-border last:border-0 card-hover text-xs text-ink-2 hover:text-ink"
-                >
-                  {link.label}
-                  <span className="text-ink-4">→</span>
-                </Link>
+          <div className="premium-card p-6">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Current focus</p>
+            <div className="mt-5 grid gap-3">
+              {['AI tool directory', 'Daily AI news', 'Startup launches', 'AIBeat Daily newsletter', 'Founder services', 'Partnership opportunities'].map((item) => (
+                <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-sm text-slate-200">
+                  <BadgeCheck className="h-4 w-4 text-green-300" />
+                  {item}
+                </div>
               ))}
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      <section className="border-y border-white/10 bg-white/[0.025] py-16">
+        <div className="site-shell">
+          <div className="mb-10 max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">What AIBeat does</p>
+            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">One platform for discovery, news, launches, and growth</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {WHAT_WE_DO.map(({ icon: Icon, label, title, body, href, cta }) => (
+              <article key={title} className="premium-card p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-cyan-100">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">{label}</span>
+                  </div>
+                </div>
+                <h3 className="mt-5 text-2xl font-bold text-white">{title}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-400">{body}</p>
+                <Link href={href} className="mt-5 inline-flex text-sm font-semibold text-cyan-200 hover:text-white">
+                  {cta} →
+                </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="site-shell py-16">
+        <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">For founders</p>
+            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Commercial options without murky promises</h2>
+            <p className="mt-4 text-sm leading-7 text-slate-400">
+              AIBeat supports founders through listings, launch promotion, Spotlight visibility, newsletter opportunities, sponsored formats, and partnerships. Every request is reviewed for quality, relevance, accuracy, and fit.
+            </p>
+            <Link href="/for-founders" className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">
+              Compare founder options
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {SERVICES.map((service) => (
+              <article key={service.title} className="premium-card p-5">
+                <h3 className="text-lg font-semibold text-white">{service.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-400">{service.body}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-white/10 bg-white/[0.025] py-16">
+        <div className="site-shell">
+          <div className="mb-10 max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">How workflows help</p>
+            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Automation supports the desk. It does not replace judgment.</h2>
+            <p className="mt-4 text-sm leading-7 text-slate-400">
+              AIBeat uses safe automation for research, drafting, reports, and workflow support. Publishing, sending, partnership approval, and editorial decisions remain deliberate.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {WORKFLOWS.map(({ icon: Icon, title, body }) => (
+              <article key={title} className="premium-card p-5">
+                <Icon className="h-5 w-5 text-cyan-200" />
+                <h3 className="mt-5 text-lg font-semibold text-white">{title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-400">{body}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="site-shell py-16">
+        <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+          <div className="premium-card p-6 md:p-8">
+            <div className="flex items-center gap-3">
+              <Eye className="h-6 w-6 text-cyan-200" />
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Editorial and commercial transparency</p>
+            </div>
+            <h2 className="mt-5 text-3xl font-black text-white">The trust rules are simple.</h2>
+            <div className="mt-6 grid gap-3">
+              {PRINCIPLES.map((principle) => (
+                <div key={principle} className="flex gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-green-300" />
+                  <p className="text-sm leading-6 text-slate-300">{principle}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <NewsletterBox />
+
+            <div className="premium-card p-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Quick links</p>
+              <div className="mt-4 space-y-1">
+                {QUICK_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="flex items-center justify-between rounded-2xl px-3 py-2 text-sm text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
+                  >
+                    {link.label}
+                    <span className="text-slate-500">→</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="site-shell pb-16">
+        <div className="premium-card p-6 md:p-8">
+          <div className="flex items-center gap-3">
+            <Handshake className="h-6 w-6 text-amber-200" />
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">Contact</p>
+          </div>
+          <h2 className="mt-5 text-3xl font-black text-white">Want to submit, partner, or ask a question?</h2>
+          <div className="mt-5 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
+            <p><strong className="text-white">General inquiries:</strong> <a href="mailto:info@aibeat.dev" className="text-cyan-200 hover:text-white">info@aibeat.dev</a></p>
+            <p><strong className="text-white">Privacy requests:</strong> <a href="mailto:privacy@aibeat.dev" className="text-cyan-200 hover:text-white">privacy@aibeat.dev</a></p>
+            <p><strong className="text-white">Submit a tool:</strong> <Link href="/submit" className="text-cyan-200 hover:text-white">Open the submission form</Link></p>
+            <p><strong className="text-white">Partner with AIBeat:</strong> <Link href="/partners" className="text-cyan-200 hover:text-white">View partnership options</Link></p>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
