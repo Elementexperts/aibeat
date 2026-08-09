@@ -63,17 +63,54 @@ export default function PartnersPage() {
               AIBeat participates in founder and launch communities where builders discover useful tools, products, and launch resources.
             </p>
           </div>
-          <a
-            href="https://daniellaunches.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex shrink-0 rounded-2xl border border-white/10 bg-white p-3 transition hover:border-cyan-300/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.16)]"
-            aria-label="Featured on DanielLaunches"
-          >
-            {/* External SVG badge is provided by DanielLaunches for verification. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://daniellaunches.com/badge-light.svg" alt="Featured on DanielLaunches" width="220" height="48" />
-          </a>
+          <div className="flex shrink-0 flex-col gap-3 sm:items-end">
+            <a
+              href="https://daniellaunches.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex rounded-2xl border border-white/10 bg-white p-3 transition hover:border-cyan-300/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.16)]"
+              aria-label="Featured on DanielLaunches"
+            >
+              {/* External SVG badge is provided by DanielLaunches for verification. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="https://daniellaunches.com/badge-light.svg" alt="Featured on DanielLaunches" width="220" height="48" />
+            </a>
+            <div className="flex flex-wrap gap-3 sm:justify-end">
+              <a
+                href="https://launchstag.com"
+                target="_blank"
+                rel="noopener"
+                className="inline-flex rounded-2xl border border-white/10 bg-white p-3 transition hover:border-cyan-300/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.16)]"
+                aria-label="Featured on Launchstag"
+              >
+                {/* External SVG badge is provided by Launchstag for verification. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://launchstag.com/badge-light.svg" alt="Featured on Launchstag" width="198" height="62" />
+              </a>
+              <a
+                href="https://sellwithboost.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex rounded-2xl border border-white/10 bg-white p-3 transition hover:border-cyan-300/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.16)]"
+                aria-label="Listed on Sell With boost"
+              >
+                {/* External SVG badge is provided by Sell With Boost for verification. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://sellwithboost.com/badge/listing.svg" alt="Listed on Sell With boost" style={{ height: '40px', width: 'auto' }} />
+              </a>
+              <a
+                href="https://sellwithboost.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex rounded-2xl border border-white/10 bg-[#0d0f14] p-3 transition hover:border-cyan-300/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.16)]"
+                aria-label="Listed on Sell With boost"
+              >
+                {/* External SVG badge is provided by Sell With Boost for verification. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://sellwithboost.com/badge/listing-dark.svg" alt="Listed on Sell With boost" style={{ height: '40px', width: 'auto' }} />
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
