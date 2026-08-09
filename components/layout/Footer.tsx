@@ -42,6 +42,41 @@ const FOOTER_GROUPS = [
   },
 ]
 
+const FEATURED_BADGES = [
+  {
+    href: 'https://daniellaunches.com',
+    label: 'Featured on DanielLaunches',
+    src: 'https://daniellaunches.com/badge-light.svg',
+    width: 170,
+    height: 37,
+    tone: 'light',
+  },
+  {
+    href: 'https://launchstag.com',
+    label: 'Featured on Launchstag',
+    src: 'https://launchstag.com/badge-light.svg',
+    width: 150,
+    height: 47,
+    tone: 'light',
+  },
+  {
+    href: 'https://findly.tools/aibeat?utm_source=aibeat',
+    label: 'Featured on Findly.tools',
+    src: 'https://findly.tools/badges/findly-tools-badge-light.svg',
+    width: 150,
+    height: 47,
+    tone: 'light',
+  },
+  {
+    href: 'https://sellwithboost.com',
+    label: 'Listed on Sell With boost',
+    src: 'https://sellwithboost.com/badge/listing-dark.svg',
+    width: 150,
+    height: 40,
+    tone: 'dark',
+  },
+]
+
 export function Footer() {
   return (
     <footer className="border-t border-white/10 bg-[#07080B]">
@@ -80,6 +115,33 @@ export function Footer() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="mt-10 rounded-3xl border border-white/10 bg-white/[0.025] p-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Featured in</div>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                AIBeat appears in selected founder and product-discovery ecosystems. Badges are shown for verification and disclosure.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              {FEATURED_BADGES.map((badge) => (
+                <a
+                  key={badge.href}
+                  href={badge.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex min-h-14 items-center rounded-2xl border border-white/10 p-2.5 transition hover:border-cyan-300/40 hover:shadow-[0_0_24px_rgba(34,211,238,0.14)] ${badge.tone === 'dark' ? 'bg-[#0d0f14]' : 'bg-white'}`}
+                  aria-label={badge.label}
+                >
+                  {/* External SVG badges are provided by the listing platforms for verification. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={badge.src} alt={badge.label} width={badge.width} height={badge.height} loading="lazy" />
+                </a>
+              ))}
+            </div>
           </div>
         </div>
 
