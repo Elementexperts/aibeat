@@ -6,6 +6,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const URL_RE = /^https?:\/\/.+\..+/i
 const MAX_FIELD_LENGTH = 2000
 const SITE_URL = 'https://www.aibeat.dev'
+const DEFAULT_SUBMISSION_TO_EMAIL = 'info@aibeat.dev'
+const DEFAULT_SUBMISSION_FROM_EMAIL = 'AIBeat Submissions <onboarding@resend.dev>'
 
 type SubmitPayload = {
   type?: string
@@ -43,6 +45,14 @@ function escapeHtml(value: string) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;')
+}
+
+function getSubmissionRecipients() {
+  return (process.env.SUBMISSION_TO_EMAIL || DEFAULT_SUBMISSION_TO_EMAIL)
+    .split(/[,\s]+/)
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean)
+    .filter((email, index, all) => EMAIL_RE.test(email) && all.indexOf(email) === index)
 }
 
 function submissionHtml({
@@ -213,11 +223,16 @@ export async function POST(req: NextRequest) {
   }
 
   const apiKey = process.env.RESEND_API_KEY
-  const toEmail = process.env.SUBMISSION_TO_EMAIL || 'info@aibeat.dev'
-  const fromEmail = process.env.SUBMISSION_FROM_EMAIL || 'AIBeat Submissions <onboarding@resend.dev>'
+  const toEmails = getSubmissionRecipients()
+  const fromEmail = process.env.SUBMISSION_FROM_EMAIL || DEFAULT_SUBMISSION_FROM_EMAIL
 
   if (!apiKey) {
     console.error('Missing RESEND_API_KEY env var')
+    return NextResponse.json({ error: 'Submission email is not configured' }, { status: 500 })
+  }
+
+  if (toEmails.length === 0) {
+    console.error('SUBMISSION_TO_EMAIL has no valid email recipients')
     return NextResponse.json({ error: 'Submission email is not configured' }, { status: 500 })
   }
 
@@ -230,7 +245,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         from: fromEmail,
-        to: [toEmail],
+        to: toEmails,
         reply_to: email || undefined,
         subject: `New AIBeat ${plan.name} request: ${name}`,
         html: submissionHtml({ type, name, url, category, description, email, selectedPlan, verificationPageUrl, verificationStatus }),

@@ -88,6 +88,17 @@ export default function PartnersPage() {
                 <img src="https://launchstag.com/badge-light.svg" alt="Featured on Launchstag" width="198" height="62" />
               </a>
               <a
+                href="https://findly.tools/aibeat?utm_source=aibeat"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex rounded-2xl border border-white/10 bg-white p-3 transition hover:border-cyan-300/40 hover:shadow-[0_0_30px_rgba(34,211,238,0.16)]"
+                aria-label="Featured on Findly.tools"
+              >
+                {/* External SVG badge is provided by Findly.tools for verification. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://findly.tools/badges/findly-tools-badge-light.svg" alt="Featured on Findly.tools" width="175" height="55" />
+              </a>
+              <a
                 href="https://sellwithboost.com"
                 target="_blank"
                 rel="noopener noreferrer"
