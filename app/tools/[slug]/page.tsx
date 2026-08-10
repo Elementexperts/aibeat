@@ -20,6 +20,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default function ToolPage({ params }: { params: { slug: string } }) {
   const tool = getToolBySlug(params.slug)
   if (!tool) notFound()
+  const hasAffiliateLink = tool.affiliateUrl !== tool.websiteUrl
 
   const stars = Array.from({ length: 5 }, (_, i) => i < Math.floor(tool.rating) ? '★' : '☆').join('')
 
@@ -90,15 +91,17 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
           <div className="bg-ink p-5 flex items-center justify-between gap-4">
             <div>
               <div className="text-white text-sm font-semibold mb-0.5">Try {tool.name}</div>
-              <div className="text-ink-4 text-xs">{tool.pricing} · Affiliate link — we earn a commission</div>
+              <div className="text-ink-4 text-xs">
+                {tool.pricing} · {hasAffiliateLink ? 'Affiliate link — we earn a commission' : 'Official website'}
+              </div>
             </div>
             <a
               href={tool.affiliateUrl}
               target="_blank"
-              rel="noopener noreferrer sponsored"
+              rel={`noopener noreferrer${hasAffiliateLink ? ' sponsored' : ''}`}
               className="bg-beat-red text-white px-5 py-2 text-sm font-semibold hover:bg-red-700 transition-colors whitespace-nowrap"
             >
-              Get {tool.name} →
+              {hasAffiliateLink ? 'Get' : 'Visit'} {tool.name} →
             </a>
           </div>
         </div>
