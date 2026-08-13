@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getToolBySlug, TOOLS, CATEGORY_COLORS } from '@/lib/data'
 import type { Metadata } from 'next'
 import { ToolLogo } from '@/components/ui/ToolLogo'
+import { ToolShareLinks } from '@/components/ui/ToolShareLinks'
 
 export async function generateStaticParams() {
   return TOOLS.map((t) => ({ slug: t.slug }))
@@ -108,6 +109,8 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
 
         {/* SIDEBAR */}
         <div className="space-y-4">
+          <ToolShareLinks name={tool.name} path={`/tools/${tool.slug}`} tagline={tool.tagline} />
+
           {/* Alternatives */}
           <div className="border border-border p-4">
             <div className="section-label">Alternatives to {tool.name}</div>

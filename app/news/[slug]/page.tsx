@@ -4,6 +4,7 @@ import { TOOLS, CATEGORY_COLORS } from '@/lib/data'
 import { getArticleBySlug, getArticles } from '@/lib/articles'
 import type { Metadata } from 'next'
 import { ToolLogo } from '@/components/ui/ToolLogo'
+import { ToolShareLinks } from '@/components/ui/ToolShareLinks'
 
 export async function generateStaticParams() {
   const articles = await getArticles()
@@ -108,6 +109,14 @@ export default async function ArticlePage({ params }: { params: { slug: string }
 
         {/* SIDEBAR */}
         <div className="space-y-4">
+          <ToolShareLinks
+            name={article.title}
+            path={`/news/${article.slug}`}
+            tagline={article.deck}
+            heading="Share this story"
+            description="Link readers back to the AIBeat article page."
+            subject={article.title}
+          />
 
           {/* Related Tools */}
           {relatedTools.length > 0 && (
