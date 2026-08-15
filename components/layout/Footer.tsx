@@ -68,6 +68,14 @@ const FEATURED_BADGES = [
     tone: 'light',
   },
   {
+    href: 'https://startupbase.io/products/aibeat?utm_source=startupbase&utm_medium=badge&utm_campaign=launch-badge-neutral',
+    label: 'Launched on StartupBase',
+    src: 'https://statics.startupbase.io/site/badges/launched-on-sb-neutral.svg',
+    width: 180,
+    height: 55,
+    tone: 'light',
+  },
+  {
     href: 'https://sellwithboost.com',
     label: 'Listed on Sell With boost',
     src: 'https://sellwithboost.com/badge/listing-dark.svg',
