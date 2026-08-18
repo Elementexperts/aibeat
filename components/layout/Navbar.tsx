@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { label: 'News', href: '/news' },
   { label: 'Launches', href: '/launches' },
   { label: 'Categories', href: '/categories' },
+  { label: 'Business', href: '/business/ai-spend-calculator', badge: 'New' },
   { label: 'Spotlight', href: '/spotlight' },
   { label: 'For Founders', href: '/for-founders' },
   { label: 'Newsletter', href: '/newsletter' },
@@ -34,9 +35,10 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="rounded-full px-3 py-2 text-sm text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-slate-300 transition hover:bg-white/[0.06] hover:text-white"
                 >
                   {link.label}
+                  {link.badge && <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-100">{link.badge}</span>}
                 </Link>
               ))}
             </div>
@@ -65,6 +67,7 @@ export function Navbar() {
           {NAV_LINKS.map((link) => (
             <Link key={link.href} href={link.href} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/[0.04] px-3 py-2 text-xs text-slate-300">
               {link.label}
+              {link.badge && <span className="rounded-full bg-cyan-300/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-cyan-100">{link.badge}</span>}
               {(link.label === 'Discover' || link.label === 'For Founders') && <ChevronDown className="h-3 w-3" />}
             </Link>
           ))}

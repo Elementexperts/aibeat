@@ -5,6 +5,7 @@ import { getArticles } from '@/lib/articles'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
 import { PremiumToolCard } from '@/components/ui/PremiumToolCard'
 import { ToolLogo } from '@/components/ui/ToolLogo'
+import { BusinessHomepageTeaser } from '@/components/business/BusinessHomepageTeaser'
 
 export const revalidate = 3600
 
@@ -236,6 +237,8 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      <BusinessHomepageTeaser />
 
       {heroArticle && (
         <section className="border-y border-white/10 bg-white/[0.025] py-20">

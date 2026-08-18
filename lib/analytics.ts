@@ -17,6 +17,18 @@ export const FOUNDER_ANALYTICS_EVENTS = {
 
 export type FounderAnalyticsEvent = typeof FOUNDER_ANALYTICS_EVENTS[keyof typeof FOUNDER_ANALYTICS_EVENTS]
 
+export const BUSINESS_ANALYTICS_EVENTS = {
+  teaserClicked: 'business_teaser_clicked',
+  calculatorViewed: 'ai_spend_calculator_viewed',
+  calculatorInputChanged: 'calculator_input_changed',
+  calculatorCompleted: 'calculator_completed',
+  earlyAccessClicked: 'early_access_clicked',
+  earlyAccessSubmitted: 'early_access_submitted',
+  surveyClicked: 'business_survey_clicked',
+} as const
+
+export type BusinessAnalyticsEvent = typeof BUSINESS_ANALYTICS_EVENTS[keyof typeof BUSINESS_ANALYTICS_EVENTS]
+
 export function founderEventForPlan(planId: string): FounderAnalyticsEvent {
   if (planId === 'free') return FOUNDER_ANALYTICS_EVENTS.submitFreeClick
   if (planId === 'enhanced') return FOUNDER_ANALYTICS_EVENTS.enhancedListingClick
