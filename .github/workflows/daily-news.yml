@@ -55,6 +55,8 @@ jobs:
         run: npm run news:daily
 
       - name: Commit and push article
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
           git config user.name "AIBeat Bot"
           git config user.email "bot@aibeat.dev"
@@ -80,3 +82,10 @@ jobs:
 
           echo "Published: ${SLUG}"
           echo "Live at: https://www.aibeat.dev/news/${SLUG}"
+
+          if [ -n "$VERCEL_DEPLOY_HOOK_URL" ]; then
+            echo "Triggering Vercel deploy hook..."
+            curl -fsS -X POST "$VERCEL_DEPLOY_HOOK_URL"
+          else
+            echo "VERCEL_DEPLOY_HOOK_URL is not configured; relying on GitHub integration auto-deploy."
+          fi
