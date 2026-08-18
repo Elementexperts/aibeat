@@ -33,11 +33,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Sync latest main before generation
+        run: |
+          git fetch origin main
+          git pull --rebase origin main
+
+      - name: Validate news automation secrets
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "::error::GROQ_API_KEY secret is missing. Add it in GitHub repository secrets before running Daily AI News Automation."
+            exit 1
+          fi
+
       - name: Run news automation
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           ARTICLE_LIMIT: 1
-        run: npx tsx scripts/fetch-and-post.ts
+          FAIL_ON_NEWS_ERROR: 'false'
+        run: npm run news:daily
 
       - name: Commit and push article
         run: |
@@ -46,7 +61,7 @@ jobs:
 
           # Sync with latest remote first
           git fetch origin main
-          git pull --rebase origin main
+          git pull --rebase --autostash origin main
 
           # Stage generated content
           git add content/articles/

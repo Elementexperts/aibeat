@@ -19,6 +19,8 @@ const CONTENT_DIR    = resolve(process.cwd(), 'content/articles')
 const LINKEDIN_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN
 const LINKEDIN_PUBLISH_ENABLED = process.env.LINKEDIN_PUBLISH_ENABLED === 'true'
 const SITE_BASE      = 'https://www.aibeat.dev'
+const FAIL_ON_NEWS_ERROR = process.env.FAIL_ON_NEWS_ERROR === 'true'
+const REQUEST_TIMEOUT_MS = 15000
 
 const RSS_FEEDS = [
   { url: 'https://techcrunch.com/category/artificial-intelligence/feed/', source: 'TechCrunch'  },
@@ -134,6 +136,7 @@ Respond ONLY with valid JSON (no markdown, no code blocks):
   try {
     const res  = await fetch(GROQ_URL, {
       method:  'POST',
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
       body:    JSON.stringify({
         model: GROQ_MODEL, temperature: 0.7, max_tokens: 4096,
@@ -141,7 +144,30 @@ Respond ONLY with valid JSON (no markdown, no code blocks):
       }),
     })
 
-    const data = await res.json()
+    const responseText = await res.text()
+    let data: any
+
+    try {
+      data = responseText ? JSON.parse(responseText) : {}
+    } catch {
+      console.error(`  Warning: Groq returned non-JSON response (${res.status}): ${responseText.slice(0, 300)}`)
+      return null
+    }
+
+    if (!res.ok) {
+      const msg: string = data?.error?.message ?? responseText
+
+      if (attempt < 2 && (res.status === 429 || msg.includes('rate_limit'))) {
+        const waitMatch = msg.match(/try again in ([\d.]+)s/)
+        const waitMs    = waitMatch ? Math.ceil(parseFloat(waitMatch[1]) * 1000) + 1500 : 10000
+        console.log(`  Rate limited - waiting ${(waitMs / 1000).toFixed(1)}s (attempt ${attempt + 1}/2)...`)
+        await new Promise(r => setTimeout(r, waitMs))
+        return writeArticleWithGroq(item, attempt + 1)
+      }
+
+      console.error(`  Warning: Groq request failed (${res.status}): ${msg.slice(0, 500)}`)
+      return null
+    }
 
     if (data.error) {
       const msg: string = data.error.message ?? ''
@@ -300,7 +326,12 @@ async function main() {
 
   if (!GROQ_API_KEY) throw new Error('Missing GROQ_API_KEY')
 
-  const parser = new Parser()
+  const parser = new Parser({
+    customFetch: (url: string) => fetch(String(url), {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      headers: { 'User-Agent': 'AIBeat-bot/1.0' },
+    }),
+  } as ConstructorParameters<typeof Parser>[0] & { customFetch: (url: string) => Promise<Response> })
   const cutoff = Date.now() - 24 * 60 * 60 * 1000
   let saved = 0, skipped = 0, failed = 0
 
@@ -315,8 +346,9 @@ async function main() {
       )
       console.log(`   ${recent.length} new items in last 24h`)
       for (const item of recent.slice(0, 3)) candidates.push({ item, source: feed.source })
-    } catch {
-      console.log(`   ⚠️  Could not fetch ${feed.url}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      console.log(`   Warning: Could not fetch ${feed.url}: ${message}`)
     }
   }
 
@@ -399,7 +431,11 @@ async function main() {
   console.log('\n─────────────────────────────────')
   console.log(`  ✅ Saved   : ${saved}`)
   console.log(`  ⏭️  Skipped : ${skipped}`)
-  if (failed > 0) { console.log(`  ❌ Failed  : ${failed}`); process.exitCode = 1 }
+  if (failed > 0) {
+    console.log(`  Failed  : ${failed}`)
+    if (FAIL_ON_NEWS_ERROR) process.exitCode = 1
+    else console.log('  Info: FAIL_ON_NEWS_ERROR is false, so transient generation errors will not fail this scheduled run.')
+  }
   console.log()
 }
 
