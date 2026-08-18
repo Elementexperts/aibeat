@@ -13,7 +13,7 @@ import { join } from 'path'
 
 const GROQ_API_KEY   = process.env.GROQ_API_KEY
 const GROQ_URL       = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL     = 'llama-3.3-70b-versatile'
+const GROQ_MODEL     = process.env.GROQ_MODEL || 'openai/gpt-oss-120b'
 const ARTICLE_LIMIT  = parseInt(process.env.ARTICLE_LIMIT ?? '1', 10)
 const CONTENT_DIR    = resolve(process.cwd(), 'content/articles')
 const LINKEDIN_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN
