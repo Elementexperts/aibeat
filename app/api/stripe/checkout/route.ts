@@ -41,8 +41,8 @@ export async function POST(req: NextRequest) {
       mode: price.recurring ? 'subscription' : 'payment',
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: email || undefined,
-      success_url: `${siteUrl}/submit?plan=${encodeURIComponent(plan.id)}&payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/submit?plan=${encodeURIComponent(plan.id)}&payment=cancelled`,
+      success_url: `${siteUrl}/payment/success?plan=${encodeURIComponent(plan.id)}&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl}/payment/cancelled?plan=${encodeURIComponent(plan.id)}`,
       metadata: {
         planId: plan.id,
         planName: plan.name,
