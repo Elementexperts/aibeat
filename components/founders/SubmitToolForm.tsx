@@ -7,6 +7,7 @@ import { CheckCircle2, Copy, ShieldCheck } from 'lucide-react'
 import { AIBEAT_CANONICAL_URL, FOUNDER_SERVICE_PLANS, formatPlanPrice, getPlanById } from '@/data/founder-services'
 import type { VerificationMethod, VerificationResult } from '@/lib/aibeat-link-verification'
 import { FOUNDER_ANALYTICS_EVENTS } from '@/lib/analytics'
+import { CheckoutButton } from './CheckoutButton'
 
 const CATEGORIES = ['AI Agents', 'Developer Tools', 'Marketing', 'Sales', 'Education', 'Research', 'Design', 'Video', 'Image', 'Audio', 'Productivity', 'Customer Support', 'Enterprise', 'Open Source', 'Other']
 const PRICING_MODELS = ['Free', 'Freemium', 'Paid', 'Free trial', 'Open source', 'Custom pricing']
@@ -153,6 +154,8 @@ export function SubmitToolForm() {
   }
 
   if (submitted) {
+    const paidPlan = selectedPlan.billingType === 'one_time' || selectedPlan.billingType === 'monthly'
+
     return (
       <div className="premium-card p-8 text-center">
         <CheckCircle2 className="mx-auto h-10 w-10 text-green-300" />
@@ -161,7 +164,18 @@ export function SubmitToolForm() {
           AIBeat reviews every request before listing, featuring, publishing, or confirming payment steps.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/for-founders" className="inline-flex justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">Compare plans</Link>
+          {paidPlan ? (
+            <CheckoutButton
+              planId={selectedPlan.id}
+              label="Pay securely with Stripe"
+              email={form.email}
+              productName={form.name}
+              website={form.url}
+              company={form.company}
+            />
+          ) : (
+            <Link href="/for-founders" className="inline-flex justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">Compare plans</Link>
+          )}
           <button type="button" onClick={() => { setSubmitted(false); setForm({ ...EMPTY_FORM, selectedPlan: 'free' }); setStep(0); setError(null) }} className="inline-flex justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white">Submit another</button>
         </div>
       </div>
