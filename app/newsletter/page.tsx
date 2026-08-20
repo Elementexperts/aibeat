@@ -177,9 +177,12 @@ export default function NewsletterPage() {
         <div className="px-6 py-10 md:px-10 md:py-12 md:border-r border-border bg-paper-2">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-beat-red mb-3">Unsubscribe</p>
           <h2 className="font-serif text-3xl font-black text-ink">Sorry to see you go.</h2>
-          <p className="text-sm text-ink-3 leading-relaxed mt-4">
-            Leave your email and, if you want, a quick note about why the brief was not useful. The comment helps make future editions better.
+        <p className="text-sm text-ink-3 leading-relaxed mt-4">
+            Leave your email and, if you want, a quick note about why the brief was not useful. You can also use the dedicated unsubscribe page.
           </p>
+          <Link href="/unsubscribe" className="inline-flex items-center gap-2 mt-5 font-mono text-[11px] text-ink hover:text-beat-red">
+            Open unsubscribe page <ArrowRight size={13} />
+          </Link>
         </div>
         <div className="px-6 py-10 md:px-10 md:py-12">
           <UnsubscribeForm />
