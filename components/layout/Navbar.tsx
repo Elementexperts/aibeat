@@ -8,7 +8,7 @@ const NAV_LINKS = [
   { label: 'News', href: '/news' },
   { label: 'Launches', href: '/launches' },
   { label: 'Categories', href: '/categories' },
-  { label: 'Business', href: '/business/ai-spend-calculator', badge: 'New' },
+  { label: 'Business', href: '/business/dashboard', badge: 'New' },
   { label: 'Spotlight', href: '/spotlight' },
   { label: 'For Founders', href: '/for-founders' },
   { label: 'Newsletter', href: '/newsletter' },

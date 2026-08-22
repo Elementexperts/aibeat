@@ -10,7 +10,8 @@ const FOOTER_GROUPS = [
       { label: 'Categories', href: '/categories' },
       { label: 'Launches', href: '/launches' },
       { label: 'Free Tools', href: '/free-tools' },
-      { label: 'AIBeat Business', href: '/business/ai-spend-calculator' },
+      { label: 'AIBeat Business', href: '/business/dashboard' },
+      { label: 'AI Spend Calculator', href: '/business/ai-spend-calculator' },
     ],
   },
   {

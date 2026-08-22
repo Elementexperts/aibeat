@@ -15,7 +15,7 @@ const CHIPS = ['AI Spend Visibility', 'Tool Overlap', 'Usage Optimization', 'Sha
 function trackTeaserClick() {
   window.gtag?.('event', BUSINESS_ANALYTICS_EVENTS.teaserClicked, {
     event_category: 'aibeat_business',
-    destination: '/business/ai-spend-calculator',
+    destination: '/business/dashboard',
   })
 }
 
@@ -34,7 +34,7 @@ export function BusinessHomepageTeaser() {
                 Your company is adopting AI. But do you know what it&apos;s actually costing?
               </h2>
               <p className="mt-5 max-w-3xl text-base leading-7 text-slate-400 md:text-lg">
-                AI subscriptions are increasingly spread across employees, departments, expense cards, and software platforms. AIBeat Business is being built to help growing companies understand their AI stack, detect overlapping spend, identify underused tools, and make better AI purchasing decisions.
+                AI subscriptions are increasingly spread across employees, departments, expense cards, and software platforms. AIBeat Business helps growing companies understand their AI stack, govern shared business memory, run specialized AI workflows, and measure ROI.
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {CHIPS.map((chip) => (
@@ -53,12 +53,18 @@ export function BusinessHomepageTeaser() {
                 Built for growing teams managing multiple AI tools.
               </p>
               <Link
-                href="/business/ai-spend-calculator"
+                href="/business/dashboard"
                 onClick={trackTeaserClick}
                 className="gradient-button mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold sm:w-auto"
               >
-                Calculate Your AI Spend
+                Open Business Console
                 <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/business/ai-spend-calculator"
+                className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-cyan-300/30 sm:w-auto"
+              >
+                Calculate AI Spend
               </Link>
             </div>
           </div>
