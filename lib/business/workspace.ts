@@ -59,3 +59,5 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
     })),
   }
 }
+
+export type BusinessWorkspaceData = ReturnType<typeof getBusinessWorkspaceData>

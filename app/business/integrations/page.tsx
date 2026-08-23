@@ -1,11 +1,15 @@
 import type { Metadata } from 'next'
+import { decideBusinessApprovalAction, runBusinessWorkflowAction } from '@/app/business/actions'
 import { BusinessWorkspace } from '@/components/business/BusinessWorkspace'
+import { getAuthenticatedBusinessWorkspaceData } from '@/lib/business/workspace-server'
 
 export const metadata: Metadata = {
   title: 'Integrations | AIBeat Business',
   description: 'AIBeat Business connector architecture for CRM, analytics, documents, web research, email, and collaboration systems.',
 }
 
-export default function BusinessIntegrationsPage() {
-  return <BusinessWorkspace route="integrations" />
+export default async function BusinessIntegrationsPage() {
+  const data = await getAuthenticatedBusinessWorkspaceData()
+  return <BusinessWorkspace route="integrations" initialData={data} onRunWorkflow={runBusinessWorkflowAction} onDecideApproval={decideBusinessApprovalAction} />
 }
+

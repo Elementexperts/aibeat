@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import {
   Activity,
@@ -29,7 +29,7 @@ import {
   Users,
 } from 'lucide-react'
 import { AGENT_REGISTRY, executeAgentMock } from '@/lib/business/agents'
-import { getBusinessWorkspaceData } from '@/lib/business/workspace'
+import { getBusinessWorkspaceData, type BusinessWorkspaceData } from '@/lib/business/workspace'
 import { getAgentIndustryInstructions, INDUSTRY_PROFILE_LABELS } from '@/lib/business/industry-profiles'
 import { decideApproval, runWorkflowManual } from '@/lib/business/workflows'
 import type { AgentType, Approval, IndustryProfile, WorkflowRun } from '@/lib/business/types'
@@ -72,8 +72,22 @@ const agentStats: Record<AgentType, string> = {
   EXECUTIVE_BRIEF: 'Last run 07:30',
 }
 
-export function BusinessWorkspace({ route, workflowId }: { route: RouteKey; workflowId?: string }) {
-  const data = useMemo(() => getBusinessWorkspaceData(), [])
+export function BusinessWorkspace({
+  route,
+  workflowId,
+  initialData,
+  onRunWorkflow,
+  onDecideApproval,
+}: {
+  route: RouteKey
+  workflowId?: string
+  initialData?: BusinessWorkspaceData
+  onRunWorkflow?: (workflowId: string) => Promise<{ run: WorkflowRun; approval?: Approval }>
+  onDecideApproval?: (approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) => Promise<Approval>
+}) {
+  const fallbackData = useMemo(() => initialData ?? getBusinessWorkspaceData(), [initialData])
+  const data = fallbackData
+  const [, startTransition] = useTransition()
   const [selectedProfile, setSelectedProfile] = useState<IndustryProfile>(data.organization.primaryProfile)
   const [approvals, setApprovals] = useState<Approval[]>(data.approvals)
   const [runs, setRuns] = useState<WorkflowRun[]>(data.runs)
@@ -83,13 +97,38 @@ export function BusinessWorkspace({ route, workflowId }: { route: RouteKey; work
   function runWorkflow(id: string) {
     const workflow = data.workflows.find((candidate) => candidate.id === id)
     if (!workflow) return
-    const result = runWorkflowManual(workflow, 'user-sarah')
+    if (onRunWorkflow) {
+      startTransition(async () => {
+        const result = await onRunWorkflow(id)
+        setRuns((current) => [result.run, ...current.filter((run) => run.id !== result.run.id)])
+        if (result.approval) setApprovals((current) => [result.approval!, ...current.filter((approval) => approval.id !== result.approval?.id)])
+      })
+      return
+    }
+    const result = runWorkflowManual(workflow, data.organization.id === 'org-growth-labs' ? 'user-sarah' : data.organization.id)
     setRuns((current) => [result.run, ...current])
     if (result.approval) setApprovals((current) => [result.approval!, ...current])
   }
 
   function resolveApproval(approval: Approval, decision: 'APPROVED' | 'REJECTED' | 'EDITED') {
-    setApprovals((current) => current.map((item) => (item.id === approval.id ? decideApproval(item, decision, 'user-sarah', decision === 'EDITED' ? `${item.generatedContent}\n\nEdited by approver.` : undefined) : item)))
+    const editedContent = decision === 'EDITED' ? `${approval.generatedContent}\n\nEdited by approver.` : undefined
+    if (onDecideApproval) {
+      startTransition(async () => {
+        const next = await onDecideApproval(approval.id, decision, editedContent)
+        setApprovals((current) => current.map((item) => (item.id === approval.id ? next : item)))
+        setRuns((current) => current.map((run) => {
+          if (run.id !== next.workflowRunId) return run
+          return {
+            ...run,
+            status: decision === 'REJECTED' ? 'FAILED' : 'COMPLETED',
+            completedAt: new Date().toISOString(),
+            resultSummary: decision === 'REJECTED' ? 'Workflow stopped after rejection.' : 'Workflow completed after approval.',
+          }
+        }))
+      })
+      return
+    }
+    setApprovals((current) => current.map((item) => (item.id === approval.id ? decideApproval(item, decision, 'user-sarah', editedContent) : item)))
   }
 
   function runAgent(agentType: AgentType) {
