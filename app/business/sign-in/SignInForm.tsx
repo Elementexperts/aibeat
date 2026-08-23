@@ -25,33 +25,51 @@ export function SignInForm({ nextPath, initialError }: { nextPath?: string; init
     setError('')
     setMessage('')
 
-    const supabase = createClient()
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-    setLoading(false)
+    try {
+      const supabase = createClient()
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (signInError) {
-      setError(signInError.message)
-      return
+      if (signInError) {
+        setError(signInError.message)
+        return
+      }
+
+      if (!data.session) {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError || !sessionData.session) {
+          setError('Sign-in succeeded, but the browser session was not established. Please try again.')
+          return
+        }
+      }
+
+      window.location.assign(safeNextPath(nextPath))
+    } catch {
+      setError('Unable to complete sign-in. Please check your connection and try again.')
+      setLoading(false)
     }
-
-    router.replace(safeNextPath(nextPath))
-    router.refresh()
   }
 
   async function handleSignOut() {
     setLoading(true)
     setError('')
-    const supabase = createClient()
-    const { error: signOutError } = await supabase.auth.signOut()
-    setLoading(false)
+    setMessage('')
 
-    if (signOutError) {
-      setError(signOutError.message)
-      return
+    try {
+      const supabase = createClient()
+      const { error: signOutError } = await supabase.auth.signOut()
+
+      if (signOutError) {
+        setError(signOutError.message)
+        return
+      }
+
+      setMessage('Signed out.')
+      router.refresh()
+    } catch {
+      setError('Unable to sign out. Please try again.')
+    } finally {
+      setLoading(false)
     }
-
-    setMessage('Signed out.')
-    router.refresh()
   }
 
   return (

@@ -20,7 +20,7 @@ export async function middleware(request: NextRequest) {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
     if (!supabaseUrl || !supabaseKey) {
-      return redirectToBusinessSignIn(request)
+      return redirectToBusinessSignIn(request, 'Business authentication is not configured.')
     }
 
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -50,7 +50,7 @@ export async function middleware(request: NextRequest) {
       .limit(1)
 
     if (membershipError || !memberships?.length) {
-      return redirectToBusinessSignIn(request)
+      return redirectToBusinessSignIn(request, 'No active AIBeat Business organization is available for this account.')
     }
 
     return response
@@ -63,9 +63,10 @@ export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)'],
 }
 
-function redirectToBusinessSignIn(request: NextRequest) {
+function redirectToBusinessSignIn(request: NextRequest, error?: string) {
   const url = request.nextUrl.clone()
   url.pathname = '/business/sign-in'
-  url.searchParams.set('next', request.nextUrl.pathname)
+  url.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`)
+  if (error) url.searchParams.set('error', error)
   return NextResponse.redirect(url)
 }
