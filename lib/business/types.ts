@@ -1,4 +1,5 @@
 export type Role = 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER'
+export type MembershipStatus = 'ACTIVE' | 'SUSPENDED' | 'INVITED'
 
 export type IndustryProfile =
   | 'DIGITAL_MARKETING_AGENCY'
@@ -48,6 +49,9 @@ export interface OrganizationMember {
   userId: string
   role: Role
   permissions: string[]
+  status?: MembershipStatus
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type BusinessContextDomain = 'COMPANY_KNOWLEDGE' | 'OPERATIONAL_CONTEXT' | 'PEOPLE_ACCESS' | 'AI_OPERATIONAL_MEMORY'
@@ -98,16 +102,22 @@ export interface BusinessContextItem {
   category: BusinessContextCategory
   title: string
   content: string
+  structuredData?: Record<string, unknown>
   source: string
+  sourceType?: string
   sourceUrl?: string
   sourceDate?: string
   confidence?: number
   createdAt: string
+  updatedAt?: string
   expiresAt?: string
+  freshUntil?: string
   relatedEntityType?: string
   relatedEntityId?: string
   humanVerified: boolean
   provenance: string
+  status?: 'ACTIVE' | 'ARCHIVED'
+  createdBy?: string
 }
 
 export interface BusinessContextPayload {
@@ -125,12 +135,15 @@ export interface AgentFinding {
   findingType: string
   title: string
   content: string
+  structuredData?: Record<string, unknown>
   source: string
   sourceUrl?: string
   sourceDate?: string
   confidence: number
   createdAt: string
+  updatedAt?: string
   expiresAt?: string
+  freshUntil?: string
   relatedEntityType?: string
   relatedEntityId?: string
   workflowRunId?: string
@@ -210,6 +223,9 @@ export interface WorkflowRun {
   status: WorkflowRunStatus
   startedAt: string
   completedAt?: string
+  currentStepId?: string
+  retryCount?: number
+  resultMetadata?: Record<string, unknown>
   steps: WorkflowRunStep[]
   resultSummary?: string
   idempotencyKey: string
@@ -222,6 +238,8 @@ export interface Approval {
   workflowStepId: string
   agentType: AgentType
   proposedAction: string
+  actionType?: string
+  proposedPayload?: Record<string, unknown>
   targetSystem: string
   affectedEntity: string
   generatedContent: string
@@ -231,7 +249,11 @@ export interface Approval {
   createdAt: string
   decidedAt?: string
   approverId?: string
+  requestedBy?: string
+  resolvedBy?: string
+  decision?: string
   editedContent?: string
+  editedPayload?: Record<string, unknown>
   executionResult?: string
 }
 

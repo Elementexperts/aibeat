@@ -1,40 +1,17 @@
 import { AGENT_REGISTRY } from './agents'
-import { demoAITools, demoRecommendations, demoRoiMetrics } from './demo-data'
-import { getMemberForUser } from './context'
-import { assertPermission, assertTenantAccess } from './security'
+import { businessStore } from './store'
 import type { AIRecommendation, AIToolSubscription, OptimizationOpportunity, ROIMetrics } from './types'
 
 export function getAIToolSubscriptions(organizationId: string, userId = 'user-sarah'): AIToolSubscription[] {
-  const member = assertTenantAccess(getMemberForUser(userId, organizationId), organizationId)
-  assertPermission(member, 'business:read')
-  return demoAITools.filter((tool) => tool.organizationId === organizationId)
+  return businessStore.getAITools({ organizationId, userId })
 }
 
 export function getAIRecommendations(organizationId: string, userId = 'user-sarah'): AIRecommendation[] {
-  const member = assertTenantAccess(getMemberForUser(userId, organizationId), organizationId)
-  assertPermission(member, 'business:read')
-  return demoRecommendations.filter((recommendation) => recommendation.organizationId === organizationId)
+  return businessStore.getRecommendations({ organizationId, userId })
 }
 
 export function getROIMetrics(organizationId: string, userId = 'user-sarah'): ROIMetrics {
-  const member = assertTenantAccess(getMemberForUser(userId, organizationId), organizationId)
-  assertPermission(member, 'business:read')
-
-  if (demoRoiMetrics.organizationId === organizationId) return demoRoiMetrics
-
-  return {
-    organizationId,
-    aiSpendMonthly: 0,
-    potentialSavingsMonthly: 0,
-    workflowsCompleted: 0,
-    estimatedHoursSaved: 0,
-    estimatedSavings: 0,
-    aiToolCost: 0,
-    workflowSuccessRate: 0,
-    approvalRate: 0,
-    activeWorkflows: 0,
-    activeAgents: 0,
-  }
+  return businessStore.getROIMetrics({ organizationId, userId })
 }
 
 export function summarizeSpend(organizationId: string, userId = 'user-sarah') {
