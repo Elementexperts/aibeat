@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { executeAgentMock, validateAgentOutput } from '../lib/business/agents'
+import { getOptimizationOpportunities } from '../lib/business/ai-spend'
 import { getBusinessContextPayload, searchBusinessContext } from '../lib/business/context'
 import { getAgentIndustryInstructions } from '../lib/business/industry-profiles'
 import { classifyActionRisk } from '../lib/business/security'
+import { getBusinessWorkspaceData } from '../lib/business/workspace'
 import { decideApproval, getOrganizationWorkflows, runWorkflowManual } from '../lib/business/workflows'
 
 test('Business Context retrieval is tenant isolated', () => {
@@ -75,4 +77,32 @@ test('agent structured output validates against registry schema', () => {
   assert.equal(result.finding.organizationId, 'org-growth-labs')
   assert.equal(result.finding.humanVerified, false)
   assert.ok(result.finding.expiresAt)
+})
+
+test('optimization opportunities connect spend recommendations to agents and workflows', () => {
+  const opportunities = getOptimizationOpportunities('org-growth-labs', 'user-sarah')
+  const leadOverlap = opportunities.find((opportunity) => opportunity.relatedAgentType === 'LEAD_RESEARCH')
+  const reportingAutomation = opportunities.find((opportunity) => opportunity.relatedAgentType === 'WEEKLY_REPORT')
+
+  assert.ok(leadOverlap)
+  assert.equal(leadOverlap.type, 'TOOL_OVERLAP')
+  assert.match(leadOverlap.recommendedCapability, /Lead Research/)
+  assert.equal(leadOverlap.relatedWorkflowTemplateId, 'tpl-lead-research')
+
+  assert.ok(reportingAutomation)
+  assert.equal(reportingAutomation.type, 'AUTOMATION')
+  assert.equal(reportingAutomation.estimatedHoursSaved, 36)
+  assert.match(reportingAutomation.ctaHref, /weekly-report/)
+})
+
+test('workspace dashboard data exposes executive brief, grouped agents, and memory health', () => {
+  const data = getBusinessWorkspaceData()
+  const groups = new Set(data.agentSummaries.map((summary) => summary.group))
+
+  assert.equal(data.executiveBriefItems.length, 3)
+  assert.equal(data.agentSummaries.length, 5)
+  assert.deepEqual(Array.from(groups).sort(), ['EXECUTIVE', 'INTELLIGENCE', 'REPORTING'])
+  assert.ok(data.businessMemoryHealth)
+  assert.equal(data.businessMemoryHealth?.companyKnowledgeScore, 86)
+  assert.equal(data.recentActivity.some((activity) => activity.status === 'WAITING_APPROVAL'), true)
 })

@@ -1,7 +1,7 @@
 import { AGENT_REGISTRY } from './agents'
-import { getAIRecommendations, getAIToolSubscriptions, getROIMetrics, summarizeSpend } from './ai-spend'
+import { getAIRecommendations, getAIToolSubscriptions, getOptimizationOpportunities, getROIMetrics, summarizeSpend } from './ai-spend'
 import { getBusinessContextPayload } from './context'
-import { demoFindings, demoOrganizations } from './demo-data'
+import { demoAgentSummaries, demoBusinessMemoryHealth, demoExecutiveBriefItems, demoFindings, demoOrganizations, demoRecentActivity } from './demo-data'
 import { INDUSTRY_PROFILE_LABELS, getIndustryProfile } from './industry-profiles'
 import { connectorRegistry } from './connectors'
 import { getApprovals, getAuditEvents, getOrganizationWorkflows, getWorkflowRuns, getWorkflowTemplates } from './workflows'
@@ -23,6 +23,11 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
   const roi = getROIMetrics(organizationId, userId)
   const spend = summarizeSpend(organizationId, userId)
   const findings = demoFindings.filter((finding) => finding.organizationId === organizationId)
+  const optimizationOpportunities = getOptimizationOpportunities(organizationId, userId)
+  const executiveBriefItems = demoExecutiveBriefItems.filter((item) => item.organizationId === organizationId)
+  const agentSummaries = demoAgentSummaries.filter((summary) => summary.agentType in AGENT_REGISTRY)
+  const recentActivity = demoRecentActivity.filter((activity) => activity.organizationId === organizationId)
+  const businessMemoryHealth = demoBusinessMemoryHealth.organizationId === organizationId ? demoBusinessMemoryHealth : undefined
 
   return {
     organization,
@@ -40,6 +45,11 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
     roi,
     spend,
     findings,
+    executiveBriefItems,
+    optimizationOpportunities,
+    businessMemoryHealth,
+    agentSummaries,
+    recentActivity,
     connectors: Object.values(connectorRegistry).map((connector) => ({
       id: connector.id,
       name: connector.name,

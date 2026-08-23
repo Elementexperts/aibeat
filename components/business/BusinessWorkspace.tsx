@@ -5,14 +5,17 @@ import Link from 'next/link'
 import {
   Activity,
   AlertTriangle,
+  ArrowRight,
   Archive,
   Bot,
   BriefcaseBusiness,
+  CalendarCheck,
   CheckCircle2,
   CircleDollarSign,
   ClipboardCheck,
   Database,
   FileText,
+  Gauge,
   GitBranch,
   LayoutDashboard,
   Lock,
@@ -23,6 +26,7 @@ import {
   ShieldCheck,
   Sparkles,
   TrendingUp,
+  Users,
 } from 'lucide-react'
 import { AGENT_REGISTRY, executeAgentMock } from '@/lib/business/agents'
 import { getBusinessWorkspaceData } from '@/lib/business/workspace'
@@ -50,7 +54,7 @@ const navItems = [
   { href: '/business/dashboard', label: 'Dashboard', key: 'dashboard', icon: LayoutDashboard },
   { href: '/business/workflows', label: 'Workflows', key: 'workflows', icon: GitBranch },
   { href: '/business/agents', label: 'Agents', key: 'agents', icon: Bot },
-  { href: '/business/context', label: 'Context', key: 'context', icon: Database },
+  { href: '/business/context', label: 'Business Memory', key: 'context', icon: Database },
   { href: '/business/ai-stack', label: 'AI Stack', key: 'ai-stack', icon: CircleDollarSign },
   { href: '/business/recommendations', label: 'Recommendations', key: 'recommendations', icon: TrendingUp },
   { href: '/business/approvals', label: 'Approvals', key: 'approvals', icon: ClipboardCheck },
@@ -107,21 +111,30 @@ export function BusinessWorkspace({ route, workflowId }: { route: RouteKey; work
     <div className="dark-page min-h-screen bg-[#0b1117] text-white">
       <div className="border-b border-white/10 bg-[#101820]">
         <div className="site-shell py-6">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+            <div className="max-w-5xl">
               <div className="inline-flex items-center gap-2 rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100">
                 <BriefcaseBusiness className="h-4 w-4" />
                 AIBeat Business
               </div>
-              <h1 className="mt-4 text-3xl font-black tracking-tight text-white md:text-5xl">Corporate AI operating console</h1>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300 md:text-base">
-                Discover, measure, govern, optimize, automate, and measure ROI from one tenant-aware workspace.
+              <h1 className="mt-4 text-3xl font-black tracking-tight text-white md:text-5xl">
+                One company memory. Five specialized AI agents. Fewer disconnected AI tools.
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300 md:text-lg md:leading-8">
+                Understand AI spend, automate recurring work, and give every AI agent the same governed business context.
+              </p>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+                A corporate AI operating console for spend intelligence, workflow automation, approvals, reports, and audit-ready context.
               </p>
             </div>
-            <div className="grid gap-2 rounded-lg border border-white/10 bg-white/[0.04] p-4 text-sm">
-              <span className="text-slate-400">Workspace</span>
-              <strong>{data.organization.name}</strong>
-              <span className="text-slate-400">{data.industryLabel} · {data.organization.employeeCount} employees</span>
+            <div className="grid min-w-0 gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-4 text-sm sm:min-w-[280px]">
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Organization</span>
+              <strong className="text-lg text-white">{data.organization.name}</strong>
+              <span className="text-slate-300">{data.industryLabel}</span>
+              <span className="inline-flex w-fit items-center gap-2 rounded-md bg-white/[0.06] px-2 py-1 text-xs font-semibold text-slate-300">
+                <Users className="h-3.5 w-3.5" />
+                {data.organization.employeeCount} employees
+              </span>
             </div>
           </div>
         </div>
@@ -176,62 +189,256 @@ export function BusinessWorkspace({ route, workflowId }: { route: RouteKey; work
 
 function Dashboard({ data, approvals, runs, onRunWorkflow }: { data: ReturnType<typeof getBusinessWorkspaceData>; approvals: Approval[]; runs: WorkflowRun[]; onRunWorkflow: (id: string) => void }) {
   const metrics = [
-    ['Active Workflows', data.workflows.filter((workflow) => workflow.status === 'ACTIVE').length],
-    ['Pending Approvals', approvals.filter((approval) => approval.status === 'PENDING').length],
-    ['Runs This Week', runs.length + 18],
-    ['Estimated Hours Saved', `${data.roi.estimatedHoursSaved}h`],
-    ['AI Spend', `${money.format(data.roi.aiSpendMonthly)} / mo`],
-    ['Potential Savings', `${money.format(data.roi.potentialSavingsMonthly)} / mo`],
+    { label: 'AI Spend', value: `${money.format(data.roi.aiSpendMonthly)}/mo`, estimate: true },
+    { label: 'Potential Savings', value: `${money.format(data.roi.potentialSavingsMonthly)}/mo`, estimate: true },
+    { label: 'Estimated Hours Saved', value: `${data.roi.estimatedHoursSaved}h`, estimate: true },
+    { label: 'Active Workflows', value: String(data.workflows.filter((workflow) => workflow.status === 'ACTIVE').length) },
+    { label: 'Pending Approvals', value: String(approvals.filter((approval) => approval.status === 'PENDING').length) },
+    { label: 'Run Success', value: `${data.roi.workflowSuccessRate}%`, estimate: true },
   ]
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-        {metrics.map(([label, value]) => (
-          <Metric key={label} label={String(label)} value={String(value)} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {metrics.map((metric) => (
+          <Metric key={metric.label} label={metric.label} value={metric.value} estimate={metric.estimate} />
         ))}
       </div>
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Panel title="Five Core Agents" icon={Bot}>
+
+      <ExecutiveBriefSection items={data.executiveBriefItems} />
+
+      <OptimizationOpportunitiesSection opportunities={data.optimizationOpportunities} />
+
+      <AgentTeamSection data={data} />
+
+      <BusinessMemoryHealthSection health={data.businessMemoryHealth} connectors={data.connectors} />
+
+      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <RecentActivitySection activities={data.recentActivity} approvals={approvals} runs={runs} />
+        <Panel title="Workflow / Integration Health" icon={Gauge}>
           <div className="grid gap-3 md:grid-cols-2">
-            {data.agents.map((agent) => (
-              <div key={agent.type} className="rounded-lg border border-white/10 bg-black/20 p-4">
+            {data.workflows.map((workflow) => (
+              <div key={workflow.id} className="rounded-lg border border-white/10 bg-black/20 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-black text-white">{agent.name}</h3>
-                    <p className="mt-1 text-xs text-slate-400">{agentStats[agent.type]}</p>
+                    <h3 className="text-sm font-black text-white">{workflow.name}</h3>
+                    <p className="mt-2 text-xs leading-5 text-slate-400">{workflow.description}</p>
                   </div>
-                  <span className="rounded-md bg-emerald-300/10 px-2 py-1 text-xs font-semibold text-emerald-100">Active</span>
+                  <StatusBadge status={workflow.status === 'ACTIVE' ? 'Success' : workflow.status} tone={workflow.status === 'ACTIVE' ? 'green' : 'amber'} />
                 </div>
-                <p className="mt-3 text-sm leading-6 text-slate-300">{agent.description}</p>
+                <button
+                  type="button"
+                  disabled={workflow.status !== 'ACTIVE'}
+                  onClick={() => onRunWorkflow(workflow.id)}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                >
+                  <Play className="h-4 w-4" />
+                  Run
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {data.connectors.slice(0, 4).map((connector) => (
+              <div key={connector.id} className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{connector.name}</div>
+                <div className="mt-2 text-sm font-black text-white">{connector.status}</div>
               </div>
             ))}
           </div>
         </Panel>
-        <Panel title="Recent Activity" icon={Activity}>
-          <Timeline runs={runs} approvals={approvals} />
-        </Panel>
       </div>
-      <Panel title="Workflow Templates" icon={GitBranch}>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          {data.workflows.map((workflow) => (
-            <div key={workflow.id} className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
-              <h3 className="text-sm font-black">{workflow.name}</h3>
-              <p className="mt-2 min-h-16 text-xs leading-5 text-slate-400">{workflow.description}</p>
-              <button
-                type="button"
-                disabled={workflow.status !== 'ACTIVE'}
-                onClick={() => onRunWorkflow(workflow.id)}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
-              >
-                <Play className="h-4 w-4" />
-                Run
-              </button>
+    </div>
+  )
+}
+
+function ExecutiveBriefSection({ items }: { items: ReturnType<typeof getBusinessWorkspaceData>['executiveBriefItems'] }) {
+  return (
+    <Panel title="Today's Executive Brief" icon={CalendarCheck} action={<Link href="/business/reports" className="inline-flex items-center gap-2 rounded-md bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950 transition hover:bg-emerald-300">Open Daily Brief <ArrowRight className="h-4 w-4" /></Link>}>
+      {items.length ? (
+        <div className="grid gap-4 lg:grid-cols-[0.32fr_1fr]">
+          <div className="rounded-lg border border-emerald-300/20 bg-emerald-300/10 p-4">
+            <div className="text-4xl font-black text-white">{items.length}</div>
+            <p className="mt-2 text-sm font-semibold text-emerald-50">items need attention</p>
+            <p className="mt-3 text-sm leading-6 text-slate-300">The Executive Daily Brief synthesizes agent findings, approvals, workflow signals, and company context.</p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {items.map((item) => (
+              <Link key={item.id} href={item.href ?? '/business/reports'} className="rounded-lg border border-white/10 bg-black/20 p-4 transition hover:border-emerald-300/30">
+                <div className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-100">{item.type}</div>
+                <h3 className="mt-2 text-sm font-black text-white">{item.title}</h3>
+                <p className="mt-2 text-xs leading-5 text-slate-400">{item.summary}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <EmptyState title="No executive brief yet" body="Once agents run, the Executive Daily Brief will summarize the most important items for leadership." />
+      )}
+    </Panel>
+  )
+}
+
+function OptimizationOpportunitiesSection({ opportunities }: { opportunities: ReturnType<typeof getBusinessWorkspaceData>['optimizationOpportunities'] }) {
+  return (
+    <Panel title="AI Optimization Opportunities" icon={TrendingUp}>
+      {opportunities.length ? (
+        <div className="grid gap-4 xl:grid-cols-3">
+          {opportunities.slice(0, 3).map((opportunity) => (
+            <div key={opportunity.id} className="flex flex-col rounded-lg border border-white/10 bg-black/20 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100">{opportunity.type.replace('_', ' ')}</div>
+                  <h3 className="mt-2 text-lg font-black text-white">{opportunity.title}</h3>
+                </div>
+                {opportunity.confidence && <span className="rounded-md bg-white/[0.06] px-2 py-1 text-xs text-slate-300">{Math.round(opportunity.confidence * 100)}% est.</span>}
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-300">{opportunity.problem}</p>
+              <div className="mt-4 grid gap-3">
+                <OpportunityStep label={opportunity.currentStateLabel} value={opportunity.currentStateValue} />
+                <OpportunityStep label="AIBeat capability" value={opportunity.recommendedCapability} />
+                <OpportunityStep label="Potential action" value={opportunity.potentialAction} />
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-400">
+                {opportunity.estimatedMonthlySavings && <span className="rounded-md bg-emerald-300/10 px-2 py-1 text-emerald-100">{money.format(opportunity.estimatedMonthlySavings)}/mo estimated savings</span>}
+                {opportunity.estimatedHoursSaved && <span className="rounded-md bg-cyan-300/10 px-2 py-1 text-cyan-100">{opportunity.estimatedHoursSaved} hrs/mo estimated</span>}
+              </div>
+              <Link href={opportunity.ctaHref} className="mt-5 inline-flex items-center justify-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm font-black text-white transition hover:border-cyan-300/40">
+                {opportunity.ctaLabel}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           ))}
         </div>
-      </Panel>
+      ) : (
+        <EmptyState title="No recommendations yet" body="AIBeat will show consolidation, utilization, governance, and workflow automation opportunities after spend and workflow signals are available." />
+      )}
+    </Panel>
+  )
+}
+
+function OpportunityStep({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-white/10 bg-white/[0.035] p-3">
+      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</div>
+      <div className="mt-1 text-sm font-semibold leading-5 text-white">{value}</div>
     </div>
+  )
+}
+
+function AgentTeamSection({ data }: { data: ReturnType<typeof getBusinessWorkspaceData> }) {
+  const groups = [
+    { key: 'INTELLIGENCE', title: 'Intelligence Agents', description: 'Discover prospects, monitor markets, and prepare campaign work.' },
+    { key: 'REPORTING', title: 'Reporting Agent', description: 'Turns operational signals into recurring reports.' },
+    { key: 'EXECUTIVE', title: 'Executive Agent', description: 'Synthesizes the most important findings from AIBeat Business agents and company context.' },
+  ] as const
+
+  return (
+    <Panel title="Your AI Team" icon={Bot}>
+      {data.agentSummaries.length ? (
+        <div className="space-y-5">
+          {groups.map((group) => {
+            const summaries = data.agentSummaries.filter((summary) => summary.group === group.key)
+            if (!summaries.length) return null
+            return (
+              <div key={group.key}>
+                <div className="mb-3">
+                  <h3 className="text-sm font-black uppercase tracking-[0.14em] text-slate-300">{group.title}</h3>
+                  <p className="mt-1 text-sm text-slate-500">{group.description}</p>
+                </div>
+                <div className="grid gap-3 lg:grid-cols-3">
+                  {summaries.map((summary) => {
+                    const agent = data.agents.find((candidate) => candidate.type === summary.agentType) ?? AGENT_REGISTRY[summary.agentType]
+                    return <AgentCard key={summary.agentType} agent={agent} summary={summary} />
+                  })}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <EmptyState title="No agent activity yet" body="Your five AIBeat agents will appear here after workflows or scheduled runs produce their first outputs." />
+      )}
+    </Panel>
+  )
+}
+
+function AgentCard({ agent, summary }: { agent: ReturnType<typeof getBusinessWorkspaceData>['agents'][number]; summary: ReturnType<typeof getBusinessWorkspaceData>['agentSummaries'][number] }) {
+  const tone = summary.status === 'ACTIVE' ? 'green' : summary.status === 'WAITING_APPROVAL' ? 'amber' : 'slate'
+
+  return (
+    <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-cyan-100">{summary.group === 'INTELLIGENCE' ? 'Intelligence Agent' : summary.group === 'REPORTING' ? 'Reporting Agent' : 'Executive Agent'}</div>
+          <h3 className="mt-2 text-base font-black text-white">{agent.name}</h3>
+        </div>
+        <StatusBadge status={summary.status.replace('_', ' ')} tone={tone} />
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-300">{summary.agentType === 'EXECUTIVE_BRIEF' ? 'Synthesizes the most important findings from AIBeat Business agents and company context.' : agent.description}</p>
+      <div className="mt-4 grid gap-2 text-xs text-slate-400">
+        <span>Last run: {formatDashboardTime(summary.lastRunAt)}</span>
+        <span>{summary.keyResult}</span>
+        <span>Next run: {formatDashboardTime(summary.nextRunAt)}</span>
+        {summary.pendingOutput && <span className="text-amber-100">Pending: {summary.pendingOutput}</span>}
+      </div>
+    </div>
+  )
+}
+
+function BusinessMemoryHealthSection({ health, connectors }: { health: ReturnType<typeof getBusinessWorkspaceData>['businessMemoryHealth']; connectors: ReturnType<typeof getBusinessWorkspaceData>['connectors'] }) {
+  const connectedSources = connectors.filter((connector) => connector.status !== 'Needs OAuth')
+
+  return (
+    <Panel title="Business Memory" icon={Database} action={<Link href="/business/context" className="inline-flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm font-black text-white transition hover:border-emerald-300/40">Manage Business Context <ArrowRight className="h-4 w-4" /></Link>}>
+      {health ? (
+        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <p className="text-sm leading-6 text-slate-300">Shared company knowledge, operational context and previous AI findings used across your agents.</p>
+            <p className="mt-3 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm leading-6 text-cyan-50">All five AI agents use the same governed organization context.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Metric label="Company Knowledge" value={`${health.companyKnowledgeScore}%`} />
+            <Metric label="Operational Context" value={`${health.operationalContextScore}%`} />
+            <Metric label="CRM" value={formatConnectorStatus(health.crmStatus)} />
+            <Metric label="Analytics" value={formatConnectorStatus(health.analyticsStatus)} />
+            <Metric label="Calendar" value={formatConnectorStatus(health.calendarStatus)} />
+            <Metric label="Documents" value={String(health.documentCount)} />
+            <Metric label="Agent Findings" value={String(health.agentFindingCount)} />
+            <Metric label="Last Updated" value={formatDashboardTime(health.lastUpdatedAt)} />
+          </div>
+        </div>
+      ) : connectedSources.length ? (
+        <EmptyState title="Business Memory is warming up" body="Connected data sources are available. AIBeat will show health scores after context is indexed." />
+      ) : (
+        <EmptyState title="Connect your first data source" body="Connect CRM, analytics, calendar, or documents so all five agents can share governed company context." />
+      )}
+    </Panel>
+  )
+}
+
+function RecentActivitySection({ activities, approvals, runs }: { activities: ReturnType<typeof getBusinessWorkspaceData>['recentActivity']; approvals: Approval[]; runs: WorkflowRun[] }) {
+  return (
+    <Panel title="Recent Activity" icon={Activity}>
+      {activities.length ? (
+        <div className="space-y-3">
+          {activities.map((activity) => (
+            <Link key={activity.id} href={activity.href ?? '/business/dashboard'} className="block rounded-lg border border-white/10 bg-black/20 p-4 transition hover:border-emerald-300/30">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs text-slate-500">{activity.timestampLabel}</div>
+                  <h3 className="mt-1 text-sm font-black text-white">{activity.title}</h3>
+                  <p className="mt-1 text-sm text-slate-400">{activity.summary}</p>
+                </div>
+                <StatusBadge status={activity.status.replace('_', ' ')} tone={activity.status === 'SUCCESS' ? 'green' : activity.status === 'WAITING_APPROVAL' ? 'amber' : activity.status === 'FAILED' ? 'red' : 'cyan'} />
+              </div>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <Timeline runs={runs} approvals={approvals} />
+      )}
+    </Panel>
   )
 }
 
@@ -566,21 +773,56 @@ function StepIcon({ status }: { status: string }) {
   return <Activity className="h-4 w-4 text-cyan-200" />
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value, estimate = false }: { label: string; value: string; estimate?: boolean }) {
   return (
     <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
       <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</div>
       <div className="mt-2 break-words text-xl font-black text-white">{value}</div>
+      {estimate && <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Estimate</div>}
     </div>
   )
 }
 
-function Panel({ title, icon: Icon, children }: { title: string; icon: typeof LayoutDashboard; children: React.ReactNode }) {
+function StatusBadge({ status, tone = 'slate' }: { status: string; tone?: 'green' | 'amber' | 'cyan' | 'red' | 'slate' }) {
+  const classes = {
+    green: 'bg-emerald-300/10 text-emerald-100',
+    amber: 'bg-amber-300/10 text-amber-100',
+    cyan: 'bg-cyan-300/10 text-cyan-100',
+    red: 'bg-rose-300/10 text-rose-100',
+    slate: 'bg-white/[0.06] text-slate-300',
+  }[tone]
+
+  return <span className={`rounded-md px-2 py-1 text-xs font-semibold uppercase tracking-[0.08em] ${classes}`}>{status}</span>
+}
+
+function EmptyState({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-lg border border-dashed border-white/15 bg-black/10 p-5">
+      <h3 className="text-sm font-black text-white">{title}</h3>
+      <p className="mt-2 text-sm leading-6 text-slate-400">{body}</p>
+    </div>
+  )
+}
+
+function formatDashboardTime(value?: string) {
+  if (!value) return 'Not scheduled'
+  if (!value.includes('T')) return value
+  return new Date(value).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+}
+
+function formatConnectorStatus(value: string) {
+  return value.toLowerCase().split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ')
+}
+
+function Panel({ title, icon: Icon, children, action }: { title: string; icon: typeof LayoutDashboard; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <div className="rounded-lg border border-white/10 bg-[#101820] p-5 shadow-2xl shadow-black/20">
-      <div className="mb-5 flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-300/10 text-emerald-100"><Icon className="h-5 w-5" /></span>
-        <h2 className="text-xl font-black text-white">{title}</h2>
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-md bg-emerald-300/10 text-emerald-100"><Icon className="h-5 w-5" /></span>
+          <h2 className="text-xl font-black text-white">{title}</h2>
+        </div>
+        {action}
       </div>
       {children}
     </div>

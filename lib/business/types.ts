@@ -22,6 +22,10 @@ export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'EDITED'
 export type FindingStatus = 'DRAFT' | 'ACTIVE' | 'SUPERSEDED' | 'EXPIRED' | 'REJECTED'
 export type ConnectorCapability = 'READ' | 'CREATE' | 'WRITE' | 'DELETE'
 export type AIRecommendationType = 'KEEP' | 'CANCEL' | 'CONSOLIDATE' | 'REVIEW' | 'REPLACE' | 'AUTOMATE_WITH_AIBEAT'
+export type ExecutiveBriefItemType = 'OPPORTUNITY' | 'RISK' | 'DECISION' | 'APPROVAL' | 'WORKFLOW'
+export type OptimizationOpportunityType = 'TOOL_OVERLAP' | 'LOW_UTILIZATION' | 'AUTOMATION' | 'GOVERNANCE'
+export type BusinessActivityStatus = 'SUCCESS' | 'NEEDS_ATTENTION' | 'WAITING_APPROVAL' | 'FAILED' | 'SCHEDULED'
+export type AgentTeamGroup = 'INTELLIGENCE' | 'REPORTING' | 'EXECUTIVE'
 
 export interface Organization {
   id: string
@@ -279,6 +283,67 @@ export interface AIRecommendation {
   relatedToolIds: string[]
   relatedAgentType?: AgentType
   relatedWorkflowTemplateId?: string
+}
+
+export interface ExecutiveBriefItem {
+  id: string
+  organizationId: string
+  type: ExecutiveBriefItemType
+  title: string
+  summary: string
+  href?: string
+}
+
+export interface BusinessMemoryHealth {
+  organizationId: string
+  companyKnowledgeScore: number
+  operationalContextScore: number
+  crmStatus: 'CONNECTED' | 'NEEDS_CONNECTION' | 'DISCONNECTED'
+  analyticsStatus: 'CONNECTED' | 'NEEDS_CONNECTION' | 'DISCONNECTED'
+  calendarStatus: 'CONNECTED' | 'NEEDS_CONNECTION' | 'DISCONNECTED'
+  documentCount: number
+  agentFindingCount: number
+  lastUpdatedAt?: string
+}
+
+export interface OptimizationOpportunity {
+  id: string
+  organizationId: string
+  type: OptimizationOpportunityType
+  title: string
+  problem: string
+  currentStateLabel: string
+  currentStateValue: string
+  recommendedCapability: string
+  potentialAction: string
+  estimatedMonthlySavings?: number
+  estimatedHoursSaved?: number
+  confidence?: number
+  relatedAgentType?: AgentType
+  relatedWorkflowTemplateId?: string
+  ctaLabel: string
+  ctaHref: string
+}
+
+export interface AgentOperationalSummary {
+  agentType: AgentType
+  group: AgentTeamGroup
+  status: 'ACTIVE' | 'SCHEDULED' | 'WAITING_APPROVAL' | 'DRAFT'
+  lastRunAt?: string
+  nextRunAt?: string
+  keyResult: string
+  pendingOutput?: string
+}
+
+export interface RecentBusinessActivity {
+  id: string
+  organizationId: string
+  timestampLabel: string
+  title: string
+  summary: string
+  status: BusinessActivityStatus
+  href?: string
+  agentType?: AgentType
 }
 
 export interface ROIMetrics {
