@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { signInBusinessUser, signOutBusinessUser } from './actions'
 
 function safeNextPath(value?: string) {
   if (!value || !value.startsWith('/business') || value.startsWith('/business/sign-in')) {
@@ -26,20 +26,11 @@ export function SignInForm({ nextPath, initialError }: { nextPath?: string; init
     setMessage('')
 
     try {
-      const supabase = createClient()
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-
-      if (signInError) {
-        setError(signInError.message)
+      const result = await signInBusinessUser(email, password)
+      if (!result.ok) {
+        setError(result.error)
+        setLoading(false)
         return
-      }
-
-      if (!data.session) {
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError || !sessionData.session) {
-          setError('Sign-in succeeded, but the browser session was not established. Please try again.')
-          return
-        }
       }
 
       window.location.assign(safeNextPath(nextPath))
@@ -55,11 +46,9 @@ export function SignInForm({ nextPath, initialError }: { nextPath?: string; init
     setMessage('')
 
     try {
-      const supabase = createClient()
-      const { error: signOutError } = await supabase.auth.signOut()
-
-      if (signOutError) {
-        setError(signOutError.message)
+      const result = await signOutBusinessUser()
+      if (!result.ok) {
+        setError(result.error)
         return
       }
 
