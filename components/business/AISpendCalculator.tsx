@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { ArrowRight, Calculator, CircleDollarSign, ShieldAlert, TrendingUp } from 'lucide-react'
 import { BUSINESS_ANALYTICS_EVENTS } from '@/lib/analytics'
 
@@ -121,6 +122,7 @@ export function AISpendCalculator() {
     }
     if (!completedTracked.current) {
       track(BUSINESS_ANALYTICS_EVENTS.calculatorCompleted, { scenario: selectedScenario.label })
+      track(BUSINESS_ANALYTICS_EVENTS.businessCalculatorCompleted, { scenario: selectedScenario.label })
       completedTracked.current = true
     }
   }
@@ -239,14 +241,23 @@ export function AISpendCalculator() {
           <p className="mt-3 text-sm leading-6 text-slate-300">
             The calculator provides an estimate. AIBeat Business is being developed to help companies discover their real AI stack, understand spending patterns, and identify optimization opportunities.
           </p>
-          <button
-            type="button"
-            onClick={scrollToEarlyAccess}
-            className="gradient-button mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold sm:w-auto"
-          >
-            Join AIBeat Business Early Access
-            <ArrowRight className="h-4 w-4" />
-          </button>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <Link href="/business/demo" className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white sm:w-auto">
+              Try Interactive Demo
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/business/sign-up" className="gradient-button inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold sm:w-auto">
+              Start Early Access
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <button
+              type="button"
+              onClick={scrollToEarlyAccess}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-cyan-300/20 px-5 py-3 text-sm font-semibold text-cyan-100 sm:w-auto"
+            >
+              Request guided follow-up
+            </button>
+          </div>
         </div>
       </div>
 

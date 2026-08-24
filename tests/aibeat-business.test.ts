@@ -9,6 +9,7 @@ import { approveAction, createContext, rejectAction, runWorkflow } from '../lib/
 import { getAgentFindings, getAIStack, getAuditLog, getPendingApprovals, getRecommendations, getRuns, getWorkflows } from '../lib/business/read-services'
 import { classifyActionRisk } from '../lib/business/security'
 import { resolveBusinessMembership } from '../lib/business/auth'
+import { isAuthenticatedBusinessPath, isPrivateBusinessPath, isPublicBusinessPath, sanitizeBusinessNext } from '../lib/business/routes'
 import { businessStore } from '../lib/business/store'
 import { getBusinessWorkspaceData } from '../lib/business/workspace'
 import { decideApproval, getOrganizationWorkflows, runWorkflowManual } from '../lib/business/workflows'
@@ -278,4 +279,51 @@ test('RLS migration contains organization-scoped policies for private tables', (
   assert.match(sql, /create policy "%1\$s admin write"/)
   assert.match(sql, /is_org_member\(organization_id\)/)
   assert.match(sql, /has_org_role\(organization_id/)
+})
+
+test('business route matrix marks public, onboarding, and private paths', () => {
+  for (const path of ['/business', '/business/demo', '/business/pricing', '/business/ai-spend-calculator', '/business/sign-up', '/business/sign-in', '/business/forgot-password', '/business/reset-password', '/business/auth/callback']) {
+    assert.equal(isPublicBusinessPath(path), true, `${path} should be public`)
+  }
+
+  assert.equal(isAuthenticatedBusinessPath('/business/onboarding'), true)
+  for (const path of ['/business/dashboard', '/business/workflows', '/business/workflows/wf-1', '/business/agents', '/business/context', '/business/ai-stack', '/business/recommendations', '/business/approvals', '/business/integrations', '/business/reports', '/business/audit', '/business/settings']) {
+    assert.equal(isPrivateBusinessPath(path), true, `${path} should be private`)
+  }
+})
+
+test('business safe next paths reject external and auth-loop redirects', () => {
+  assert.equal(sanitizeBusinessNext('/business/dashboard?tab=approvals'), '/business/dashboard?tab=approvals')
+  assert.equal(sanitizeBusinessNext('/business/workflows/wf-1'), '/business/workflows/wf-1')
+  assert.equal(sanitizeBusinessNext('https://evil.example/business/dashboard'), '/business/dashboard')
+  assert.equal(sanitizeBusinessNext('//evil.example/business/dashboard'), '/business/dashboard')
+  assert.equal(sanitizeBusinessNext('/business/sign-in?next=/business/dashboard'), '/business/dashboard')
+  assert.equal(sanitizeBusinessNext('/news'), '/business/dashboard')
+})
+
+test('sitemap excludes authenticated workspace routes and includes public business journey', () => {
+  const source = readFileSync('app/sitemap.ts', 'utf8')
+  for (const path of ['/business/demo', '/business/pricing', '/business/sign-up', '/business/sign-in', '/business/forgot-password']) {
+    assert.match(source, new RegExp(`'${path}'`))
+  }
+  for (const path of ['/business/dashboard', '/business/workflows', '/business/agents', '/business/context', '/business/ai-stack', '/business/recommendations', '/business/approvals', '/business/integrations', '/business/reports', '/business/audit', '/business/settings']) {
+    assert.doesNotMatch(source, new RegExp(`'${path}'`))
+  }
+})
+
+test('demo route renders explicit demo mode without authenticated mutating server actions', () => {
+  const source = readFileSync('app/business/demo/page.tsx', 'utf8')
+  assert.match(source, /mode="demo"/)
+  assert.doesNotMatch(source, /runBusinessWorkflowAction/)
+  assert.doesNotMatch(source, /decideBusinessApprovalAction/)
+})
+
+test('self-serve onboarding migration allows first owner without service role and avoids demo organization', () => {
+  const sql = readFileSync('supabase/migrations/202608240001_business_self_serve_onboarding.sql', 'utf8')
+  const actionSource = readFileSync('app/business/onboarding/actions.ts', 'utf8')
+  assert.match(sql, /organizations authenticated create own/)
+  assert.match(sql, /organization_members first owner insert/)
+  assert.match(sql, /organization_has_no_members/)
+  assert.doesNotMatch(actionSource, /org-growth-labs/)
+  assert.match(actionSource, /role: 'OWNER'/)
 })

@@ -23,8 +23,14 @@ export const BUSINESS_ANALYTICS_EVENTS = {
   calculatorViewed: 'ai_spend_calculator_viewed',
   calculatorInputChanged: 'calculator_input_changed',
   calculatorCompleted: 'calculator_completed',
+  businessCalculatorCompleted: 'business_calculator_completed',
   earlyAccessClicked: 'early_access_clicked',
   earlyAccessSubmitted: 'early_access_submitted',
+  demoOpened: 'business_demo_opened',
+  signupStarted: 'business_signup_started',
+  signupCompleted: 'business_signup_completed',
+  pricingViewed: 'business_pricing_viewed',
+  planSelected: 'business_plan_selected',
   surveyClicked: 'business_survey_clicked',
 } as const
 

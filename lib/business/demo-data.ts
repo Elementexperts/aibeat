@@ -25,7 +25,7 @@ export const demoUsers: User[] = [
 export const demoOrganizations: Organization[] = [
   {
     id: 'org-growth-labs',
-    name: 'Growth Labs Studio',
+    name: 'Growth Labs - Demo Workspace',
     employeeCount: 42,
     primaryProfile: 'DIGITAL_MARKETING_AGENCY',
     secondaryProfiles: ['SEO_CONTENT_AGENCY'],

@@ -1,8 +1,14 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import {
+  isAuthenticatedBusinessPath,
+  isBusinessPath,
+  isPrivateBusinessPath,
+  isPublicBusinessPath,
+  sanitizeBusinessNext,
+} from './lib/business/routes'
 
 const CANONICAL_HOST = 'www.aibeat.dev'
-const PUBLIC_BUSINESS_PATHS = new Set(['/business', '/business/ai-spend-calculator', '/business/sign-in'])
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get('host')?.toLowerCase() || ''
@@ -14,43 +20,43 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 308)
   }
 
-  if (request.nextUrl.pathname.startsWith('/business') && !PUBLIC_BUSINESS_PATHS.has(request.nextUrl.pathname)) {
+  if (isBusinessPath(request.nextUrl.pathname)) {
     const response = NextResponse.next({ request })
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
-    if (!supabaseUrl || !supabaseKey) {
-      return redirectToBusinessSignIn(request, 'Business authentication is not configured.')
+    if (!isPrivateBusinessPath(request.nextUrl.pathname) && !isAuthenticatedBusinessPath(request.nextUrl.pathname)) {
+      if (request.nextUrl.pathname === '/business/sign-in' || request.nextUrl.pathname === '/business/sign-up') {
+        const auth = await getBusinessAuthState(request, response, supabaseUrl, supabaseKey)
+        if (auth.userId && auth.hasMembership) {
+          return NextResponse.redirect(new URL(sanitizeBusinessNext(request.nextUrl.searchParams.get('next')), request.url))
+        }
+        if (auth.userId && !auth.hasMembership) {
+          return NextResponse.redirect(new URL('/business/onboarding', request.url))
+        }
+      }
+      return response
     }
 
-    const supabase = createServerClient(supabaseUrl, supabaseKey, {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value)
-            response.cookies.set(name, value, options)
-          })
-        },
-      },
-    })
+    if (!isPublicBusinessPath(request.nextUrl.pathname)) {
+      const auth = await getBusinessAuthState(request, response, supabaseUrl, supabaseKey)
 
-    const { data } = await supabase.auth.getUser()
-    if (!data.user) {
-      return redirectToBusinessSignIn(request)
-    }
+      if (!auth.userId) {
+        return redirectToBusinessSignIn(request)
+      }
 
-    const { data: memberships, error: membershipError } = await supabase
-      .from('organization_members')
-      .select('id')
-      .eq('user_id', data.user.id)
-      .eq('status', 'ACTIVE')
-      .limit(1)
+      if (isAuthenticatedBusinessPath(request.nextUrl.pathname)) {
+        if (auth.hasMembership && request.nextUrl.pathname === '/business/onboarding') {
+          return NextResponse.redirect(new URL(sanitizeBusinessNext(request.nextUrl.searchParams.get('next')), request.url))
+        }
+        return response
+      }
 
-    if (membershipError || !memberships?.length) {
-      return redirectToBusinessSignIn(request, 'No active AIBeat Business organization is available for this account.')
+      if (!auth.hasMembership) {
+        const url = new URL('/business/onboarding', request.url)
+        url.searchParams.set('next', sanitizeBusinessNext(`${request.nextUrl.pathname}${request.nextUrl.search}`))
+        return NextResponse.redirect(url)
+      }
     }
 
     return response
@@ -66,7 +72,40 @@ export const config = {
 function redirectToBusinessSignIn(request: NextRequest, error?: string) {
   const url = request.nextUrl.clone()
   url.pathname = '/business/sign-in'
-  url.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`)
+  url.search = ''
+  url.searchParams.set('next', sanitizeBusinessNext(`${request.nextUrl.pathname}${request.nextUrl.search}`))
   if (error) url.searchParams.set('error', error)
   return NextResponse.redirect(url)
+}
+
+async function getBusinessAuthState(request: NextRequest, response: NextResponse, supabaseUrl?: string, supabaseKey?: string) {
+  if (!supabaseUrl || !supabaseKey) {
+    return { userId: null, hasMembership: false }
+  }
+
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          request.cookies.set(name, value)
+          response.cookies.set(name, value, options)
+        })
+      },
+    },
+  })
+
+  const { data } = await supabase.auth.getUser()
+  if (!data.user) return { userId: null, hasMembership: false }
+
+  const { data: memberships, error } = await supabase
+    .from('organization_members')
+    .select('id')
+    .eq('user_id', data.user.id)
+    .eq('status', 'ACTIVE')
+    .limit(1)
+
+  return { userId: data.user.id, hasMembership: !error && Boolean(memberships?.length) }
 }

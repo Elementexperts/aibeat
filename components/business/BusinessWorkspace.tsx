@@ -34,7 +34,7 @@ import { getAgentIndustryInstructions, INDUSTRY_PROFILE_LABELS } from '@/lib/bus
 import { decideApproval, runWorkflowManual } from '@/lib/business/workflows'
 import type { AgentType, Approval, IndustryProfile, WorkflowRun } from '@/lib/business/types'
 
-type RouteKey =
+export type BusinessWorkspaceRoute =
   | 'dashboard'
   | 'workflows'
   | 'workflow-detail'
@@ -72,21 +72,30 @@ const agentStats: Record<AgentType, string> = {
   EXECUTIVE_BRIEF: 'Last run 07:30',
 }
 
+type WorkspaceMode = 'demo' | 'authenticated'
+
 export function BusinessWorkspace({
   route,
   workflowId,
   initialData,
   onRunWorkflow,
   onDecideApproval,
+  mode = 'authenticated',
 }: {
-  route: RouteKey
+  route: BusinessWorkspaceRoute
   workflowId?: string
   initialData?: BusinessWorkspaceData
   onRunWorkflow?: (workflowId: string) => Promise<{ run: WorkflowRun; approval?: Approval }>
   onDecideApproval?: (approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) => Promise<Approval>
+  mode?: WorkspaceMode
 }) {
-  const fallbackData = useMemo(() => initialData ?? getBusinessWorkspaceData(), [initialData])
+  const fallbackData = useMemo(() => {
+    if (initialData) return initialData
+    if (mode === 'demo') return getBusinessWorkspaceData()
+    throw new Error('Authenticated workspace data is required.')
+  }, [initialData, mode])
   const data = fallbackData
+  const isDemo = mode === 'demo'
   const [, startTransition] = useTransition()
   const [selectedProfile, setSelectedProfile] = useState<IndustryProfile>(data.organization.primaryProfile)
   const [approvals, setApprovals] = useState<Approval[]>(data.approvals)
@@ -97,7 +106,7 @@ export function BusinessWorkspace({
   function runWorkflow(id: string) {
     const workflow = data.workflows.find((candidate) => candidate.id === id)
     if (!workflow) return
-    if (onRunWorkflow) {
+    if (!isDemo && onRunWorkflow) {
       startTransition(async () => {
         const result = await onRunWorkflow(id)
         setRuns((current) => [result.run, ...current.filter((run) => run.id !== result.run.id)])
@@ -112,7 +121,7 @@ export function BusinessWorkspace({
 
   function resolveApproval(approval: Approval, decision: 'APPROVED' | 'REJECTED' | 'EDITED') {
     const editedContent = decision === 'EDITED' ? `${approval.generatedContent}\n\nEdited by approver.` : undefined
-    if (onDecideApproval) {
+    if (!isDemo && onDecideApproval) {
       startTransition(async () => {
         const next = await onDecideApproval(approval.id, decision, editedContent)
         setApprovals((current) => current.map((item) => (item.id === approval.id ? next : item)))
@@ -154,16 +163,20 @@ export function BusinessWorkspace({
             <div className="max-w-5xl">
               <div className="inline-flex items-center gap-2 rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100">
                 <BriefcaseBusiness className="h-4 w-4" />
-                AIBeat Business
+                {isDemo ? 'Demo workspace' : 'AIBeat Business'}
               </div>
               <h1 className="mt-4 text-3xl font-black tracking-tight text-white md:text-5xl">
                 One company memory. Five specialized AI agents. Fewer disconnected AI tools.
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300 md:text-lg md:leading-8">
-                Understand AI spend, automate recurring work, and give every AI agent the same governed business context.
+                {isDemo
+                  ? 'Interactive demo with fictional names, activity, integrations, and financial metrics.'
+                  : 'Understand AI spend, automate recurring work, and give every AI agent the same governed business context.'}
               </p>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-                A corporate AI operating console for spend intelligence, workflow automation, approvals, reports, and audit-ready context.
+                {isDemo
+                  ? 'No real organization data is queried or changed in this public demo.'
+                  : 'A corporate AI operating console for spend intelligence, workflow automation, approvals, reports, and audit-ready context.'}
               </p>
             </div>
             <div className="grid min-w-0 gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-4 text-sm sm:min-w-[280px]">
@@ -186,7 +199,7 @@ export function BusinessWorkspace({
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={isDemo ? `/business/demo?view=${item.key}` : item.href}
                 className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-semibold transition ${selected ? 'bg-emerald-300/15 text-emerald-100' : 'text-slate-300 hover:bg-white/[0.05] hover:text-white'}`}
               >
                 <item.icon className="h-4 w-4" />
@@ -198,24 +211,32 @@ export function BusinessWorkspace({
             <Sparkles className="h-4 w-4" />
             Spend Calculator
           </Link>
+          {isDemo && (
+            <div className="mt-3 grid gap-2 border-t border-white/10 pt-3">
+              <Link href="/business/sign-up" className="rounded-md bg-emerald-400 px-3 py-2 text-center text-sm font-black text-slate-950">Create Your Workspace</Link>
+              <Link href="/business/pricing" className="rounded-md border border-white/10 px-3 py-2 text-center text-sm font-black text-white">Start Early Access</Link>
+            </div>
+          )}
         </aside>
 
         <section className="min-w-0">
-          {route === 'dashboard' && <Dashboard data={data} approvals={approvals} runs={runs} onRunWorkflow={runWorkflow} />}
-          {route === 'workflows' && <Workflows data={data} runs={runs} onRunWorkflow={runWorkflow} />}
-          {route === 'workflow-detail' && activeWorkflow && <WorkflowDetail workflow={activeWorkflow} runs={runs.filter((run) => run.workflowId === activeWorkflow.id)} onRunWorkflow={runWorkflow} />}
+          {isDemo && <DemoNotice />}
+          {route === 'dashboard' && <Dashboard data={data} approvals={approvals} runs={runs} onRunWorkflow={runWorkflow} mode={mode} />}
+          {route === 'workflows' && <Workflows data={data} runs={runs} onRunWorkflow={runWorkflow} mode={mode} />}
+          {route === 'workflow-detail' && activeWorkflow && <WorkflowDetail workflow={activeWorkflow} runs={runs.filter((run) => run.workflowId === activeWorkflow.id)} onRunWorkflow={runWorkflow} mode={mode} />}
           {route === 'agents' && (
             <Agents
               selectedProfile={selectedProfile}
               setSelectedProfile={setSelectedProfile}
               demoAgentOutput={demoAgentOutput}
               onRunAgent={runAgent}
+              mode={mode}
             />
           )}
           {route === 'context' && <ContextView data={data} />}
           {route === 'ai-stack' && <AIStack data={data} />}
           {route === 'recommendations' && <Recommendations data={data} />}
-          {route === 'approvals' && <Approvals approvals={approvals} onResolve={resolveApproval} />}
+          {route === 'approvals' && <Approvals approvals={approvals} onResolve={resolveApproval} mode={mode} />}
           {route === 'integrations' && <Integrations data={data} />}
           {route === 'reports' && <Reports data={data} runs={runs} />}
           {route === 'audit' && <Audit data={data} />}
@@ -226,7 +247,7 @@ export function BusinessWorkspace({
   )
 }
 
-function Dashboard({ data, approvals, runs, onRunWorkflow }: { data: ReturnType<typeof getBusinessWorkspaceData>; approvals: Approval[]; runs: WorkflowRun[]; onRunWorkflow: (id: string) => void }) {
+function Dashboard({ data, approvals, runs, onRunWorkflow, mode }: { data: ReturnType<typeof getBusinessWorkspaceData>; approvals: Approval[]; runs: WorkflowRun[]; onRunWorkflow: (id: string) => void; mode: WorkspaceMode }) {
   const metrics = [
     { label: 'AI Spend', value: `${money.format(data.roi.aiSpendMonthly)}/mo`, estimate: true },
     { label: 'Potential Savings', value: `${money.format(data.roi.potentialSavingsMonthly)}/mo`, estimate: true },
@@ -272,7 +293,7 @@ function Dashboard({ data, approvals, runs, onRunWorkflow }: { data: ReturnType<
                   className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
                 >
                   <Play className="h-4 w-4" />
-                  Run
+                  {mode === 'demo' ? 'Simulate Run' : 'Run'}
                 </button>
               </div>
             ))}
@@ -481,7 +502,7 @@ function RecentActivitySection({ activities, approvals, runs }: { activities: Re
   )
 }
 
-function Workflows({ data, runs, onRunWorkflow }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[]; onRunWorkflow: (id: string) => void }) {
+function Workflows({ data, runs, onRunWorkflow, mode }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[]; onRunWorkflow: (id: string) => void; mode: WorkspaceMode }) {
   return (
     <Panel title="Structured Workflows" icon={GitBranch}>
       <div className="space-y-4">
@@ -500,7 +521,7 @@ function Workflows({ data, runs, onRunWorkflow }: { data: ReturnType<typeof getB
               </div>
               <button type="button" disabled={workflow.status !== 'ACTIVE'} onClick={() => onRunWorkflow(workflow.id)} className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
                 <Play className="h-4 w-4" />
-                Manual Run
+                {mode === 'demo' ? 'Simulate Manual Run' : 'Manual Run'}
               </button>
             </div>
           </div>
@@ -512,7 +533,7 @@ function Workflows({ data, runs, onRunWorkflow }: { data: ReturnType<typeof getB
   )
 }
 
-function WorkflowDetail({ workflow, runs, onRunWorkflow }: { workflow: ReturnType<typeof getBusinessWorkspaceData>['workflows'][number]; runs: WorkflowRun[]; onRunWorkflow: (id: string) => void }) {
+function WorkflowDetail({ workflow, runs, onRunWorkflow, mode }: { workflow: ReturnType<typeof getBusinessWorkspaceData>['workflows'][number]; runs: WorkflowRun[]; onRunWorkflow: (id: string) => void; mode: WorkspaceMode }) {
   return (
     <div className="space-y-6">
       <Panel title={workflow.name} icon={GitBranch}>
@@ -525,7 +546,7 @@ function WorkflowDetail({ workflow, runs, onRunWorkflow }: { workflow: ReturnTyp
         </div>
         <button type="button" disabled={workflow.status !== 'ACTIVE'} onClick={() => onRunWorkflow(workflow.id)} className="mt-5 inline-flex items-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
           <Play className="h-4 w-4" />
-          Run Workflow
+          {mode === 'demo' ? 'Simulate Workflow' : 'Run Workflow'}
         </button>
       </Panel>
       <Panel title="Step Definitions" icon={ClipboardCheck}>
@@ -548,7 +569,7 @@ function WorkflowDetail({ workflow, runs, onRunWorkflow }: { workflow: ReturnTyp
   )
 }
 
-function Agents({ selectedProfile, setSelectedProfile, demoAgentOutput, onRunAgent }: { selectedProfile: IndustryProfile; setSelectedProfile: (profile: IndustryProfile) => void; demoAgentOutput: Record<string, unknown> | null; onRunAgent: (agent: AgentType) => void }) {
+function Agents({ selectedProfile, setSelectedProfile, demoAgentOutput, onRunAgent, mode }: { selectedProfile: IndustryProfile; setSelectedProfile: (profile: IndustryProfile) => void; demoAgentOutput: Record<string, unknown> | null; onRunAgent: (agent: AgentType) => void; mode: WorkspaceMode }) {
   return (
     <div className="space-y-6">
       <Panel title="Industry-Tailored Agents" icon={Bot}>
@@ -561,7 +582,7 @@ function Agents({ selectedProfile, setSelectedProfile, demoAgentOutput, onRunAge
             <div key={agent.type} className="rounded-lg border border-white/10 bg-black/20 p-4">
               <div className="flex items-start justify-between gap-3">
                 <h3 className="text-base font-black">{agent.name}</h3>
-                <button type="button" onClick={() => onRunAgent(agent.type)} className="rounded-md bg-emerald-400 px-3 py-1.5 text-xs font-black text-slate-950">Demo Run</button>
+                <button type="button" onClick={() => onRunAgent(agent.type)} className="rounded-md bg-emerald-400 px-3 py-1.5 text-xs font-black text-slate-950">{mode === 'demo' ? 'Simulate' : 'Demo Run'}</button>
               </div>
               <p className="mt-2 text-sm leading-6 text-slate-300">{agent.description}</p>
               <p className="mt-3 rounded-md border border-amber-300/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-50">{getAgentIndustryInstructions(selectedProfile, agent.type)}</p>
@@ -662,7 +683,7 @@ function Recommendations({ data }: { data: ReturnType<typeof getBusinessWorkspac
   )
 }
 
-function Approvals({ approvals, onResolve }: { approvals: Approval[]; onResolve: (approval: Approval, decision: 'APPROVED' | 'REJECTED' | 'EDITED') => void }) {
+function Approvals({ approvals, onResolve, mode }: { approvals: Approval[]; onResolve: (approval: Approval, decision: 'APPROVED' | 'REJECTED' | 'EDITED') => void; mode: WorkspaceMode }) {
   return (
     <Panel title="Approval Center" icon={ClipboardCheck}>
       <div className="grid gap-4">
@@ -678,9 +699,9 @@ function Approvals({ approvals, onResolve }: { approvals: Approval[]; onResolve:
             </div>
             {approval.status === 'PENDING' && (
               <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" onClick={() => onResolve(approval, 'APPROVED')} className="rounded-md bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950">Approve</button>
-                <button type="button" onClick={() => onResolve(approval, 'EDITED')} className="rounded-md bg-cyan-300 px-3 py-2 text-sm font-black text-slate-950">Edit</button>
-                <button type="button" onClick={() => onResolve(approval, 'REJECTED')} className="rounded-md bg-rose-400 px-3 py-2 text-sm font-black text-slate-950">Reject</button>
+                <button type="button" onClick={() => onResolve(approval, 'APPROVED')} className="rounded-md bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950">{mode === 'demo' ? 'Simulate Approval' : 'Approve'}</button>
+                <button type="button" onClick={() => onResolve(approval, 'EDITED')} className="rounded-md bg-cyan-300 px-3 py-2 text-sm font-black text-slate-950">{mode === 'demo' ? 'Simulate Edit' : 'Edit'}</button>
+                <button type="button" onClick={() => onResolve(approval, 'REJECTED')} className="rounded-md bg-rose-400 px-3 py-2 text-sm font-black text-slate-950">{mode === 'demo' ? 'Simulate Rejection' : 'Reject'}</button>
               </div>
             )}
           </div>
@@ -864,6 +885,14 @@ function Panel({ title, icon: Icon, children, action }: { title: string; icon: t
         {action}
       </div>
       {children}
+    </div>
+  )
+}
+
+function DemoNotice() {
+  return (
+    <div className="mb-6 rounded-lg border border-cyan-300/20 bg-cyan-300/[0.08] p-4 text-sm leading-6 text-cyan-50">
+      <strong className="font-black">Interactive demo.</strong> Growth Labs - Demo Workspace is fictional. Names, activity, integrations, workflow results, approvals, and financial metrics are simulated; no production connectors are authorized and no database mutations are performed here.
     </div>
   )
 }

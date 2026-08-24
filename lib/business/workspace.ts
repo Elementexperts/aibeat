@@ -55,7 +55,7 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
       id: connector.id,
       name: connector.name,
       capabilities: connector.capabilities,
-      status: connector.id === 'crm' ? 'Needs OAuth' : 'Healthy mock',
+      status: connector.id === 'crm' ? 'Demo connection - OAuth not authorized' : 'Demo connection',
     })),
   }
 }

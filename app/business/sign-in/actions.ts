@@ -1,12 +1,13 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeBusinessNext } from '@/lib/business/routes'
 
 export type BusinessAuthActionResult =
-  | { ok: true }
+  | { ok: true; redirectTo?: string }
   | { ok: false; error: string }
 
-export async function signInBusinessUser(email: string, password: string): Promise<BusinessAuthActionResult> {
+export async function signInBusinessUser(email: string, password: string, nextPath?: string): Promise<BusinessAuthActionResult> {
   if (!email || !password) {
     return { ok: false, error: 'Email and password are required.' }
   }
@@ -23,7 +24,14 @@ export async function signInBusinessUser(email: string, password: string): Promi
       return { ok: false, error: 'Sign-in succeeded, but the server session was not established. Please try again.' }
     }
 
-    return { ok: true }
+    const { data: memberships } = await supabase
+      .from('organization_members')
+      .select('id')
+      .eq('user_id', data.user.id)
+      .eq('status', 'ACTIVE')
+      .limit(1)
+
+    return { ok: true, redirectTo: memberships?.length ? sanitizeBusinessNext(nextPath) : '/business/onboarding' }
   } catch (error) {
     return { ok: false, error: getSafeAuthError(error) }
   }
