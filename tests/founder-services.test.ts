@@ -26,7 +26,7 @@ test('founder service plans expose active pricing from central configuration', (
   assert.equal(formatPlanPrice(getPlanById('free')), 'Free')
   assert.equal(formatPlanPrice(getPlanById('simple')), '$1.99 one time')
   assert.equal(formatPlanPrice(getPlanById('featured')), '$9.95 one time')
-  assert.equal(formatPlanPrice(getPlanById('spotlight_pro')), '$29 one time')
+  assert.equal(formatPlanPrice(getPlanById('spotlight_pro')), '$29.00 one time')
   assert.equal(formatPlanPrice(getPlanById('launch-campaign')), 'Custom')
   assert.equal(formatPlanPrice(getPlanById('newsletter-sponsorship')), 'Custom')
   assert.equal(formatPlanPrice(getPlanById('sponsored-article')), '$199 one time')
@@ -169,7 +169,7 @@ test('founder pricing contains the requested initial public lineup', () => {
     ['Free Listing', 'Free'],
     ['Simple Placement', '$1.99 one time'],
     ['Featured Placement', '$9.95 one time'],
-    ['Spotlight Pro', '$29 one time'],
+    ['Spotlight Pro', '$29.00 one time'],
     ['Launch Campaign', 'Custom'],
     ['Newsletter Sponsorship', 'Custom'],
     ['Sponsored Article', '$199 one time'],

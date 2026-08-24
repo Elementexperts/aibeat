@@ -3,18 +3,24 @@ import Link from 'next/link'
 import { CheckCircle2, Mail, ShieldCheck } from 'lucide-react'
 import { formatPlanPrice, getPlanById } from '@/data/founder-services'
 
+const TIER_TO_PLAN: Record<string, string> = {
+  simple: 'simple',
+  featured: 'featured',
+  spotlightPro: 'spotlight_pro',
+}
+
 export const metadata: Metadata = {
-  title: 'Payment Received',
-  description: 'Your AIBeat payment was received successfully.',
+  title: 'Checkout Complete',
+  description: 'Your AIBeat checkout returned successfully.',
   robots: { index: false, follow: false },
 }
 
 export default function PaymentSuccessPage({
   searchParams,
 }: {
-  searchParams: { plan?: string; session_id?: string }
+  searchParams: { plan?: string; tier?: string; session_id?: string }
 }) {
-  const plan = getPlanById(searchParams.plan)
+  const plan = getPlanById(TIER_TO_PLAN[searchParams.tier || ''] || searchParams.plan)
 
   return (
     <main className="dark-page min-h-screen">
@@ -23,10 +29,10 @@ export default function PaymentSuccessPage({
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-green-300/30 bg-green-300/10">
             <CheckCircle2 className="h-7 w-7 text-green-200" />
           </div>
-          <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-green-200">Payment received</p>
+          <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-green-200">Checkout complete</p>
           <h1 className="mt-4 text-4xl font-black leading-tight text-white md:text-6xl">Thanks, your AIBeat request is moving.</h1>
           <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-slate-400">
-            Your payment for {plan.name} ({formatPlanPrice(plan)}) was completed. AIBeat will review the submission details and follow up by email before publishing, scheduling, or confirming deliverables.
+            Stripe returned checkout for {plan.name} ({formatPlanPrice(plan)}). AIBeat confirms payment through Stripe webhook events before publishing, scheduling, or confirming deliverables.
           </p>
 
           <div className="mt-8 grid gap-3 text-left sm:grid-cols-2">
@@ -38,7 +44,7 @@ export default function PaymentSuccessPage({
             <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-5">
               <Mail className="h-5 w-5 text-cyan-200" />
               <h2 className="mt-4 text-lg font-semibold text-white">Email follow-up</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-400">You will receive the next steps at the contact email from your submission.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">You will receive next steps at the contact email from your submission after review.</p>
             </div>
           </div>
 

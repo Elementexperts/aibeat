@@ -3,6 +3,12 @@ import Link from 'next/link'
 import { ArrowLeft, CreditCard } from 'lucide-react'
 import { formatPlanPrice, getPlanById } from '@/data/founder-services'
 
+const TIER_TO_PLAN: Record<string, string> = {
+  simple: 'simple',
+  featured: 'featured',
+  spotlightPro: 'spotlight_pro',
+}
+
 export const metadata: Metadata = {
   title: 'Payment Cancelled',
   description: 'Your AIBeat payment was not completed.',
@@ -12,9 +18,9 @@ export const metadata: Metadata = {
 export default function PaymentCancelledPage({
   searchParams,
 }: {
-  searchParams: { plan?: string }
+  searchParams: { plan?: string; tier?: string }
 }) {
-  const plan = getPlanById(searchParams.plan)
+  const plan = getPlanById(TIER_TO_PLAN[searchParams.tier || ''] || searchParams.plan)
   const submitHref = `/submit?plan=${encodeURIComponent(plan.id)}`
 
   return (
@@ -27,7 +33,7 @@ export default function PaymentCancelledPage({
           <p className="mt-6 text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">Payment cancelled</p>
           <h1 className="mt-4 text-4xl font-black leading-tight text-white md:text-6xl">No charge was made.</h1>
           <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-slate-400">
-            Checkout for {plan.name} ({formatPlanPrice(plan)}) was cancelled. You can return to the submission form when you are ready.
+            Checkout for {plan.name} ({formatPlanPrice(plan)}) was cancelled. No completed payment was recorded from this checkout return. You can return to the submission options when you are ready.
           </p>
 
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">

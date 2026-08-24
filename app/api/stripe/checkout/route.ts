@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { buildCheckoutSessionParams, getCheckoutPlan, getSiteUrl, getStripe, getStripePriceId } from '@/lib/stripe'
+import {
+  buildCheckoutSessionParams,
+  checkoutSessionRedirect,
+  getCheckoutPlan,
+  getPlanKeyForCheckoutTier,
+  getSiteUrl,
+  getStripe,
+  isCheckoutTier,
+  validateStripeCheckoutConfig,
+} from '@/lib/stripe'
 
 export async function POST(req: NextRequest) {
-  let planId = ''
+  let tier = ''
   let email = ''
   let productName = ''
   let website = ''
@@ -11,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    planId = typeof body?.planId === 'string' ? body.planId.trim() : ''
+    tier = typeof body?.tier === 'string' ? body.tier.trim() : ''
     email = typeof body?.email === 'string' ? body.email.trim() : ''
     productName = typeof body?.productName === 'string' ? body.productName.trim().slice(0, 500) : ''
     website = typeof body?.website === 'string' ? body.website.trim().slice(0, 500) : ''
@@ -21,25 +30,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const checkoutPlan = getCheckoutPlan(planId)
+  if (!isCheckoutTier(tier)) {
+    return NextResponse.json({ error: 'Unknown paid listing package' }, { status: 400 })
+  }
+
+  const planId = getPlanKeyForCheckoutTier(tier)
+  const checkoutPlan = planId ? getCheckoutPlan(planId) : null
 
   if (!checkoutPlan) {
     return NextResponse.json({ error: 'Unknown paid listing package' }, { status: 400 })
   }
 
-  const { plan } = checkoutPlan
-  const priceId = getStripePriceId(plan.id)
+  const config = validateStripeCheckoutConfig(tier)
 
-  if (!priceId || !priceId.startsWith('price_')) {
-    return NextResponse.json({ error: 'Stripe price is not configured' }, { status: 500 })
+  if (!config.ok) {
+    return NextResponse.json({ error: config.error }, { status: 500 })
   }
 
   try {
     const stripe = getStripe()
     const siteUrl = getSiteUrl()
     const sessionParams = buildCheckoutSessionParams({
-      planKey: plan.id,
-      priceId,
+      planKey: tier,
+      priceId: config.priceId,
       siteUrl,
       email,
       productName,
@@ -54,11 +67,13 @@ export async function POST(req: NextRequest) {
 
     const session = await stripe.checkout.sessions.create(sessionParams)
 
-    if (!session.url) {
+    const redirect = checkoutSessionRedirect(session)
+
+    if (!redirect) {
       return NextResponse.json({ error: 'Stripe did not return a checkout URL' }, { status: 502 })
     }
 
-    return NextResponse.json({ url: session.url })
+    return NextResponse.json(redirect)
   } catch (err) {
     console.error('Stripe checkout error:', err instanceof Error ? err.message : err)
     return NextResponse.json({ error: 'Could not start checkout' }, { status: 502 })

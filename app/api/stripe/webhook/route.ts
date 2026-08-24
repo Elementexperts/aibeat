@@ -1,21 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
-import { markStripeEventProcessed } from '@/lib/stripe-webhook'
+import { markStripeEventProcessed, processCheckoutSessionEvent } from '@/lib/stripe-webhook'
 import type Stripe from 'stripe'
 
 export const runtime = 'nodejs'
 
-function logCompletedCheckout(session: Stripe.Checkout.Session, eventType: string) {
-  console.log('Stripe checkout completed:', {
-    eventType,
-    sessionId: session.id,
-    customerEmail: session.customer_details?.email || session.customer_email,
-    packageKey: session.metadata?.package_key || session.metadata?.planId,
-    packageName: session.metadata?.package_name || session.metadata?.planName,
-    submissionId: session.metadata?.submission_id,
-    productName: session.metadata?.product_name || session.metadata?.productName,
-    productUrl: session.metadata?.product_url || session.metadata?.website,
+async function getSessionWithLineItems(session: Stripe.Checkout.Session) {
+  if (session.line_items?.data?.length) return session
+
+  return getStripe().checkout.sessions.retrieve(session.id, {
+    expand: ['line_items.data.price'],
   })
+}
+
+function logWebhookResult(eventType: string, result: ReturnType<typeof processCheckoutSessionEvent>) {
+  if (result.status === 'fulfilled' || result.status === 'pending' || result.status === 'failed') {
+    console.log('Stripe checkout processed:', {
+      eventType,
+      status: result.status,
+      sessionId: result.checkoutSessionId,
+      tier: result.tier,
+      submissionId: result.submissionId,
+    })
+    return
+  }
+
+  console.log('Stripe checkout ignored:', { eventType, status: result.status, reason: 'reason' in result ? result.reason : undefined })
 }
 
 export async function POST(req: NextRequest) {
@@ -44,20 +54,37 @@ export async function POST(req: NextRequest) {
 
   switch (event.type) {
     case 'checkout.session.completed':
-    case 'checkout.session.async_payment_succeeded': {
       if (!markStripeEventProcessed(event.id)) {
         console.log('Duplicate Stripe webhook event ignored:', event.id)
         break
       }
-      const session = event.data.object
-      logCompletedCheckout(session, event.type)
+
+      try {
+        const session = await getSessionWithLineItems(event.data.object)
+        const result = processCheckoutSessionEvent(event.type, session)
+        logWebhookResult(event.type, result)
+      } catch (err) {
+        console.error('Stripe webhook processing error:', err instanceof Error ? err.message : 'processing failed')
+        return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
+      }
+      break
+    case 'checkout.session.async_payment_succeeded':
+    case 'checkout.session.async_payment_failed': {
+      if (!markStripeEventProcessed(event.id)) {
+        console.log('Duplicate Stripe webhook event ignored:', event.id)
+        break
+      }
+
+      try {
+        const session = await getSessionWithLineItems(event.data.object)
+        const result = processCheckoutSessionEvent(event.type, session)
+        logWebhookResult(event.type, result)
+      } catch (err) {
+        console.error('Stripe webhook processing error:', err instanceof Error ? err.message : 'processing failed')
+        return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
+      }
       break
     }
-    case 'invoice.paid':
-    case 'invoice.payment_failed':
-    case 'customer.subscription.deleted':
-      console.log('Stripe webhook received:', event.type)
-      break
     default:
       console.log('Unhandled Stripe webhook event:', event.type)
   }
