@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, BadgeDollarSign, Megaphone, Newspaper, ShieldCheck, Target } from 'lucide-react'
 import { ComparisonTable, DisclosureSection, FounderHero, InquiryCTA, ServiceGrid } from '@/components/founders/ServiceBlocks'
-import { inquiryHref } from '@/lib/founder-services'
+import { SubmissionPricingCards } from '@/components/founders/SubmissionPricingCards'
 
 export const metadata: Metadata = {
   title: 'Advertise With AIBeat',
@@ -33,10 +33,10 @@ export default function AdvertisePage() {
         eyebrow="Advertise with AIBeat"
         title="Promote your AI product without compromising reader trust"
         description="AIBeat separates self-service paid listings from custom advertising, newsletter, sponsored article, launch, and partnership campaigns."
-        primaryHref={inquiryHref('AIBeat advertising inquiry', 'Advertising or sponsorship')}
-        primaryLabel="Email AIBeat"
-        secondaryHref="/for-founders"
-        secondaryLabel="Compare All Options"
+        primaryHref="#self-service-listings"
+        primaryLabel="Order Paid Listing"
+        secondaryHref="#custom-campaigns"
+        secondaryLabel="Custom Campaigns"
       />
 
       <section className="site-shell py-16">
@@ -67,20 +67,20 @@ export default function AdvertisePage() {
         </div>
       </section>
 
-      <section className="border-y border-white/10 bg-white/[0.025] py-16">
+      <section id="self-service-listings" className="scroll-mt-24 border-y border-white/10 bg-white/[0.025] py-16">
         <div className="site-shell">
           <div className="mb-10 max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">Self-service listings</p>
             <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Simple, Featured, and Spotlight Pro are the paid listing tiers</h2>
             <p className="mt-4 text-sm leading-7 text-slate-400">
-              These are the only one-time paid submission packages. Larger advertising and editorial campaigns are scoped separately below.
+              Choose a one-time paid listing package and continue to Stripe Checkout. Larger advertising and editorial campaigns are scoped separately below.
             </p>
           </div>
-          <ServiceGrid ids={['simple', 'featured', 'spotlight_pro']} />
+          <SubmissionPricingCards />
         </div>
       </section>
 
-      <section className="site-shell py-16">
+      <section id="custom-campaigns" className="site-shell scroll-mt-24 py-16">
         <div className="mb-8 max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Custom campaigns</p>
           <h2 className="mt-3 text-4xl font-black text-white">Sponsored articles, newsletters, launches, and partnerships</h2>
