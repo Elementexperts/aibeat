@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { ArrowRight, CheckCircle2, FileCheck2, ShieldCheck, Sparkles } from 'lucide-react'
+import { ArrowRight, CheckCircle2, FileCheck2, ShieldCheck } from 'lucide-react'
 import { SubmitToolForm } from '@/components/founders/SubmitToolForm'
-import { DisclosureSection, ServiceGrid } from '@/components/founders/ServiceBlocks'
+import { SubmissionPricingCards } from '@/components/founders/SubmissionPricingCards'
 
 export const metadata: Metadata = {
   title: 'Submit an AI Tool',
@@ -38,9 +38,9 @@ export default function SubmitPage() {
         <div className="site-shell grid gap-10 py-16 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
           <div className="lg:sticky lg:top-28">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Submit a tool</p>
-            <h1 className="mt-5 text-5xl font-black leading-tight text-white md:text-7xl">Start with free AIBeat review</h1>
+            <h1 className="mt-5 text-5xl font-black leading-tight text-white md:text-7xl">Submit your AI product to AIBeat</h1>
             <p className="mt-6 text-lg leading-8 text-slate-400">
-              Submit your AI product for directory consideration, editorial review, listing updates, claim requests, or promotional interest.
+              Start with free editorial consideration, or choose a paid placement package when you want a clearer review path and labeled promotional visibility.
             </p>
             <div className="mt-8 grid gap-3">
               {REQUIRED_CONTEXT.map((item) => (
@@ -52,11 +52,11 @@ export default function SubmitPage() {
             </div>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/for-founders" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white hover:border-cyan-300/40">
-                Compare founder services
+                Custom campaigns
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link href="/spotlight" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">
-                View Spotlight
+                View paid packages
               </Link>
             </div>
           </div>
@@ -83,9 +83,12 @@ export default function SubmitPage() {
 
         <div className="premium-card p-6">
           <ShieldCheck className="h-6 w-6 text-green-300" />
-          <h2 className="mt-5 text-2xl font-black text-white">Free does not mean guaranteed</h2>
+          <h2 className="mt-5 text-2xl font-black text-white">Free submission</h2>
           <p className="mt-4 text-sm leading-7 text-slate-400">
-            Free submissions are reviewed manually. AIBeat may accept, decline, request more context, or suggest a better path such as Spotlight, launch promotion, newsletter sponsorship, or a partner article. Sponsored options are labeled separately from editorial consideration.
+            Free submissions are reviewed manually. Ownership verification, an AIBeat badge, or a backlink may be requested before publication.
+          </p>
+          <p className="mt-4 text-sm leading-7 text-slate-400">
+            Free submission does not guarantee approval, placement, publication timing, or a Verified badge. Free editorial consideration remains available.
           </p>
         </div>
       </section>
@@ -93,28 +96,32 @@ export default function SubmitPage() {
       <section className="border-y border-white/10 bg-white/[0.025] py-16">
         <div className="site-shell">
           <div className="mb-10 max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">After submission</p>
-            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Choose promotion only if it fits your goal</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">Paid Spotlight</p>
+            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Three simple one-time listing packages</h2>
+            <p className="mt-4 text-sm leading-7 text-slate-400">
+              Choose a paid package only when the added review priority, content depth, or disclosed placement fits your goal.
+            </p>
           </div>
-          <ServiceGrid ids={['free', 'enhanced', 'spotlight', 'launch-feature', 'newsletter-feature']} compact />
+          <SubmissionPricingCards />
         </div>
       </section>
 
       <section className="site-shell py-16">
         <div className="premium-card p-6 md:p-8">
-          <Sparkles className="h-6 w-6 text-cyan-200" />
-          <h2 className="mt-5 text-3xl font-black text-white">Want to be featured faster?</h2>
+          <ShieldCheck className="h-6 w-6 text-cyan-200" />
+          <h2 className="mt-5 text-3xl font-black text-white">Trust and disclosure</h2>
           <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-400">
-            If your goal is launch visibility, newsletter exposure, homepage/category Spotlight, or a sponsored article, choose promotional interest in the form or email AIBeat with your campaign timing.
+            Verified stays separate from paid placement. A Verified badge is awarded only after AIBeat verifies product ownership or authenticity. Paid listings use Featured, Spotlight, or Sponsored disclosure wherever placement could affect reader interpretation.
+          </p>
+          <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-400">
+            Payment does not buy rankings, review scores, positive editorial opinions, guaranteed clicks, guaranteed sales, or guaranteed newsletter coverage.
           </p>
           <Link href="/advertise" className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">
-            View promotion options
+            Discuss custom campaigns
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
-
-      <DisclosureSection />
     </div>
   )
 }

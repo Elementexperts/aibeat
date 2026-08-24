@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getStripe } from '@/lib/stripe'
+import { markStripeEventProcessed } from '@/lib/stripe-webhook'
+import type Stripe from 'stripe'
 
 export const runtime = 'nodejs'
+
+function logCompletedCheckout(session: Stripe.Checkout.Session, eventType: string) {
+  console.log('Stripe checkout completed:', {
+    eventType,
+    sessionId: session.id,
+    customerEmail: session.customer_details?.email || session.customer_email,
+    packageKey: session.metadata?.package_key || session.metadata?.planId,
+    packageName: session.metadata?.package_name || session.metadata?.planName,
+    submissionId: session.metadata?.submission_id,
+    productName: session.metadata?.product_name || session.metadata?.productName,
+    productUrl: session.metadata?.product_url || session.metadata?.website,
+  })
+}
 
 export async function POST(req: NextRequest) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
@@ -28,13 +43,14 @@ export async function POST(req: NextRequest) {
   }
 
   switch (event.type) {
-    case 'checkout.session.completed': {
+    case 'checkout.session.completed':
+    case 'checkout.session.async_payment_succeeded': {
+      if (!markStripeEventProcessed(event.id)) {
+        console.log('Duplicate Stripe webhook event ignored:', event.id)
+        break
+      }
       const session = event.data.object
-      console.log('Stripe checkout completed:', {
-        sessionId: session.id,
-        customerEmail: session.customer_details?.email || session.customer_email,
-        planId: session.metadata?.planId,
-      })
+      logCompletedCheckout(session, event.type)
       break
     }
     case 'invoice.paid':

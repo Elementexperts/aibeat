@@ -135,7 +135,7 @@ export default function PartnersPage() {
               AIBeat reviews partnership ideas for reader relevance, disclosure requirements, and long-term trust before moving forward.
             </p>
           </div>
-          <ServiceGrid ids={['partnership', 'newsletter-feature', 'sponsored-article', 'launch-feature', 'growth-campaign']} />
+          <ServiceGrid ids={['partnership', 'newsletter-sponsorship', 'sponsored-article', 'launch-campaign', 'growth-campaign']} />
         </div>
       </section>
 

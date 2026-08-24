@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPlanById } from '@/data/founder-services'
-import { getSiteUrl, getStripe, getStripePriceId } from '@/lib/stripe'
+import { buildCheckoutSessionParams, getCheckoutPlan, getSiteUrl, getStripe, getStripePriceId } from '@/lib/stripe'
 
 export async function POST(req: NextRequest) {
   let planId = ''
@@ -8,6 +7,7 @@ export async function POST(req: NextRequest) {
   let productName = ''
   let website = ''
   let company = ''
+  let submissionId = ''
 
   try {
     const body = await req.json()
@@ -16,16 +16,18 @@ export async function POST(req: NextRequest) {
     productName = typeof body?.productName === 'string' ? body.productName.trim().slice(0, 500) : ''
     website = typeof body?.website === 'string' ? body.website.trim().slice(0, 500) : ''
     company = typeof body?.company === 'string' ? body.company.trim().slice(0, 500) : ''
+    submissionId = typeof body?.submissionId === 'string' ? body.submissionId.trim().slice(0, 200) : ''
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
 
-  const plan = getPlanById(planId)
+  const checkoutPlan = getCheckoutPlan(planId)
 
-  if (plan.billingType === 'free' || plan.billingType === 'custom') {
-    return NextResponse.json({ error: 'This plan is not available for checkout' }, { status: 400 })
+  if (!checkoutPlan) {
+    return NextResponse.json({ error: 'Unknown paid listing package' }, { status: 400 })
   }
 
+  const { plan } = checkoutPlan
   const priceId = getStripePriceId(plan.id)
 
   if (!priceId || !priceId.startsWith('price_')) {
@@ -34,23 +36,23 @@ export async function POST(req: NextRequest) {
 
   try {
     const stripe = getStripe()
-    const price = await stripe.prices.retrieve(priceId)
     const siteUrl = getSiteUrl()
-
-    const session = await stripe.checkout.sessions.create({
-      mode: price.recurring ? 'subscription' : 'payment',
-      line_items: [{ price: priceId, quantity: 1 }],
-      customer_email: email || undefined,
-      success_url: `${siteUrl}/payment/success?plan=${encodeURIComponent(plan.id)}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${siteUrl}/payment/cancelled?plan=${encodeURIComponent(plan.id)}`,
-      metadata: {
-        planId: plan.id,
-        planName: plan.name,
-        productName,
-        website,
-        company,
-      },
+    const sessionParams = buildCheckoutSessionParams({
+      planKey: plan.id,
+      priceId,
+      siteUrl,
+      email,
+      productName,
+      website,
+      company,
+      submissionId,
     })
+
+    if (!sessionParams) {
+      return NextResponse.json({ error: 'Unknown paid listing package' }, { status: 400 })
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams)
 
     if (!session.url) {
       return NextResponse.json({ error: 'Stripe did not return a checkout URL' }, { status: 502 })

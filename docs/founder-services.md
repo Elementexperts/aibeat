@@ -6,7 +6,7 @@ AIBeat's founder-facing commercial system positions the site as a discovery and 
 
 - `/for-founders`: central founder-services hub.
 - `/submit`: free tool submission, listing updates, claim/update requests, and promotional-interest intake.
-- `/spotlight`: enhanced listings, homepage/category Spotlight, launch features, and promotional visibility.
+- `/spotlight`: Simple Placement, Featured Placement, Spotlight Pro, and promotional visibility rules.
 - `/launch`: launch service page for new products, major updates, and public releases.
 - `/advertise`: newsletter sponsorships, Spotlight, sponsored articles, and custom campaign inquiries.
 - `/partners`: affiliate, content, newsletter, launch, community, and marketplace partnership options.
@@ -34,10 +34,11 @@ Edit package names, prices, availability text, inclusions, exclusions, CTAs, and
 The current package menu includes:
 
 - Free Listing: Free.
-- Enhanced Listing: $29 one time.
-- AIBeat Spotlight: $79 one time.
-- Launch Feature: $149 one time.
-- Newsletter Feature: $99 per placement.
+- Simple Placement: $1.99 one time.
+- Featured Placement: $9.95 one time.
+- Spotlight Pro: $29 one time.
+- Launch Campaign: Custom.
+- Newsletter Sponsorship: Custom.
 - Sponsored Article: $199 one time.
 - Growth Campaign: From $349.
 - Media and Affiliate Partnership: Custom or exchange-based.
@@ -46,7 +47,7 @@ The current package menu includes:
 
 - Use the values in `data/founder-services.ts`.
 - Do not publish invented prices, traffic estimates, subscriber counts, conversion rates, ranking claims, or guaranteed outcomes.
-- Do not add checkout buttons until a real payment provider and fulfillment process are selected.
+- Use Stripe Checkout for Simple Placement, Featured Placement, and Spotlight Pro. Resolve Price IDs server-side from allowed plan keys only.
 
 ## Disclosure Rules
 

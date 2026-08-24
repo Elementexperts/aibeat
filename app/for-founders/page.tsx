@@ -41,12 +41,12 @@ const PATHS = [
 const FAQS = [
   ['Is submitting a tool free?', 'Yes. Free Listing review is free. AIBeat may request a public badge or text link before approval to verify website control.'],
   ['Does payment guarantee approval?', 'No. Paid requests still require AIBeat review for quality, relevance, accuracy, and safety.'],
-  ['How long does review take?', 'Free submissions are reviewed as capacity allows. Launch Feature turnaround is listed as 3-5 business days after all assets are received.'],
-  ['What is the difference between Enhanced and Spotlight?', 'Enhanced improves the product listing. Spotlight adds clearly labeled promotional visibility such as category or homepage placement when scheduled.'],
-  ['Is newsletter coverage guaranteed?', 'Only packages that explicitly include a newsletter placement guarantee it. Spotlight includes newsletter consideration, not guaranteed placement.'],
+  ['How long does review take?', 'Free submissions are reviewed as capacity allows. Featured Placement has an expected 2-4 business day review window, and Spotlight Pro has an expected 1-3 business day review window.'],
+  ['What is the difference between Simple, Featured, and Spotlight Pro?', 'Simple is a standard paid listing, Featured adds priority review and seven days of relevant category-page placement, and Spotlight Pro adds deeper context plus a 14-day homepage or category Spotlight placement.'],
+  ['Is newsletter coverage guaranteed?', 'No. Spotlight Pro includes newsletter and editorial consideration without guaranteeing inclusion. Custom newsletter campaigns are scoped separately.'],
   ['How are sponsored articles labeled?', 'Sponsored and partner articles are visibly labeled. Payment does not buy positive editorial opinion.'],
   ['Can AIBeat write the article?', 'AIBeat can format and develop a sponsored or partner article when the topic is useful and claims are verifiable.'],
-  ['Can I update my listing later?', 'Yes. Free listings can request updates; Enhanced includes one listing update within 30 days.'],
+  ['Can I update my listing later?', 'Yes. Free and paid listings can request updates, and AIBeat reviews changes for accuracy and fit.'],
   ['Do you guarantee traffic, leads, or sales?', 'No. AIBeat does not guarantee traffic, rankings, leads, sales, clicks, opens, or revenue.'],
   ['Can we create a custom campaign?', 'Yes. Growth Campaign and Partnership options are designed for custom coordination.'],
   ['Can we exchange features through a partnership?', 'Yes, when there is real audience and editorial value. Affiliate and exchange relationships are disclosed.'],
@@ -59,7 +59,7 @@ export default function ForFoundersPage() {
       <FounderHero
         eyebrow="For AI founders"
         title="Launch, feature, and grow your AI product with AIBeat"
-        description="AIBeat helps relevant AI companies become easier to discover through free submissions, enhanced listings, Spotlight placement, launches, newsletter features, partner articles, and custom campaigns."
+        description="AIBeat helps relevant AI companies become easier to discover through free submissions, Simple Placement, Featured Placement, Spotlight Pro, and clearly separated custom campaigns."
         primaryHref="/submit"
         primaryLabel="Submit a Tool"
         secondaryHref="/advertise"
@@ -85,7 +85,7 @@ export default function ForFoundersPage() {
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Service menu</p>
               <h2 className="mt-3 max-w-3xl text-4xl font-black text-white md:text-5xl">Choose how you want your AI product to be discovered</h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-400">
-                Start with a free directory listing or increase your visibility through enhanced listings, Spotlight placement, launch campaigns, newsletter features, and sponsored editorial opportunities.
+                Start with a free directory submission or choose one of three paid listing tiers. Custom launch campaigns, newsletter sponsorships, and sponsored editorial opportunities stay separate from submission pricing.
               </p>
             </div>
             <Link href="/submit" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">

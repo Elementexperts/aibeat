@@ -70,7 +70,7 @@ export default function LaunchPage() {
               AIBeat separates free editorial consideration from paid promotional formats so founders and readers know what they are seeing.
             </p>
           </div>
-          <ServiceGrid ids={['free', 'launch-feature', 'spotlight', 'newsletter-feature', 'sponsored-article', 'growth-campaign']} />
+          <ServiceGrid ids={['free', 'featured', 'spotlight_pro', 'launch-campaign', 'newsletter-sponsorship', 'sponsored-article']} />
         </div>
       </section>
 

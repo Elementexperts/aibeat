@@ -7,7 +7,7 @@ AIBeat uses labels to help readers understand why and how content appears.
 | Label | Purchasable | Rule |
 |---|---:|---|
 | Standard Listing | No | A regular accepted directory listing. |
-| Enhanced Listing | Yes | A richer listing format. Does not imply editorial endorsement. |
+| Featured | Yes | A paid visibility or presentation label. Does not imply editorial endorsement. |
 | Spotlight | Yes | Promotional visibility. Must not imply independent editorial endorsement. |
 | New Launch | Yes | Depends on verified launch timing or accepted launch package. |
 | Sponsored | Yes | Required for paid editorial or paid promotional placements. |

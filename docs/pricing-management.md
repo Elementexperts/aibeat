@@ -13,10 +13,11 @@ Do not duplicate prices across page components.
 | Plan | Price |
 |---|---:|
 | Free Listing | Free |
-| Enhanced Listing | $29 one time |
-| AIBeat Spotlight | $79 one time |
-| Launch Feature | $149 one time |
-| Newsletter Feature | $99 per placement |
+| Simple Placement | $1.99 one time |
+| Featured Placement | $9.95 one time |
+| Spotlight Pro | $29 one time |
+| Launch Campaign | Custom |
+| Newsletter Sponsorship | Custom |
 | Sponsored Article | $199 one time |
 | Growth Campaign | From $349 |
 | Partnership | Custom or exchange-based |
@@ -29,23 +30,25 @@ The pricing file exports:
 - `getPlansByCategory()`
 - `getRecommendedPlan()`
 - `getPlanById()`
+- `getSubmissionPlans()`
+- `getPaidSubmissionPlans()`
 - `formatPlanPrice()`
 
 ## Payment Readiness
 
-No payment processor is currently implemented.
+Stripe Checkout is implemented for the three self-service paid listing packages.
 
 Workflow:
 
 ```text
 request submitted
 -> AIBeat review
--> manual payment link when applicable
--> payment confirmed
+-> Stripe Checkout when a paid listing package is selected
+-> webhook-verified payment received
 -> placement or campaign scheduled
 ```
 
-Do not display "Buy Now" until a real checkout provider exists and has been explicitly approved.
+Do not accept client-supplied amounts or arbitrary Stripe Price IDs. The browser sends only an allowed plan key, and the server resolves the Price ID from environment variables.
 
 ## Free Listing Verification
 

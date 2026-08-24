@@ -32,7 +32,7 @@ export default function AdvertisePage() {
       <FounderHero
         eyebrow="Advertise with AIBeat"
         title="Promote your AI product without compromising reader trust"
-        description="AIBeat offers clearly labeled advertising, newsletter, Spotlight, sponsored article, and custom campaign opportunities for relevant AI companies and founder-focused tools."
+        description="AIBeat separates self-service paid listings from custom advertising, newsletter, sponsored article, launch, and partnership campaigns."
         primaryHref={inquiryHref('AIBeat advertising inquiry', 'Advertising or sponsorship')}
         primaryLabel="Email AIBeat"
         secondaryHref="/for-founders"
@@ -70,11 +70,25 @@ export default function AdvertisePage() {
       <section className="border-y border-white/10 bg-white/[0.025] py-16">
         <div className="site-shell">
           <div className="mb-10 max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">Advertising packages</p>
-            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Choose the format that matches your campaign goal</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">Self-service listings</p>
+            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Simple, Featured, and Spotlight Pro are the paid listing tiers</h2>
+            <p className="mt-4 text-sm leading-7 text-slate-400">
+              These are the only one-time paid submission packages. Larger advertising and editorial campaigns are scoped separately below.
+            </p>
           </div>
-          <ServiceGrid ids={['spotlight', 'newsletter-feature', 'sponsored-article', 'launch-feature', 'partnership', 'growth-campaign']} />
+          <ServiceGrid ids={['simple', 'featured', 'spotlight_pro']} />
         </div>
+      </section>
+
+      <section className="site-shell py-16">
+        <div className="mb-8 max-w-2xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Custom campaigns</p>
+          <h2 className="mt-3 text-4xl font-black text-white">Sponsored articles, newsletters, launches, and partnerships</h2>
+          <p className="mt-4 text-sm leading-7 text-slate-400">
+            Custom campaigns are not a fourth submission tier. They are manually scoped, reviewed for fit, and labeled as Sponsored, Featured, Spotlight, or Partner content where appropriate.
+          </p>
+        </div>
+        <ServiceGrid ids={['newsletter-sponsorship', 'sponsored-article', 'launch-campaign', 'partnership', 'growth-campaign']} />
       </section>
 
       <section className="site-shell grid gap-6 py-16 lg:grid-cols-2">
@@ -110,7 +124,7 @@ export default function AdvertisePage() {
           <h2 className="mt-3 text-4xl font-black text-white">Advertising, editorial, and partnership formats</h2>
         </div>
         <div className="overflow-x-auto">
-          <ComparisonTable ids={['newsletter-feature', 'spotlight', 'sponsored-article', 'partnership', 'growth-campaign']} />
+          <ComparisonTable ids={['simple', 'featured', 'spotlight_pro', 'newsletter-sponsorship', 'sponsored-article', 'growth-campaign']} />
         </div>
       </section>
 

@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { CheckCircle2, Copy, ShieldCheck } from 'lucide-react'
-import { AIBEAT_CANONICAL_URL, FOUNDER_SERVICE_PLANS, formatPlanPrice, getPlanById } from '@/data/founder-services'
+import { AIBEAT_CANONICAL_URL, formatPlanPrice, getPlanById, getSubmissionPlans } from '@/data/founder-services'
 import type { VerificationMethod, VerificationResult } from '@/lib/aibeat-link-verification'
 import { FOUNDER_ANALYTICS_EVENTS } from '@/lib/analytics'
 import { CheckoutButton } from './CheckoutButton'
@@ -219,7 +219,7 @@ export function SubmitToolForm() {
           <FormInput label="Business email *" type="email" value={form.email} onChange={(value) => set('email', value)} placeholder="Use a domain email when possible" required />
           <FormInput label="Company *" value={form.company} onChange={(value) => set('company', value)} required />
           <div className="grid gap-5 sm:grid-cols-2">
-            <FormSelect label="Selected plan" value={form.selectedPlan} onChange={(value) => set('selectedPlan', value)} options={FOUNDER_SERVICE_PLANS.filter((plan) => plan.active).map((plan) => ({ label: `${plan.name} - ${formatPlanPrice(plan)}`, value: plan.id }))} />
+            <FormSelect label="Selected plan" value={form.selectedPlan} onChange={(value) => set('selectedPlan', value)} options={getSubmissionPlans().map((plan) => ({ label: `${plan.name} - ${formatPlanPrice(plan)}`, value: plan.id }))} />
             <FormSelect label="Preferred contact" value={form.preferredChannel} onChange={(value) => set('preferredChannel', value)} options={CHANNELS} />
           </div>
           <FormTextarea label="Anything else? (optional)" value={form.notes} onChange={(value) => set('notes', value)} placeholder="Mention launch goals, newsletter interest, special use cases, or anything AIBeat should know." />

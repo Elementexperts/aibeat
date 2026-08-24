@@ -9,7 +9,9 @@ import {
   getActivePlans,
   getPlanById,
   getPlansByCategory,
+  getPaidSubmissionPlans,
   getRecommendedPlan,
+  getSubmissionPlans,
   isEditorPickPurchasable,
 } from '../data/founder-services'
 import { inspectAibeatLink, normalizeAibeatDestination, verifyAibeatLink } from '../lib/aibeat-link-verification'
@@ -20,21 +22,24 @@ function html(body: string, status = 200, headers: Record<string, string> = { 'c
 }
 
 test('founder service plans expose active pricing from central configuration', () => {
-  assert.equal(getActivePlans().length, 8)
+  assert.equal(getActivePlans().length, 9)
   assert.equal(formatPlanPrice(getPlanById('free')), 'Free')
-  assert.equal(formatPlanPrice(getPlanById('enhanced')), '$29 one time')
-  assert.equal(formatPlanPrice(getPlanById('spotlight')), '$79 one time')
-  assert.equal(formatPlanPrice(getPlanById('launch-feature')), '$149 one time')
-  assert.equal(formatPlanPrice(getPlanById('newsletter-feature')), '$99 per placement')
+  assert.equal(formatPlanPrice(getPlanById('simple')), '$1.99 one time')
+  assert.equal(formatPlanPrice(getPlanById('featured')), '$9.95 one time')
+  assert.equal(formatPlanPrice(getPlanById('spotlight_pro')), '$29 one time')
+  assert.equal(formatPlanPrice(getPlanById('launch-campaign')), 'Custom')
+  assert.equal(formatPlanPrice(getPlanById('newsletter-sponsorship')), 'Custom')
   assert.equal(formatPlanPrice(getPlanById('sponsored-article')), '$199 one time')
   assert.equal(formatPlanPrice(getPlanById('growth-campaign')), 'From $349')
-  assert.equal(getRecommendedPlan()?.id, 'spotlight')
-  assert.equal(getPlansByCategory('listing').map((plan) => plan.id).join(','), 'free,enhanced')
+  assert.equal(getRecommendedPlan()?.id, 'featured')
+  assert.equal(getPlansByCategory('listing').map((plan) => plan.id).join(','), 'free,simple,featured,spotlight_pro')
+  assert.equal(getSubmissionPlans().map((plan) => plan.id).join(','), 'free,simple,featured,spotlight_pro')
+  assert.equal(getPaidSubmissionPlans().map((plan) => plan.id).join(','), 'simple,featured,spotlight_pro')
 })
 
 test('invalid plan falls back safely and Free Listing requires verification', () => {
   const fallback = getPlanById('not-real')
-  const paid = getPlanById('enhanced')
+  const paid = getPlanById('simple')
 
   assert.equal(fallback.id, 'free')
   assert.equal(fallback.verificationRequired, true)
@@ -42,12 +47,14 @@ test('invalid plan falls back safely and Free Listing requires verification', ()
 })
 
 test('feature matrix separates conditional and guaranteed newsletter benefits', () => {
-  const row = FEATURE_MATRIX_ROWS.find((item) => item.label === 'Newsletter mention')
-  const guaranteed = FEATURE_MATRIX_ROWS.find((item) => item.label === 'Guaranteed newsletter placement')
+  const row = FEATURE_MATRIX_ROWS.find((item) => item.label === 'Newsletter coverage')
+  const verified = FEATURE_MATRIX_ROWS.find((item) => item.label === 'Verified badge')
 
-  assert.equal(row?.values.spotlight, 'Considered')
-  assert.equal(guaranteed?.values.spotlight, 'Not included')
-  assert.equal(guaranteed?.values['launch-feature'], 'Included')
+  assert.equal(row?.values.spotlight_pro, 'Considered')
+  assert.equal(row?.values.featured, 'Not included')
+  assert.equal(verified?.values.simple, 'Not included')
+  assert.equal(verified?.values.featured, 'Not included')
+  assert.equal(verified?.values.spotlight_pro, 'Not included')
 })
 
 test('content labels keep Editors Pick non-purchasable and Sponsored purchasable', () => {
@@ -57,9 +64,18 @@ test('content labels keep Editors Pick non-purchasable and Sponsored purchasable
 
 test('analytics event mapping does not include personal data fields', () => {
   assert.equal(founderEventForPlan('free'), FOUNDER_ANALYTICS_EVENTS.submitFreeClick)
-  assert.equal(founderEventForPlan('enhanced'), FOUNDER_ANALYTICS_EVENTS.enhancedListingClick)
-  assert.equal(founderEventForPlan('spotlight'), FOUNDER_ANALYTICS_EVENTS.spotlightClick)
+  assert.equal(founderEventForPlan('simple'), FOUNDER_ANALYTICS_EVENTS.simplePlacementClick)
+  assert.equal(founderEventForPlan('featured'), FOUNDER_ANALYTICS_EVENTS.featuredPlacementClick)
+  assert.equal(founderEventForPlan('spotlight_pro'), FOUNDER_ANALYTICS_EVENTS.spotlightProClick)
   assert.equal(founderEventForPlan('growth-campaign'), FOUNDER_ANALYTICS_EVENTS.growthCampaignClick)
+})
+
+test('paid submission plans never include or grant Verified status', () => {
+  for (const plan of getPaidSubmissionPlans()) {
+    assert.equal(plan.verifiedBadgeIncluded, false)
+    assert.equal(plan.verificationRequired, undefined)
+    assert.ok(plan.exclusions?.some((entry) => entry.includes('Verified badge')))
+  }
 })
 
 test('approved AIBeat destinations normalize www and common paths', () => {
@@ -151,10 +167,11 @@ test('founder pricing contains the requested initial public lineup', () => {
 
   assert.deepEqual(lineup, [
     ['Free Listing', 'Free'],
-    ['Enhanced Listing', '$29 one time'],
-    ['AIBeat Spotlight', '$79 one time'],
-    ['Launch Feature', '$149 one time'],
-    ['Newsletter Feature', '$99 per placement'],
+    ['Simple Placement', '$1.99 one time'],
+    ['Featured Placement', '$9.95 one time'],
+    ['Spotlight Pro', '$29 one time'],
+    ['Launch Campaign', 'Custom'],
+    ['Newsletter Sponsorship', 'Custom'],
     ['Sponsored Article', '$199 one time'],
     ['Growth Campaign', 'From $349'],
     ['Media and Affiliate Partnership', 'Custom or exchange-based'],

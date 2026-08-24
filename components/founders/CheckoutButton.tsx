@@ -11,6 +11,7 @@ export function CheckoutButton({
   productName,
   website,
   company,
+  fullWidth = false,
 }: {
   planId: string
   label: string
@@ -18,6 +19,7 @@ export function CheckoutButton({
   productName?: string
   website?: string
   company?: string
+  fullWidth?: boolean
 }) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
 
@@ -50,7 +52,7 @@ export function CheckoutButton({
       disabled={status === 'loading'}
       data-founder-event={founderEventForPlan(planId)}
       data-plan-id={planId}
-      className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-70"
+      className={`shiny-order-button inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-black text-white transition disabled:cursor-not-allowed disabled:opacity-70 ${fullWidth ? 'w-full' : ''}`}
     >
       {status === 'loading' ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
       {status === 'error' ? 'Try checkout again' : label}

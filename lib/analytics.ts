@@ -3,8 +3,9 @@ export const FOUNDER_ANALYTICS_EVENTS = {
   pricingPlanView: 'pricing_plan_view',
   pricingPlanSelect: 'pricing_plan_select',
   submitFreeClick: 'submit_free_click',
-  enhancedListingClick: 'enhanced_listing_click',
-  spotlightClick: 'spotlight_click',
+  simplePlacementClick: 'simple_placement_click',
+  featuredPlacementClick: 'featured_placement_click',
+  spotlightProClick: 'spotlight_pro_click',
   launchFeatureClick: 'launch_feature_click',
   newsletterFeatureClick: 'newsletter_feature_click',
   sponsoredArticleClick: 'sponsored_article_click',
@@ -31,10 +32,11 @@ export type BusinessAnalyticsEvent = typeof BUSINESS_ANALYTICS_EVENTS[keyof type
 
 export function founderEventForPlan(planId: string): FounderAnalyticsEvent {
   if (planId === 'free') return FOUNDER_ANALYTICS_EVENTS.submitFreeClick
-  if (planId === 'enhanced') return FOUNDER_ANALYTICS_EVENTS.enhancedListingClick
-  if (planId === 'spotlight') return FOUNDER_ANALYTICS_EVENTS.spotlightClick
-  if (planId === 'launch-feature') return FOUNDER_ANALYTICS_EVENTS.launchFeatureClick
-  if (planId === 'newsletter-feature') return FOUNDER_ANALYTICS_EVENTS.newsletterFeatureClick
+  if (planId === 'simple') return FOUNDER_ANALYTICS_EVENTS.simplePlacementClick
+  if (planId === 'featured') return FOUNDER_ANALYTICS_EVENTS.featuredPlacementClick
+  if (planId === 'spotlight_pro') return FOUNDER_ANALYTICS_EVENTS.spotlightProClick
+  if (planId === 'launch-campaign') return FOUNDER_ANALYTICS_EVENTS.launchFeatureClick
+  if (planId === 'newsletter-sponsorship') return FOUNDER_ANALYTICS_EVENTS.newsletterFeatureClick
   if (planId === 'sponsored-article') return FOUNDER_ANALYTICS_EVENTS.sponsoredArticleClick
   if (planId === 'growth-campaign') return FOUNDER_ANALYTICS_EVENTS.growthCampaignClick
   if (planId === 'partnership') return FOUNDER_ANALYTICS_EVENTS.partnerApplicationClick
