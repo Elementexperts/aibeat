@@ -66,6 +66,21 @@ export async function uploadBusinessDocumentAction(formData: FormData) {
   }
 }
 
+export async function updateBusinessIntegrationAction(integrationId: string, action: 'disconnect' | 'reconnect' | 'mark-expired') {
+  const auth = await getAuthenticatedBusinessContext()
+  const store = new SupabaseBusinessDataStore(createClient())
+  const actor = { organizationId: auth.organizationId, userId: auth.userId }
+  const status = action === 'disconnect' ? 'DISCONNECTED' : action === 'mark-expired' ? 'TOKEN_EXPIRED' : 'RECONNECT_REQUIRED'
+  const connection = await store.upsertIntegrationConnection(actor, integrationId, {
+    status,
+    lastError: action === 'mark-expired' ? 'OAuth access token expired.' : undefined,
+    reconnectUrl: `/business/integrations/oauth/start?integration=${encodeURIComponent(integrationId)}`,
+    metadata: { action, updatedBy: auth.userId },
+  })
+  revalidateBusinessPaths()
+  return connection
+}
+
 function revalidateBusinessPaths() {
   for (const path of ['/business/dashboard', '/business/workflows', '/business/approvals', '/business/reports', '/business/audit', '/business/context']) {
     revalidatePath(path)

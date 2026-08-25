@@ -1,4 +1,5 @@
-import { executeAgentMock } from './agents'
+import { executeAgentMock, executeAgentRuntime } from './agents'
+import { buildOAuthStartUrl, connectorRegistry, getEffectiveConnectionStatus, getIntegrationDefinition, integrationDefinitions } from './connectors'
 import { ingestBusinessDocument, type DocumentIngestionInput } from './document-ingestion'
 import { workflowTemplates } from './demo-data'
 import { rankBusinessMemoryChunks } from './vector-retrieval'
@@ -15,6 +16,9 @@ import type {
   BusinessDocument,
   BusinessDocumentChunk,
   BusinessDocumentIngestionResult,
+  ConnectorExecutionRecord,
+  IntegrationConnection,
+  IntegrationConnectionStatus,
   Organization,
   ROIMetrics,
   WorkflowDefinition,
@@ -292,6 +296,56 @@ export class SupabaseBusinessDataStore {
     return (data ?? []).map(mapAuditEvent)
   }
 
+  async getIntegrationConnections(actor: Actor): Promise<IntegrationConnection[]> {
+    const { data, error } = await this.supabase
+      .from('integration_connections')
+      .select('*')
+      .eq('organization_id', actor.organizationId)
+      .order('updated_at', { ascending: false })
+    if (error) throw new Error('Unable to read integration connections')
+    return (data ?? []).map(mapIntegrationConnection)
+  }
+
+  async getIntegrationSummaries(actor: Actor) {
+    const connections = await this.getIntegrationConnections(actor)
+    return integrationDefinitions
+      .slice()
+      .sort((a, b) => a.pilotPriority - b.pilotPriority)
+      .map((definition) => {
+        const connection = connections.find((candidate) => candidate.integrationId === definition.id)
+        return {
+          ...definition,
+          connection,
+          status: getEffectiveConnectionStatus(connection),
+          reconnectUrl: connection?.reconnectUrl ?? buildOAuthStartUrl(definition.id, actor.organizationId),
+        }
+      })
+  }
+
+  async upsertIntegrationConnection(actor: Actor, integrationId: string, patch: Partial<IntegrationConnection> & { status: IntegrationConnectionStatus }): Promise<IntegrationConnection> {
+    const { data, error } = await this.supabase
+      .from('integration_connections')
+      .upsert({
+        organization_id: actor.organizationId,
+        integration_id: integrationId,
+        status: patch.status,
+        encrypted_secret_ref: patch.encryptedSecretRef,
+        access_token_expires_at: patch.accessTokenExpiresAt,
+        refresh_token_rotated_at: patch.refreshTokenRotatedAt,
+        last_connected_at: patch.lastConnectedAt,
+        last_health_check_at: patch.lastHealthCheckAt,
+        last_error: patch.lastError,
+        reconnect_url: patch.reconnectUrl,
+        metadata: patch.metadata ?? {},
+        created_by: actor.userId,
+      }, { onConflict: 'organization_id,integration_id' })
+      .select('*')
+      .single()
+    if (error || !data) throw new Error('Unable to update integration connection')
+    await this.recordAuditEvent(actor, { eventType: 'INTEGRATION_CONNECTION_UPDATED', entityId: data.id, summary: `${integrationId} connection is ${patch.status}` })
+    return mapIntegrationConnection(data)
+  }
+
   async runWorkflow(actor: Actor, workflowId: string, options: { idempotencyKey?: string } = {}): Promise<{ run: WorkflowRun; approval?: Approval; auditEvents: AuditEvent[]; finding?: AgentFinding }> {
     const workflow = await this.getWorkflow(actor, workflowId)
     if (workflow.status !== 'ACTIVE') throw new Error('Only active workflows can be run')
@@ -328,6 +382,7 @@ export class SupabaseBusinessDataStore {
     const auditEvents: AuditEvent[] = [
       await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_STARTED', entityId: runRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: `Workflow started: ${workflow.name}` }),
     ]
+    const connectorExecutions: ConnectorExecutionRecord[] = []
     let approval: Approval | undefined
     let finalStatus = 'COMPLETED'
     let resultSummary = 'Workflow completed using mock agent runtime.'
@@ -389,18 +444,29 @@ export class SupabaseBusinessDataStore {
         break
       }
 
-      await this.supabase.from('workflow_steps').update({ status: 'COMPLETED', completed_at: new Date().toISOString(), output_summary: `${step.name} completed by mock runtime.` }).eq('id', stepRow.id)
-      auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_STEP_COMPLETED', entityId: stepRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: `${step.name} completed by mock runtime.` }))
+      const execution = await this.executeWorkflowStep(actor, step.action, step.risk, step.connectorId)
+      connectorExecutions.push(execution)
+      if (!execution.ok) {
+        await this.supabase.from('workflow_steps').update({ status: 'FAILED', error: execution.error ?? execution.summary, completed_at: new Date().toISOString(), output_summary: execution.summary }).eq('id', stepRow.id)
+        finalStatus = 'FAILED'
+        resultSummary = execution.summary
+        auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_FAILED', entityId: runRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: execution.summary }))
+        break
+      }
+
+      await this.supabase.from('workflow_steps').update({ status: 'COMPLETED', completed_at: new Date().toISOString(), output_summary: execution.summary }).eq('id', stepRow.id)
+      auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_STEP_COMPLETED', entityId: stepRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: execution.summary }))
     }
 
     let finding: AgentFinding | undefined
     if (!approval && finalStatus !== 'FAILED') {
-      finding = await this.persistMockAgentFinding(actor, workflow, runRow.id)
+      finding = await this.persistRuntimeAgentFinding(actor, workflow, runRow.id, connectorExecutions)
+      resultSummary = 'Workflow completed using connector-backed agent runtime.'
     }
 
     const { data: completedRunRow, error } = await this.supabase
       .from('workflow_runs')
-      .update({ status: finalStatus, result_summary: resultSummary, current_step_id: currentStepId, completed_at: finalStatus === 'RUNNING' || finalStatus === 'WAITING_FOR_APPROVAL' ? null : new Date().toISOString() })
+      .update({ status: finalStatus, result_summary: resultSummary, current_step_id: currentStepId, completed_at: finalStatus === 'RUNNING' || finalStatus === 'WAITING_FOR_APPROVAL' ? null : new Date().toISOString(), result_metadata: { connectorExecutions } })
       .eq('id', runRow.id)
       .select('*')
       .single()
@@ -475,6 +541,74 @@ export class SupabaseBusinessDataStore {
         businessContext: await this.getBusinessContextPayload(actor),
       },
       workflow.agentType,
+    )
+
+    const { data, error } = await this.supabase
+      .from('agent_findings')
+      .insert({
+        organization_id: actor.organizationId,
+        agent_type: workflow.agentType,
+        workflow_run_id: workflowRunId,
+        finding_type: result.finding.findingType,
+        title: result.finding.title,
+        content: result.finding.content,
+        structured_data: result.finding.structuredData ?? {},
+        source: result.finding.source,
+        source_url: result.finding.sourceUrl,
+        source_date: result.finding.sourceDate,
+        confidence: result.finding.confidence,
+        fresh_until: result.finding.freshUntil,
+        related_entity_type: result.finding.relatedEntityType,
+        related_entity_id: result.finding.relatedEntityId,
+        human_verified: result.finding.humanVerified,
+        status: 'ACTIVE',
+      })
+      .select('*')
+      .single()
+    if (error || !data) throw new Error('Unable to persist agent finding')
+    await this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_COMPLETED', entityId: data.id, workflowRunId, agentType: workflow.agentType, summary: data.title })
+    return mapFinding(data)
+  }
+
+  private async executeWorkflowStep(actor: Actor, action: string, risk: ConnectorExecutionRecord['risk'], connectorId?: string): Promise<ConnectorExecutionRecord> {
+    if (!connectorId) return { connectorId: 'aibeat-runtime', action, ok: true, risk, summary: `AIBeat runtime executed ${action}` }
+    const connector = connectorRegistry[connectorId]
+    const definition = getIntegrationDefinition(connectorId)
+    if (!connector || !definition) {
+      return { connectorId, action, ok: false, risk, summary: `Connector ${connectorId} is not registered`, error: 'CONNECTOR_NOT_REGISTERED' }
+    }
+    if (definition.authType === 'OAUTH2') {
+      const connections = await this.getIntegrationConnections(actor)
+      const connection = connections.find((candidate) => candidate.integrationId === connectorId)
+      const status = getEffectiveConnectionStatus(connection)
+      if (status !== 'CONNECTED') {
+        return {
+          connectorId,
+          action,
+          ok: false,
+          risk,
+          summary: `${definition.name} cannot execute ${action}: ${status}`,
+          error: status,
+        }
+      }
+    }
+    const result = await connector.execute(action, { organizationId: actor.organizationId })
+    return { connectorId, action, ok: result.ok, risk, summary: result.summary, error: result.error }
+  }
+
+  private async persistRuntimeAgentFinding(actor: Actor, workflow: WorkflowDefinition, workflowRunId: string, connectorExecutions: ConnectorExecutionRecord[]): Promise<AgentFinding> {
+    const organization = await this.getOrganization(actor)
+    const result = executeAgentRuntime(
+      {
+        organizationId: actor.organizationId,
+        userId: actor.userId,
+        workflowRunId,
+        industryProfile: organization.primaryProfile,
+        permissions: ['business:read', 'workflow:run'],
+        businessContext: await this.getBusinessContextPayload(actor),
+      },
+      workflow.agentType,
+      connectorExecutions,
     )
 
     const { data, error } = await this.supabase
@@ -604,6 +738,26 @@ function mapDocumentChunk(row: Row): BusinessDocumentChunk {
   }
 }
 
+function mapIntegrationConnection(row: Row): IntegrationConnection {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    integrationId: row.integration_id,
+    status: row.status,
+    encryptedSecretRef: row.encrypted_secret_ref ?? undefined,
+    accessTokenExpiresAt: row.access_token_expires_at ?? undefined,
+    refreshTokenRotatedAt: row.refresh_token_rotated_at ?? undefined,
+    lastConnectedAt: row.last_connected_at ?? undefined,
+    lastHealthCheckAt: row.last_health_check_at ?? undefined,
+    lastError: row.last_error ?? undefined,
+    reconnectUrl: row.reconnect_url ?? undefined,
+    metadata: row.metadata ?? {},
+    createdBy: row.created_by ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at ?? undefined,
+  }
+}
+
 function parseEmbedding(value: unknown): number[] {
   if (Array.isArray(value)) return value.map(Number)
   if (typeof value !== 'string') return []
@@ -650,6 +804,7 @@ function mapRun(row: Row, steps: WorkflowRunStep[]): WorkflowRun {
     scheduledTriggerId: row.scheduled_trigger_id ?? undefined,
     scheduledFor: row.scheduled_for ?? undefined,
     deadLetterReason: row.dead_letter_reason ?? undefined,
+    connectorExecutions: row.result_metadata?.connectorExecutions ?? undefined,
   }
 }
 

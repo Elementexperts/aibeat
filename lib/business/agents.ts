@@ -1,5 +1,5 @@
 import { getAgentIndustryInstructions } from './industry-profiles'
-import type { AgentDefinition, AgentExecutionContext, AgentFinding, AgentType } from './types'
+import type { AgentDefinition, AgentExecutionContext, AgentFinding, AgentType, ConnectorExecutionRecord } from './types'
 
 export const AGENT_REGISTRY: Record<AgentType, AgentDefinition> = {
   LEAD_RESEARCH: {
@@ -178,6 +178,96 @@ export function executeAgentMock(ctx: AgentExecutionContext, agentType: AgentTyp
       source: 'AIBeat Business mock agent runtime',
       sourceDate: new Date().toISOString().slice(0, 10),
       confidence: Number(output.confidence ?? 0.74),
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
+      workflowRunId: ctx.workflowRunId,
+      humanVerified: false,
+      status: 'DRAFT',
+    },
+  }
+}
+
+export function executeAgentRuntime(ctx: AgentExecutionContext, agentType: AgentType, connectorExecutions: ConnectorExecutionRecord[]): { output: Record<string, unknown>; finding: AgentFinding } {
+  const contextTitles = [
+    ...ctx.businessContext.companyKnowledge,
+    ...ctx.businessContext.operationalContext,
+    ...(ctx.businessContext.retrievedChunks ?? []),
+  ].map((item) => item.title).slice(0, 5)
+  const successfulTools = connectorExecutions.filter((execution) => execution.ok)
+  const evidence = [
+    ...contextTitles.map((title) => `Business Memory: ${title}`),
+    ...successfulTools.map((execution) => `${execution.connectorId}: ${execution.summary}`),
+  ]
+  const confidence = Math.min(0.92, 0.66 + successfulTools.length * 0.06 + contextTitles.length * 0.02)
+
+  const outputs: Record<AgentType, Record<string, unknown>> = {
+    LEAD_RESEARCH: {
+      leadName: 'Workflow-qualified prospect',
+      company: 'Connected account candidate',
+      fitScore: Math.round(confidence * 100),
+      confidence,
+      reasons: ['Matched against Business Memory', 'Checked connected source signals', 'Prepared next step behind approval boundary'],
+      evidence,
+      likelyNeeds: ['AI workflow governance', 'Shared company memory', 'Recurring reporting'],
+      risks: connectorExecutions.some((execution) => !execution.ok) ? ['One connector returned an execution issue'] : [],
+      recommendedNextAction: 'Review the proposed CRM note or outreach task before external write.',
+      suggestedOutreachAngle: 'Lead with governed AI workflow automation tied to the company memory layer.',
+    },
+    COMPETITOR_MONITOR: {
+      development: 'Connected-source market signal captured',
+      competitorOrMarket: 'Pilot market watchlist',
+      importanceScore: Math.round(confidence * 100),
+      whyItMatters: 'The workflow combined Business Memory with connector evidence instead of static demo context.',
+      source: successfulTools.map((execution) => execution.connectorId).join(', ') || 'Business Memory',
+      sourceDate: new Date().toISOString().slice(0, 10),
+      opportunity: 'Use the signal to update positioning, sales notes, or a briefing draft.',
+      risk: 'Connector coverage may still be partial during pilot setup.',
+      recommendedResponse: 'Create an internal brief and route external publication through approval.',
+    },
+    MARKETING_CONTENT: {
+      opportunity: 'Create content from source-backed Business Memory and connected signal evidence.',
+      brief: 'Position AIBeat Business as a governed AI operations console with connector-aware workflows.',
+      draft: 'Draft generated from Business Memory and connector execution records. External publishing remains approval-gated.',
+      sources: evidence,
+    },
+    WEEKLY_REPORT: {
+      reportingPeriod: 'Current workflow period',
+      executiveSummary: 'Report generated from connected workflow tools and Business Memory.',
+      KPIChanges: successfulTools.map((execution) => execution.summary),
+      wins: ['Workflow completed connector-backed read/draft steps'],
+      risks: connectorExecutions.filter((execution) => !execution.ok).map((execution) => execution.error ?? execution.summary),
+      anomalies: [],
+      explanations: ['Results reflect the configured pilot connectors and tenant-scoped memory.'],
+      recommendedActions: ['Review approval-gated delivery actions before sending.'],
+    },
+    EXECUTIVE_BRIEF: {
+      date: new Date().toISOString().slice(0, 10),
+      topPriorities: ['Review pending approvals', 'Resolve disconnected or expired pilot connectors'],
+      opportunities: ['Use connected source evidence in recurring workflows'],
+      risks: connectorExecutions.filter((execution) => !execution.ok).map((execution) => execution.summary),
+      pendingDecisions: ['Approval-gated external actions'],
+      deadlines: [],
+      workflowIssues: connectorExecutions.some((execution) => !execution.ok) ? ['Connector execution issue detected'] : [],
+      recommendedActions: ['Reconnect expired integrations and approve reviewed outputs.'],
+    },
+  }
+
+  const output = outputs[agentType]
+  if (!validateAgentOutput(agentType, output)) throw new Error(`Invalid structured output for ${agentType}`)
+
+  return {
+    output,
+    finding: {
+      id: `finding-${agentType.toLowerCase()}-${Date.now()}`,
+      organizationId: ctx.organizationId,
+      agentType,
+      findingType: 'workflow_runtime_output',
+      title: `${AGENT_REGISTRY[agentType].name} runtime output`,
+      content: JSON.stringify(output),
+      structuredData: { connectorExecutions },
+      source: 'AIBeat Business workflow runtime',
+      sourceDate: new Date().toISOString().slice(0, 10),
+      confidence: Number(output.confidence ?? confidence),
       createdAt: new Date().toISOString(),
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
       workflowRunId: ctx.workflowRunId,

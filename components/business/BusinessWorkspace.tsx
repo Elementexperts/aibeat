@@ -33,7 +33,7 @@ import { AGENT_REGISTRY, executeAgentMock } from '@/lib/business/agents'
 import { getBusinessWorkspaceData, type BusinessWorkspaceData } from '@/lib/business/workspace'
 import { getAgentIndustryInstructions, INDUSTRY_PROFILE_LABELS } from '@/lib/business/industry-profiles'
 import { decideApproval, runWorkflowManual } from '@/lib/business/workflows'
-import type { AgentType, Approval, BusinessDocumentIngestionResult, IndustryProfile, WorkflowRun } from '@/lib/business/types'
+import type { AgentType, Approval, BusinessDocumentIngestionResult, IndustryProfile, IntegrationConnection, IntegrationConnectionStatus, WorkflowRun } from '@/lib/business/types'
 
 export type BusinessWorkspaceRoute =
   | 'dashboard'
@@ -82,6 +82,7 @@ export function BusinessWorkspace({
   onRunWorkflow,
   onDecideApproval,
   onUploadDocument,
+  onUpdateIntegration,
   mode = 'authenticated',
 }: {
   route: BusinessWorkspaceRoute
@@ -90,6 +91,7 @@ export function BusinessWorkspace({
   onRunWorkflow?: (workflowId: string) => Promise<{ run: WorkflowRun; approval?: Approval }>
   onDecideApproval?: (approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) => Promise<Approval>
   onUploadDocument?: (formData: FormData) => Promise<BusinessDocumentIngestionResult>
+  onUpdateIntegration?: (integrationId: string, action: 'disconnect' | 'reconnect' | 'mark-expired') => Promise<IntegrationConnection>
   mode?: WorkspaceMode
 }) {
   const fallbackData = useMemo(() => {
@@ -253,7 +255,7 @@ export function BusinessWorkspace({
           {route === 'ai-stack' && <AIStack data={data} />}
           {route === 'recommendations' && <Recommendations data={data} />}
           {route === 'approvals' && <Approvals approvals={approvals} onResolve={resolveApproval} mode={mode} />}
-          {route === 'integrations' && <Integrations data={data} />}
+          {route === 'integrations' && <Integrations data={data} onUpdateIntegration={onUpdateIntegration} mode={mode} />}
           {route === 'reports' && <Reports data={data} runs={runs} />}
           {route === 'audit' && <Audit data={data} />}
           {route === 'settings' && <SettingsView selectedProfile={selectedProfile} setSelectedProfile={setSelectedProfile} />}
@@ -318,7 +320,7 @@ function Dashboard({ data, approvals, runs, onRunWorkflow, mode }: { data: Retur
             {data.connectors.slice(0, 4).map((connector) => (
               <div key={connector.id} className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
                 <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{connector.name}</div>
-                <div className="mt-2 text-sm font-black text-white">{connector.status}</div>
+                <div className="mt-2 text-sm font-black text-white">{formatConnectorStatus(connector.status)}</div>
               </div>
             ))}
           </div>
@@ -463,7 +465,7 @@ function AgentCard({ agent, summary }: { agent: ReturnType<typeof getBusinessWor
 }
 
 function BusinessMemoryHealthSection({ health, connectors }: { health: ReturnType<typeof getBusinessWorkspaceData>['businessMemoryHealth']; connectors: ReturnType<typeof getBusinessWorkspaceData>['connectors'] }) {
-  const connectedSources = connectors.filter((connector) => connector.status !== 'Needs OAuth')
+  const connectedSources = connectors.filter((connector) => connector.status === 'CONNECTED')
 
   return (
     <Panel title="Business Memory" icon={Database} action={<Link href="/business/context" className="inline-flex items-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm font-black text-white transition hover:border-emerald-300/40">Manage Business Context <ArrowRight className="h-4 w-4" /></Link>}>
@@ -771,17 +773,51 @@ function Approvals({ approvals, onResolve, mode }: { approvals: Approval[]; onRe
   )
 }
 
-function Integrations({ data }: { data: ReturnType<typeof getBusinessWorkspaceData> }) {
+function Integrations({ data, onUpdateIntegration, mode }: { data: ReturnType<typeof getBusinessWorkspaceData>; onUpdateIntegration?: (integrationId: string, action: 'disconnect' | 'reconnect' | 'mark-expired') => Promise<IntegrationConnection>; mode: WorkspaceMode }) {
+  const [connectors, setConnectors] = useState(data.connectors)
+  const [, startIntegrationTransition] = useTransition()
+  const pilot = connectors.filter((connector) => connector.pilotPriority <= 3)
+  const remaining = connectors.filter((connector) => connector.pilotPriority > 3)
+
+  function updateIntegration(integrationId: string, action: 'disconnect' | 'reconnect' | 'mark-expired') {
+    if (!onUpdateIntegration) return
+    startIntegrationTransition(async () => {
+      const connection = await onUpdateIntegration(integrationId, action)
+      setConnectors((current) => current.map((connector) => connector.id === integrationId ? { ...connector, connection, status: connection.status as IntegrationConnectionStatus, reconnectUrl: connection.reconnectUrl ?? connector.reconnectUrl } : connector))
+    })
+  }
+
   return (
     <Panel title="Expandable Connector Architecture" icon={Plug}>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {data.connectors.map((connector) => (
+      <div className="mb-5 grid gap-4 md:grid-cols-3">
+        {pilot.map((connector) => (
           <div key={connector.id} className="rounded-lg border border-white/10 bg-black/20 p-4">
             <div className="flex items-start justify-between gap-3">
               <h3 className="font-black">{connector.name}</h3>
-              <span className="rounded-md bg-white/[0.06] px-2 py-1 text-xs text-slate-300">{connector.status}</span>
+              <StatusBadge status={formatConnectorStatus(connector.status)} tone={connector.status === 'CONNECTED' ? 'green' : connector.status === 'TOKEN_EXPIRED' || connector.status === 'RECONNECT_REQUIRED' ? 'amber' : 'slate'} />
             </div>
-            <p className="mt-3 text-sm text-slate-400">Capabilities: {connector.capabilities.join(', ')}</p>
+            <p className="mt-3 text-sm leading-6 text-slate-400">{connector.description}</p>
+            <p className="mt-3 text-xs text-slate-500">Capabilities: {connector.capabilities.join(', ')} · Auth: {connector.authType}</p>
+            {connector.status !== 'CONNECTED' && connector.authType === 'OAUTH2' && (
+              <button type="button" disabled={mode === 'demo' || !onUpdateIntegration} onClick={() => updateIntegration(connector.id, 'reconnect')} className="mt-4 inline-flex items-center gap-2 rounded-md border border-amber-300/30 px-3 py-2 text-sm font-black text-amber-50 disabled:cursor-not-allowed disabled:opacity-60">
+                Reconnect
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
+            {connector.status === 'CONNECTED' && (
+              <button type="button" disabled={mode === 'demo' || !onUpdateIntegration} onClick={() => updateIntegration(connector.id, 'disconnect')} className="mt-4 rounded-md border border-white/10 px-3 py-2 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-60">Disconnect</button>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {remaining.map((connector) => (
+          <div key={connector.id} className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-black">{connector.name}</h3>
+              <StatusBadge status={formatConnectorStatus(connector.status)} tone={connector.status === 'CONNECTED' ? 'green' : 'slate'} />
+            </div>
+            <p className="mt-2 text-xs text-slate-500">{connector.description}</p>
           </div>
         ))}
       </div>

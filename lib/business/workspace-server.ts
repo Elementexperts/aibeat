@@ -1,7 +1,6 @@
 import 'server-only'
 
 import { AGENT_REGISTRY } from './agents'
-import { connectorRegistry } from './connectors'
 import { demoAgentSummaries, demoBusinessMemoryHealth, demoExecutiveBriefItems } from './demo-data'
 import { INDUSTRY_PROFILE_LABELS, getIndustryProfile } from './industry-profiles'
 import { getAuthenticatedBusinessContext } from './server-auth'
@@ -28,6 +27,7 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
     findings,
     documents,
     documentChunks,
+    connectors,
   ] = await Promise.all([
     store.getOrganization(actor),
     store.getWorkflows(actor),
@@ -41,6 +41,7 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
     store.getFindings(actor),
     store.getDocuments(actor),
     store.getDocumentChunks(actor),
+    store.getIntegrationSummaries(actor),
   ])
 
   const spend = {
@@ -120,11 +121,6 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
       href: event.workflowRunId ? '/business/workflows' : '/business/audit',
       agentType: event.agentType,
     })),
-    connectors: Object.values(connectorRegistry).map((connector) => ({
-      id: connector.id,
-      name: connector.name,
-      capabilities: connector.capabilities,
-      status: connector.id === 'crm' ? 'Needs OAuth' : 'Healthy',
-    })),
+    connectors,
   }
 }

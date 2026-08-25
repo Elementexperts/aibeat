@@ -3,7 +3,6 @@ import { getAIRecommendations, getAIToolSubscriptions, getOptimizationOpportunit
 import { getBusinessContextPayload } from './context'
 import { demoAgentSummaries, demoBusinessMemoryHealth, demoExecutiveBriefItems, demoRecentActivity } from './demo-data'
 import { INDUSTRY_PROFILE_LABELS, getIndustryProfile } from './industry-profiles'
-import { connectorRegistry } from './connectors'
 import { businessStore } from './store'
 import { getApprovals, getAuditEvents, getOrganizationWorkflows, getWorkflowRuns, getWorkflowTemplates } from './workflows'
 
@@ -31,6 +30,7 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
   const agentSummaries = demoAgentSummaries.filter((summary) => summary.agentType in AGENT_REGISTRY)
   const recentActivity = demoRecentActivity.filter((activity) => activity.organizationId === organizationId)
   const businessMemoryHealth = demoBusinessMemoryHealth.organizationId === organizationId ? demoBusinessMemoryHealth : undefined
+  const connectors = businessStore.getIntegrationSummaries(actor)
 
   return {
     organization,
@@ -60,12 +60,7 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
     } : undefined,
     agentSummaries,
     recentActivity,
-    connectors: Object.values(connectorRegistry).map((connector) => ({
-      id: connector.id,
-      name: connector.name,
-      capabilities: connector.capabilities,
-      status: connector.id === 'crm' ? 'Demo connection - OAuth not authorized' : 'Demo connection',
-    })),
+    connectors,
   }
 }
 

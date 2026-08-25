@@ -271,6 +271,52 @@ test('Business Memory carries findings across agents', () => {
   assert.equal(validateAgentOutput('EXECUTIVE_BRIEF', executive.output), true)
 })
 
+test('pilot connector framework exposes OAuth lifecycle states for first three integrations', () => {
+  const actor = { organizationId: 'org-growth-labs', userId: 'user-sarah' }
+  const integrations = businessStore.getIntegrationSummaries(actor)
+
+  assert.deepEqual(integrations.slice(0, 3).map((integration) => integration.id), ['google-workspace', 'crm', 'email-slack'])
+  assert.equal(integrations.find((integration) => integration.id === 'google-workspace')?.status, 'CONNECTED')
+  assert.equal(integrations.find((integration) => integration.id === 'crm')?.status, 'CONNECTED')
+  assert.equal(integrations.find((integration) => integration.id === 'email-slack')?.status, 'TOKEN_EXPIRED')
+
+  businessStore.disconnectIntegration(actor, 'crm')
+  assert.equal(businessStore.getIntegrationSummaries(actor).find((integration) => integration.id === 'crm')?.status, 'DISCONNECTED')
+
+  businessStore.connectIntegration(actor, 'crm')
+  assert.equal(businessStore.getIntegrationSummaries(actor).find((integration) => integration.id === 'crm')?.status, 'CONNECTED')
+})
+
+test('workflow execution uses connector-backed runtime and blocks expired OAuth tools', () => {
+  const actor = { organizationId: 'org-growth-labs', userId: 'user-sarah' }
+  const workflow = businessStore.createWorkflow(actor, {
+    name: 'CRM runtime smoke test',
+    description: 'Read CRM and persist runtime finding.',
+    agentType: 'LEAD_RESEARCH',
+    trigger: 'MANUAL',
+    inputs: [],
+    steps: [
+      { id: 'read-crm', name: 'Read CRM', description: 'Read connected CRM signals.', action: 'readContacts', risk: 'READ', connectorId: 'crm' },
+    ],
+    requiredIntegrations: ['crm'],
+    approvalPolicy: { requiredForRisks: ['APPROVAL_REQUIRED'], approverRoles: ['OWNER', 'ADMIN'] },
+    outputDefinition: {},
+    status: 'ACTIVE',
+    version: 1,
+  })
+
+  const completed = businessStore.runWorkflow(actor, workflow.id, { idempotencyKey: 'crm-runtime-ok' })
+  assert.equal(completed.run.status, 'COMPLETED')
+  assert.match(completed.run.resultSummary ?? '', /connector-backed/)
+  assert.equal(completed.run.connectorExecutions?.[0]?.connectorId, 'crm')
+  assert.equal(completed.finding?.findingType, 'workflow_runtime_output')
+
+  businessStore.expireIntegrationToken(actor, 'crm')
+  const failed = businessStore.runWorkflow(actor, workflow.id, { idempotencyKey: 'crm-runtime-expired' })
+  assert.equal(failed.run.status, 'FAILED')
+  assert.match(failed.run.resultSummary ?? '', /TOKEN_EXPIRED/)
+})
+
 test('document ingestion stores extracted chunks with source metadata and searchable vectors', () => {
   const actor = { organizationId: 'org-growth-labs', userId: 'user-sarah' }
   const result = businessStore.ingestDocument(actor, {
@@ -353,6 +399,16 @@ test('business memory migration adds storage-backed chunks and scheduler tables'
   assert.match(sql, /create table if not exists workflow_schedule_triggers/)
   assert.match(sql, /dead_letter_reason/)
   assert.match(sql, /timezone/)
+})
+
+test('connector runtime migration adds pilot integrations and token lifecycle fields', () => {
+  const sql = readFileSync('supabase/migrations/202608250002_business_connector_runtime.sql', 'utf8')
+  assert.match(sql, /access_token_expires_at/)
+  assert.match(sql, /refresh_token_rotated_at/)
+  assert.match(sql, /last_error/)
+  assert.match(sql, /google-workspace/)
+  assert.match(sql, /email-slack/)
+  assert.match(sql, /pilot_priority/)
 })
 
 test('business route matrix marks public, onboarding, and private paths', () => {

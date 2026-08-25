@@ -1,4 +1,5 @@
-import { executeAgentMock } from './agents'
+import { executeAgentMock, executeAgentRuntime } from './agents'
+import { buildOAuthStartUrl, connectorRegistry, getEffectiveConnectionStatus, getIntegrationDefinition, integrationDefinitions } from './connectors'
 import { ingestBusinessDocument, type DocumentIngestionInput } from './document-ingestion'
 import { rankBusinessMemoryChunks } from './vector-retrieval'
 import {
@@ -29,6 +30,9 @@ import type {
   BusinessDocument,
   BusinessDocumentChunk,
   BusinessDocumentIngestionResult,
+  ConnectorExecutionRecord,
+  IntegrationConnection,
+  IntegrationConnectionStatus,
   Organization,
   OrganizationMember,
   ROIMetrics,
@@ -44,6 +48,7 @@ export interface BusinessSeed {
   users: User[]
   organizations: Organization[]
   members: OrganizationMember[]
+  integrationConnections: IntegrationConnection[]
   contextItems: BusinessContextItem[]
   documents: BusinessDocument[]
   documentChunks: BusinessDocumentChunk[]
@@ -68,6 +73,7 @@ export class BusinessDataStore {
   users: User[]
   organizations: Organization[]
   members: OrganizationMember[]
+  integrationConnections: IntegrationConnection[]
   contextItems: BusinessContextItem[]
   documents: BusinessDocument[]
   documentChunks: BusinessDocumentChunk[]
@@ -86,6 +92,7 @@ export class BusinessDataStore {
     this.users = clone(seed.users)
     this.organizations = clone(seed.organizations)
     this.members = clone(seed.members)
+    this.integrationConnections = clone(seed.integrationConnections)
     this.contextItems = clone(seed.contextItems)
     this.documents = clone(seed.documents)
     this.documentChunks = clone(seed.documentChunks)
@@ -121,6 +128,97 @@ export class BusinessDataStore {
     const organization = this.organizations.find((candidate) => candidate.id === actor.organizationId)
     if (!organization) throw new Error('Organization not found')
     return organization
+  }
+
+  getIntegrationConnections(actor: BusinessActor): IntegrationConnection[] {
+    this.assertMember(actor)
+    return this.integrationConnections.filter((connection) => connection.organizationId === actor.organizationId)
+  }
+
+  getIntegrationConnection(actor: BusinessActor, integrationId: string): IntegrationConnection | undefined {
+    this.assertMember(actor)
+    return this.integrationConnections.find((connection) => connection.organizationId === actor.organizationId && connection.integrationId === integrationId)
+  }
+
+  upsertIntegrationConnection(actor: BusinessActor, integrationId: string, patch: Partial<IntegrationConnection> & { status: IntegrationConnectionStatus }): IntegrationConnection {
+    this.assertMember(actor, 'business:write')
+    const definition = getIntegrationDefinition(integrationId)
+    if (!definition) throw new Error(`Unknown integration: ${integrationId}`)
+    const now = new Date().toISOString()
+    const existing = this.getIntegrationConnection(actor, integrationId)
+    const connection: IntegrationConnection = {
+      id: existing?.id ?? `conn-${actor.organizationId}-${integrationId}`,
+      organizationId: actor.organizationId,
+      integrationId,
+      status: patch.status,
+      encryptedSecretRef: patch.encryptedSecretRef ?? existing?.encryptedSecretRef,
+      accessTokenExpiresAt: patch.accessTokenExpiresAt ?? existing?.accessTokenExpiresAt,
+      refreshTokenRotatedAt: patch.refreshTokenRotatedAt ?? existing?.refreshTokenRotatedAt,
+      lastConnectedAt: patch.status === 'CONNECTED' ? now : existing?.lastConnectedAt,
+      lastHealthCheckAt: patch.lastHealthCheckAt ?? existing?.lastHealthCheckAt,
+      lastError: patch.lastError,
+      reconnectUrl: patch.reconnectUrl,
+      metadata: { ...(existing?.metadata ?? {}), ...(patch.metadata ?? {}) },
+      createdBy: existing?.createdBy ?? actor.userId,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    }
+    if (existing) {
+      Object.assign(existing, connection)
+    } else {
+      this.integrationConnections.unshift(connection)
+    }
+    this.recordAuditEvent(actor, {
+      eventType: 'INTEGRATION_CONNECTION_UPDATED',
+      entityType: 'integration_connection',
+      entityId: connection.id,
+      summary: `${definition.name} connection is ${connection.status}`,
+    })
+    return connection
+  }
+
+  connectIntegration(actor: BusinessActor, integrationId: string, expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()): IntegrationConnection {
+    return this.upsertIntegrationConnection(actor, integrationId, {
+      status: 'CONNECTED',
+      encryptedSecretRef: `secret://${actor.organizationId}/${integrationId}`,
+      accessTokenExpiresAt: expiresAt,
+      refreshTokenRotatedAt: new Date().toISOString(),
+      lastError: undefined,
+      metadata: { connectedBy: actor.userId },
+    })
+  }
+
+  expireIntegrationToken(actor: BusinessActor, integrationId: string): IntegrationConnection {
+    return this.upsertIntegrationConnection(actor, integrationId, {
+      status: 'TOKEN_EXPIRED',
+      accessTokenExpiresAt: new Date(Date.now() - 1000).toISOString(),
+      lastError: 'OAuth access token expired.',
+    })
+  }
+
+  disconnectIntegration(actor: BusinessActor, integrationId: string): IntegrationConnection {
+    return this.upsertIntegrationConnection(actor, integrationId, {
+      status: 'DISCONNECTED',
+      encryptedSecretRef: undefined,
+      lastError: undefined,
+      metadata: { disconnectedAt: new Date().toISOString() },
+    })
+  }
+
+  getIntegrationSummaries(actor: BusinessActor) {
+    const connections = this.getIntegrationConnections(actor)
+    return integrationDefinitions
+      .slice()
+      .sort((a, b) => a.pilotPriority - b.pilotPriority)
+      .map((definition) => {
+        const connection = connections.find((candidate) => candidate.integrationId === definition.id)
+        return {
+          ...definition,
+          connection,
+          status: getEffectiveConnectionStatus(connection),
+          reconnectUrl: connection?.reconnectUrl ?? buildOAuthStartUrl(definition.id, actor.organizationId),
+        }
+      })
   }
 
   searchBusinessContext(params: BusinessActor & { query?: string; domains?: BusinessContextDomain[] }): BusinessContextItem[] {
@@ -297,6 +395,7 @@ export class BusinessDataStore {
     const runId = `run-${workflow.id}-${Date.now()}`
     const steps: WorkflowRunStep[] = []
     const auditEvents: AuditEvent[] = []
+    const connectorExecutions: ConnectorExecutionRecord[] = []
     let approval: Approval | undefined
 
     const run: WorkflowRun = {
@@ -310,6 +409,7 @@ export class BusinessDataStore {
       idempotencyKey,
       retryCount: 0,
       resultMetadata: {},
+      connectorExecutions,
     }
 
     this.runs.unshift(run)
@@ -369,18 +469,32 @@ export class BusinessDataStore {
         break
       }
 
+      const execution = this.executeWorkflowStep(actor, step.action, step.risk, step.connectorId)
+      connectorExecutions.push(execution)
+      if (!execution.ok) {
+        runStep.status = 'FAILED'
+        runStep.completedAt = new Date().toISOString()
+        runStep.error = execution.error ?? execution.summary
+        runStep.outputSummary = execution.summary
+        run.status = 'FAILED'
+        run.completedAt = new Date().toISOString()
+        run.resultSummary = execution.summary
+        auditEvents.push(this.recordAuditEvent(actor, { eventType: 'WORKFLOW_FAILED', entityType: 'workflow_run', entityId: run.id, workflowRunId: run.id, agentType: workflow.agentType, summary: execution.summary }))
+        break
+      }
+
       runStep.status = 'COMPLETED'
       runStep.completedAt = new Date().toISOString()
-      runStep.outputSummary = `${step.name} completed by mock runtime.`
+      runStep.outputSummary = execution.summary
       auditEvents.push(this.recordAuditEvent(actor, { eventType: 'WORKFLOW_STEP_COMPLETED', entityType: 'workflow_step', entityId: runStep.id, workflowRunId: run.id, agentType: workflow.agentType, summary: runStep.outputSummary }))
     }
 
     let finding: AgentFinding | undefined
     if (!approval && run.status !== 'FAILED') {
-      finding = this.persistMockAgentFinding(actor, workflow, run, member.permissions)
+      finding = this.persistRuntimeAgentFinding(actor, workflow, run, member.permissions, connectorExecutions)
       run.status = 'COMPLETED'
       run.completedAt = new Date().toISOString()
-      run.resultSummary = 'Workflow completed using mock agent runtime.'
+      run.resultSummary = 'Workflow completed using connector-backed agent runtime.'
     }
 
     return { run, approval, auditEvents, finding }
@@ -516,6 +630,64 @@ export class BusinessDataStore {
     return event
   }
 
+  executeWorkflowStep(actor: BusinessActor, action: string, risk: ConnectorExecutionRecord['risk'], connectorId?: string): ConnectorExecutionRecord {
+    if (!connectorId) {
+      return { connectorId: 'aibeat-runtime', action, ok: true, risk, summary: `AIBeat runtime executed ${action}` }
+    }
+
+    const connector = connectorRegistry[connectorId]
+    const definition = getIntegrationDefinition(connectorId)
+    if (!connector || !definition) {
+      return { connectorId, action, ok: false, risk, summary: `Connector ${connectorId} is not registered`, error: 'CONNECTOR_NOT_REGISTERED' }
+    }
+
+    if (definition.authType === 'OAUTH2') {
+      const connection = this.getIntegrationConnection(actor, connectorId)
+      const status = getEffectiveConnectionStatus(connection)
+      if (status !== 'CONNECTED') {
+        return {
+          connectorId,
+          action,
+          ok: false,
+          risk,
+          summary: `${definition.name} cannot execute ${action}: ${status}`,
+          error: status,
+        }
+      }
+    }
+
+    return {
+      connectorId,
+      action,
+      ok: true,
+      risk,
+      summary: `${connector.name} executed ${action}`,
+    }
+  }
+
+  persistRuntimeAgentFinding(actor: BusinessActor, workflow: WorkflowDefinition, run: WorkflowRun, permissions: string[], connectorExecutions: ConnectorExecutionRecord[]): AgentFinding {
+    const organization = this.organizations.find((candidate) => candidate.id === actor.organizationId)
+    if (!organization) throw new Error('Organization not found')
+
+    const result = executeAgentRuntime(
+      {
+        organizationId: actor.organizationId,
+        userId: actor.userId,
+        workflowRunId: run.id,
+        industryProfile: organization.primaryProfile,
+        permissions,
+        businessContext: this.getBusinessContextPayload(actor),
+      },
+      workflow.agentType,
+      connectorExecutions,
+    )
+    const finding = { ...result.finding, id: `finding-${workflow.agentType.toLowerCase()}-${Date.now()}`, status: 'ACTIVE' as const }
+    this.findings.unshift(finding)
+    this.contextItems.unshift(findingToContextItem(finding))
+    this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_COMPLETED', entityType: 'agent_finding', entityId: finding.id, workflowRunId: run.id, agentType: workflow.agentType, summary: finding.title })
+    return finding
+  }
+
   persistMockAgentFinding(actor: BusinessActor, workflow: WorkflowDefinition, run: WorkflowRun, permissions: string[]): AgentFinding {
     const organization = this.organizations.find((candidate) => candidate.id === actor.organizationId)
     if (!organization) throw new Error('Organization not found')
@@ -585,6 +757,52 @@ export function createBusinessSeed(): BusinessSeed {
     users: [...demoUsers, userB],
     organizations: [...demoOrganizations, orgB],
     members: [...demoMembers.map((member) => ({ ...member, status: member.status ?? 'ACTIVE' as const })), memberB],
+    integrationConnections: [
+      {
+        id: 'conn-growth-google-workspace',
+        organizationId: 'org-growth-labs',
+        integrationId: 'google-workspace',
+        status: 'CONNECTED',
+        encryptedSecretRef: 'secret://org-growth-labs/google-workspace',
+        accessTokenExpiresAt: '2026-09-01T00:00:00.000Z',
+        refreshTokenRotatedAt: '2026-08-24T12:00:00.000Z',
+        lastConnectedAt: '2026-08-24T12:00:00.000Z',
+        lastHealthCheckAt: '2026-08-25T08:00:00.000Z',
+        metadata: { pilot: true },
+        createdBy: 'user-sarah',
+        createdAt: '2026-08-24T12:00:00.000Z',
+        updatedAt: '2026-08-25T08:00:00.000Z',
+      },
+      {
+        id: 'conn-growth-crm',
+        organizationId: 'org-growth-labs',
+        integrationId: 'crm',
+        status: 'CONNECTED',
+        encryptedSecretRef: 'secret://org-growth-labs/crm',
+        accessTokenExpiresAt: '2026-09-01T00:00:00.000Z',
+        refreshTokenRotatedAt: '2026-08-24T12:15:00.000Z',
+        lastConnectedAt: '2026-08-24T12:15:00.000Z',
+        lastHealthCheckAt: '2026-08-25T08:00:00.000Z',
+        metadata: { provider: 'hubspot', pilot: true },
+        createdBy: 'user-sarah',
+        createdAt: '2026-08-24T12:15:00.000Z',
+        updatedAt: '2026-08-25T08:00:00.000Z',
+      },
+      {
+        id: 'conn-growth-email-slack',
+        organizationId: 'org-growth-labs',
+        integrationId: 'email-slack',
+        status: 'TOKEN_EXPIRED',
+        encryptedSecretRef: 'secret://org-growth-labs/email-slack',
+        accessTokenExpiresAt: '2026-08-24T00:00:00.000Z',
+        lastError: 'OAuth access token expired.',
+        reconnectUrl: '/business/integrations/oauth/start?integration=email-slack',
+        metadata: { provider: 'gmail-slack', pilot: true },
+        createdBy: 'user-sarah',
+        createdAt: '2026-08-20T12:00:00.000Z',
+        updatedAt: '2026-08-24T00:00:00.000Z',
+      },
+    ],
     contextItems: [...demoContextItems.map((item) => ({ ...item, status: item.status ?? 'ACTIVE' })), contextB],
     documents: [],
     documentChunks: [],

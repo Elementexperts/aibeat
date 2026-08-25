@@ -22,6 +22,8 @@ export type WorkflowStepStatus = 'PENDING' | 'RUNNING' | 'WAITING_FOR_APPROVAL' 
 export type ApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'EDITED'
 export type FindingStatus = 'DRAFT' | 'ACTIVE' | 'SUPERSEDED' | 'EXPIRED' | 'REJECTED'
 export type ConnectorCapability = 'READ' | 'CREATE' | 'WRITE' | 'DELETE'
+export type ConnectorAuthType = 'OAUTH2' | 'API_KEY' | 'MANUAL' | 'NONE'
+export type IntegrationConnectionStatus = 'NOT_CONNECTED' | 'OAUTH_REQUIRED' | 'CONNECTED' | 'TOKEN_EXPIRED' | 'RECONNECT_REQUIRED' | 'DISCONNECTED' | 'ERROR'
 export type AIRecommendationType = 'KEEP' | 'CANCEL' | 'CONSOLIDATE' | 'REVIEW' | 'REPLACE' | 'AUTOMATE_WITH_AIBEAT'
 export type ExecutiveBriefItemType = 'OPPORTUNITY' | 'RISK' | 'DECISION' | 'APPROVAL' | 'WORKFLOW'
 export type OptimizationOpportunityType = 'TOOL_OVERLAP' | 'LOW_UTILIZATION' | 'AUTOMATION' | 'GOVERNANCE'
@@ -235,6 +237,44 @@ export interface WorkflowStepDefinition {
   connectorId?: string
 }
 
+export interface IntegrationDefinition {
+  id: string
+  name: string
+  category: 'GOOGLE_WORKSPACE' | 'CRM' | 'EMAIL_COLLABORATION' | 'ANALYTICS' | 'DOCUMENTS' | 'WEB_RESEARCH' | 'NOTIFICATIONS'
+  authType: ConnectorAuthType
+  capabilities: ConnectorCapability[]
+  pilotPriority: number
+  oauthScopes?: string[]
+  description: string
+}
+
+export interface IntegrationConnection {
+  id: string
+  organizationId: string
+  integrationId: string
+  status: IntegrationConnectionStatus
+  encryptedSecretRef?: string
+  accessTokenExpiresAt?: string
+  refreshTokenRotatedAt?: string
+  lastConnectedAt?: string
+  lastHealthCheckAt?: string
+  lastError?: string
+  reconnectUrl?: string
+  metadata: Record<string, unknown>
+  createdBy?: string
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface ConnectorExecutionRecord {
+  connectorId: string
+  action: string
+  ok: boolean
+  summary: string
+  error?: string
+  risk: ActionRisk
+}
+
 export interface ApprovalPolicy {
   requiredForRisks: ActionRisk[]
   approverRoles: Role[]
@@ -291,6 +331,7 @@ export interface WorkflowRun {
   scheduledTriggerId?: string
   scheduledFor?: string
   deadLetterReason?: string
+  connectorExecutions?: ConnectorExecutionRecord[]
 }
 
 export interface WorkflowScheduleTrigger {
