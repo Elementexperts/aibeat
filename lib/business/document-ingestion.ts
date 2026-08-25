@@ -1,4 +1,3 @@
-import { createHash, randomUUID } from 'node:crypto'
 import { embedBusinessText } from './vector-retrieval'
 import type {
   BusinessContextItem,
@@ -28,8 +27,8 @@ export interface DocumentIngestionInput {
 export function ingestBusinessDocument(input: DocumentIngestionInput): BusinessDocumentIngestionResult {
   const now = input.now ?? new Date().toISOString()
   const extractedText = extractTextFromDocument(input)
-  const checksum = createHash('sha256').update(input.bytes).digest('hex')
-  const documentId = randomUUID()
+  const checksum = checksumBuffer(input.bytes)
+  const documentId = createPortableId()
   const document: BusinessDocument = {
     id: documentId,
     organizationId: input.organizationId,
@@ -174,4 +173,23 @@ function normalizeWhitespace(text: string): string {
 
 function estimateTokens(text: string): number {
   return Math.max(1, Math.ceil(text.length / 4))
+}
+
+function checksumBuffer(buffer: Buffer): string {
+  let hash = 2166136261
+  for (let index = 0; index < buffer.length; index += 1) {
+    hash ^= buffer[index]
+    hash = Math.imul(hash, 16777619)
+  }
+  return `fnv1a-${(hash >>> 0).toString(16).padStart(8, '0')}-${buffer.byteLength}`
+}
+
+function createPortableId(): string {
+  const cryptoLike = globalThis.crypto
+  if (cryptoLike?.randomUUID) return cryptoLike.randomUUID()
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const value = Math.floor(Math.random() * 16)
+    const digit = char === 'x' ? value : (value & 0x3) | 0x8
+    return digit.toString(16)
+  })
 }
