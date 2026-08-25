@@ -27,6 +27,10 @@ export type ExecutiveBriefItemType = 'OPPORTUNITY' | 'RISK' | 'DECISION' | 'APPR
 export type OptimizationOpportunityType = 'TOOL_OVERLAP' | 'LOW_UTILIZATION' | 'AUTOMATION' | 'GOVERNANCE'
 export type BusinessActivityStatus = 'SUCCESS' | 'NEEDS_ATTENTION' | 'WAITING_APPROVAL' | 'FAILED' | 'SCHEDULED'
 export type AgentTeamGroup = 'INTELLIGENCE' | 'REPORTING' | 'EXECUTIVE'
+export type BusinessDocumentStatus = 'UPLOADED' | 'EXTRACTED' | 'INDEXED' | 'FAILED' | 'ARCHIVED'
+export type BusinessDocumentChunkStatus = 'ACTIVE' | 'ARCHIVED'
+export type SchedulerTriggerStatus = 'ACTIVE' | 'PAUSED' | 'DEAD_LETTERED'
+export type SchedulerRunStatus = 'LEASED' | 'COMPLETED' | 'FAILED' | 'DEAD_LETTERED'
 
 export interface Organization {
   id: string
@@ -35,6 +39,7 @@ export interface Organization {
   primaryProfile: IndustryProfile
   secondaryProfiles: IndustryProfile[]
   createdAt: string
+  timezone?: string
 }
 
 export interface User {
@@ -126,6 +131,58 @@ export interface BusinessContextPayload {
   operationalContext: BusinessContextItem[]
   peopleAndAccess: BusinessContextItem[]
   aiOperationalMemory: BusinessContextItem[]
+  retrievedChunks?: BusinessDocumentChunk[]
+}
+
+export interface BusinessDocument {
+  id: string
+  organizationId: string
+  title: string
+  documentType: string
+  source: string
+  sourceUrl?: string
+  storageBucket?: string
+  storagePath?: string
+  byteSize?: number
+  checksum?: string
+  extractionStatus: BusinessDocumentStatus
+  extractedText?: string
+  metadata: Record<string, unknown>
+  createdBy?: string
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface BusinessDocumentChunk {
+  id: string
+  organizationId: string
+  documentId: string
+  chunkIndex: number
+  title: string
+  content: string
+  tokenEstimate: number
+  embedding: number[]
+  metadata: {
+    source: string
+    sourceUrl?: string
+    documentType: string
+    documentTitle: string
+    chunkIndex: number
+    checksum?: string
+    storagePath?: string
+    [key: string]: unknown
+  }
+  similarity?: number
+  lexicalScore?: number
+  status: BusinessDocumentChunkStatus
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface BusinessDocumentIngestionResult {
+  document: BusinessDocument
+  chunks: BusinessDocumentChunk[]
+  contextItem: BusinessContextItem
 }
 
 export interface AgentFinding {
@@ -192,6 +249,8 @@ export interface WorkflowDefinition {
   agentType: AgentType
   trigger: 'MANUAL' | 'SCHEDULED'
   schedule?: string
+  timezone?: string
+  nextRunAt?: string
   inputs: Array<{ key: string; label: string; required: boolean }>
   steps: WorkflowStepDefinition[]
   requiredIntegrations: string[]
@@ -229,6 +288,41 @@ export interface WorkflowRun {
   steps: WorkflowRunStep[]
   resultSummary?: string
   idempotencyKey: string
+  scheduledTriggerId?: string
+  scheduledFor?: string
+  deadLetterReason?: string
+}
+
+export interface WorkflowScheduleTrigger {
+  id: string
+  organizationId: string
+  workflowId: string
+  timezone: string
+  schedule: string
+  nextRunAt: string
+  status: SchedulerTriggerStatus
+  retryCount: number
+  maxRetries: number
+  deadLetterReason?: string
+  lastRunAt?: string
+  lastError?: string
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface WorkflowScheduleAttempt {
+  id: string
+  organizationId: string
+  triggerId: string
+  workflowId: string
+  workflowRunId?: string
+  status: SchedulerRunStatus
+  attempt: number
+  scheduledFor: string
+  leasedUntil?: string
+  error?: string
+  createdAt: string
+  completedAt?: string
 }
 
 export interface Approval {
@@ -324,6 +418,8 @@ export interface BusinessMemoryHealth {
   analyticsStatus: 'CONNECTED' | 'NEEDS_CONNECTION' | 'DISCONNECTED'
   calendarStatus: 'CONNECTED' | 'NEEDS_CONNECTION' | 'DISCONNECTED'
   documentCount: number
+  chunkCount?: number
+  indexedDocumentCount?: number
   agentFindingCount: number
   lastUpdatedAt?: string
 }

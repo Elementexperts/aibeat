@@ -1,5 +1,7 @@
 import { executeAgentMock } from './agents'
+import { ingestBusinessDocument, type DocumentIngestionInput } from './document-ingestion'
 import { workflowTemplates } from './demo-data'
+import { rankBusinessMemoryChunks } from './vector-retrieval'
 import { canAutoExecuteRisk, sanitizeAuditSummary } from './security'
 import type {
   AIRecommendation,
@@ -10,6 +12,9 @@ import type {
   BusinessContextDomain,
   BusinessContextItem,
   BusinessContextPayload,
+  BusinessDocument,
+  BusinessDocumentChunk,
+  BusinessDocumentIngestionResult,
   Organization,
   ROIMetrics,
   WorkflowDefinition,
@@ -48,6 +53,110 @@ export class SupabaseBusinessDataStore {
     const { data, error } = await query
     if (error) throw new Error('Unable to read Business Context')
     return (data ?? []).map(mapContextItem)
+  }
+
+  async ingestDocument(actor: Actor, input: Omit<DocumentIngestionInput, 'organizationId' | 'userId'>): Promise<BusinessDocumentIngestionResult> {
+    const result = ingestBusinessDocument({ ...input, organizationId: actor.organizationId, userId: actor.userId })
+
+    const { data: documentRow, error: documentError } = await this.supabase
+      .from('documents')
+      .upsert({
+        id: result.document.id,
+        organization_id: actor.organizationId,
+        title: result.document.title,
+        document_type: result.document.documentType,
+        source: result.document.source,
+        source_url: result.document.sourceUrl,
+        storage_bucket: result.document.storageBucket,
+        storage_path: result.document.storagePath,
+        byte_size: result.document.byteSize,
+        checksum: result.document.checksum,
+        extraction_status: result.document.extractionStatus,
+        extracted_text: result.document.extractedText,
+        metadata: result.document.metadata,
+        created_by: actor.userId,
+      })
+      .select('*')
+      .single()
+    if (documentError || !documentRow) throw new Error('Unable to persist uploaded document')
+
+    await this.supabase
+      .from('document_chunks')
+      .delete()
+      .eq('organization_id', actor.organizationId)
+      .eq('document_id', result.document.id)
+
+    const { data: chunkRows, error: chunkError } = await this.supabase
+      .from('document_chunks')
+      .insert(result.chunks.map((chunk) => ({
+        id: chunk.id,
+        organization_id: actor.organizationId,
+        document_id: result.document.id,
+        chunk_index: chunk.chunkIndex,
+        title: chunk.title,
+        content: chunk.content,
+        token_estimate: chunk.tokenEstimate,
+        embedding: `[${chunk.embedding.join(',')}]`,
+        metadata: chunk.metadata,
+        status: 'ACTIVE',
+      })))
+      .select('*')
+    if (chunkError) throw new Error('Unable to persist document chunks')
+
+    const contextItem = await this.createBusinessContextItem(actor, {
+      domain: result.contextItem.domain,
+      category: result.contextItem.category,
+      title: result.contextItem.title,
+      content: result.contextItem.content,
+      structuredData: result.contextItem.structuredData,
+      source: result.contextItem.source,
+      sourceType: result.contextItem.sourceType,
+      sourceUrl: result.contextItem.sourceUrl,
+      sourceDate: result.contextItem.sourceDate,
+      confidence: result.contextItem.confidence,
+      freshUntil: result.contextItem.freshUntil,
+      relatedEntityType: result.contextItem.relatedEntityType,
+      relatedEntityId: result.contextItem.relatedEntityId,
+      humanVerified: false,
+      provenance: result.contextItem.provenance,
+      status: 'ACTIVE',
+    })
+    await this.recordAuditEvent(actor, { eventType: 'DOCUMENT_INGESTED', entityId: result.document.id, summary: `Document ingested: ${result.document.title}` })
+
+    return {
+      document: mapDocument(documentRow),
+      chunks: (chunkRows ?? []).map(mapDocumentChunk),
+      contextItem,
+    }
+  }
+
+  async getDocuments(actor: Actor): Promise<BusinessDocument[]> {
+    const { data, error } = await this.supabase
+      .from('documents')
+      .select('*')
+      .eq('organization_id', actor.organizationId)
+      .neq('extraction_status', 'ARCHIVED')
+      .order('updated_at', { ascending: false })
+    if (error) throw new Error('Unable to read documents')
+    return (data ?? []).map(mapDocument)
+  }
+
+  async getDocumentChunks(actor: Actor, documentId?: string): Promise<BusinessDocumentChunk[]> {
+    let query = this.supabase
+      .from('document_chunks')
+      .select('*')
+      .eq('organization_id', actor.organizationId)
+      .eq('status', 'ACTIVE')
+      .order('chunk_index', { ascending: true })
+    if (documentId) query = query.eq('document_id', documentId)
+    const { data, error } = await query
+    if (error) throw new Error('Unable to read document chunks')
+    return (data ?? []).map(mapDocumentChunk)
+  }
+
+  async retrieveBusinessMemory(actor: Actor, query: string, limit = 8): Promise<BusinessDocumentChunk[]> {
+    const chunks = await this.getDocumentChunks(actor)
+    return rankBusinessMemoryChunks({ query, chunks, limit })
   }
 
   async getBusinessContextPayload(actor: Actor): Promise<BusinessContextPayload> {
@@ -422,6 +531,7 @@ function mapOrganization(row: Row): Organization {
     primaryProfile: row.primary_profile,
     secondaryProfiles: row.secondary_profiles ?? [],
     createdAt: row.created_at,
+    timezone: row.timezone ?? undefined,
   }
 }
 
@@ -451,6 +561,55 @@ function mapContextItem(row: Row): BusinessContextItem {
   }
 }
 
+function mapDocument(row: Row): BusinessDocument {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    title: row.title,
+    documentType: row.document_type,
+    source: row.source,
+    sourceUrl: row.source_url ?? undefined,
+    storageBucket: row.storage_bucket ?? undefined,
+    storagePath: row.storage_path ?? undefined,
+    byteSize: row.byte_size == null ? undefined : Number(row.byte_size),
+    checksum: row.checksum ?? undefined,
+    extractionStatus: row.extraction_status ?? 'INDEXED',
+    extractedText: row.extracted_text ?? undefined,
+    metadata: row.metadata ?? {},
+    createdBy: row.created_by ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at ?? undefined,
+  }
+}
+
+function mapDocumentChunk(row: Row): BusinessDocumentChunk {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    documentId: row.document_id,
+    chunkIndex: Number(row.chunk_index ?? 0),
+    title: row.title,
+    content: row.content,
+    tokenEstimate: Number(row.token_estimate ?? 0),
+    embedding: parseEmbedding(row.embedding),
+    metadata: row.metadata ?? {
+      source: 'Document',
+      documentType: 'TEXT',
+      documentTitle: row.title,
+      chunkIndex: Number(row.chunk_index ?? 0),
+    },
+    status: row.status ?? 'ACTIVE',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at ?? undefined,
+  }
+}
+
+function parseEmbedding(value: unknown): number[] {
+  if (Array.isArray(value)) return value.map(Number)
+  if (typeof value !== 'string') return []
+  return value.replace(/^\[/, '').replace(/\]$/, '').split(',').map((part) => Number(part.trim())).filter((part) => Number.isFinite(part))
+}
+
 function mapWorkflow(row: Row): WorkflowDefinition {
   return {
     id: row.id,
@@ -461,6 +620,8 @@ function mapWorkflow(row: Row): WorkflowDefinition {
     agentType: row.agent_type,
     trigger: row.trigger,
     schedule: row.schedule ?? undefined,
+    timezone: row.timezone ?? undefined,
+    nextRunAt: row.next_run_at ?? undefined,
     inputs: row.inputs ?? [],
     steps: row.steps ?? [],
     requiredIntegrations: row.required_integrations ?? [],
@@ -486,6 +647,9 @@ function mapRun(row: Row, steps: WorkflowRunStep[]): WorkflowRun {
     steps,
     resultSummary: row.result_summary ?? undefined,
     idempotencyKey: row.idempotency_key,
+    scheduledTriggerId: row.scheduled_trigger_id ?? undefined,
+    scheduledFor: row.scheduled_for ?? undefined,
+    deadLetterReason: row.dead_letter_reason ?? undefined,
   }
 }
 
@@ -653,6 +817,8 @@ function toWorkflowPatch(patch: Partial<WorkflowDefinition>): Row {
     agent_type: patch.agentType,
     trigger: patch.trigger,
     schedule: patch.schedule,
+    timezone: patch.timezone,
+    next_run_at: patch.nextRunAt,
     inputs: patch.inputs,
     steps: patch.steps,
     required_integrations: patch.requiredIntegrations,

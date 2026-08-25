@@ -7,6 +7,7 @@ import { archiveBusinessContextItem, getBusinessContextItem, getBusinessContextP
 import { getAgentIndustryInstructions } from '../lib/business/industry-profiles'
 import { approveAction, createContext, rejectAction, runWorkflow } from '../lib/business/mutations'
 import { getAgentFindings, getAIStack, getAuditLog, getPendingApprovals, getRecommendations, getRuns, getWorkflows } from '../lib/business/read-services'
+import { computeNextRunAt, runSchedulerTick, upsertWorkflowSchedule } from '../lib/business/scheduler'
 import { classifyActionRisk } from '../lib/business/security'
 import { resolveBusinessMembership } from '../lib/business/auth'
 import { isAuthenticatedBusinessPath, isPrivateBusinessPath, isPublicBusinessPath, sanitizeBusinessNext } from '../lib/business/routes'
@@ -270,6 +271,69 @@ test('Business Memory carries findings across agents', () => {
   assert.equal(validateAgentOutput('EXECUTIVE_BRIEF', executive.output), true)
 })
 
+test('document ingestion stores extracted chunks with source metadata and searchable vectors', () => {
+  const actor = { organizationId: 'org-growth-labs', userId: 'user-sarah' }
+  const result = businessStore.ingestDocument(actor, {
+    title: 'Customer Success Playbook',
+    fileName: 'customer-success-playbook.md',
+    mimeType: 'text/markdown',
+    source: 'Internal playbook',
+    bytes: Buffer.from('Renewal risk playbook. Expansion accounts should receive quarterly executive business reviews with customer health scoring.'),
+  })
+
+  assert.equal(result.document.extractionStatus, 'INDEXED')
+  assert.equal(result.chunks.length > 0, true)
+  assert.equal(result.chunks[0].metadata.source, 'Internal playbook')
+  assert.equal(result.chunks[0].embedding.length, 384)
+
+  const matches = businessStore.retrieveBusinessMemory(actor, 'quarterly business review renewal risk', 3)
+  assert.equal(matches.length > 0, true)
+  assert.equal(matches[0].documentId, result.document.id)
+  assert.equal(businessStore.getBusinessContextPayload(actor).companyKnowledge.some((item) => item.structuredData?.documentId === result.document.id), true)
+})
+
+test('scheduler computes timezone-aware next run and executes due workflows once', () => {
+  const actor = { organizationId: 'org-growth-labs', userId: 'user-sarah' }
+  const workflow = getOrganizationWorkflows(actor.organizationId, actor.userId).find((candidate) => candidate.agentType === 'COMPETITOR_MONITOR')
+  assert.ok(workflow)
+
+  const nextRunAt = computeNextRunAt('Monday 08:00', 'Asia/Tashkent', new Date('2026-08-25T05:00:00.000Z'))
+  assert.equal(nextRunAt, '2026-08-31T03:00:00.000Z')
+
+  const trigger = upsertWorkflowSchedule(businessStore, actor, {
+    workflowId: workflow.id,
+    schedule: 'Weekdays 07:30',
+    timezone: 'Asia/Tashkent',
+    startFrom: new Date('2026-08-25T01:00:00.000Z'),
+  })
+  trigger.nextRunAt = '2026-08-25T02:30:00.000Z'
+
+  const tick = runSchedulerTick(businessStore, actor, new Date('2026-08-25T02:31:00.000Z'))
+  assert.equal(tick.completed, 1)
+  assert.equal(tick.attempts[0].status, 'COMPLETED')
+  assert.equal(businessStore.getRuns(actor).some((run) => run.scheduledTriggerId === trigger.id), true)
+})
+
+test('scheduler dead-letters failing recurring triggers after max retries', () => {
+  const actor = { organizationId: 'org-growth-labs', userId: 'user-sarah' }
+  const workflow = getOrganizationWorkflows(actor.organizationId, actor.userId).find((candidate) => candidate.agentType === 'LEAD_RESEARCH')
+  assert.ok(workflow)
+
+  const trigger = upsertWorkflowSchedule(businessStore, actor, {
+    workflowId: workflow.id,
+    schedule: 'Weekdays 07:30',
+    timezone: 'UTC',
+    maxRetries: 1,
+  })
+  businessStore.updateWorkflow(actor, workflow.id, { status: 'PAUSED' })
+  trigger.nextRunAt = '2026-08-25T07:30:00.000Z'
+
+  const tick = runSchedulerTick(businessStore, actor, new Date('2026-08-25T07:31:00.000Z'))
+  assert.equal(tick.deadLettered, 1)
+  assert.equal(trigger.status, 'DEAD_LETTERED')
+  assert.match(trigger.deadLetterReason ?? '', /active workflows/i)
+})
+
 test('RLS migration contains organization-scoped policies for private tables', () => {
   const sql = readFileSync('supabase/migrations/202608230001_aibeat_business_foundation.sql', 'utf8')
   for (const table of ['business_context_items', 'workflows', 'workflow_runs', 'approvals', 'agent_findings', 'ai_tool_subscriptions', 'ai_recommendations', 'audit_events']) {
@@ -279,6 +343,16 @@ test('RLS migration contains organization-scoped policies for private tables', (
   assert.match(sql, /create policy "%1\$s admin write"/)
   assert.match(sql, /is_org_member\(organization_id\)/)
   assert.match(sql, /has_org_role\(organization_id/)
+})
+
+test('business memory migration adds storage-backed chunks and scheduler tables', () => {
+  const sql = readFileSync('supabase/migrations/202608250001_business_memory_ingestion_scheduler.sql', 'utf8')
+  assert.match(sql, /create table if not exists document_chunks/)
+  assert.match(sql, /embedding vector\(384\)/)
+  assert.match(sql, /business-documents/)
+  assert.match(sql, /create table if not exists workflow_schedule_triggers/)
+  assert.match(sql, /dead_letter_reason/)
+  assert.match(sql, /timezone/)
 })
 
 test('business route matrix marks public, onboarding, and private paths', () => {

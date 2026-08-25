@@ -26,13 +26,14 @@ import {
   ShieldCheck,
   Sparkles,
   TrendingUp,
+  UploadCloud,
   Users,
 } from 'lucide-react'
 import { AGENT_REGISTRY, executeAgentMock } from '@/lib/business/agents'
 import { getBusinessWorkspaceData, type BusinessWorkspaceData } from '@/lib/business/workspace'
 import { getAgentIndustryInstructions, INDUSTRY_PROFILE_LABELS } from '@/lib/business/industry-profiles'
 import { decideApproval, runWorkflowManual } from '@/lib/business/workflows'
-import type { AgentType, Approval, IndustryProfile, WorkflowRun } from '@/lib/business/types'
+import type { AgentType, Approval, BusinessDocumentIngestionResult, IndustryProfile, WorkflowRun } from '@/lib/business/types'
 
 export type BusinessWorkspaceRoute =
   | 'dashboard'
@@ -80,6 +81,7 @@ export function BusinessWorkspace({
   initialData,
   onRunWorkflow,
   onDecideApproval,
+  onUploadDocument,
   mode = 'authenticated',
 }: {
   route: BusinessWorkspaceRoute
@@ -87,6 +89,7 @@ export function BusinessWorkspace({
   initialData?: BusinessWorkspaceData
   onRunWorkflow?: (workflowId: string) => Promise<{ run: WorkflowRun; approval?: Approval }>
   onDecideApproval?: (approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) => Promise<Approval>
+  onUploadDocument?: (formData: FormData) => Promise<BusinessDocumentIngestionResult>
   mode?: WorkspaceMode
 }) {
   const fallbackData = useMemo(() => {
@@ -100,6 +103,7 @@ export function BusinessWorkspace({
   const [selectedProfile, setSelectedProfile] = useState<IndustryProfile>(data.organization.primaryProfile)
   const [approvals, setApprovals] = useState<Approval[]>(data.approvals)
   const [runs, setRuns] = useState<WorkflowRun[]>(data.runs)
+  const [memoryData, setMemoryData] = useState(data)
   const [demoAgentOutput, setDemoAgentOutput] = useState<Record<string, unknown> | null>(null)
   const activeWorkflow = data.workflows.find((workflow) => workflow.id === workflowId) ?? data.workflows[0]
 
@@ -233,7 +237,19 @@ export function BusinessWorkspace({
               mode={mode}
             />
           )}
-          {route === 'context' && <ContextView data={data} />}
+          {route === 'context' && <ContextView data={memoryData} onUploadDocument={onUploadDocument ? async (formData) => {
+            const result = await onUploadDocument(formData)
+            setMemoryData((current) => ({
+              ...current,
+              documents: [result.document, ...(current.documents ?? []).filter((document) => document.id !== result.document.id)],
+              documentChunks: [...result.chunks, ...(current.documentChunks ?? []).filter((chunk) => chunk.documentId !== result.document.id)],
+              context: {
+                ...current.context,
+                companyKnowledge: [result.contextItem, ...current.context.companyKnowledge.filter((item) => item.id !== result.contextItem.id)],
+              },
+            }))
+            return result
+          } : undefined} mode={mode} />}
           {route === 'ai-stack' && <AIStack data={data} />}
           {route === 'recommendations' && <Recommendations data={data} />}
           {route === 'approvals' && <Approvals approvals={approvals} onResolve={resolveApproval} mode={mode} />}
@@ -599,37 +615,81 @@ function Agents({ selectedProfile, setSelectedProfile, demoAgentOutput, onRunAge
   )
 }
 
-function ContextView({ data }: { data: ReturnType<typeof getBusinessWorkspaceData> }) {
+function ContextView({ data, onUploadDocument, mode }: { data: ReturnType<typeof getBusinessWorkspaceData>; onUploadDocument?: (formData: FormData) => Promise<BusinessDocumentIngestionResult>; mode: WorkspaceMode }) {
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [, startUploadTransition] = useTransition()
   const groups = [
     ['Company Knowledge', data.context.companyKnowledge],
     ['Operational Context', data.context.operationalContext],
     ['People & Access', data.context.peopleAndAccess],
     ['AI Operational Memory', data.context.aiOperationalMemory],
   ] as const
+  const documentCount = data.documents?.length ?? 0
+  const chunkCount = data.documentChunks?.length ?? 0
+
+  function uploadDocument(formData: FormData) {
+    if (!onUploadDocument) return
+    setUploadError(null)
+    setUploadMessage(null)
+    startUploadTransition(async () => {
+      try {
+        const result = await onUploadDocument(formData)
+        setUploadMessage(`${result.document.title} indexed into ${result.chunks.length} chunks.`)
+      } catch (error) {
+        setUploadError(error instanceof Error ? error.message : 'Unable to upload document.')
+      }
+    })
+  }
 
   return (
-    <Panel title="Shared Business Memory" icon={Database}>
-      <p className="mb-5 text-sm leading-6 text-slate-300">AIBeat owns and governs company memory. Model providers only receive tenant-filtered context payloads with provenance and freshness metadata.</p>
-      <div className="grid gap-4 lg:grid-cols-2">
-        {groups.map(([title, items]) => (
-          <div key={title} className="rounded-lg border border-white/10 bg-black/20 p-4">
-            <h3 className="font-black">{title}</h3>
-            <div className="mt-3 space-y-3">
-              {items.length ? items.map((item) => (
-                <div key={item.id} className="rounded-md bg-white/[0.04] p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <strong className="text-sm">{item.title}</strong>
-                    <span className="text-xs text-slate-500">{item.sourceDate ?? 'No date'}</span>
-                  </div>
-                  <p className="mt-2 text-xs leading-5 text-slate-400">{item.content}</p>
-                  <p className="mt-2 text-xs text-slate-500">Provenance: {item.provenance}</p>
-                </div>
-              )) : <p className="text-sm text-slate-500">Prepared domain; no demo items yet.</p>}
-            </div>
+    <div className="space-y-6">
+      <Panel title="Document Ingestion" icon={UploadCloud}>
+        <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
+          <form action={uploadDocument} className="grid gap-3 rounded-lg border border-white/10 bg-black/20 p-4">
+            <input name="title" placeholder="Document title" className="rounded-md border border-white/10 bg-[#0b1117] px-3 py-2 text-sm text-white placeholder:text-slate-500" />
+            <input name="source" placeholder="Source, e.g. Customer success playbook" className="rounded-md border border-white/10 bg-[#0b1117] px-3 py-2 text-sm text-white placeholder:text-slate-500" />
+            <input name="sourceUrl" placeholder="Source URL (optional)" className="rounded-md border border-white/10 bg-[#0b1117] px-3 py-2 text-sm text-white placeholder:text-slate-500" />
+            <input name="file" type="file" accept=".txt,.md,.mdx,.csv,.json,.html,.htm" disabled={mode === 'demo'} className="rounded-md border border-white/10 bg-[#0b1117] px-3 py-2 text-sm text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-400 file:px-3 file:py-1.5 file:text-sm file:font-black file:text-slate-950 disabled:opacity-60" />
+            <button type="submit" disabled={mode === 'demo' || !onUploadDocument} className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400">
+              <UploadCloud className="h-4 w-4" />
+              Upload & Index
+            </button>
+            {uploadMessage && <p className="text-sm text-emerald-100">{uploadMessage}</p>}
+            {uploadError && <p className="text-sm text-rose-100">{uploadError}</p>}
+            {mode === 'demo' && <p className="text-xs leading-5 text-slate-500">Uploads are disabled in the public demo workspace.</p>}
+          </form>
+          <div className="grid gap-3 md:grid-cols-3">
+            <Metric label="Stored Documents" value={String(documentCount)} />
+            <Metric label="Indexed Chunks" value={String(chunkCount)} />
+            <Metric label="Vector Dimensions" value="384" />
           </div>
-        ))}
-      </div>
-    </Panel>
+        </div>
+      </Panel>
+
+      <Panel title="Shared Business Memory" icon={Database}>
+        <p className="mb-5 text-sm leading-6 text-slate-300">AIBeat owns and governs company memory. Model providers only receive tenant-filtered context payloads with provenance, source metadata, and retrieved document chunks.</p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {groups.map(([title, items]) => (
+            <div key={title} className="rounded-lg border border-white/10 bg-black/20 p-4">
+              <h3 className="font-black">{title}</h3>
+              <div className="mt-3 space-y-3">
+                {items.length ? items.map((item) => (
+                  <div key={item.id} className="rounded-md bg-white/[0.04] p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <strong className="text-sm">{item.title}</strong>
+                      <span className="text-xs text-slate-500">{item.sourceDate ?? item.sourceType ?? 'No date'}</span>
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-slate-400">{item.content}</p>
+                    <p className="mt-2 text-xs text-slate-500">Provenance: {item.provenance}</p>
+                  </div>
+                )) : <p className="text-sm text-slate-500">Prepared domain; no demo items yet.</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Panel>
+    </div>
   )
 }
 

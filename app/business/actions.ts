@@ -5,6 +5,8 @@ import { getAuthenticatedBusinessContext } from '@/lib/business/server-auth'
 import { SupabaseBusinessDataStore } from '@/lib/business/supabase-store'
 import { createClient } from '@/lib/supabase/server'
 
+const BUSINESS_DOCUMENT_BUCKET = 'business-documents'
+
 export async function runBusinessWorkflowAction(workflowId: string) {
   const auth = await getAuthenticatedBusinessContext()
   const store = new SupabaseBusinessDataStore(createClient())
@@ -21,8 +23,55 @@ export async function decideBusinessApprovalAction(approvalId: string, decision:
   return approval
 }
 
+export async function uploadBusinessDocumentAction(formData: FormData) {
+  const auth = await getAuthenticatedBusinessContext()
+  const supabase = createClient()
+  const store = new SupabaseBusinessDataStore(supabase)
+  const file = formData.get('file')
+  if (!(file instanceof File)) throw new Error('Choose a document to upload.')
+
+  const title = String(formData.get('title') || file.name || 'Untitled document').trim()
+  const source = String(formData.get('source') || 'Upload').trim()
+  const sourceUrl = String(formData.get('sourceUrl') || '').trim() || undefined
+  const bytes = Buffer.from(await file.arrayBuffer())
+  const storagePath = `${auth.organizationId}/${Date.now()}-${sanitizeStorageName(file.name || title)}`
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUSINESS_DOCUMENT_BUCKET)
+    .upload(storagePath, bytes, {
+      contentType: file.type || 'text/plain',
+      upsert: true,
+    })
+
+  if (uploadError) throw new Error(`Unable to store document: ${uploadError.message}`)
+
+  const result = await store.ingestDocument(
+    { organizationId: auth.organizationId, userId: auth.userId },
+    {
+      title,
+      fileName: file.name,
+      mimeType: file.type,
+      source,
+      sourceUrl,
+      storageBucket: BUSINESS_DOCUMENT_BUCKET,
+      storagePath,
+      bytes,
+    },
+  )
+  revalidateBusinessPaths()
+  return {
+    document: result.document,
+    chunks: result.chunks,
+    contextItem: result.contextItem,
+  }
+}
+
 function revalidateBusinessPaths() {
   for (const path of ['/business/dashboard', '/business/workflows', '/business/approvals', '/business/reports', '/business/audit', '/business/context']) {
     revalidatePath(path)
   }
+}
+
+function sanitizeStorageName(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 120) || 'document.txt'
 }

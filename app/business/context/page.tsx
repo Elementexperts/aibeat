@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { decideBusinessApprovalAction, runBusinessWorkflowAction } from '@/app/business/actions'
+import { decideBusinessApprovalAction, runBusinessWorkflowAction, uploadBusinessDocumentAction } from '@/app/business/actions'
 import { BusinessWorkspace } from '@/components/business/BusinessWorkspace'
 import { privateBusinessRobots } from '@/lib/business/metadata'
 import { getAuthenticatedBusinessWorkspaceData } from '@/lib/business/workspace-server'
@@ -12,6 +12,6 @@ export const metadata: Metadata = {
 
 export default async function BusinessContextPage() {
   const data = await getAuthenticatedBusinessWorkspaceData()
-  return <BusinessWorkspace route="context" initialData={data} onRunWorkflow={runBusinessWorkflowAction} onDecideApproval={decideBusinessApprovalAction} />
+  return <BusinessWorkspace route="context" initialData={data} onRunWorkflow={runBusinessWorkflowAction} onDecideApproval={decideBusinessApprovalAction} onUploadDocument={uploadBusinessDocumentAction} />
 }
 

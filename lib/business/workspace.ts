@@ -18,6 +18,8 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
   const approvals = getApprovals(organizationId, userId)
   const runs = getWorkflowRuns(organizationId, userId)
   const context = getBusinessContextPayload(organizationId, userId)
+  const documents = businessStore.getDocuments(actor)
+  const documentChunks = businessStore.getDocumentChunks(actor)
   const tools = getAIToolSubscriptions(organizationId, userId)
   const recommendations = getAIRecommendations(organizationId, userId)
   const auditEvents = getAuditEvents(organizationId, userId)
@@ -40,6 +42,8 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
     approvals,
     runs,
     context,
+    documents,
+    documentChunks,
     tools,
     recommendations,
     auditEvents,
@@ -48,7 +52,12 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
     findings,
     executiveBriefItems,
     optimizationOpportunities,
-    businessMemoryHealth,
+    businessMemoryHealth: businessMemoryHealth ? {
+      ...businessMemoryHealth,
+      documentCount: Math.max(businessMemoryHealth.documentCount, documents.length),
+      indexedDocumentCount: documents.filter((document) => document.extractionStatus === 'INDEXED').length,
+      chunkCount: documentChunks.length,
+    } : undefined,
     agentSummaries,
     recentActivity,
     connectors: Object.values(connectorRegistry).map((connector) => ({

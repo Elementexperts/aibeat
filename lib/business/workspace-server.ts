@@ -26,6 +26,8 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
     auditEvents,
     roi,
     findings,
+    documents,
+    documentChunks,
   ] = await Promise.all([
     store.getOrganization(actor),
     store.getWorkflows(actor),
@@ -37,6 +39,8 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
     store.getAuditEvents(actor),
     store.getROIMetrics(actor),
     store.getFindings(actor),
+    store.getDocuments(actor),
+    store.getDocumentChunks(actor),
   ])
 
   const spend = {
@@ -65,6 +69,8 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
     approvals,
     runs,
     context,
+    documents,
+    documentChunks,
     tools,
     recommendations,
     auditEvents,
@@ -89,10 +95,17 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
       ctaLabel: 'Review Recommendation',
       ctaHref: '/business/recommendations',
     })),
-    businessMemoryHealth: demoBusinessMemoryHealth.organizationId === organization.id ? demoBusinessMemoryHealth : {
+    businessMemoryHealth: demoBusinessMemoryHealth.organizationId === organization.id ? {
+      ...demoBusinessMemoryHealth,
+      documentCount: Math.max(demoBusinessMemoryHealth.documentCount, documents.length),
+      indexedDocumentCount: documents.filter((document) => document.extractionStatus === 'INDEXED').length,
+      chunkCount: documentChunks.length,
+    } : {
       ...demoBusinessMemoryHealth,
       organizationId: organization.id,
-      documentCount: context.companyKnowledge.length + context.operationalContext.length + context.peopleAndAccess.length,
+      documentCount: documents.length || context.companyKnowledge.length + context.operationalContext.length + context.peopleAndAccess.length,
+      indexedDocumentCount: documents.filter((document) => document.extractionStatus === 'INDEXED').length,
+      chunkCount: documentChunks.length,
       agentFindingCount: context.aiOperationalMemory.length,
       lastUpdatedAt: auditEvents[0]?.timestamp,
     },

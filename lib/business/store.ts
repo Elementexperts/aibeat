@@ -1,4 +1,6 @@
 import { executeAgentMock } from './agents'
+import { ingestBusinessDocument, type DocumentIngestionInput } from './document-ingestion'
+import { rankBusinessMemoryChunks } from './vector-retrieval'
 import {
   demoAITools,
   demoApprovals,
@@ -24,6 +26,9 @@ import type {
   BusinessContextDomain,
   BusinessContextItem,
   BusinessContextPayload,
+  BusinessDocument,
+  BusinessDocumentChunk,
+  BusinessDocumentIngestionResult,
   Organization,
   OrganizationMember,
   ROIMetrics,
@@ -31,6 +36,8 @@ import type {
   WorkflowDefinition,
   WorkflowRun,
   WorkflowRunStep,
+  WorkflowScheduleAttempt,
+  WorkflowScheduleTrigger,
 } from './types'
 
 export interface BusinessSeed {
@@ -38,8 +45,12 @@ export interface BusinessSeed {
   organizations: Organization[]
   members: OrganizationMember[]
   contextItems: BusinessContextItem[]
+  documents: BusinessDocument[]
+  documentChunks: BusinessDocumentChunk[]
   workflows: WorkflowDefinition[]
   runs: WorkflowRun[]
+  scheduleTriggers: WorkflowScheduleTrigger[]
+  scheduleAttempts: WorkflowScheduleAttempt[]
   approvals: Approval[]
   findings: AgentFinding[]
   auditEvents: AuditEvent[]
@@ -58,8 +69,12 @@ export class BusinessDataStore {
   organizations: Organization[]
   members: OrganizationMember[]
   contextItems: BusinessContextItem[]
+  documents: BusinessDocument[]
+  documentChunks: BusinessDocumentChunk[]
   workflows: WorkflowDefinition[]
   runs: WorkflowRun[]
+  scheduleTriggers: WorkflowScheduleTrigger[]
+  scheduleAttempts: WorkflowScheduleAttempt[]
   approvals: Approval[]
   findings: AgentFinding[]
   auditEvents: AuditEvent[]
@@ -72,8 +87,12 @@ export class BusinessDataStore {
     this.organizations = clone(seed.organizations)
     this.members = clone(seed.members)
     this.contextItems = clone(seed.contextItems)
+    this.documents = clone(seed.documents)
+    this.documentChunks = clone(seed.documentChunks)
     this.workflows = clone(seed.workflows)
     this.runs = clone(seed.runs)
+    this.scheduleTriggers = clone(seed.scheduleTriggers)
+    this.scheduleAttempts = clone(seed.scheduleAttempts)
     this.approvals = clone(seed.approvals)
     this.findings = clone(seed.findings)
     this.auditEvents = clone(seed.auditEvents)
@@ -190,6 +209,50 @@ export class BusinessDataStore {
 
   archiveBusinessContextItem(actor: BusinessActor, itemId: string): BusinessContextItem {
     return this.updateBusinessContextItem(actor, itemId, { status: 'ARCHIVED' })
+  }
+
+  ingestDocument(actor: BusinessActor, input: Omit<DocumentIngestionInput, 'organizationId' | 'userId'>): BusinessDocumentIngestionResult {
+    this.assertMember(actor, 'business:write')
+    const result = ingestBusinessDocument({ ...input, organizationId: actor.organizationId, userId: actor.userId })
+    this.documents = [
+      result.document,
+      ...this.documents.filter((document) => document.id !== result.document.id || document.organizationId !== actor.organizationId),
+    ]
+    this.documentChunks = [
+      ...result.chunks,
+      ...this.documentChunks.filter((chunk) => chunk.documentId !== result.document.id || chunk.organizationId !== actor.organizationId),
+    ]
+    this.contextItems = [
+      result.contextItem,
+      ...this.contextItems.filter((item) => item.id !== result.contextItem.id || item.organizationId !== actor.organizationId),
+    ]
+    this.recordAuditEvent(actor, {
+      eventType: 'DOCUMENT_INGESTED',
+      entityType: 'document',
+      entityId: result.document.id,
+      summary: `Document ingested: ${result.document.title} (${result.chunks.length} chunks)`,
+    })
+    return result
+  }
+
+  getDocuments(actor: BusinessActor): BusinessDocument[] {
+    this.assertMember(actor)
+    return this.documents.filter((document) => document.organizationId === actor.organizationId && document.extractionStatus !== 'ARCHIVED')
+  }
+
+  getDocumentChunks(actor: BusinessActor, documentId?: string): BusinessDocumentChunk[] {
+    this.assertMember(actor)
+    return this.documentChunks.filter((chunk) => {
+      if (chunk.organizationId !== actor.organizationId) return false
+      if (chunk.status !== 'ACTIVE') return false
+      if (documentId && chunk.documentId !== documentId) return false
+      return true
+    })
+  }
+
+  retrieveBusinessMemory(actor: BusinessActor, query: string, limit = 8): BusinessDocumentChunk[] {
+    const chunks = this.getDocumentChunks(actor)
+    return rankBusinessMemoryChunks({ query, chunks, limit })
   }
 
   getWorkflows(actor: BusinessActor): WorkflowDefinition[] {
@@ -523,8 +586,12 @@ export function createBusinessSeed(): BusinessSeed {
     organizations: [...demoOrganizations, orgB],
     members: [...demoMembers.map((member) => ({ ...member, status: member.status ?? 'ACTIVE' as const })), memberB],
     contextItems: [...demoContextItems.map((item) => ({ ...item, status: item.status ?? 'ACTIVE' })), contextB],
+    documents: [],
+    documentChunks: [],
     workflows: workflowB ? [...demoWorkflows, workflowB] : [...demoWorkflows],
     runs: runB ? [...demoRuns, runB] : [...demoRuns],
+    scheduleTriggers: [],
+    scheduleAttempts: [],
     approvals: approvalB ? [...demoApprovals, approvalB] : [...demoApprovals],
     findings: findingB ? [...demoFindings, findingB] : [...demoFindings],
     auditEvents: [...demoAuditEvents],
