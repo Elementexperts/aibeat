@@ -1,6 +1,7 @@
 import { executeAgentMock, executeAgentRuntime } from './agents'
 import { buildOAuthStartUrl, connectorRegistry, getEffectiveConnectionStatus, getIntegrationDefinition, integrationDefinitions } from './connectors'
 import { ingestBusinessDocument, type DocumentIngestionInput } from './document-ingestion'
+import { evaluateAgentFinding } from './evaluations'
 import { rankBusinessMemoryChunks } from './vector-retrieval'
 import {
   demoAITools,
@@ -22,6 +23,7 @@ import type {
   AIRecommendation,
   AIToolSubscription,
   AgentFinding,
+  AgentEvaluationResult,
   Approval,
   AuditEvent,
   BusinessContextDomain,
@@ -30,11 +32,13 @@ import type {
   BusinessDocument,
   BusinessDocumentChunk,
   BusinessDocumentIngestionResult,
+  BusinessNotification,
   ConnectorExecutionRecord,
   IntegrationConnection,
   IntegrationConnectionStatus,
   Organization,
   OrganizationMember,
+  Role,
   ROIMetrics,
   User,
   WorkflowDefinition,
@@ -49,6 +53,8 @@ export interface BusinessSeed {
   organizations: Organization[]
   members: OrganizationMember[]
   integrationConnections: IntegrationConnection[]
+  notifications: BusinessNotification[]
+  evaluations: AgentEvaluationResult[]
   contextItems: BusinessContextItem[]
   documents: BusinessDocument[]
   documentChunks: BusinessDocumentChunk[]
@@ -74,6 +80,8 @@ export class BusinessDataStore {
   organizations: Organization[]
   members: OrganizationMember[]
   integrationConnections: IntegrationConnection[]
+  notifications: BusinessNotification[]
+  evaluations: AgentEvaluationResult[]
   contextItems: BusinessContextItem[]
   documents: BusinessDocument[]
   documentChunks: BusinessDocumentChunk[]
@@ -93,6 +101,8 @@ export class BusinessDataStore {
     this.organizations = clone(seed.organizations)
     this.members = clone(seed.members)
     this.integrationConnections = clone(seed.integrationConnections)
+    this.notifications = clone(seed.notifications)
+    this.evaluations = clone(seed.evaluations)
     this.contextItems = clone(seed.contextItems)
     this.documents = clone(seed.documents)
     this.documentChunks = clone(seed.documentChunks)
@@ -219,6 +229,50 @@ export class BusinessDataStore {
           reconnectUrl: connection?.reconnectUrl ?? buildOAuthStartUrl(definition.id, actor.organizationId),
         }
       })
+  }
+
+  getOrganizationMembers(actor: BusinessActor): OrganizationMember[] {
+    this.assertMember(actor)
+    return this.members.filter((member) => member.organizationId === actor.organizationId)
+  }
+
+  inviteMember(actor: BusinessActor, input: { email: string; role: Role }): OrganizationMember {
+    this.assertMember(actor, 'members:manage')
+    const now = new Date().toISOString()
+    const member: OrganizationMember = {
+      id: `mem-invite-${Date.now()}`,
+      organizationId: actor.organizationId,
+      userId: `invited:${input.email.toLowerCase()}`,
+      role: input.role,
+      permissions: [],
+      status: 'INVITED',
+      invitedEmail: input.email.toLowerCase(),
+      invitedBy: actor.userId,
+      createdAt: now,
+      updatedAt: now,
+    }
+    this.members.unshift(member)
+    this.recordAuditEvent(actor, { eventType: 'MEMBER_INVITED', entityType: 'organization_member', entityId: member.id, summary: `Invited ${member.invitedEmail} as ${member.role}` })
+    return member
+  }
+
+  updateMemberRole(actor: BusinessActor, memberId: string, role: Role): OrganizationMember {
+    this.assertMember(actor, 'members:manage')
+    const member = this.members.find((candidate) => candidate.id === memberId && candidate.organizationId === actor.organizationId)
+    if (!member) throw new Error('Member not found')
+    if (member.role === 'OWNER' && role !== 'OWNER' && this.getOrganizationMembers(actor).filter((candidate) => candidate.role === 'OWNER' && (candidate.status ?? 'ACTIVE') === 'ACTIVE').length <= 1) {
+      throw new Error('Workspace must keep at least one active owner')
+    }
+    member.role = role
+    member.updatedAt = new Date().toISOString()
+    this.recordAuditEvent(actor, { eventType: 'MEMBER_ROLE_UPDATED', entityType: 'organization_member', entityId: member.id, summary: `Member role updated to ${role}` })
+    return member
+  }
+
+  transferWorkspaceOwnership(actor: BusinessActor, memberId: string): OrganizationMember {
+    const member = this.updateMemberRole(actor, memberId, 'OWNER')
+    this.recordAuditEvent(actor, { eventType: 'WORKSPACE_OWNERSHIP_TRANSFERRED', entityType: 'organization_member', entityId: member.id, summary: `Workspace ownership granted to ${member.userId}` })
+    return member
   }
 
   searchBusinessContext(params: BusinessActor & { query?: string; domains?: BusinessContextDomain[] }): BusinessContextItem[] {
@@ -436,6 +490,7 @@ export class BusinessDataStore {
         run.completedAt = new Date().toISOString()
         run.resultSummary = runStep.error
         auditEvents.push(this.recordAuditEvent(actor, { eventType: 'WORKFLOW_FAILED', entityType: 'workflow_run', entityId: run.id, workflowRunId: run.id, agentType: workflow.agentType, summary: runStep.error }))
+        this.createWorkflowNotification(actor, workflow, run, 'WORKFLOW_FAILED', runStep.error)
         break
       }
 
@@ -466,6 +521,7 @@ export class BusinessDataStore {
         run.resultSummary = 'Workflow paused at approval boundary.'
         this.approvals.unshift(approval)
         auditEvents.push(this.recordAuditEvent(actor, { eventType: 'APPROVAL_REQUESTED', entityType: 'approval', entityId: approval.id, workflowRunId: run.id, agentType: workflow.agentType, summary: `Approval requested: ${approval.proposedAction}` }))
+        this.createWorkflowNotification(actor, workflow, run, 'APPROVAL_REQUESTED', `Approval requested: ${approval.proposedAction}`, approval.id)
         break
       }
 
@@ -480,6 +536,7 @@ export class BusinessDataStore {
         run.completedAt = new Date().toISOString()
         run.resultSummary = execution.summary
         auditEvents.push(this.recordAuditEvent(actor, { eventType: 'WORKFLOW_FAILED', entityType: 'workflow_run', entityId: run.id, workflowRunId: run.id, agentType: workflow.agentType, summary: execution.summary }))
+        this.createWorkflowNotification(actor, workflow, run, 'WORKFLOW_FAILED', execution.summary)
         break
       }
 
@@ -495,6 +552,9 @@ export class BusinessDataStore {
       run.status = 'COMPLETED'
       run.completedAt = new Date().toISOString()
       run.resultSummary = 'Workflow completed using connector-backed agent runtime.'
+      if (workflow.agentType === 'EXECUTIVE_BRIEF' || workflow.agentType === 'WEEKLY_REPORT') {
+        this.createWorkflowNotification(actor, workflow, run, 'PRIORITY_WORKFLOW_COMPLETED', `${workflow.name} completed.`)
+      }
     }
 
     return { run, approval, auditEvents, finding }
@@ -561,9 +621,79 @@ export class BusinessDataStore {
     return this.approvals.filter((approval) => approval.organizationId === actor.organizationId)
   }
 
+  getNotifications(actor: BusinessActor): BusinessNotification[] {
+    this.assertMember(actor)
+    return this.notifications.filter((notification) => notification.organizationId === actor.organizationId && (!notification.userId || notification.userId === actor.userId))
+  }
+
+  markNotificationRead(actor: BusinessActor, notificationId: string): BusinessNotification {
+    const notification = this.notifications.find((candidate) => candidate.id === notificationId && candidate.organizationId === actor.organizationId)
+    if (!notification) throw new Error('Notification not found')
+    notification.status = 'READ'
+    notification.readAt = new Date().toISOString()
+    return notification
+  }
+
+  createNotification(actor: BusinessActor, input: Omit<BusinessNotification, 'id' | 'organizationId' | 'status' | 'createdAt'>): BusinessNotification {
+    this.assertMember(actor)
+    const notification: BusinessNotification = {
+      ...input,
+      id: `notif-${Date.now()}-${this.notifications.length + 1}`,
+      organizationId: actor.organizationId,
+      status: 'UNREAD',
+      createdAt: new Date().toISOString(),
+    }
+    this.notifications.unshift(notification)
+    return notification
+  }
+
   getFindings(actor: BusinessActor): AgentFinding[] {
     this.assertMember(actor)
     return this.findings.filter((finding) => finding.organizationId === actor.organizationId)
+  }
+
+  getAgentEvaluations(actor: BusinessActor): AgentEvaluationResult[] {
+    this.assertMember(actor)
+    return this.evaluations.filter((evaluation) => evaluation.organizationId === actor.organizationId)
+  }
+
+  evaluateAgentFinding(actor: BusinessActor, findingId: string): AgentEvaluationResult {
+    this.assertMember(actor)
+    const finding = this.findings.find((candidate) => candidate.id === findingId && candidate.organizationId === actor.organizationId)
+    if (!finding) throw new Error('Agent finding not found')
+    const run = this.runs.find((candidate) => candidate.id === finding.workflowRunId && candidate.organizationId === actor.organizationId)
+    const evaluation = evaluateAgentFinding({
+      organizationId: actor.organizationId,
+      agentType: finding.agentType,
+      finding,
+      run,
+      context: this.getBusinessContextPayload(actor),
+      priorFindings: this.getFindings(actor),
+    })
+    this.evaluations = [evaluation, ...this.evaluations.filter((item) => item.id !== evaluation.id)]
+    this.recordAuditEvent(actor, { eventType: 'AGENT_EVALUATED', entityType: 'agent_evaluation', entityId: evaluation.id, workflowRunId: finding.workflowRunId, agentType: finding.agentType, summary: `Evaluated ${finding.title}` })
+    return evaluation
+  }
+
+  runAgentEvaluationHarness(actor: BusinessActor): AgentEvaluationResult[] {
+    return this.getFindings(actor).map((finding) => this.evaluateAgentFinding(actor, finding.id))
+  }
+
+  private createWorkflowNotification(actor: BusinessActor, workflow: WorkflowDefinition, run: WorkflowRun, type: BusinessNotification['type'], body: string, approvalId?: string) {
+    const title = type === 'APPROVAL_REQUESTED'
+      ? 'Approval needs review'
+      : type === 'WORKFLOW_FAILED'
+        ? 'Workflow failed'
+        : 'Priority workflow completed'
+    this.createNotification(actor, {
+      type,
+      title,
+      body,
+      href: type === 'APPROVAL_REQUESTED' ? '/business/approvals' : '/business/workflows',
+      workflowId: workflow.id,
+      workflowRunId: run.id,
+      approvalId,
+    })
   }
 
   getAITools(actor: BusinessActor): AIToolSubscription[] {
@@ -810,6 +940,8 @@ export function createBusinessSeed(): BusinessSeed {
     runs: runB ? [...demoRuns, runB] : [...demoRuns],
     scheduleTriggers: [],
     scheduleAttempts: [],
+    notifications: [],
+    evaluations: [],
     approvals: approvalB ? [...demoApprovals, approvalB] : [...demoApprovals],
     findings: findingB ? [...demoFindings, findingB] : [...demoFindings],
     auditEvents: [...demoAuditEvents],

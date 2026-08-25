@@ -25,6 +25,9 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
   const roi = getROIMetrics(organizationId, userId)
   const spend = summarizeSpend(organizationId, userId)
   const findings = businessStore.getFindings(actor)
+  const members = businessStore.getOrganizationMembers(actor)
+  const notifications = businessStore.getNotifications(actor)
+  const evaluations = businessStore.getAgentEvaluations(actor)
   const optimizationOpportunities = getOptimizationOpportunities(organizationId, userId)
   const executiveBriefItems = demoExecutiveBriefItems.filter((item) => item.organizationId === organizationId)
   const agentSummaries = demoAgentSummaries.filter((summary) => summary.agentType in AGENT_REGISTRY)
@@ -50,6 +53,9 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
     roi,
     spend,
     findings,
+    members,
+    notifications,
+    evaluations,
     executiveBriefItems,
     optimizationOpportunities,
     businessMemoryHealth: businessMemoryHealth ? {

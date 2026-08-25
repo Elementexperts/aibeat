@@ -33,7 +33,7 @@ import { AGENT_REGISTRY, executeAgentMock } from '@/lib/business/agents'
 import { getBusinessWorkspaceData, type BusinessWorkspaceData } from '@/lib/business/workspace'
 import { getAgentIndustryInstructions, INDUSTRY_PROFILE_LABELS } from '@/lib/business/industry-profiles'
 import { decideApproval, runWorkflowManual } from '@/lib/business/workflows'
-import type { AgentType, Approval, BusinessDocumentIngestionResult, IndustryProfile, IntegrationConnection, IntegrationConnectionStatus, WorkflowRun } from '@/lib/business/types'
+import type { AgentEvaluationResult, AgentType, Approval, BusinessDocumentIngestionResult, IndustryProfile, IntegrationConnection, IntegrationConnectionStatus, OrganizationMember, Role, WorkflowRun } from '@/lib/business/types'
 
 export type BusinessWorkspaceRoute =
   | 'dashboard'
@@ -83,6 +83,9 @@ export function BusinessWorkspace({
   onDecideApproval,
   onUploadDocument,
   onUpdateIntegration,
+  onInviteMember,
+  onUpdateMemberRole,
+  onRunEvaluations,
   mode = 'authenticated',
 }: {
   route: BusinessWorkspaceRoute
@@ -92,6 +95,9 @@ export function BusinessWorkspace({
   onDecideApproval?: (approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) => Promise<Approval>
   onUploadDocument?: (formData: FormData) => Promise<BusinessDocumentIngestionResult>
   onUpdateIntegration?: (integrationId: string, action: 'disconnect' | 'reconnect' | 'mark-expired') => Promise<IntegrationConnection>
+  onInviteMember?: (formData: FormData) => Promise<OrganizationMember>
+  onUpdateMemberRole?: (memberId: string, role: Role) => Promise<OrganizationMember>
+  onRunEvaluations?: () => Promise<AgentEvaluationResult[]>
   mode?: WorkspaceMode
 }) {
   const fallbackData = useMemo(() => {
@@ -256,9 +262,9 @@ export function BusinessWorkspace({
           {route === 'recommendations' && <Recommendations data={data} />}
           {route === 'approvals' && <Approvals approvals={approvals} onResolve={resolveApproval} mode={mode} />}
           {route === 'integrations' && <Integrations data={data} onUpdateIntegration={onUpdateIntegration} mode={mode} />}
-          {route === 'reports' && <Reports data={data} runs={runs} />}
+          {route === 'reports' && <Reports data={data} runs={runs} onRunEvaluations={onRunEvaluations} mode={mode} />}
           {route === 'audit' && <Audit data={data} />}
-          {route === 'settings' && <SettingsView selectedProfile={selectedProfile} setSelectedProfile={setSelectedProfile} />}
+          {route === 'settings' && <SettingsView data={data} selectedProfile={selectedProfile} setSelectedProfile={setSelectedProfile} onInviteMember={onInviteMember} onUpdateMemberRole={onUpdateMemberRole} mode={mode} />}
         </section>
       </div>
     </div>
@@ -292,7 +298,11 @@ function Dashboard({ data, approvals, runs, onRunWorkflow, mode }: { data: Retur
       <BusinessMemoryHealthSection health={data.businessMemoryHealth} connectors={data.connectors} />
 
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <NotificationsSection data={data} />
         <RecentActivitySection activities={data.recentActivity} approvals={approvals} runs={runs} />
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <Panel title="Workflow / Integration Health" icon={Gauge}>
           <div className="grid gap-3 md:grid-cols-2">
             {data.workflows.map((workflow) => (
@@ -327,6 +337,29 @@ function Dashboard({ data, approvals, runs, onRunWorkflow, mode }: { data: Retur
         </Panel>
       </div>
     </div>
+  )
+}
+
+function NotificationsSection({ data }: { data: ReturnType<typeof getBusinessWorkspaceData> }) {
+  const notifications = data.notifications ?? []
+  return (
+    <Panel title="Notifications" icon={AlertTriangle}>
+      {notifications.length ? (
+        <div className="space-y-3">
+          {notifications.slice(0, 5).map((notification) => (
+            <Link key={notification.id} href={notification.href ?? '/business/dashboard'} className="block rounded-lg border border-white/10 bg-black/20 p-4 transition hover:border-amber-300/30">
+              <div className="flex items-start justify-between gap-3">
+                <strong className="text-sm text-white">{notification.title}</strong>
+                <StatusBadge status={formatConnectorStatus(notification.status)} tone={notification.status === 'UNREAD' ? 'amber' : 'slate'} />
+              </div>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{notification.body}</p>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <EmptyState title="No operational notifications" body="Approvals, workflow failures, and priority workflow completions will appear here." />
+      )}
+    </Panel>
   )
 }
 
@@ -825,7 +858,16 @@ function Integrations({ data, onUpdateIntegration, mode }: { data: ReturnType<ty
   )
 }
 
-function Reports({ data, runs }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[] }) {
+function Reports({ data, runs, onRunEvaluations, mode }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[]; onRunEvaluations?: () => Promise<AgentEvaluationResult[]>; mode: WorkspaceMode }) {
+  const [evaluations, setEvaluations] = useState(data.evaluations ?? [])
+  const [, startEvaluationTransition] = useTransition()
+  const avg = (key: keyof Pick<AgentEvaluationResult, 'factuality' | 'relevance' | 'duplicateRate' | 'editRate'>) => evaluations.length ? Math.round((evaluations.reduce((sum, item) => sum + Number(item[key]), 0) / evaluations.length) * 100) : 0
+  const totalCost = evaluations.reduce((sum, item) => sum + item.estimatedCostUsd, 0)
+  const avgLatency = evaluations.length ? Math.round(evaluations.reduce((sum, item) => sum + item.latencyMs, 0) / evaluations.length) : 0
+  function runEvaluations() {
+    if (!onRunEvaluations) return
+    startEvaluationTransition(async () => setEvaluations(await onRunEvaluations()))
+  }
   return (
     <Panel title="ROI / Performance Dashboard" icon={FileText}>
       <div className="grid gap-3 md:grid-cols-4">
@@ -837,6 +879,20 @@ function Reports({ data, runs }: { data: ReturnType<typeof getBusinessWorkspaceD
         <Metric label="AI / Tool Cost" value={money.format(data.roi.aiToolCost)} />
         <Metric label="Workflow Success Rate" value={`${data.roi.workflowSuccessRate}%`} />
         <Metric label="Approval Rate" value={`${data.roi.approvalRate}%`} />
+      </div>
+      <div className="mt-6 rounded-lg border border-white/10 bg-black/20 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="font-black text-white">Agent Evaluation Harness</h3>
+          <button type="button" disabled={mode === 'demo' || !onRunEvaluations} onClick={runEvaluations} className="rounded-md bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400">Run Evaluations</button>
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-6">
+          <Metric label="Factuality" value={`${avg('factuality')}%`} />
+          <Metric label="Relevance" value={`${avg('relevance')}%`} />
+          <Metric label="Duplicate Rate" value={`${avg('duplicateRate')}%`} />
+          <Metric label="Edit Rate" value={`${avg('editRate')}%`} />
+          <Metric label="Eval Cost" value={`$${totalCost.toFixed(3)}`} />
+          <Metric label="Latency" value={`${avgLatency}ms`} />
+        </div>
       </div>
       <div className="mt-6 space-y-3">
         {runs.map((run) => <RunTimeline key={run.id} run={run} />)}
@@ -864,7 +920,41 @@ function Audit({ data }: { data: ReturnType<typeof getBusinessWorkspaceData> }) 
   )
 }
 
-function SettingsView({ selectedProfile, setSelectedProfile }: { selectedProfile: IndustryProfile; setSelectedProfile: (profile: IndustryProfile) => void }) {
+function SettingsView({
+  data,
+  selectedProfile,
+  setSelectedProfile,
+  onInviteMember,
+  onUpdateMemberRole,
+  mode,
+}: {
+  data: ReturnType<typeof getBusinessWorkspaceData>
+  selectedProfile: IndustryProfile
+  setSelectedProfile: (profile: IndustryProfile) => void
+  onInviteMember?: (formData: FormData) => Promise<OrganizationMember>
+  onUpdateMemberRole?: (memberId: string, role: Role) => Promise<OrganizationMember>
+  mode: WorkspaceMode
+}) {
+  const [members, setMembers] = useState(data.members ?? [])
+  const [, startMemberTransition] = useTransition()
+  const disabled = mode === 'demo'
+
+  function inviteMember(formData: FormData) {
+    if (!onInviteMember || disabled) return
+    startMemberTransition(async () => {
+      const member = await onInviteMember(formData)
+      setMembers((current) => [member, ...current.filter((item) => item.id !== member.id)])
+    })
+  }
+
+  function updateMemberRole(memberId: string, role: Role) {
+    if (!onUpdateMemberRole || disabled) return
+    startMemberTransition(async () => {
+      const member = await onUpdateMemberRole(memberId, role)
+      setMembers((current) => current.map((item) => item.id === member.id ? member : item))
+    })
+  }
+
   return (
     <Panel title="Business Settings" icon={Settings}>
       <div className="grid gap-5 lg:grid-cols-2">
@@ -882,6 +972,32 @@ function SettingsView({ selectedProfile, setSelectedProfile }: { selectedProfile
             <p className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-200" /> OWNER, ADMIN, MANAGER, MEMBER roles</p>
             <p className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-200" /> Approval-required actions pause workflows</p>
           </div>
+        </div>
+      </div>
+      <div className="mt-5 rounded-lg border border-white/10 bg-black/20 p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="font-black">Workspace Members</h3>
+          <StatusBadge status={`${members.length} seats`} tone="cyan" />
+        </div>
+        <form action={inviteMember} className="mt-4 grid gap-3 md:grid-cols-[1fr_180px_auto]">
+          <input name="email" type="email" required placeholder="teammate@company.com" disabled={disabled || !onInviteMember} className="rounded-md border border-white/10 bg-[#101820] px-3 py-2 text-sm text-white placeholder:text-slate-500 disabled:cursor-not-allowed disabled:opacity-60" />
+          <select name="role" defaultValue="MEMBER" disabled={disabled || !onInviteMember} className="rounded-md border border-white/10 bg-[#101820] px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60">
+            {(['ADMIN', 'MANAGER', 'MEMBER'] as Role[]).map((role) => <option key={role} value={role}>{role}</option>)}
+          </select>
+          <button type="submit" disabled={disabled || !onInviteMember} className="rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400">Invite</button>
+        </form>
+        <div className="mt-4 divide-y divide-white/10">
+          {members.map((member) => (
+            <div key={member.id} className="grid gap-3 py-3 md:grid-cols-[1fr_160px] md:items-center">
+              <div>
+                <p className="font-semibold text-white">{member.invitedEmail ?? member.userId}</p>
+                <p className="mt-1 text-xs text-slate-500">{member.status ?? 'ACTIVE'}{member.invitedBy ? ` by ${member.invitedBy}` : ''}</p>
+              </div>
+              <select value={member.role} disabled={disabled || !onUpdateMemberRole} onChange={(event) => updateMemberRole(member.id, event.target.value as Role)} className="rounded-md border border-white/10 bg-[#101820] px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60">
+                {(['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'] as Role[]).map((role) => <option key={role} value={role}>{role}</option>)}
+              </select>
+            </div>
+          ))}
         </div>
       </div>
     </Panel>

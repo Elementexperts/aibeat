@@ -28,6 +28,9 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
     documents,
     documentChunks,
     connectors,
+    members,
+    notifications,
+    evaluations,
   ] = await Promise.all([
     store.getOrganization(actor),
     store.getWorkflows(actor),
@@ -42,6 +45,9 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
     store.getDocuments(actor),
     store.getDocumentChunks(actor),
     store.getIntegrationSummaries(actor),
+    store.getOrganizationMembers(actor),
+    store.getNotifications(actor),
+    store.getAgentEvaluations(actor),
   ])
 
   const spend = {
@@ -78,6 +84,9 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
     roi: nextRoi,
     spend,
     findings,
+    members,
+    notifications,
+    evaluations,
     executiveBriefItems: demoExecutiveBriefItems.filter((item) => item.organizationId === organization.id),
     optimizationOpportunities: recommendations.map((recommendation) => ({
       id: `opp-${recommendation.id}`,

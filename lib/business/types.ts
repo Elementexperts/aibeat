@@ -33,6 +33,8 @@ export type BusinessDocumentStatus = 'UPLOADED' | 'EXTRACTED' | 'INDEXED' | 'FAI
 export type BusinessDocumentChunkStatus = 'ACTIVE' | 'ARCHIVED'
 export type SchedulerTriggerStatus = 'ACTIVE' | 'PAUSED' | 'DEAD_LETTERED'
 export type SchedulerRunStatus = 'LEASED' | 'COMPLETED' | 'FAILED' | 'DEAD_LETTERED'
+export type BusinessNotificationType = 'APPROVAL_REQUESTED' | 'WORKFLOW_FAILED' | 'PRIORITY_WORKFLOW_COMPLETED'
+export type BusinessNotificationStatus = 'UNREAD' | 'READ' | 'ARCHIVED'
 
 export interface Organization {
   id: string
@@ -59,6 +61,24 @@ export interface OrganizationMember {
   status?: MembershipStatus
   createdAt?: string
   updatedAt?: string
+  invitedEmail?: string
+  invitedBy?: string
+}
+
+export interface BusinessNotification {
+  id: string
+  organizationId: string
+  userId?: string
+  type: BusinessNotificationType
+  status: BusinessNotificationStatus
+  title: string
+  body: string
+  href?: string
+  workflowId?: string
+  workflowRunId?: string
+  approvalId?: string
+  createdAt: string
+  readAt?: string
 }
 
 export type BusinessContextDomain = 'COMPANY_KNOWLEDGE' | 'OPERATIONAL_CONTEXT' | 'PEOPLE_ACCESS' | 'AI_OPERATIONAL_MEMORY'
@@ -492,6 +512,23 @@ export interface AgentOperationalSummary {
   nextRunAt?: string
   keyResult: string
   pendingOutput?: string
+}
+
+export interface AgentEvaluationResult {
+  id: string
+  organizationId: string
+  agentType: AgentType
+  workflowRunId?: string
+  findingId?: string
+  factuality: number
+  relevance: number
+  duplicateRate: number
+  editRate: number
+  estimatedCostUsd: number
+  latencyMs: number
+  passed: boolean
+  notes: string[]
+  createdAt: string
 }
 
 export interface RecentBusinessActivity {

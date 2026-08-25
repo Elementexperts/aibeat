@@ -1,6 +1,7 @@
 import { executeAgentMock, executeAgentRuntime } from './agents'
 import { buildOAuthStartUrl, connectorRegistry, getEffectiveConnectionStatus, getIntegrationDefinition, integrationDefinitions } from './connectors'
 import { ingestBusinessDocument, type DocumentIngestionInput } from './document-ingestion'
+import { evaluateAgentFinding } from './evaluations'
 import { workflowTemplates } from './demo-data'
 import { rankBusinessMemoryChunks } from './vector-retrieval'
 import { canAutoExecuteRisk, sanitizeAuditSummary } from './security'
@@ -8,6 +9,7 @@ import type {
   AIRecommendation,
   AIToolSubscription,
   AgentFinding,
+  AgentEvaluationResult,
   Approval,
   AuditEvent,
   BusinessContextDomain,
@@ -16,10 +18,12 @@ import type {
   BusinessDocument,
   BusinessDocumentChunk,
   BusinessDocumentIngestionResult,
+  BusinessNotification,
   ConnectorExecutionRecord,
   IntegrationConnection,
   IntegrationConnectionStatus,
   Organization,
+  OrganizationMember,
   ROIMetrics,
   WorkflowDefinition,
   WorkflowRun,
@@ -306,6 +310,38 @@ export class SupabaseBusinessDataStore {
     return (data ?? []).map(mapIntegrationConnection)
   }
 
+  async getOrganizationMembers(actor: Actor) {
+    const { data, error } = await this.supabase
+      .from('organization_members')
+      .select('id, organization_id, user_id, role, permissions, status, invited_email, invited_by, created_at, updated_at')
+      .eq('organization_id', actor.organizationId)
+      .order('created_at', { ascending: true })
+    if (error) throw new Error('Unable to read organization members')
+    return (data ?? []).map(mapMembership)
+  }
+
+  async getNotifications(actor: Actor): Promise<BusinessNotification[]> {
+    const { data, error } = await this.supabase
+      .from('business_notifications')
+      .select('*')
+      .eq('organization_id', actor.organizationId)
+      .order('created_at', { ascending: false })
+      .limit(50)
+    if (error) throw new Error('Unable to read notifications')
+    return (data ?? []).map(mapNotification)
+  }
+
+  async getAgentEvaluations(actor: Actor): Promise<AgentEvaluationResult[]> {
+    const { data, error } = await this.supabase
+      .from('agent_evaluations')
+      .select('*')
+      .eq('organization_id', actor.organizationId)
+      .order('created_at', { ascending: false })
+      .limit(100)
+    if (error) throw new Error('Unable to read agent evaluations')
+    return (data ?? []).map(mapEvaluation)
+  }
+
   async getIntegrationSummaries(actor: Actor) {
     const connections = await this.getIntegrationConnections(actor)
     return integrationDefinitions
@@ -344,6 +380,103 @@ export class SupabaseBusinessDataStore {
     if (error || !data) throw new Error('Unable to update integration connection')
     await this.recordAuditEvent(actor, { eventType: 'INTEGRATION_CONNECTION_UPDATED', entityId: data.id, summary: `${integrationId} connection is ${patch.status}` })
     return mapIntegrationConnection(data)
+  }
+
+  async inviteMember(actor: Actor, input: { email: string; role: string }) {
+    const { data, error } = await this.supabase
+      .from('organization_members')
+      .insert({
+        organization_id: actor.organizationId,
+        user_id: null,
+        role: input.role,
+        permissions: [],
+        status: 'INVITED',
+        invited_email: input.email.toLowerCase(),
+        invited_by: actor.userId,
+      })
+      .select('*')
+      .single()
+    if (error || !data) throw new Error('Unable to invite member')
+    await this.recordAuditEvent(actor, { eventType: 'MEMBER_INVITED', entityId: data.id, summary: `Invited ${input.email} as ${input.role}` })
+    return mapMembership(data)
+  }
+
+  async updateMemberRole(actor: Actor, memberId: string, role: string) {
+    const members = await this.getOrganizationMembers(actor)
+    const target = members.find((member) => member.id === memberId)
+    if (!target) throw new Error('Member not found')
+    if (target.role === 'OWNER' && role !== 'OWNER' && members.filter((member) => member.role === 'OWNER' && (member.status ?? 'ACTIVE') === 'ACTIVE').length <= 1) {
+      throw new Error('Workspace must keep at least one active owner')
+    }
+    const { data, error } = await this.supabase
+      .from('organization_members')
+      .update({ role })
+      .eq('id', memberId)
+      .eq('organization_id', actor.organizationId)
+      .select('*')
+      .single()
+    if (error || !data) throw new Error('Unable to update member role')
+    await this.recordAuditEvent(actor, { eventType: 'MEMBER_ROLE_UPDATED', entityId: memberId, summary: `Member role updated to ${role}` })
+    return mapMembership(data)
+  }
+
+  private async createWorkflowNotification(actor: Actor, workflow: WorkflowDefinition, runId: string, type: BusinessNotification['type'], body: string, approvalId?: string) {
+    const title = type === 'APPROVAL_REQUESTED'
+      ? 'Approval needs review'
+      : type === 'WORKFLOW_FAILED'
+        ? 'Workflow failed'
+        : 'Priority workflow completed'
+
+    const { error } = await this.supabase.from('business_notifications').insert({
+      id: `notif-${runId}-${type}-${Date.now()}`,
+      organization_id: actor.organizationId,
+      type,
+      title,
+      body,
+      href: type === 'APPROVAL_REQUESTED' ? '/business/approvals' : '/business/workflows',
+      workflow_id: workflow.id,
+      workflow_run_id: runId,
+      approval_id: approvalId,
+    })
+    if (error) return undefined
+    return undefined
+  }
+  async runAgentEvaluationHarness(actor: Actor): Promise<AgentEvaluationResult[]> {
+    const [findings, runs, context] = await Promise.all([
+      this.getFindings(actor),
+      this.getRuns(actor),
+      this.getBusinessContextPayload(actor),
+    ])
+    const evaluations = findings.map((finding) => evaluateAgentFinding({
+      organizationId: actor.organizationId,
+      agentType: finding.agentType,
+      finding,
+      run: runs.find((run) => run.id === finding.workflowRunId),
+      context,
+      priorFindings: findings,
+    }))
+    if (!evaluations.length) return []
+    const { data, error } = await this.supabase
+      .from('agent_evaluations')
+      .upsert(evaluations.map((evaluation) => ({
+        id: evaluation.id,
+        organization_id: evaluation.organizationId,
+        agent_type: evaluation.agentType,
+        workflow_run_id: evaluation.workflowRunId,
+        finding_id: evaluation.findingId,
+        factuality: evaluation.factuality,
+        relevance: evaluation.relevance,
+        duplicate_rate: evaluation.duplicateRate,
+        edit_rate: evaluation.editRate,
+        estimated_cost_usd: evaluation.estimatedCostUsd,
+        latency_ms: evaluation.latencyMs,
+        passed: evaluation.passed,
+        notes: evaluation.notes,
+      })))
+      .select('*')
+    if (error) throw new Error('Unable to persist agent evaluations')
+    await this.recordAuditEvent(actor, { eventType: 'AGENT_EVALUATION_HARNESS_RUN', summary: `Evaluated ${evaluations.length} agent findings` })
+    return (data ?? []).map(mapEvaluation)
   }
 
   async runWorkflow(actor: Actor, workflowId: string, options: { idempotencyKey?: string } = {}): Promise<{ run: WorkflowRun; approval?: Approval; auditEvents: AuditEvent[]; finding?: AgentFinding }> {
@@ -755,6 +888,58 @@ function mapIntegrationConnection(row: Row): IntegrationConnection {
     createdBy: row.created_by ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at ?? undefined,
+  }
+}
+
+function mapMembership(row: Row): OrganizationMember {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    userId: row.user_id ?? `invited:${row.invited_email}`,
+    role: row.role,
+    permissions: row.permissions ?? [],
+    status: row.status ?? 'ACTIVE',
+    invitedEmail: row.invited_email ?? undefined,
+    invitedBy: row.invited_by ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at ?? undefined,
+  }
+}
+
+function mapNotification(row: Row): BusinessNotification {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    userId: row.user_id ?? undefined,
+    type: row.type,
+    status: row.status,
+    title: row.title,
+    body: row.body,
+    href: row.href ?? undefined,
+    workflowId: row.workflow_id ?? undefined,
+    workflowRunId: row.workflow_run_id ?? undefined,
+    approvalId: row.approval_id ?? undefined,
+    createdAt: row.created_at,
+    readAt: row.read_at ?? undefined,
+  }
+}
+
+function mapEvaluation(row: Row): AgentEvaluationResult {
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    agentType: row.agent_type,
+    workflowRunId: row.workflow_run_id ?? undefined,
+    findingId: row.finding_id ?? undefined,
+    factuality: Number(row.factuality ?? 0),
+    relevance: Number(row.relevance ?? 0),
+    duplicateRate: Number(row.duplicate_rate ?? 0),
+    editRate: Number(row.edit_rate ?? 0),
+    estimatedCostUsd: Number(row.estimated_cost_usd ?? 0),
+    latencyMs: Number(row.latency_ms ?? 0),
+    passed: Boolean(row.passed),
+    notes: row.notes ?? [],
+    createdAt: row.created_at,
   }
 }
 

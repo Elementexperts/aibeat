@@ -81,8 +81,35 @@ export async function updateBusinessIntegrationAction(integrationId: string, act
   return connection
 }
 
+export async function inviteBusinessMemberAction(formData: FormData) {
+  const auth = await getAuthenticatedBusinessContext()
+  const store = new SupabaseBusinessDataStore(createClient())
+  const email = String(formData.get('email') || '').trim()
+  const role = String(formData.get('role') || 'MEMBER').trim()
+  if (!email) throw new Error('Email is required.')
+  const member = await store.inviteMember({ organizationId: auth.organizationId, userId: auth.userId }, { email, role })
+  revalidateBusinessPaths()
+  return member
+}
+
+export async function updateBusinessMemberRoleAction(memberId: string, role: string) {
+  const auth = await getAuthenticatedBusinessContext()
+  const store = new SupabaseBusinessDataStore(createClient())
+  const member = await store.updateMemberRole({ organizationId: auth.organizationId, userId: auth.userId }, memberId, role)
+  revalidateBusinessPaths()
+  return member
+}
+
+export async function runAgentEvaluationHarnessAction() {
+  const auth = await getAuthenticatedBusinessContext()
+  const store = new SupabaseBusinessDataStore(createClient())
+  const evaluations = await store.runAgentEvaluationHarness({ organizationId: auth.organizationId, userId: auth.userId })
+  revalidateBusinessPaths()
+  return evaluations
+}
+
 function revalidateBusinessPaths() {
-  for (const path of ['/business/dashboard', '/business/workflows', '/business/approvals', '/business/reports', '/business/audit', '/business/context']) {
+  for (const path of ['/business/dashboard', '/business/workflows', '/business/approvals', '/business/reports', '/business/audit', '/business/context', '/business/settings', '/business/integrations']) {
     revalidatePath(path)
   }
 }
