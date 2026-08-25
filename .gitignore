@@ -32,3 +32,6 @@ next-env.d.ts
 data/linkedin/history.json
 data/linkedin/drafts/*
 !data/linkedin/drafts/.gitkeep
+
+# Supabase CLI
+supabase/.temp/
