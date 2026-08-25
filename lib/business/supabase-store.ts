@@ -313,7 +313,7 @@ export class SupabaseBusinessDataStore {
   async getOrganizationMembers(actor: Actor) {
     const { data, error } = await this.supabase
       .from('organization_members')
-      .select('id, organization_id, user_id, role, permissions, status, invited_email, invited_by, created_at, updated_at')
+      .select('*')
       .eq('organization_id', actor.organizationId)
       .order('created_at', { ascending: true })
     if (error) throw new Error('Unable to read organization members')
@@ -327,7 +327,7 @@ export class SupabaseBusinessDataStore {
       .eq('organization_id', actor.organizationId)
       .order('created_at', { ascending: false })
       .limit(50)
-    if (error) throw new Error('Unable to read notifications')
+    if (error) return []
     return (data ?? []).map(mapNotification)
   }
 
@@ -338,7 +338,7 @@ export class SupabaseBusinessDataStore {
       .eq('organization_id', actor.organizationId)
       .order('created_at', { ascending: false })
       .limit(100)
-    if (error) throw new Error('Unable to read agent evaluations')
+    if (error) return []
     return (data ?? []).map(mapEvaluation)
   }
 
