@@ -1589,6 +1589,34 @@ export const TOOLS: Tool[] = [
     alternatives: ['hubspot', 'copy-ai', 'rizz-invites'],
   },
   {
+  slug: 'synabot-ai',
+  name: 'SynaBot AI',
+  tagline: 'Role-based AI assistants and agents for small businesses',
+  description: 'SynaBot AI is an AI adoption platform for small businesses and professionals, offering role-based assistants, multi-step AI agents, prompt libraries, tools, persistent memory, and team workflows from one workspace.',
+  category: 'AI Agents',
+  logo: '#0f766e',
+  logoInitials: 'SA',
+  logoUrl: 'https://www.google.com/s2/favicons?domain=synabot.ai&sz=128',
+  rating: 4.4,
+  pricing: 'Free plan; Pro from $19/month',
+  pricingType: 'freemium',
+  affiliateUrl: 'https://synabot.ai/',
+  websiteUrl: 'https://synabot.ai/',
+  featured: false,
+  pros: [
+    'Role-based assistants across business functions',
+    'Multi-step AI agents with human approval for write actions',
+    'Persistent memory and team workflows on Pro',
+    'Free tier available without a credit card'
+  ],
+  cons: [
+    'Advanced agent and memory features require Pro',
+    'Token-based usage may require top-ups for heavier workloads',
+    'Some agent-building capabilities are still in beta'
+  ],
+  alternatives: ['chatgpt', 'claude', 'gemini'],
+  },
+  {
     slug: 'local-basics',
     name: 'Local Basics',
     tagline: 'Local business visibility toolkit for getting discovered online',
