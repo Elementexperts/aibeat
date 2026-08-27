@@ -19,6 +19,7 @@ import {
   GitBranch,
   LayoutDashboard,
   Lock,
+  LogOut,
   PauseCircle,
   Play,
   Plug,
@@ -34,6 +35,7 @@ import { getBusinessWorkspaceData, type BusinessWorkspaceData } from '@/lib/busi
 import { getAgentIndustryInstructions, INDUSTRY_PROFILE_LABELS } from '@/lib/business/industry-profiles'
 import { decideApproval, runWorkflowManual } from '@/lib/business/workflows'
 import type { AgentEvaluationResult, AgentType, Approval, BusinessDocumentIngestionResult, IndustryProfile, IntegrationConnection, IntegrationConnectionStatus, OrganizationMember, Role, WorkflowRun } from '@/lib/business/types'
+import { createClient } from '@/lib/supabase/client'
 
 export type BusinessWorkspaceRoute =
   | 'dashboard'
@@ -114,6 +116,19 @@ export function BusinessWorkspace({
   const [memoryData, setMemoryData] = useState(data)
   const [demoAgentOutput, setDemoAgentOutput] = useState<Record<string, unknown> | null>(null)
   const activeWorkflow = data.workflows.find((workflow) => workflow.id === workflowId) ?? data.workflows[0]
+
+  async function handleSignOut() {
+    const supabase = createClient()
+
+    const { error } = await supabase.auth.signOut()
+
+    if (error) {
+      console.error('Unable to sign out of AIBeat Business', error)
+      return
+    }
+
+    window.location.assign('/business')
+  }
 
   function runWorkflow(id: string) {
     const workflow = data.workflows.find((candidate) => candidate.id === id)
@@ -227,6 +242,18 @@ export function BusinessWorkspace({
             <div className="mt-3 grid gap-2 border-t border-white/10 pt-3">
               <Link href="/business/sign-up" className="rounded-md bg-emerald-400 px-3 py-2 text-center text-sm font-black text-slate-950">Create Your Workspace</Link>
               <Link href="/business/pricing" className="rounded-md border border-white/10 px-3 py-2 text-center text-sm font-black text-white">Start Early Access</Link>
+            </div>
+          )}
+          {!isDemo && (
+            <div className="mt-3 border-t border-white/10 pt-3">
+              <button
+                type="button"
+                onClick={() => void handleSignOut()}
+                className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm font-semibold text-slate-400 transition hover:bg-rose-400/10 hover:text-rose-200"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
             </div>
           )}
         </aside>
