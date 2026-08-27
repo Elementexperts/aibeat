@@ -451,9 +451,10 @@ test('demo route renders explicit demo mode without authenticated mutating serve
 test('self-serve onboarding migration allows first owner without service role and avoids demo organization', () => {
   const sql = readFileSync('supabase/migrations/202608240001_business_self_serve_onboarding.sql', 'utf8')
   const actionSource = readFileSync('app/business/onboarding/actions.ts', 'utf8')
+
   assert.match(sql, /organizations authenticated create own/)
   assert.match(sql, /organization_members first owner insert/)
   assert.match(sql, /organization_has_no_members/)
   assert.doesNotMatch(actionSource, /org-growth-labs/)
-  assert.match(actionSource, /role: 'OWNER'/)
+  assert.match(actionSource, /create_business_organization/)
 })
