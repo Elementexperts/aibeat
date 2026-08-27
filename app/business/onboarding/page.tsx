@@ -21,12 +21,12 @@ export default async function BusinessOnboardingPage({ searchParams }: { searchP
   }
 
   return (
-    <main className="dark-page min-h-screen bg-[#0b1117] text-white">
+    <main className="min-h-screen bg-slate-50 text-slate-950 transition-colors dark:bg-[#0b1117] dark:text-white">
       <div className="site-shell grid min-h-screen items-center gap-10 py-12 lg:grid-cols-[0.8fr_1.2fr]">
         <section>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-100">AIBeat Business</p>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-100">AIBeat Business</p>
           <h2 className="mt-4 text-4xl font-black tracking-tight">Your protected workspace starts with one organization.</h2>
-          <p className="mt-4 text-lg leading-8 text-slate-300">The first legitimate member becomes the organization owner. Demo organizations are never used for real accounts.</p>
+          <p className="mt-4 text-lg leading-8 text-slate-600 dark:text-slate-300">The first legitimate member becomes the organization owner. Demo organizations are never used for real accounts.</p>
         </section>
         <OnboardingForm nextPath={searchParams.next} defaults={defaults} />
       </div>
