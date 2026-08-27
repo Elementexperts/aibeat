@@ -8,7 +8,7 @@
 - **Styling:** Tailwind CSS
 - **Language:** TypeScript
 - **Fonts:** Playfair Display + IBM Plex Sans + IBM Plex Mono
-- **Deployment:** Vercel (free tier)
+- **Deployment:** Vercel 
 
 ## Getting Started
 
@@ -48,7 +48,7 @@ aibeat/
     └── tools/              # MDX tool review files
 ```
 
-## Deployment to Vercel (Free)
+## Deployment to Vercel 
 
 ```bash
 # 1. Push to GitHub
