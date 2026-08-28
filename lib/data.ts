@@ -1775,6 +1775,66 @@ export const TOOLS: Tool[] = [
     cons: ['Public product details should be reviewed', 'Best fit depends on local business goals', 'May need manual setup details'],
     alternatives: ['hubspot', 'semrush', 'ahrefs'],
   },
+
+  // — AI Marketing / GTM —
+  {
+    slug: 'wes-marketing',
+    name: 'Wes Marketing',
+    tagline: 'Founder-led GTM, content marketing and business development for early-stage companies',
+    description: 'Wes Marketing provides done-for-you founder-led go-to-market support, including GTM motion design, founder-led content marketing and business development for startups and growing companies.',
+    category: 'AI Marketing',
+    logo: '#111827',
+    logoInitials: 'WM',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=wesmarketingsolutions.com&sz=128',
+    rating: 4.4,
+    pricing: 'Custom pricing',
+    pricingType: 'paid',
+    affiliateUrl: 'https://wesmarketingsolutions.com/',
+    websiteUrl: 'https://wesmarketingsolutions.com/',
+    featured: true,
+    pros: [
+      'Founder-led GTM specialization',
+      'Done-for-you GTM execution',
+      'Founder-led content marketing support',
+      'Business development focus',
+    ],
+    cons: [
+      'Service scope and pricing require direct consultation',
+      'Not a self-serve AI software product',
+      'Results depend on execution, market fit and client collaboration',
+    ],
+    alternatives: ['alchemy-leads', 'hubspot', 'semrush'],
+  },
+
+  // — Productivity —
+  {
+    slug: 'htmlslides',
+    name: 'HtmlSlides',
+    tagline: 'Create, play and share interactive AI-assisted HTML presentations',
+    description: 'HtmlSlides helps users create browser-based presentations as dynamic HTML, then play, share and embed them without traditional presentation software. It supports AI-assisted deck creation, templates, browser playback, share links, embeds and video export.',
+    category: 'Productivity',
+    logo: '#111827',
+    logoInitials: 'HS',
+    logoUrl: 'https://www.google.com/s2/favicons?domain=htmlslides.ai&sz=128',
+    rating: 4.4,
+    pricing: 'Free plan · Pro $19/mo',
+    pricingType: 'freemium',
+    affiliateUrl: 'https://www.htmlslides.ai/',
+    websiteUrl: 'https://www.htmlslides.ai/',
+    featured: false,
+    pros: [
+      'Creates and plays presentations directly in the browser',
+      'Supports animation, interactivity and live web content',
+      'Share links and embed support',
+      'Free plan plus AI-assisted creation and templates',
+    ],
+    cons: [
+      'Some advanced features require Pro',
+      'HTML workflow may feel unfamiliar to traditional PowerPoint users',
+      'Best results may require AI or template-assisted setup',
+    ],
+    alternatives: [],
+  },
 ]
 
 // ============================================================
