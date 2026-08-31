@@ -46,6 +46,14 @@ const FOOTER_GROUPS = [
 
 const FEATURED_BADGES = [
   {
+    href: 'https://launchbuff.com/products/aibeat-dev-1fg0lx',
+    label: 'Featured on LaunchBuff',
+    src: 'https://launchbuff.com/badge-featured-dark.svg',
+    width: 256,
+    height: 80,
+    tone: 'dark',
+  },
+  {
     href: 'https://launchnest.io/p/aibeat',
     label: 'AIBEAT on LaunchNest',
     src: 'https://launchnest.io/badge/aibeat.svg?variant=listed',
