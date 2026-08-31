@@ -10,12 +10,12 @@ declare global {
   }
 }
 
-const CHIPS = ['AI Spend Visibility', 'Tool Overlap', 'Usage Optimization', 'Shadow AI Visibility']
+const CHIPS = ['Company memory', 'Specialized agents', 'Governed workflows', 'AI spend visibility']
 
 function trackTeaserClick() {
   window.gtag?.('event', BUSINESS_ANALYTICS_EVENTS.teaserClicked, {
     event_category: 'aibeat_business',
-    destination: '/business/dashboard',
+    destination: '/business',
   })
 }
 
@@ -31,10 +31,10 @@ export function BusinessHomepageTeaser() {
                 AIBeat Business
               </div>
               <h2 className="mt-5 max-w-3xl text-balance text-3xl font-black leading-tight text-white md:text-5xl">
-                Your company is adopting AI. But do you know what it&apos;s actually costing?
+                For teams operating AI inside the company
               </h2>
               <p className="mt-5 max-w-3xl text-base leading-7 text-slate-400 md:text-lg">
-                AI subscriptions are increasingly spread across employees, departments, expense cards, and software platforms. AIBeat Business helps growing companies understand their AI stack, govern shared business memory, run specialized AI workflows, and measure ROI.
+                AIBeat Business is separate from public discovery: one company memory, specialized AI agents, governed recurring workflows, approvals, reporting, and AI spend visibility.
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {CHIPS.map((chip) => (
@@ -50,14 +50,14 @@ export function BusinessHomepageTeaser() {
                 <Layers3 className="h-6 w-6" />
               </div>
               <p className="mt-5 text-sm leading-6 text-slate-400">
-                Built for growing teams managing multiple AI tools.
+                Built for growing teams that need to operate AI with context, controls, and measurable usage.
               </p>
               <Link
-                href="/business/dashboard"
+                href="/business"
                 onClick={trackTeaserClick}
                 className="gradient-button mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold sm:w-auto"
               >
-                Open Business Console
+                Explore AIBeat Business
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link

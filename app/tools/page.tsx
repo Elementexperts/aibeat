@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { TOOLS, TRENDING } from '@/lib/data'
 import type { Metadata } from 'next'
 import { ToolLogo } from '@/components/ui/ToolLogo'
+import { PUBLIC_ANALYTICS_EVENTS } from '@/lib/analytics'
 
 export const metadata: Metadata = {
   title: 'AI Tool Reviews — AIBeat.dev',
@@ -25,7 +26,7 @@ export default function ToolsPage() {
           <h1 className="font-serif text-3xl font-bold text-ink">AI Tool Reviews</h1>
         </div>
         <p className="text-xs text-ink-3 max-w-xs text-right hidden md:block">
-          {TOOLS.length} tools reviewed. Honest takes, no fluff.
+          {TOOLS.length} tools reviewed. <Link href="/ai-score" data-analytics-event={PUBLIC_ANALYTICS_EVENTS.aiScoreLearnMore} className="hover:text-beat-red">How AIBeat Score works.</Link>
         </p>
       </div>
 
@@ -54,7 +55,7 @@ export default function ToolsPage() {
               <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1.5">{tool.category}</div>
               <p className="text-[11px] text-ink-3 leading-relaxed mb-2 line-clamp-2">{tool.tagline}</p>
               <div className="flex justify-between items-center">
-                <span className="text-[11px] text-yellow-600">★ {tool.rating}</span>
+                <span className="text-[11px] font-semibold text-cyan-700">AIBeat Score {tool.rating}</span>
                 <span className={`font-mono text-[10px] px-1.5 py-0.5 ${
                   tool.pricingType === 'free'      ? 'bg-beat-green-light text-beat-green' :
                   tool.pricingType === 'freemium'  ? 'bg-yellow-50 text-yellow-700' :

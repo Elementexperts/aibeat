@@ -1,13 +1,21 @@
 import Link from 'next/link'
-import { ArrowRight, Newspaper, Rocket, Search, Sparkles, Zap } from 'lucide-react'
-import { TOOLS, getPopularTools } from '@/lib/data'
+import type { Metadata } from 'next'
+import { ArrowRight, Compass, Newspaper, Rocket, Search, ShieldCheck, Sparkles, Zap } from 'lucide-react'
+import { TOOLS, getFeaturedTools, getPopularTools } from '@/lib/data'
 import { getArticles } from '@/lib/articles'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
 import { PremiumToolCard } from '@/components/ui/PremiumToolCard'
 import { ToolLogo } from '@/components/ui/ToolLogo'
 import { BusinessHomepageTeaser } from '@/components/business/BusinessHomepageTeaser'
+import { PUBLIC_ANALYTICS_EVENTS } from '@/lib/analytics'
 
 export const revalidate = 3600
+
+export const metadata: Metadata = {
+  title: 'AIBeat - Discover AI Tools, Startups, Launches & AI News',
+  description: 'Discover curated AI tools, emerging startups, product launches and important AI news. Find useful AI products by category, workflow and AIBeat Score.',
+  alternates: { canonical: '/' },
+}
 
 const SEARCH_SUGGESTIONS = [
   'AI agents for sales',
@@ -19,26 +27,26 @@ const SEARCH_SUGGESTIONS = [
 
 const DISCOVERY_ITEMS = ['New today', 'Trending', 'Editor picks', 'Open source', 'Free tools', 'Product Hunt launches', 'Founder launches', 'AIBeat Daily']
 
-const FOUNDER_SERVICES = [
+const WHY_AIBEAT = [
   {
-    title: 'Submit a Tool',
-    body: 'Add your product to the AIBeat directory and make it discoverable by category, use case, and search intent.',
-    href: '/submit',
+    icon: Compass,
+    title: 'Curated Discovery',
+    body: 'Find useful AI products without browsing thousands of low-quality listings.',
   },
   {
-    title: 'Launch on AIBeat',
-    body: 'Create a dedicated launch experience for a new product, major update, or public release.',
-    href: '/launch',
+    icon: ShieldCheck,
+    title: 'AIBeat Score',
+    body: 'Use a consistent product signal designed to make tool evaluation easier.',
   },
   {
-    title: 'AIBeat Spotlight',
-    body: 'Increase visibility through featured placement, enhanced presentation, and optional promotional exposure.',
-    href: '/spotlight',
+    icon: Rocket,
+    title: 'Launch Intelligence',
+    body: 'Discover emerging products and startup launches before they become mainstream.',
   },
   {
-    title: 'Newsletter and Editorial',
-    body: 'Introduce your product through a newsletter feature, editorial review, founder interview, or sponsored story.',
-    href: '/advertise',
+    icon: Newspaper,
+    title: 'AI Intelligence',
+    body: 'Follow important AI developments with less noise and more practical context.',
   },
 ]
 
@@ -54,6 +62,7 @@ function categorySummary() {
 export default async function HomePage() {
   const articles = await getArticles()
   const popularTools = getPopularTools(8)
+  const latestLaunches = getFeaturedTools().slice(0, 4)
   const categories = categorySummary()
   const heroArticle = articles[0]
   const secondaryArticles = articles.slice(1, 4)
@@ -73,7 +82,7 @@ export default async function HomePage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-sm text-cyan-100">
               <Sparkles className="h-4 w-4" />
-              The AI discovery platform
+              Less noise. Better AI discovery.
             </div>
 
             <h1 className="mt-6 max-w-5xl text-balance text-6xl font-black leading-[0.95] tracking-tight text-white md:text-7xl lg:text-8xl">
@@ -81,19 +90,34 @@ export default async function HomePage() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 md:text-xl">
-              Explore useful AI tools, emerging startups, important industry news, and new product launches-all curated in one place.
+              Curated AI tools, verified launches and independent AI intelligence - helping you discover what is actually worth using.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/directory" className="gradient-button inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold">
+              <Link
+                href="/directory"
+                data-analytics-event={PUBLIC_ANALYTICS_EVENTS.heroExploreTools}
+                data-analytics-destination="/directory"
+                className="gradient-button inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold"
+              >
                 Explore AI Tools
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/launch" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-6 py-3 text-sm font-semibold text-white transition hover:border-cyan-300/40">
-                Launch Your Product
+              <Link
+                href="/launches"
+                data-analytics-event={PUBLIC_ANALYTICS_EVENTS.heroDiscoverLaunches}
+                data-analytics-destination="/launches"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[0.04] px-6 py-3 text-sm font-semibold text-white transition hover:border-cyan-300/40"
+              >
+                Discover Launches
               </Link>
-              <Link href="/newsletter" className="inline-flex items-center justify-center rounded-full px-2 py-3 text-sm font-semibold text-cyan-200 transition hover:text-white">
-                Join the AIBeat Newsletter
+              <Link
+                href="/submit"
+                data-analytics-event={PUBLIC_ANALYTICS_EVENTS.heroSubmitProduct}
+                data-analytics-destination="/submit"
+                className="inline-flex items-center justify-center rounded-full px-2 py-3 text-sm font-semibold text-cyan-200 transition hover:text-white"
+              >
+                Submit Your Product
               </Link>
             </div>
 
@@ -168,7 +192,7 @@ export default async function HomePage() {
           </div>
           <div className="flex gap-3">
             <Link href="/launches" className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-cyan-300/40">View All Launches</Link>
-            <Link href="/launch" className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black">Launch on AIBeat</Link>
+            <Link href="/ai-score" data-analytics-event={PUBLIC_ANALYTICS_EVENTS.aiScoreLearnMore} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black">How AIBeat Score works</Link>
           </div>
         </div>
 
@@ -238,7 +262,44 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <BusinessHomepageTeaser />
+      <section className="site-shell py-20">
+        <div className="mb-10 max-w-3xl">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Why AIBeat?</p>
+          <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">AI discovery with stronger editorial signal</h2>
+          <p className="mt-4 text-slate-400">
+            AIBeat is built for people who want useful products, relevant launches, and important AI developments without endless directory noise.
+          </p>
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {WHY_AIBEAT.map(({ icon: Icon, title, body }) => (
+            <article key={title} className="premium-card p-5">
+              <Icon className="h-5 w-5 text-cyan-200" />
+              <h3 className="mt-5 text-lg font-semibold text-white">{title}</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-400">{body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {latestLaunches.length > 0 && (
+        <section className="border-y border-white/10 bg-white/[0.025] py-20">
+          <div className="site-shell">
+            <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Latest Launches</p>
+                <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Emerging AI products to watch</h2>
+                <p className="mt-4 max-w-2xl text-slate-400">A curated launch surface for new products, founder stories, and practical AI workflows.</p>
+              </div>
+              <Link href="/launches" className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-cyan-300/40">Discover Launches</Link>
+            </div>
+            <div className="grid gap-4 md:grid-cols-4">
+              {latestLaunches.map((tool) => (
+                <PremiumToolCard key={tool.slug} tool={tool} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {heroArticle && (
         <section className="border-y border-white/10 bg-white/[0.025] py-20">
@@ -300,21 +361,28 @@ export default async function HomePage() {
               <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Launching an AI product?</h2>
               <p className="mt-4 text-slate-400">Reach people actively searching for new AI tools, products, and solutions.</p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:flex-col">
-              <Link href="/launch" className="gradient-button inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold">Launch Your Product</Link>
-                <Link href="/for-founders" className="inline-flex items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white">View Promotion Options</Link>
+                <Link href="/submit" className="gradient-button inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold">List for Free</Link>
+                <Link href="/spotlight" className="inline-flex items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white">Explore Paid Visibility</Link>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              {FOUNDER_SERVICES.map((service) => (
-                <Link key={service.title} href={service.href} className="premium-card p-5">
-                  <h3 className="text-lg font-semibold text-white">{service.title}</h3>
-                  <p className="mt-3 text-sm leading-6 text-slate-400">{service.body}</p>
+              {[
+                ['Free listing', 'Standard directory consideration with basic product context.', '/submit'],
+                ['Featured placement', 'Priority review and short category-page placement when approved.', '/spotlight'],
+                ['Spotlight Pro', 'Premium listed visibility with deeper product context and disclosure.', '/spotlight'],
+                ['Custom campaigns', 'Launch, newsletter, article, or partner opportunities scoped separately.', '/for-founders'],
+              ].map(([title, body, href]) => (
+                <Link key={title} href={href} className="premium-card p-5">
+                  <h3 className="text-lg font-semibold text-white">{title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-400">{body}</p>
                 </Link>
               ))}
             </div>
           </div>
         </div>
       </section>
+
+      <BusinessHomepageTeaser />
     </div>
   )
 }

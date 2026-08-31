@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { FOUNDER_ANALYTICS_EVENTS, type FounderAnalyticsEvent } from '@/lib/analytics'
 
 declare global {
   interface Window {
@@ -8,7 +9,11 @@ declare global {
   }
 }
 
-export function FounderAnalytics() {
+export function FounderAnalytics({
+  viewEvent = FOUNDER_ANALYTICS_EVENTS.founderPageView,
+}: {
+  viewEvent?: FounderAnalyticsEvent
+}) {
   useEffect(() => {
     function onClick(event: MouseEvent) {
       const target = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-founder-event]') : null
@@ -22,10 +27,10 @@ export function FounderAnalytics() {
 
     document.addEventListener('click', onClick)
     if (typeof window.gtag === 'function') {
-      window.gtag('event', 'founder_page_view', { event_category: 'founder_services' })
+      window.gtag('event', viewEvent, { event_category: 'founder_services' })
     }
     return () => document.removeEventListener('click', onClick)
-  }, [])
+  }, [viewEvent])
 
   return null
 }

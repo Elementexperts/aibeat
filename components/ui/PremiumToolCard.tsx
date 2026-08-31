@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowUpRight, Bookmark, Check, Sparkles } from 'lucide-react'
 import type { Tool } from '@/lib/data'
+import { PUBLIC_ANALYTICS_EVENTS } from '@/lib/analytics'
 import { ToolLogo } from './ToolLogo'
 
 type PremiumToolCardProps = {
@@ -57,8 +58,11 @@ export function PremiumToolCard({ tool, variant = 'standard' }: PremiumToolCardP
                 </div>
               ))}
             </div>
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-slate-300">AIBeat score {tool.rating}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-cyan-300/10 px-3 py-1.5 text-xs font-semibold text-cyan-100">AIBeat Score {tool.rating}</span>
+              <Link href="/ai-score" data-analytics-event={PUBLIC_ANALYTICS_EVENTS.aiScoreLearnMore} className="text-xs font-semibold text-cyan-200 hover:text-white">
+                How it works
+              </Link>
               <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-slate-300">{pricingLabel(tool)}</span>
               <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-slate-300">{tool.category}</span>
             </div>

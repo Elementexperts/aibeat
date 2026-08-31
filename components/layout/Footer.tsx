@@ -8,6 +8,7 @@ const FOOTER_GROUPS = [
       { label: 'AI Tools', href: '/tools' },
       { label: 'Directory', href: '/directory' },
       { label: 'Categories', href: '/categories' },
+      { label: 'AIBeat Score', href: '/ai-score' },
       { label: 'Launches', href: '/launches' },
       { label: 'Free Tools', href: '/free-tools' },
       { label: 'AIBeat Business', href: '/business/dashboard' },

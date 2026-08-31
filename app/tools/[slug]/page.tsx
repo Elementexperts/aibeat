@@ -4,6 +4,7 @@ import { getToolBySlug, TOOLS, CATEGORY_COLORS } from '@/lib/data'
 import type { Metadata } from 'next'
 import { ToolLogo } from '@/components/ui/ToolLogo'
 import { ToolShareLinks } from '@/components/ui/ToolShareLinks'
+import { PUBLIC_ANALYTICS_EVENTS } from '@/lib/analytics'
 
 export async function generateStaticParams() {
   return TOOLS.map((t) => ({ slug: t.slug }))
@@ -22,8 +23,6 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
   const tool = getToolBySlug(params.slug)
   if (!tool) notFound()
   const hasAffiliateLink = tool.affiliateUrl !== tool.websiteUrl
-
-  const stars = Array.from({ length: 5 }, (_, i) => i < Math.floor(tool.rating) ? '★' : '☆').join('')
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
@@ -48,7 +47,10 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
               <h1 className="font-serif text-3xl font-bold text-ink leading-tight">{tool.name}</h1>
               <p className="text-ink-3 text-sm mt-1">{tool.tagline}</p>
               <div className="flex items-center gap-3 mt-2">
-                <span className="text-yellow-500 text-sm">{stars} {tool.rating}</span>
+                <span className="text-cyan-700 text-sm font-semibold">AIBeat Score {tool.rating}</span>
+                <Link href="/ai-score" data-analytics-event={PUBLIC_ANALYTICS_EVENTS.aiScoreLearnMore} className="text-xs text-ink-3 hover:text-beat-red">
+                  How it works
+                </Link>
                 <span className={`font-mono text-[10px] px-2 py-0.5 ${
                   tool.pricingType === 'free' ? 'bg-beat-green-light text-beat-green' :
                   tool.pricingType === 'freemium' ? 'bg-yellow-50 text-yellow-700' :

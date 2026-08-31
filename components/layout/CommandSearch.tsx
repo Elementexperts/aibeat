@@ -8,6 +8,7 @@ import { TOOLS, TRENDING } from '@/lib/data'
 const PAGES = [
   { title: 'AI News', href: '/news', type: 'Page' },
   { title: 'Tool Directory', href: '/directory', type: 'Page' },
+  { title: 'AIBeat Score', href: '/ai-score', type: 'Page' },
   { title: 'Submit a Tool', href: '/submit', type: 'Founder' },
   { title: 'Advertise', href: '/advertise', type: 'Founder' },
   { title: 'Newsletter', href: '/newsletter', type: 'Page' },

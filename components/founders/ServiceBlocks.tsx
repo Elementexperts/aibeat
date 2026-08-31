@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight, CheckCircle2, ShieldCheck, XCircle } from 'lucide-react'
 import { DISCLOSURE_RULES, FEATURE_MATRIX_COLUMNS, FEATURE_MATRIX_ROWS, FOUNDER_PROCESS, FOUNDER_SERVICE_PLANS, PAID_SUBMISSION_PLAN_IDS, formatPlanPrice, inquiryHref, type FounderServicePlan } from '@/lib/founder-services'
-import { founderEventForPlan, FOUNDER_ANALYTICS_EVENTS } from '@/lib/analytics'
+import { founderEventForPlan, FOUNDER_ANALYTICS_EVENTS, type FounderAnalyticsEvent } from '@/lib/analytics'
 import { CheckoutButton } from './CheckoutButton'
 import { FounderAnalytics } from './FounderAnalytics'
 
@@ -22,6 +22,7 @@ export function FounderHero({
   primaryLabel = 'Submit a Tool',
   secondaryHref = '/advertise',
   secondaryLabel = 'Discuss Promotion',
+  viewEvent,
 }: {
   eyebrow: string
   title: string
@@ -30,10 +31,11 @@ export function FounderHero({
   primaryLabel?: string
   secondaryHref?: string
   secondaryLabel?: string
+  viewEvent?: FounderAnalyticsEvent
 }) {
   return (
     <section className="relative overflow-hidden border-b border-white/10">
-      <FounderAnalytics />
+      <FounderAnalytics viewEvent={viewEvent} />
       <div className="absolute inset-0 -z-10">
         <div className="absolute left-10 top-12 h-80 w-80 rounded-full bg-cyan-300/10 blur-3xl" />
         <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-purple-500/15 blur-3xl" />

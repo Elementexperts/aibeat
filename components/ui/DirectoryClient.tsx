@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { TOOLS, getPopularTools } from '@/lib/data'
+import { PUBLIC_ANALYTICS_EVENTS } from '@/lib/analytics'
 import { ToolLogo } from '@/components/ui/ToolLogo'
 
 const ALL = 'All'
@@ -58,7 +59,7 @@ export default function DirectoryClient() {
           <h1 className="font-serif text-3xl font-bold text-ink">Tool Directory</h1>
         </div>
         <p className="text-xs text-ink-3 text-right hidden md:block">
-          {TOOLS.length} tools reviewed
+          {TOOLS.length} tools reviewed · <Link href="/ai-score" data-analytics-event={PUBLIC_ANALYTICS_EVENTS.aiScoreLearnMore} className="hover:text-beat-red">AIBeat Score</Link>
         </p>
       </div>
 
@@ -183,7 +184,7 @@ function ToolCard({ tool, i, rank }: { tool: typeof TOOLS[number]; i: number; ra
         <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1.5">{tool.category}</div>
         <p className="text-[11px] text-ink-3 leading-relaxed mb-2 line-clamp-2">{tool.tagline}</p>
         <div className="flex justify-between items-center">
-          <span className="text-[11px] text-yellow-600">★ {tool.rating}</span>
+          <span className="text-[11px] font-semibold text-cyan-700">AIBeat Score {tool.rating}</span>
           <span className={`font-mono text-[10px] px-1.5 py-0.5 ${
             tool.pricingType === 'free'     ? 'bg-beat-green-light text-beat-green' :
             tool.pricingType === 'freemium' ? 'bg-yellow-50 text-yellow-700' :

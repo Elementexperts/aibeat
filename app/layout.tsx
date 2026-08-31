@@ -6,6 +6,7 @@ import { TopBar } from '@/components/layout/TopBar'
 import { BreakingTicker } from '@/components/layout/BreakingTicker'
 import { Footer } from '@/components/layout/Footer'
 import { SubscribePopup } from '@/components/subscribe/SubscribePopup'
+import { PublicAnalytics } from '@/components/analytics/PublicAnalytics'
 
 const siteUrl = 'https://www.aibeat.dev'
 const previewImage = '/og-image.png'
@@ -14,10 +15,10 @@ const logoImage = '/aibeat-logo.png'
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: 'AIBeat - Discover Tomorrow\'s AI Today',
+    default: 'AIBeat - Discover AI Tools, Startups, Launches & AI News',
     template: '%s | AIBeat.dev',
   },
-  description: 'Explore useful AI tools, emerging startups, important industry news, and new product launches-all curated in one place.',
+  description: 'Discover curated AI tools, emerging startups, product launches and important AI news. Find useful AI products by category, workflow and AIBeat Score.',
   keywords: ['AI news', 'AI tools', 'artificial intelligence', 'AI startup launches', 'AI tool directory', 'AI product discovery'],
   authors: [{ name: 'AIBeat Staff' }],
   creator: 'AIBeat.dev',
@@ -41,8 +42,8 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: siteUrl,
     siteName: 'AIBeat.dev',
-    title: 'AIBeat - Discover Tomorrow\'s AI Today',
-    description: 'Explore useful AI tools, emerging startups, important industry news, and new product launches.',
+    title: 'AIBeat - Discover AI Tools, Startups, Launches & AI News',
+    description: 'Discover curated AI tools, emerging startups, product launches and important AI news.',
     images: [
       {
         url: previewImage,
@@ -54,8 +55,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AIBeat - Discover Tomorrow\'s AI Today',
-    description: 'Explore useful AI tools, emerging startups, important industry news, and new product launches.',
+    title: 'AIBeat - Discover AI Tools, Startups, Launches & AI News',
+    description: 'Discover curated AI tools, emerging startups, product launches and important AI news.',
     creator: '@aibeat_dev',
     images: [previewImage],
   },
@@ -116,6 +117,7 @@ export default function RootLayout({
         <main>{children}</main>
         <Footer />
         <SubscribePopup />
+        <PublicAnalytics />
       </body>
     </html>
   )

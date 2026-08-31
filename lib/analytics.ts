@@ -1,8 +1,8 @@
 export const FOUNDER_ANALYTICS_EVENTS = {
   founderPageView: 'founder_page_view',
-  pricingPlanView: 'pricing_plan_view',
+  pricingPlanView: 'founder_pricing_view',
   pricingPlanSelect: 'pricing_plan_select',
-  submitFreeClick: 'submit_free_click',
+  submitFreeClick: 'free_listing_click',
   simplePlacementClick: 'simple_placement_click',
   featuredPlacementClick: 'featured_placement_click',
   spotlightProClick: 'spotlight_pro_click',
@@ -18,8 +18,18 @@ export const FOUNDER_ANALYTICS_EVENTS = {
 
 export type FounderAnalyticsEvent = typeof FOUNDER_ANALYTICS_EVENTS[keyof typeof FOUNDER_ANALYTICS_EVENTS]
 
+export const PUBLIC_ANALYTICS_EVENTS = {
+  heroExploreTools: 'hero_explore_tools',
+  heroDiscoverLaunches: 'hero_discover_launches',
+  heroSubmitProduct: 'hero_submit_product',
+  aiScoreLearnMore: 'ai_score_learn_more',
+  businessCtaClick: 'business_cta_click',
+} as const
+
+export type PublicAnalyticsEvent = typeof PUBLIC_ANALYTICS_EVENTS[keyof typeof PUBLIC_ANALYTICS_EVENTS]
+
 export const BUSINESS_ANALYTICS_EVENTS = {
-  teaserClicked: 'business_teaser_clicked',
+  teaserClicked: PUBLIC_ANALYTICS_EVENTS.businessCtaClick,
   calculatorViewed: 'ai_spend_calculator_viewed',
   calculatorInputChanged: 'calculator_input_changed',
   calculatorCompleted: 'calculator_completed',
