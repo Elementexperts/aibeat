@@ -46,6 +46,14 @@ const FOOTER_GROUPS = [
 
 const FEATURED_BADGES = [
   {
+    href: 'https://launchnest.io/p/aibeat',
+    label: 'AIBEAT on LaunchNest',
+    src: 'https://launchnest.io/badge/aibeat.svg?variant=listed',
+    width: 220,
+    height: 56,
+    tone: 'light',
+  },
+  {
     href: 'https://daniellaunches.com',
     label: 'Featured on DanielLaunches',
     src: 'https://daniellaunches.com/badge-light.svg',
@@ -128,31 +136,53 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 rounded-3xl border border-white/10 bg-white/[0.025] p-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Featured in</div>
-              <p className="mt-1 text-xs leading-5 text-slate-500">
-                AIBeat appears in selected founder and product-discovery ecosystems. Badges are shown for verification and disclosure.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              {FEATURED_BADGES.map((badge) => (
+        <div className="mt-10 overflow-hidden border-y border-white/10 bg-white/[0.018] py-3">
+          <div className="mb-2 flex items-center gap-3 px-1">
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Featured in</span>
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
+
+          <div
+            className="group relative overflow-hidden"
+            style={{
+              maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+            }}
+          >
+            <div className="flex w-max animate-[aibeat-partners_42s_linear_infinite] items-center gap-2.5 group-hover:[animation-play-state:paused] motion-reduce:animate-none">
+              {[...FEATURED_BADGES, ...FEATURED_BADGES].map((badge, index) => (
                 <a
-                  key={badge.href}
+                  key={`${badge.href}-${index}`}
                   href={badge.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`inline-flex min-h-14 items-center rounded-2xl border border-white/10 p-2.5 transition hover:border-cyan-300/40 hover:shadow-[0_0_24px_rgba(34,211,238,0.14)] ${badge.tone === 'dark' ? 'bg-[#0d0f14]' : 'bg-white'}`}
+                  className={`inline-flex h-10 shrink-0 items-center justify-center rounded-xl border border-white/10 px-2.5 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-300/40 ${
+                    badge.tone === 'dark' ? 'bg-[#0d0f14]' : 'bg-white'
+                  }`}
                   aria-label={badge.label}
+                  aria-hidden={index >= FEATURED_BADGES.length ? true : undefined}
+                  tabIndex={index >= FEATURED_BADGES.length ? -1 : undefined}
                 >
-                  {/* External SVG badges are provided by the listing platforms for verification. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={badge.src} alt={badge.label} width={badge.width} height={badge.height} loading="lazy" />
+                  <img
+                    src={badge.src}
+                    alt={index < FEATURED_BADGES.length ? badge.label : ''}
+                    width={badge.width}
+                    height={badge.height}
+                    loading="lazy"
+                    className="h-6 w-auto max-w-[132px] object-contain"
+                  />
                 </a>
               ))}
             </div>
           </div>
+
+          <style>{`
+            @keyframes aibeat-partners {
+              from { transform: translateX(0); }
+              to { transform: translateX(calc(-50% - 0.3125rem)); }
+            }
+          `}</style>
         </div>
 
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-slate-500 md:flex-row md:items-center md:justify-between">
