@@ -273,7 +273,7 @@ export class SupabaseBusinessDataStore {
   }
 
   async getRuns(actor: Actor): Promise<WorkflowRun[]> {
-    const { data, error } = await this.supabase.from('workflow_runs').select('*').eq('organization_id', actor.organizationId).order('created_at', { ascending: false })
+    const { data, error } = await this.supabase.from('workflow_runs').select('*').eq('organization_id', actor.organizationId).order('created_at', { ascending: false }).limit(50)
     if (error) throw new Error('Unable to read workflow runs')
     return this.hydrateRuns(actor.organizationId, data ?? [])
   }
@@ -285,7 +285,7 @@ export class SupabaseBusinessDataStore {
   }
 
   async getFindings(actor: Actor): Promise<AgentFinding[]> {
-    const { data, error } = await this.supabase.from('agent_findings').select('*').eq('organization_id', actor.organizationId).order('created_at', { ascending: false })
+    const { data, error } = await this.supabase.from('agent_findings').select('*').eq('organization_id', actor.organizationId).order('created_at', { ascending: false }).limit(50)
     if (error) throw new Error('Unable to read agent findings')
     return (data ?? []).map(mapFinding)
   }
@@ -501,6 +501,26 @@ export class SupabaseBusinessDataStore {
     const workflow = await this.getWorkflow(actor, workflowId)
     if (workflow.status !== 'ACTIVE') throw new Error('Only active workflows can be run')
     const workflowInput = validateWorkflowInput(workflow.inputs, options.input)
+
+    if (workflow.agentType === 'LEAD_RESEARCH' && workflowInput.leadUrl) {
+      const { data: activeDuplicate, error: duplicateError } = await this.supabase
+        .from('workflow_runs')
+        .select('*')
+        .eq('organization_id', actor.organizationId)
+        .eq('workflow_id', workflow.id)
+        .in('status', ['RUNNING', 'WAITING_FOR_APPROVAL'])
+        .contains('result_metadata', { workflowInput: { leadUrl: workflowInput.leadUrl } })
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (duplicateError) throw new Error('Unable to check for an active workflow run')
+      if (activeDuplicate) {
+        const [run] = await this.hydrateRuns(actor.organizationId, [activeDuplicate])
+        const { data: approvalRow } = await this.supabase.from('approvals').select('*').eq('organization_id', actor.organizationId).eq('workflow_run_id', run.id).eq('status', 'PENDING').maybeSingle()
+        const { data: findingRow } = await this.supabase.from('agent_findings').select('*').eq('organization_id', actor.organizationId).eq('workflow_run_id', run.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        return { run, approval: approvalRow ? mapApproval(approvalRow) : undefined, finding: findingRow ? mapFinding(findingRow) : undefined, auditEvents: [] }
+      }
+    }
 
     const idempotencyKey = options.idempotencyKey ?? `${workflow.id}:manual:${Date.now()}`
     const { data: existing } = await this.supabase

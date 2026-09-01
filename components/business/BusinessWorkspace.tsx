@@ -40,6 +40,7 @@ import { createClient } from '@/lib/supabase/client'
 import { AskAIBeat } from './AskAIBeat'
 import type { AIBeatAssistantMessage, AIBeatAssistantResponse } from '@/lib/business/assistant/types'
 import { buildWorkflowCatalog, getPreparedLeadResearchInput, validatePreparedLeadUrl } from '@/lib/business/workflow-catalog'
+import { defaultRunHistory, groupLeadQualifications, runProspectLabel, runProspectUrl, sortAndDedupeRuns } from '@/lib/business/workflow-history'
 
 export type BusinessWorkspaceRoute =
   | 'dashboard'
@@ -612,6 +613,10 @@ function Workflows({ data, runs, findings, onRunWorkflow, mode, error, runningWo
   const preparedInput = getPreparedLeadResearchInput(initialWorkflowSuggestion)
   const [preparedLeadUrl, setPreparedLeadUrl] = useState(preparedInput?.leadUrl ?? '')
   const [preparedError, setPreparedError] = useState<string | null>(null)
+  const [showOlderRuns, setShowOlderRuns] = useState(false)
+  const orderedRuns = sortAndDedupeRuns(runs)
+  const visibleRuns = defaultRunHistory(orderedRuns, showOlderRuns)
+  const qualificationGroups = groupLeadQualifications(findings, orderedRuns)
   function runPreparedLeadResearch() {
     const validation = validatePreparedLeadUrl(preparedLeadUrl)
     if (!validation.ok) { setPreparedError(validation.error); return }
@@ -655,12 +660,35 @@ function Workflows({ data, runs, findings, onRunWorkflow, mode, error, runningWo
           </div>
         ))}
         <h3 className="pt-4 text-sm font-black uppercase tracking-[0.16em] text-slate-400">Run History</h3>
-        {runs.map((run) => <RunTimeline key={run.id} run={run} />)}
-        <h3 className="pt-4 text-sm font-black uppercase tracking-[0.16em] text-slate-400">Lead Qualifications</h3>
-        {findings.filter((finding) => finding.agentType === 'LEAD_RESEARCH').map((finding) => <LeadQualification key={finding.id} finding={finding} run={runs.find((run) => run.id === finding.workflowRunId)} />)}
+        {visibleRuns.map((run) => <RunHistoryCard key={run.id} run={run} hasFinding={findings.some((finding) => finding.workflowRunId === run.id)} />)}
+        {orderedRuns.length > 8 && <button type="button" onClick={() => setShowOlderRuns((current) => !current)} className="w-fit rounded-md border border-white/15 px-4 py-2 text-sm font-black text-white">{showOlderRuns ? 'Show recent runs' : `Show older runs (${orderedRuns.length - 8})`}</button>}
+        <h3 id="lead-qualifications" className="scroll-mt-6 pt-4 text-sm font-black uppercase tracking-[0.16em] text-slate-400">Lead Qualifications</h3>
+        {qualificationGroups.map((group) => <QualificationGroup key={group.key} group={group} runs={orderedRuns} />)}
       </div>
     </Panel>
   )
+}
+
+function RunHistoryCard({ run, hasFinding }: { run: WorkflowRun; hasFinding: boolean }) {
+  const ai = run.resultMetadata?.ai && typeof run.resultMetadata.ai === 'object' ? run.resultMetadata.ai as Record<string, unknown> : undefined
+  const prospect = runProspectUrl(run)
+  return <div className="rounded-lg border border-white/10 bg-black/20 p-4">
+    <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{prospect ? 'Prospect' : 'Workflow run'}</p><strong className="mt-1 block text-base text-white">{runProspectLabel(run)}</strong></div><StatusBadge status={run.status} tone={run.status === 'WAITING_FOR_APPROVAL' ? 'amber' : run.status === 'FAILED' ? 'red' : run.status === 'COMPLETED' ? 'green' : 'cyan'} /></div>
+    <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-400"><span>Started {formatDashboardTime(run.startedAt)}</span><span>{run.completedAt ? `Completed ${formatDashboardTime(run.completedAt)}` : run.status === 'WAITING_FOR_APPROVAL' ? 'Waiting for approval' : 'In progress'}</span>{Boolean(ai?.provider) && <span>{ai?.provider === 'mock' ? 'Mock AI · Mock test result' : `${String(ai?.provider)} · ${String(ai?.model ?? 'model unavailable')}`}</span>}</div>
+    {run.resultSummary && <p className="mt-3 text-sm text-slate-300">{run.resultSummary}</p>}
+    {hasFinding && <a href="#lead-qualifications" className="mt-3 inline-block text-sm font-black text-emerald-200 hover:text-emerald-100">View result</a>}
+  </div>
+}
+
+function QualificationGroup({ group, runs }: { group: ReturnType<typeof groupLeadQualifications>[number]; runs: WorkflowRun[] }) {
+  const [expanded, setExpanded] = useState(false)
+  const runById = new Map(runs.map((run) => [run.id, run]))
+  const latestRun = group.latest.workflowRunId ? runById.get(group.latest.workflowRunId) : undefined
+  return <div className="space-y-3">
+    <LeadQualification finding={group.latest} run={latestRun} />
+    <div className="flex flex-wrap items-center gap-3 px-1 text-xs text-slate-400"><span>Latest {formatDashboardTime(group.latest.createdAt)}</span>{group.history.length > 1 && <button type="button" onClick={() => setExpanded((current) => !current)} className="font-black text-emerald-200">{expanded ? 'Hide history' : `History (${group.history.length})`}</button>}</div>
+    {expanded && <div className="divide-y divide-white/10 rounded-lg border border-white/10 bg-black/20 px-4">{group.history.map((finding) => { const run = finding.workflowRunId ? runById.get(finding.workflowRunId) : undefined; const score = finding.structuredData?.fitScore; return <div key={finding.id} className="flex flex-wrap items-center justify-between gap-2 py-3 text-sm"><span>{new Date(finding.createdAt).toLocaleString()} · Fit {String(score ?? '—')}</span><StatusBadge status={run?.status ?? finding.status} tone={run?.status === 'WAITING_FOR_APPROVAL' ? 'amber' : run?.status === 'FAILED' ? 'red' : 'slate'} /></div> })}</div>}
+  </div>
 }
 
 function LeadQualification({ finding, run }: { finding: AgentFinding; run?: WorkflowRun }) {
@@ -673,7 +701,7 @@ function LeadQualification({ finding, run }: { finding: AgentFinding; run?: Work
     <div className="mt-4 grid gap-3 sm:grid-cols-2"><Metric label="Fit score" value={String(result.fitScore ?? '—')} /><Metric label="Confidence" value={typeof result.confidence === 'number' ? `${Math.round(result.confidence * 100)}%` : '—'} /></div>
     {[['Reasons', list('reasons')], ['Evidence', list('evidence')], ['Likely needs', list('likelyNeeds')], ['Risks', list('risks')]].map(([label, values]) => <div key={label as string} className="mt-4"><strong className="text-sm">{label as string}</strong><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-300">{(values as string[]).map((value) => <li key={value}>{value}</li>)}</ul></div>)}
     <p className="mt-4 text-sm"><strong>Recommended next action:</strong> {String(result.recommendedNextAction ?? '')}</p><p className="mt-2 text-sm"><strong>Outreach angle:</strong> {String(result.suggestedOutreachAngle ?? '')}</p>
-    {ai && (ai.provider === 'mock' || ai.aiMode === 'mock' || ai.mode === 'mock' ? <p className="mt-4 text-xs font-semibold text-cyan-100">Mock AI · No external model call</p> : <div className="mt-4 grid gap-1 rounded-md border border-white/10 bg-black/20 p-3 text-xs text-slate-400 sm:grid-cols-2"><p>AI provider: {String(ai.provider)}</p><p>Model: {String(ai.model)}</p><p>Input tokens: {String(ai.tokensIn ?? 0)}</p><p>Output tokens: {String(ai.tokensOut ?? 0)}</p><p>Latency: {String(ai.latencyMs ?? 0)}ms</p><p className="break-all">Model run ID: {String(ai.modelRunId ?? '')}</p><p>Cost tracking: Not yet calculated</p></div>)}
+    {ai && (ai.provider === 'mock' || ai.aiMode === 'mock' || ai.mode === 'mock' ? <p className="mt-4 text-xs font-semibold text-cyan-100">Mock AI · Mock test result · No external model call</p> : <div className="mt-4 grid gap-1 rounded-md border border-white/10 bg-black/20 p-3 text-xs text-slate-400 sm:grid-cols-2"><p>AI provider: {String(ai.provider)}</p><p>Model: {String(ai.model)}</p><p>Input tokens: {String(ai.tokensIn ?? 0)}</p><p>Output tokens: {String(ai.tokensOut ?? 0)}</p><p>Latency: {String(ai.latencyMs ?? 0)}ms</p><p className="break-all">Model run ID: {String(ai.modelRunId ?? '')}</p><p>Cost tracking: Not yet calculated</p></div>)}
   </div>
 }
 

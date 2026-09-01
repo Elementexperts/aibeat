@@ -23,6 +23,8 @@ import { sanitizeAssistantSuggestion, validateAssistantMessage, validateAssistan
 import type { AIBeatAssistantContext } from '../lib/business/assistant/types'
 import { buildWorkflowCatalog, getPreparedLeadResearchInput, validatePreparedLeadUrl } from '../lib/business/workflow-catalog'
 import { workflowTemplates } from '../lib/business/demo-data'
+import { DEFAULT_RUN_HISTORY_LIMIT, defaultRunHistory, groupLeadQualifications, isActiveWorkflowStatus, runProspectLabel, sortAndDedupeRuns } from '../lib/business/workflow-history'
+import type { AgentFinding, WorkflowRun } from '../lib/business/types'
 
 beforeEach(() => {
   businessStore.reset()
@@ -66,6 +68,67 @@ test('prepared Lead Research URL remains editable and invalid input cannot run',
   assert.deepEqual(validatePreparedLeadUrl('example.com'), { ok: true, leadUrl: 'https://example.com/' })
   assert.equal(validatePreparedLeadUrl('file:///etc/passwd').ok, false)
   assert.equal(validatePreparedLeadUrl('not a url').ok, false)
+})
+
+function historyRun(id: string, startedAt: string, leadUrl = 'https://stripe.com/', status: WorkflowRun['status'] = 'COMPLETED'): WorkflowRun {
+  return { id, organizationId: 'org-growth-labs', workflowId: 'lead-workflow', status, startedAt, completedAt: status === 'COMPLETED' ? startedAt : undefined, resultMetadata: { workflowInput: { leadUrl }, ai: { provider: 'mock', model: 'deterministic' } }, steps: [], resultSummary: 'Research completed.', idempotencyKey: id }
+}
+
+function qualification(id: string, createdAt: string, prospectUrl: string, company = 'Stripe', fitScore = 82): AgentFinding {
+  return { id, organizationId: 'org-growth-labs', agentType: 'LEAD_RESEARCH', findingType: 'LEAD_QUALIFICATION', title: company, content: 'Qualification', structuredData: { company, fitScore, confidence: 0.74, provenance: { prospectUrl }, ai: { provider: 'mock', mode: 'mock' } }, source: 'AIBeat Business deterministic mock', sourceUrl: prospectUrl, confidence: 0.74, createdAt, workflowRunId: `run-${id}`, humanVerified: false, status: 'ACTIVE' }
+}
+
+test('workflow history sorts newest first, removes duplicate ids, and defaults to eight runs', () => {
+  const runs = Array.from({ length: 10 }, (_, index) => historyRun(`run-${index}`, `2026-09-01T${String(index).padStart(2, '0')}:00:00.000Z`))
+  const withDuplicate = [runs[0], ...runs, { ...runs[0], resultSummary: 'duplicate render candidate' }]
+  const ordered = sortAndDedupeRuns(withDuplicate)
+  assert.equal(ordered[0].id, 'run-9')
+  assert.equal(ordered.filter((run) => run.id === 'run-0').length, 1)
+  assert.equal(defaultRunHistory(withDuplicate).length, DEFAULT_RUN_HISTORY_LIMIT)
+  assert.equal(defaultRunHistory(withDuplicate, true).length, 10)
+})
+
+test('lead qualification history groups normalized prospect URLs without collapsing other domains', () => {
+  const findings = [
+    qualification('stripe-old', '2026-09-01T10:00:00.000Z', 'https://www.stripe.com/'),
+    qualification('stripe-new', '2026-09-01T11:00:00.000Z', 'stripe.com'),
+    qualification('other', '2026-09-01T12:00:00.000Z', 'https://stripe.example/', 'Stripe Example'),
+  ]
+  const groups = groupLeadQualifications(findings, [])
+  assert.equal(groups.length, 2)
+  const stripe = groups.find((group) => group.key === 'url:stripe.com')
+  assert.ok(stripe)
+  assert.equal(stripe.latest.id, 'stripe-new')
+  assert.deepEqual(stripe.history.map((finding) => finding.id), ['stripe-new', 'stripe-old'])
+  assert.equal(groups.some((group) => group.key === 'url:stripe.example'), true)
+})
+
+test('a newly executed finding becomes the displayed latest qualification and increments history', () => {
+  const old = qualification('old', '2026-09-01T10:00:00.000Z', 'stripe.com', 'Stripe', 70)
+  const initial = groupLeadQualifications([old], [historyRun('run-old', old.createdAt)])[0]
+  const newest = qualification('new', '2026-09-01T11:00:00.000Z', 'https://www.stripe.com/', 'Stripe', 91)
+  const updated = groupLeadQualifications([newest, old], [historyRun('run-new', newest.createdAt), historyRun('run-old', old.createdAt)])[0]
+  assert.equal(initial.latest.id, 'old')
+  assert.equal(updated.latest.id, 'new')
+  assert.equal(updated.history.length, 2)
+})
+
+test('run history uses the normalized prospect label and identifies mock results', () => {
+  const run = historyRun('run-mock', '2026-09-01T10:00:00.000Z', 'https://www.stripe.com/')
+  assert.equal(runProspectLabel(run), 'stripe.com')
+  const source = readFileSync('components/business/BusinessWorkspace.tsx', 'utf8')
+  assert.match(source, /Mock AI · Mock test result/)
+  assert.match(source, /Show older runs/)
+})
+
+test('duplicate-run guard only treats active statuses as blocking', () => {
+  assert.equal(isActiveWorkflowStatus('RUNNING'), true)
+  assert.equal(isActiveWorkflowStatus('WAITING_FOR_APPROVAL'), true)
+  assert.equal(isActiveWorkflowStatus('COMPLETED'), false)
+  assert.equal(isActiveWorkflowStatus('FAILED'), false)
+  const source = readFileSync('lib/business/supabase-store.ts', 'utf8')
+  assert.match(source, /\.in\('status', \['RUNNING', 'WAITING_FOR_APPROVAL'\]\)/)
+  assert.match(source, /contains\('result_metadata', \{ workflowInput: \{ leadUrl: workflowInput\.leadUrl \} \}\)/)
 })
 
 test('unknown workflow suggestions are ignored and direct workflow catalog retains all five templates', () => {
