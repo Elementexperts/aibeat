@@ -74,6 +74,7 @@ export function SubmitToolForm() {
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({ ...EMPTY_FORM, selectedPlan: initialPlan.id })
   const [submitted, setSubmitted] = useState(false)
+  const [submissionId, setSubmissionId] = useState('')
   const [loading, setLoading] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -145,6 +146,7 @@ export function SubmitToolForm() {
         return
       }
       window.gtag?.('event', FOUNDER_ANALYTICS_EVENTS.founderFormComplete, { event_category: 'founder_services', plan_id: selectedPlan.id })
+      setSubmissionId(typeof data?.submissionId === 'string' ? data.submissionId : '')
       setSubmitted(true)
     } catch {
       setError('Could not submit right now. Please try again.')
@@ -164,7 +166,7 @@ export function SubmitToolForm() {
           AIBeat reviews every request before listing, featuring, publishing, or confirming payment steps.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          {paidPlan ? (
+          {paidPlan && submissionId ? (
             <CheckoutButton
               planId={selectedPlan.id}
               label="Pay securely with Stripe"
@@ -172,11 +174,12 @@ export function SubmitToolForm() {
               productName={form.name}
               website={form.url}
               company={form.company}
+              submissionId={submissionId}
             />
           ) : (
             <Link href="/for-founders" className="inline-flex justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">Compare plans</Link>
           )}
-          <button type="button" onClick={() => { setSubmitted(false); setForm({ ...EMPTY_FORM, selectedPlan: 'free' }); setStep(0); setError(null) }} className="inline-flex justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white">Submit another</button>
+          <button type="button" onClick={() => { setSubmitted(false); setSubmissionId(''); setForm({ ...EMPTY_FORM, selectedPlan: 'free' }); setStep(0); setError(null) }} className="inline-flex justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white">Submit another</button>
         </div>
       </div>
     )

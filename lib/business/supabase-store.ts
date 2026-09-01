@@ -255,6 +255,16 @@ export class SupabaseBusinessDataStore {
     return mapWorkflow(data)
   }
 
+  async getOrCreateWorkflowFromTemplate(actor: Actor, template: WorkflowDefinition): Promise<WorkflowDefinition> {
+    const { data: existing, error: readError } = await this.supabase.from('workflows').select('*').eq('organization_id', actor.organizationId).eq('template_id', template.id).order('created_at', { ascending: true }).limit(1).maybeSingle()
+    if (readError) throw new Error('Unable to prepare workflow')
+    if (existing) return mapWorkflow(existing)
+    const { data, error } = await this.supabase.from('workflows').insert({ organization_id: actor.organizationId, template_id: template.id, name: template.name, description: template.description, agent_type: template.agentType, trigger: template.trigger, schedule: template.schedule, inputs: template.inputs, steps: template.steps, required_integrations: template.requiredIntegrations, approval_policy: template.approvalPolicy, output_definition: template.outputDefinition, status: 'ACTIVE', version: template.version, created_by: actor.userId }).select('*').single()
+    if (error || !data) throw new Error('Unable to prepare workflow')
+    await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_CREATED', entityId: data.id, summary: `Workflow prepared from template: ${template.name}` })
+    return mapWorkflow(data)
+  }
+
   async updateWorkflow(actor: Actor, workflowId: string, patch: Partial<WorkflowDefinition>): Promise<WorkflowDefinition> {
     const { data, error } = await this.supabase.from('workflows').update(toWorkflowPatch(patch)).eq('id', workflowId).eq('organization_id', actor.organizationId).select('*').single()
     if (error || !data) throw new Error('Workflow not found')

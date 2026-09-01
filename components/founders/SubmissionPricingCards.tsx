@@ -1,8 +1,8 @@
 'use client'
 
-import { CheckCircle2 } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { getPaidSubmissionPlans } from '@/data/founder-services'
-import { CheckoutButton } from './CheckoutButton'
 
 export function SubmissionPricingCards() {
   const plans = getPaidSubmissionPlans()
@@ -45,9 +45,14 @@ export function SubmissionPricingCards() {
             {plan.turnaround && <p className="mt-5 text-xs leading-6 text-slate-400">Expected review turnaround: {plan.turnaround}</p>}
             <p className="mt-3 text-xs leading-6 text-slate-500">{plan.disclosure}</p>
 
-            <div className="mt-6">
-              <CheckoutButton planId={plan.id} label={plan.ctaLabel} fullWidth />
-            </div>
+            <Link
+              href={`/submit?plan=${encodeURIComponent(plan.id)}`}
+              data-plan-id={plan.id}
+              className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-black text-black transition hover:bg-cyan-100"
+            >
+              {plan.ctaLabel}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </article>
         )
       })}

@@ -17,6 +17,7 @@ export function CheckoutButton({
   productName,
   website,
   company,
+  submissionId,
   fullWidth = false,
 }: {
   planId: string
@@ -25,6 +26,7 @@ export function CheckoutButton({
   productName?: string
   website?: string
   company?: string
+  submissionId?: string
   fullWidth?: boolean
 }) {
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle')
@@ -40,7 +42,7 @@ export function CheckoutButton({
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier, email, productName, website, company }),
+        body: JSON.stringify({ tier, email, productName, website, company, submissionId }),
       })
       const data = await res.json()
 

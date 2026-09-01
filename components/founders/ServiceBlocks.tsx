@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { ArrowRight, CheckCircle2, ShieldCheck, XCircle } from 'lucide-react'
 import { DISCLOSURE_RULES, FEATURE_MATRIX_COLUMNS, FEATURE_MATRIX_ROWS, FOUNDER_PROCESS, FOUNDER_SERVICE_PLANS, PAID_SUBMISSION_PLAN_IDS, formatPlanPrice, inquiryHref, type FounderServicePlan } from '@/lib/founder-services'
 import { founderEventForPlan, FOUNDER_ANALYTICS_EVENTS, type FounderAnalyticsEvent } from '@/lib/analytics'
-import { CheckoutButton } from './CheckoutButton'
 import { FounderAnalytics } from './FounderAnalytics'
 
 const categoryTone: Record<FounderServicePlan['category'], string> = {
@@ -83,7 +82,8 @@ export function FounderHero({
 }
 
 export function ServiceCard({ item, compact = false }: { item: FounderServicePlan; compact?: boolean }) {
-  const checkoutEnabled = PAID_SUBMISSION_PLAN_IDS.includes(item.id as typeof PAID_SUBMISSION_PLAN_IDS[number])
+  const isPaidSubmissionPlan = PAID_SUBMISSION_PLAN_IDS.includes(item.id as typeof PAID_SUBMISSION_PLAN_IDS[number])
+  const ctaHref = isPaidSubmissionPlan ? `/submit?plan=${encodeURIComponent(item.id)}` : item.ctaHref
 
   return (
     <article className="premium-card flex h-full flex-col p-5 md:p-6">
@@ -111,16 +111,10 @@ export function ServiceCard({ item, compact = false }: { item: FounderServicePla
       <p className="mt-5 text-xs leading-6 text-slate-500">{item.disclosure}</p>
       {item.placementDuration && <p className="mt-4 text-xs leading-6 text-cyan-100">Duration: {item.placementDuration}</p>}
       {item.turnaround && <p className="mt-2 text-xs leading-6 text-slate-400">Turnaround: {item.turnaround}</p>}
-      {checkoutEnabled ? (
-        <div className="mt-6">
-          <CheckoutButton planId={item.id} label={item.ctaLabel} fullWidth />
-        </div>
-      ) : (
-        <Link href={item.ctaHref} data-founder-event={founderEventForPlan(item.id)} data-plan-id={item.id} className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
-          {item.ctaLabel}
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      )}
+      <Link href={ctaHref} data-founder-event={founderEventForPlan(item.id)} data-plan-id={item.id} className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-cyan-100">
+        {item.ctaLabel}
+        <ArrowRight className="h-4 w-4" />
+      </Link>
     </article>
   )
 }

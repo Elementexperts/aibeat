@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 
 import {
   FEATURE_MATRIX_ROWS,
@@ -76,6 +77,27 @@ test('paid submission plans never include or grant Verified status', () => {
     assert.equal(plan.verificationRequired, undefined)
     assert.ok(plan.exclusions?.some((entry) => entry.includes('Verified badge')))
   }
+})
+
+test('paid pricing cards route to a preselected submission instead of direct checkout', () => {
+  const serviceCards = readFileSync('components/founders/ServiceBlocks.tsx', 'utf8')
+  const submissionCards = readFileSync('components/founders/SubmissionPricingCards.tsx', 'utf8')
+
+  assert.match(serviceCards, /`\/submit\?plan=\$\{encodeURIComponent\(item\.id\)\}`/)
+  assert.match(submissionCards, /`\/submit\?plan=\$\{encodeURIComponent\(plan\.id\)\}`/)
+  assert.equal(serviceCards.includes('<CheckoutButton'), false)
+  assert.equal(submissionCards.includes('<CheckoutButton'), false)
+})
+
+test('paid checkout is offered only after submit returns a captured submission id', () => {
+  const form = readFileSync('components/founders/SubmitToolForm.tsx', 'utf8')
+  const submitRoute = readFileSync('app/api/submit/route.ts', 'utf8')
+  const checkoutRoute = readFileSync('app/api/stripe/checkout/route.ts', 'utf8')
+
+  assert.match(form, /paidPlan && submissionId/)
+  assert.match(form, /submissionId=\{submissionId\}/)
+  assert.match(submitRoute, /success: true, submissionId/)
+  assert.match(checkoutRoute, /buildCheckoutSessionParams/)
 })
 
 test('approved AIBeat destinations normalize www and common paths', () => {

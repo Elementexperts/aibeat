@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomUUID } from 'node:crypto'
 import { formatPlanPrice, getPlanById } from '@/data/founder-services'
 import { verifyAibeatLink, type VerificationMethod } from '@/lib/aibeat-link-verification'
 
@@ -237,6 +238,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const submissionId = randomUUID()
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -259,7 +261,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Could not submit right now' }, { status: 502 })
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, submissionId })
   } catch (err) {
     console.error('Submit form error:', err)
     return NextResponse.json({ error: 'Could not submit right now' }, { status: 502 })

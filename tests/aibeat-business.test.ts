@@ -21,6 +21,8 @@ import { askAIBeat } from '../lib/business/assistant/assistant'
 import { AIBEAT_ALLOWED_ROUTES, AIBEAT_ALLOWED_WORKFLOW_IDS } from '../lib/business/assistant/product-guide'
 import { sanitizeAssistantSuggestion, validateAssistantMessage, validateAssistantResponse } from '../lib/business/assistant/validation'
 import type { AIBeatAssistantContext } from '../lib/business/assistant/types'
+import { buildWorkflowCatalog, getPreparedLeadResearchInput, validatePreparedLeadUrl } from '../lib/business/workflow-catalog'
+import { workflowTemplates } from '../lib/business/demo-data'
 
 beforeEach(() => {
   businessStore.reset()
@@ -49,6 +51,35 @@ test('Ask AIBeat prepares but does not execute Lead Research', async () => {
   assert.equal(result.intent, 'WORKFLOW_PREPARE'); assert.deepEqual(result.suggestions[0].workflowInput, { leadUrl: 'https://example.com/' })
   const source = readFileSync('app/business/actions.ts', 'utf8'); const assistantBody = source.slice(source.indexOf('askAIBeatAction'), source.indexOf('testBusinessAIConnectionAction'))
   assert.doesNotMatch(assistantBody, /runBusinessWorkflowAction|runWorkflow\(/)
+})
+
+test('workflows page accepts and renders a prepared Lead Research suggestion without auto-running', () => {
+  const pageSource = readFileSync('app/business/workflows/page.tsx', 'utf8'); const workspaceSource = readFileSync('components/business/BusinessWorkspace.tsx', 'utf8')
+  assert.match(pageSource, /searchParams\.workflow === 'tpl-lead-research'/)
+  assert.deepEqual(getPreparedLeadResearchInput({ workflowId: 'tpl-lead-research', input: { leadUrl: 'https://stripe.com/' } }), { leadUrl: 'https://stripe.com/' })
+  assert.match(workspaceSource, /Recommended by Ask AIBeat/); assert.match(workspaceSource, /value=\{preparedLeadUrl\}/); assert.match(workspaceSource, /onRunWorkflow\('tpl-lead-research', \{ leadUrl: validation\.leadUrl \}\)/)
+  assert.doesNotMatch(workspaceSource, /useEffect\([\s\S]{0,300}onRunWorkflow/)
+})
+
+test('prepared Lead Research URL remains editable and invalid input cannot run', () => {
+  assert.deepEqual(validatePreparedLeadUrl('stripe.com'), { ok: true, leadUrl: 'https://stripe.com/' })
+  assert.deepEqual(validatePreparedLeadUrl('example.com'), { ok: true, leadUrl: 'https://example.com/' })
+  assert.equal(validatePreparedLeadUrl('file:///etc/passwd').ok, false)
+  assert.equal(validatePreparedLeadUrl('not a url').ok, false)
+})
+
+test('unknown workflow suggestions are ignored and direct workflow catalog retains all five templates', () => {
+  assert.equal(getPreparedLeadResearchInput({ workflowId: 'unknown', input: { leadUrl: 'https://stripe.com/' } }), undefined)
+  const catalog = buildWorkflowCatalog([], workflowTemplates)
+  assert.deepEqual(catalog.map((workflow) => workflow.name), ['Lead Research & Qualification', 'Competitor / Market Monitoring', 'Marketing & Content Workflow', 'Weekly Business Reporting', 'Executive Daily Brief'])
+  const existing = { ...workflowTemplates[0], id: 'existing-lead', templateId: 'tpl-lead-research', organizationId: 'org-growth-labs' }
+  assert.equal(buildWorkflowCatalog([existing], workflowTemplates)[0].id, 'existing-lead')
+})
+
+test('template handoff reuses the existing workflow server action and submitted input', () => {
+  const source = readFileSync('app/business/actions.ts', 'utf8')
+  assert.match(source, /getOrCreateWorkflowFromTemplate\(actor, template\)/)
+  assert.match(source, /store\.runWorkflow\(actor, executableWorkflowId, \{ input \}\)/)
 })
 
 test('assistant suggestions enforce source-controlled route and workflow allowlists', () => {

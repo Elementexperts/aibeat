@@ -39,6 +39,7 @@ import type { AgentEvaluationResult, AgentFinding, AgentType, Approval, Business
 import { createClient } from '@/lib/supabase/client'
 import { AskAIBeat } from './AskAIBeat'
 import type { AIBeatAssistantMessage, AIBeatAssistantResponse } from '@/lib/business/assistant/types'
+import { buildWorkflowCatalog, getPreparedLeadResearchInput, validatePreparedLeadUrl } from '@/lib/business/workflow-catalog'
 
 export type BusinessWorkspaceRoute =
   | 'dashboard'
@@ -145,7 +146,7 @@ export function BusinessWorkspace({
   }
 
   function runWorkflow(id: string, input: Record<string, unknown> = {}) {
-    const workflow = data.workflows.find((candidate) => candidate.id === id)
+    const workflow = data.workflows.find((candidate) => candidate.id === id || candidate.templateId === id) ?? data.templates.find((candidate) => candidate.id === id)
     if (!workflow) return
     if (workflow.inputs.some((item) => item.required) && !Object.keys(input).length) {
       window.location.assign('/business/workflows')
@@ -605,13 +606,32 @@ function RecentActivitySection({ activities, approvals, runs }: { activities: Re
 }
 
 function Workflows({ data, runs, findings, onRunWorkflow, mode, error, runningWorkflowId, initialWorkflowSuggestion }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[]; findings: AgentFinding[]; onRunWorkflow: (id: string, input?: Record<string, unknown>) => void; mode: WorkspaceMode; error: string | null; runningWorkflowId: string | null; initialWorkflowSuggestion?: { workflowId: string; input: Record<string, string> } }) {
-  const suggestedWorkflow = initialWorkflowSuggestion ? data.workflows.find((workflow) => workflow.templateId === initialWorkflowSuggestion.workflowId || workflow.id === initialWorkflowSuggestion.workflowId) : undefined
+  const catalog = buildWorkflowCatalog(data.workflows, data.templates)
+  const suggestedWorkflow = initialWorkflowSuggestion ? catalog.find((workflow) => workflow.templateId === initialWorkflowSuggestion.workflowId || workflow.id === initialWorkflowSuggestion.workflowId) : undefined
   const [workflowInputs, setWorkflowInputs] = useState<Record<string, Record<string, string>>>(suggestedWorkflow && initialWorkflowSuggestion ? { [suggestedWorkflow.id]: initialWorkflowSuggestion.input } : {})
+  const preparedInput = getPreparedLeadResearchInput(initialWorkflowSuggestion)
+  const [preparedLeadUrl, setPreparedLeadUrl] = useState(preparedInput?.leadUrl ?? '')
+  const [preparedError, setPreparedError] = useState<string | null>(null)
+  function runPreparedLeadResearch() {
+    const validation = validatePreparedLeadUrl(preparedLeadUrl)
+    if (!validation.ok) { setPreparedError(validation.error); return }
+    setPreparedError(null)
+    onRunWorkflow('tpl-lead-research', { leadUrl: validation.leadUrl })
+  }
   return (
     <Panel title="Structured Workflows" icon={GitBranch}>
       <div className="space-y-4">
         {error && <div className="rounded-md border border-rose-300/30 bg-rose-300/10 p-3 text-sm text-rose-100">{error}</div>}
-        {data.workflows.map((workflow) => (
+        {preparedInput && <div className="rounded-lg border border-cyan-300/30 bg-cyan-300/[0.07] p-5">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-cyan-100">Recommended by Ask AIBeat</p>
+          <h3 className="mt-2 text-xl font-black">Lead Research &amp; Qualification</h3>
+          <label className="mt-4 block max-w-xl text-sm font-semibold text-slate-200">Prospect website<input aria-label="Prepared prospect website" value={preparedLeadUrl} onChange={(event) => { setPreparedLeadUrl(event.target.value); setPreparedError(null) }} className="mt-2 w-full rounded-md border border-white/10 bg-[#101820] px-3 py-2.5 text-sm text-white" /></label>
+          {preparedError && <p className="mt-2 text-sm text-rose-200">{preparedError}</p>}
+          <div className="mt-4"><p className="text-sm font-semibold text-white">AIBeat will:</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-300"><li>Research the prospect&apos;s public website</li><li>Compare it against Business Memory and your ICP</li><li>Calculate qualification and confidence</li><li>Identify evidence, likely needs, and risks</li><li>Prepare the recommended next action</li><li>Stop at the approval boundary before external action</li></ul></div>
+          <div className="mt-5 flex flex-wrap gap-2"><Link href="/business/ask" className="rounded-md border border-white/15 px-4 py-2 text-sm font-black text-white">Back to Ask AIBeat</Link><button type="button" disabled={runningWorkflowId === 'tpl-lead-research' || !preparedLeadUrl.trim()} onClick={runPreparedLeadResearch} className="inline-flex items-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400"><Play className="h-4 w-4" />{runningWorkflowId === 'tpl-lead-research' ? 'Running…' : 'Run Lead Research'}</button></div>
+        </div>}
+        <h3 className="pt-2 text-sm font-black uppercase tracking-[0.16em] text-slate-400">Workflow Catalog</h3>
+        {catalog.map((workflow) => (
           <div key={workflow.id} className="rounded-lg border border-white/10 bg-black/20 p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>

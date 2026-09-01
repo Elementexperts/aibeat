@@ -9,6 +9,7 @@ import { buildAssistantContext } from '@/lib/business/assistant/context'
 import type { AIBeatAssistantMessage } from '@/lib/business/assistant/types'
 import { ModelConfigurationError, ModelProviderError, ModelResponseValidationError } from '@/lib/business/model-router'
 import { testAIConnection } from '@/lib/business/ai-runtime'
+import { getWorkflowTemplates } from '@/lib/business/workflows'
 
 const BUSINESS_DOCUMENT_BUCKET = 'business-documents'
 
@@ -38,7 +39,10 @@ export async function testBusinessAIConnectionAction() {
 export async function runBusinessWorkflowAction(workflowId: string, input: Record<string, unknown> = {}) {
   const auth = await getAuthenticatedBusinessContext()
   const store = new SupabaseBusinessDataStore(createClient())
-  const result = await store.runWorkflow({ organizationId: auth.organizationId, userId: auth.userId }, workflowId, { input })
+  const actor = { organizationId: auth.organizationId, userId: auth.userId }
+  const template = getWorkflowTemplates().find((candidate) => candidate.id === workflowId)
+  const executableWorkflowId = template ? (await store.getOrCreateWorkflowFromTemplate(actor, template)).id : workflowId
+  const result = await store.runWorkflow(actor, executableWorkflowId, { input })
   revalidateBusinessPaths()
   return result
 }
