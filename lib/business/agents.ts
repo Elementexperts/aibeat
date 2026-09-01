@@ -1,4 +1,5 @@
 import { getAgentIndustryInstructions } from './industry-profiles'
+import { isLeadResearchOutput } from './lead-research'
 import type { AgentDefinition, AgentExecutionContext, AgentFinding, AgentType, ConnectorExecutionRecord } from './types'
 
 export const AGENT_REGISTRY: Record<AgentType, AgentDefinition> = {
@@ -84,6 +85,7 @@ export const AGENT_REGISTRY: Record<AgentType, AgentDefinition> = {
 }
 
 export function validateAgentOutput(agentType: AgentType, output: Record<string, unknown>): boolean {
+  if (agentType === 'LEAD_RESEARCH') return isLeadResearchOutput(output)
   const schema = AGENT_REGISTRY[agentType].outputSchema
   return Object.keys(schema).every((key) => key in output)
 }
@@ -175,6 +177,7 @@ export function executeAgentMock(ctx: AgentExecutionContext, agentType: AgentTyp
       findingType: 'mock_mvp_output',
       title: `${AGENT_REGISTRY[agentType].name} demo output`,
       content: JSON.stringify(output),
+      structuredData: output,
       source: 'AIBeat Business mock agent runtime',
       sourceDate: new Date().toISOString().slice(0, 10),
       confidence: Number(output.confidence ?? 0.74),
@@ -264,7 +267,7 @@ export function executeAgentRuntime(ctx: AgentExecutionContext, agentType: Agent
       findingType: 'workflow_runtime_output',
       title: `${AGENT_REGISTRY[agentType].name} runtime output`,
       content: JSON.stringify(output),
-      structuredData: { connectorExecutions },
+      structuredData: { ...output, connectorExecutions },
       source: 'AIBeat Business workflow runtime',
       sourceDate: new Date().toISOString().slice(0, 10),
       confidence: Number(output.confidence ?? confidence),

@@ -34,7 +34,7 @@ import { AGENT_REGISTRY, executeAgentMock } from '@/lib/business/agents'
 import { getBusinessWorkspaceData, type BusinessWorkspaceData } from '@/lib/business/workspace'
 import { getAgentIndustryInstructions, INDUSTRY_PROFILE_LABELS } from '@/lib/business/industry-profiles'
 import { decideApproval, runWorkflowManual } from '@/lib/business/workflows'
-import type { AgentEvaluationResult, AgentType, Approval, BusinessDocumentIngestionResult, IndustryProfile, IntegrationConnection, IntegrationConnectionStatus, OrganizationMember, Role, WorkflowRun } from '@/lib/business/types'
+import type { AgentEvaluationResult, AgentFinding, AgentType, Approval, BusinessDocumentIngestionResult, IndustryProfile, IntegrationConnection, IntegrationConnectionStatus, OrganizationMember, Role, WorkflowRun } from '@/lib/business/types'
 import { createClient } from '@/lib/supabase/client'
 
 export type BusinessWorkspaceRoute =
@@ -93,7 +93,7 @@ export function BusinessWorkspace({
   route: BusinessWorkspaceRoute
   workflowId?: string
   initialData?: BusinessWorkspaceData
-  onRunWorkflow?: (workflowId: string) => Promise<{ run: WorkflowRun; approval?: Approval }>
+  onRunWorkflow?: (workflowId: string, input?: Record<string, unknown>) => Promise<{ run: WorkflowRun; approval?: Approval; finding?: AgentFinding }>
   onDecideApproval?: (approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) => Promise<Approval>
   onUploadDocument?: (formData: FormData) => Promise<BusinessDocumentIngestionResult>
   onUpdateIntegration?: (integrationId: string, action: 'disconnect' | 'reconnect' | 'mark-expired') => Promise<IntegrationConnection>
@@ -113,6 +113,9 @@ export function BusinessWorkspace({
   const [selectedProfile, setSelectedProfile] = useState<IndustryProfile>(data.organization.primaryProfile)
   const [approvals, setApprovals] = useState<Approval[]>(data.approvals)
   const [runs, setRuns] = useState<WorkflowRun[]>(data.runs)
+  const [findings, setFindings] = useState<AgentFinding[]>(data.findings)
+  const [workflowError, setWorkflowError] = useState<string | null>(null)
+  const [runningWorkflowId, setRunningWorkflowId] = useState<string | null>(null)
   const [memoryData, setMemoryData] = useState(data)
   const [demoAgentOutput, setDemoAgentOutput] = useState<Record<string, unknown> | null>(null)
   const activeWorkflow = data.workflows.find((workflow) => workflow.id === workflowId) ?? data.workflows[0]
@@ -130,14 +133,23 @@ export function BusinessWorkspace({
     window.location.assign('/business')
   }
 
-  function runWorkflow(id: string) {
+  function runWorkflow(id: string, input: Record<string, unknown> = {}) {
     const workflow = data.workflows.find((candidate) => candidate.id === id)
     if (!workflow) return
+    if (workflow.inputs.some((item) => item.required) && !Object.keys(input).length) {
+      window.location.assign('/business/workflows')
+      return
+    }
     if (!isDemo && onRunWorkflow) {
       startTransition(async () => {
-        const result = await onRunWorkflow(id)
-        setRuns((current) => [result.run, ...current.filter((run) => run.id !== result.run.id)])
-        if (result.approval) setApprovals((current) => [result.approval!, ...current.filter((approval) => approval.id !== result.approval?.id)])
+        setWorkflowError(null); setRunningWorkflowId(id)
+        try {
+          const result = await onRunWorkflow(id, input)
+          setRuns((current) => [result.run, ...current.filter((run) => run.id !== result.run.id)])
+          if (result.approval) setApprovals((current) => [result.approval!, ...current.filter((approval) => approval.id !== result.approval?.id)])
+          if (result.finding) setFindings((current) => [result.finding!, ...current.filter((finding) => finding.id !== result.finding?.id)])
+        } catch (error) { setWorkflowError(error instanceof Error ? error.message : 'Workflow could not be run.') }
+        finally { setRunningWorkflowId(null) }
       })
       return
     }
@@ -261,7 +273,7 @@ export function BusinessWorkspace({
         <section className="min-w-0">
           {isDemo && <DemoNotice />}
           {route === 'dashboard' && <Dashboard data={data} approvals={approvals} runs={runs} onRunWorkflow={runWorkflow} mode={mode} />}
-          {route === 'workflows' && <Workflows data={data} runs={runs} onRunWorkflow={runWorkflow} mode={mode} />}
+          {route === 'workflows' && <Workflows data={data} runs={runs} findings={findings} onRunWorkflow={runWorkflow} mode={mode} error={workflowError} runningWorkflowId={runningWorkflowId} />}
           {route === 'workflow-detail' && activeWorkflow && <WorkflowDetail workflow={activeWorkflow} runs={runs.filter((run) => run.workflowId === activeWorkflow.id)} onRunWorkflow={runWorkflow} mode={mode} />}
           {route === 'agents' && (
             <Agents
@@ -580,10 +592,12 @@ function RecentActivitySection({ activities, approvals, runs }: { activities: Re
   )
 }
 
-function Workflows({ data, runs, onRunWorkflow, mode }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[]; onRunWorkflow: (id: string) => void; mode: WorkspaceMode }) {
+function Workflows({ data, runs, findings, onRunWorkflow, mode, error, runningWorkflowId }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[]; findings: AgentFinding[]; onRunWorkflow: (id: string, input?: Record<string, unknown>) => void; mode: WorkspaceMode; error: string | null; runningWorkflowId: string | null }) {
+  const [workflowInputs, setWorkflowInputs] = useState<Record<string, Record<string, string>>>({})
   return (
     <Panel title="Structured Workflows" icon={GitBranch}>
       <div className="space-y-4">
+        {error && <div className="rounded-md border border-rose-300/30 bg-rose-300/10 p-3 text-sm text-rose-100">{error}</div>}
         {data.workflows.map((workflow) => (
           <div key={workflow.id} className="rounded-lg border border-white/10 bg-black/20 p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -597,21 +611,41 @@ function Workflows({ data, runs, onRunWorkflow, mode }: { data: ReturnType<typeo
                   <span className="rounded-md bg-white/[0.06] px-2 py-1">{workflow.status}</span>
                 </div>
               </div>
-              <button type="button" disabled={workflow.status !== 'ACTIVE'} onClick={() => onRunWorkflow(workflow.id)} className="inline-flex items-center justify-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
+              <div className="w-full max-w-sm space-y-2">
+              {workflow.inputs.map((input) => <label key={input.key} className="block text-xs font-semibold text-slate-300">{input.label}<input aria-label={input.label} value={workflowInputs[workflow.id]?.[input.key] ?? ''} onChange={(event) => setWorkflowInputs((current) => ({ ...current, [workflow.id]: { ...current[workflow.id], [input.key]: event.target.value } }))} placeholder={input.key === 'leadUrl' ? 'example.com' : input.label} className="mt-1 w-full rounded-md border border-white/10 bg-[#101820] px-3 py-2 text-sm text-white placeholder:text-slate-500" /></label>)}
+              <button type="button" disabled={workflow.status !== 'ACTIVE' || runningWorkflowId === workflow.id || workflow.inputs.some((input) => input.required && !(workflowInputs[workflow.id]?.[input.key] ?? '').trim())} onClick={() => onRunWorkflow(workflow.id, workflowInputs[workflow.id] ?? {})} className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
                 <Play className="h-4 w-4" />
-                {mode === 'demo' ? 'Simulate Manual Run' : 'Manual Run'}
+                {runningWorkflowId === workflow.id ? 'Running…' : mode === 'demo' ? 'Simulate Manual Run' : 'Manual Run'}
               </button>
+              </div>
             </div>
           </div>
         ))}
         <h3 className="pt-4 text-sm font-black uppercase tracking-[0.16em] text-slate-400">Run History</h3>
         {runs.map((run) => <RunTimeline key={run.id} run={run} />)}
+        <h3 className="pt-4 text-sm font-black uppercase tracking-[0.16em] text-slate-400">Lead Qualifications</h3>
+        {findings.filter((finding) => finding.agentType === 'LEAD_RESEARCH').map((finding) => <LeadQualification key={finding.id} finding={finding} run={runs.find((run) => run.id === finding.workflowRunId)} />)}
       </div>
     </Panel>
   )
 }
 
-function WorkflowDetail({ workflow, runs, onRunWorkflow, mode }: { workflow: ReturnType<typeof getBusinessWorkspaceData>['workflows'][number]; runs: WorkflowRun[]; onRunWorkflow: (id: string) => void; mode: WorkspaceMode }) {
+function LeadQualification({ finding, run }: { finding: AgentFinding; run?: WorkflowRun }) {
+  const result = finding.structuredData ?? {}
+  const list = (key: string) => Array.isArray(result[key]) ? (result[key] as string[]) : []
+  const ai = result.ai && typeof result.ai === 'object' ? result.ai as Record<string, unknown> : run?.resultMetadata?.ai as Record<string, unknown> | undefined
+  return <div className="rounded-lg border border-emerald-300/20 bg-emerald-300/[0.06] p-5">
+    <div className="flex flex-wrap justify-between gap-2"><h4 className="text-lg font-black">{String(result.company ?? finding.title)}</h4><StatusBadge status={run?.status ?? finding.status} tone={run?.status === 'WAITING_FOR_APPROVAL' ? 'amber' : 'green'} /></div>
+    {run?.status === 'WAITING_FOR_APPROVAL' && <p className="mt-2 text-sm font-semibold text-amber-100">Research completed — next action requires approval.</p>}
+    <div className="mt-4 grid gap-3 sm:grid-cols-2"><Metric label="Fit score" value={String(result.fitScore ?? '—')} /><Metric label="Confidence" value={typeof result.confidence === 'number' ? `${Math.round(result.confidence * 100)}%` : '—'} /></div>
+    {[['Reasons', list('reasons')], ['Evidence', list('evidence')], ['Likely needs', list('likelyNeeds')], ['Risks', list('risks')]].map(([label, values]) => <div key={label as string} className="mt-4"><strong className="text-sm">{label as string}</strong><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-300">{(values as string[]).map((value) => <li key={value}>{value}</li>)}</ul></div>)}
+    <p className="mt-4 text-sm"><strong>Recommended next action:</strong> {String(result.recommendedNextAction ?? '')}</p><p className="mt-2 text-sm"><strong>Outreach angle:</strong> {String(result.suggestedOutreachAngle ?? '')}</p>
+    {ai && <p className="mt-4 text-xs text-slate-400">AI: {String(ai.provider ?? ai.aiMode ?? ai.mode ?? 'mock')} / {String(ai.model ?? 'deterministic fixture')}</p>}
+  </div>
+}
+
+function WorkflowDetail({ workflow, runs, onRunWorkflow, mode }: { workflow: ReturnType<typeof getBusinessWorkspaceData>['workflows'][number]; runs: WorkflowRun[]; onRunWorkflow: (id: string, input?: Record<string, unknown>) => void; mode: WorkspaceMode }) {
+  const [inputs, setInputs] = useState<Record<string, string>>({})
   return (
     <div className="space-y-6">
       <Panel title={workflow.name} icon={GitBranch}>
@@ -622,7 +656,8 @@ function WorkflowDetail({ workflow, runs, onRunWorkflow, mode }: { workflow: Ret
           <Metric label="Trigger" value={workflow.schedule ?? workflow.trigger} />
           <Metric label="Approval Boundary" value={workflow.approvalPolicy.requiredForRisks.join(', ')} />
         </div>
-        <button type="button" disabled={workflow.status !== 'ACTIVE'} onClick={() => onRunWorkflow(workflow.id)} className="mt-5 inline-flex items-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
+        <div className="mt-5 max-w-md space-y-3">{workflow.inputs.map((input) => <label key={input.key} className="block text-xs font-semibold text-slate-300">{input.label}<input value={inputs[input.key] ?? ''} onChange={(event) => setInputs((current) => ({ ...current, [input.key]: event.target.value }))} className="mt-1 w-full rounded-md border border-white/10 bg-[#101820] px-3 py-2 text-sm text-white" /></label>)}</div>
+        <button type="button" disabled={workflow.status !== 'ACTIVE' || workflow.inputs.some((input) => input.required && !(inputs[input.key] ?? '').trim())} onClick={() => onRunWorkflow(workflow.id, inputs)} className="mt-5 inline-flex items-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
           <Play className="h-4 w-4" />
           {mode === 'demo' ? 'Simulate Workflow' : 'Run Workflow'}
         </button>

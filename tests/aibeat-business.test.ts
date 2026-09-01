@@ -14,9 +14,53 @@ import { isAuthenticatedBusinessPath, isPrivateBusinessPath, isPublicBusinessPat
 import { businessStore } from '../lib/business/store'
 import { getBusinessWorkspaceData } from '../lib/business/workspace'
 import { decideApproval, getOrganizationWorkflows, runWorkflowManual } from '../lib/business/workflows'
+import { isLeadResearchOutput, normalizeLeadUrl, validateWorkflowInput } from '../lib/business/lead-research'
+import { getBusinessAIMode, getModelRouter, MockModelRouter } from '../lib/business/model-router'
+import { mapGeminiUsage } from '../lib/business/model-providers/gemini'
 
 beforeEach(() => {
   businessStore.reset()
+})
+
+test('AIBeat Business AI mode defaults safely to mock', () => {
+  assert.equal(getBusinessAIMode({}), 'mock')
+  assert.equal(getBusinessAIMode({ AIBEAT_BUSINESS_AI_MODE: 'mock' }), 'mock')
+})
+
+test('mock model router needs no Gemini key and returns valid deterministic Lead Research', async () => {
+  const router = await getModelRouter({ AIBEAT_BUSINESS_AI_MODE: 'mock' })
+  assert.equal(router instanceof MockModelRouter, true)
+  const result = await router.extractStructured<unknown>('https://example.com', 'LEAD_RESEARCH')
+  assert.equal(isLeadResearchOutput(result.data), true)
+  assert.equal(result.usage.provider, 'mock')
+  assert.equal(result.usage.tokensIn, 0)
+})
+
+test('Lead Research validation rejects malformed structured output', () => {
+  assert.equal(isLeadResearchOutput({ leadName: 'x', company: 'y', fitScore: 101, confidence: 2, reasons: [], evidence: [], likelyNeeds: [], risks: [], recommendedNextAction: 'x', suggestedOutreachAngle: 'y' }), false)
+  assert.equal(isLeadResearchOutput({}), false)
+})
+
+test('Lead Research workflow input requires and normalizes a public web URL', () => {
+  assert.throws(() => validateWorkflowInput([{ key: 'leadUrl', required: true }], {}), /required/i)
+  assert.equal(normalizeLeadUrl(' example.com '), 'https://example.com/')
+  assert.throws(() => normalizeLeadUrl('file:///etc/passwd'), /http or https/i)
+})
+
+test('live Gemini mode without server key fails before client initialization', async () => {
+  await assert.rejects(() => getModelRouter({ AIBEAT_BUSINESS_AI_MODE: 'live', AIBEAT_BUSINESS_AI_PROVIDER: 'gemini' }), /GEMINI_API_KEY/)
+})
+
+test('Gemini usage mapping preserves real metadata and safely defaults missing counts', () => {
+  assert.deepEqual(mapGeminiUsage(undefined, 'gemini-2.5-flash', 125, 'run-1'), { provider: 'gemini', model: 'gemini-2.5-flash', tokensIn: 0, tokensOut: 0, estimatedCostUsd: 0, latencyMs: 125, runId: 'run-1' })
+  assert.equal(mapGeminiUsage({ promptTokenCount: 12, responseTokenCount: 7 }, 'model', 1, 'run').tokensOut, 7)
+})
+
+test('Lead Research implementation persists input and result before approval without a migration', () => {
+  const source = readFileSync('lib/business/supabase-store.ts', 'utf8')
+  assert.match(source, /result_metadata: \{ workflowInput \}/)
+  assert.match(source, /step\.id === 'score-lead'[\s\S]*persistLeadResearchFinding/)
+  assert.match(source, /finding && approval \? 'Research completed — next action requires approval\.'/)
 })
 
 test('Business Context retrieval is tenant isolated', () => {

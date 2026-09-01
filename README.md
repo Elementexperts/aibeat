@@ -91,3 +91,8 @@ NEXT_PUBLIC_ADSENSE_ID=ca-pub-XXXXX   # Google AdSense
 KIT_API_KEY=your_kit_api_key           # Kit API key
 KIT_FORM_ID=your_kit_form_id           # Kit form ID
 ```
+# AIBeat Business AI execution
+
+AIBeat Business defaults to zero-cost mock execution: `AIBEAT_BUSINESS_AI_MODE=mock`. Mock mode needs no Gemini key and makes neither Gemini nor prospect-website requests.
+
+For live Lead Research, configure server-side environment variables outside Git: `AIBEAT_BUSINESS_AI_MODE=live`, `AIBEAT_BUSINESS_AI_PROVIDER=gemini`, `AIBEAT_BUSINESS_MODEL=<supported Gemini model>`, and `GEMINI_API_KEY=<secret>`. The model currently documented as the fallback is `gemini-2.5-flash`. Redeploy Vercel after changing environment variables. Never expose the key through a `NEXT_PUBLIC_` variable.

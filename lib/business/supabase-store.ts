@@ -5,6 +5,10 @@ import { evaluateAgentFinding } from './evaluations'
 import { workflowTemplates } from './demo-data'
 import { rankBusinessMemoryChunks } from './vector-retrieval'
 import { canAutoExecuteRisk, sanitizeAuditSummary } from './security'
+import { buildLeadResearchPrompt } from './agent-prompts'
+import { isLeadResearchOutput, validateWorkflowInput } from './lead-research'
+import { getBusinessAIMode, getModelRouter, type ModelUsage } from './model-router'
+import { researchProspectWebsite, type ProspectEvidence } from './prospect-research'
 import type {
   AIRecommendation,
   AIToolSubscription,
@@ -479,9 +483,10 @@ export class SupabaseBusinessDataStore {
     return (data ?? []).map(mapEvaluation)
   }
 
-  async runWorkflow(actor: Actor, workflowId: string, options: { idempotencyKey?: string } = {}): Promise<{ run: WorkflowRun; approval?: Approval; auditEvents: AuditEvent[]; finding?: AgentFinding }> {
+  async runWorkflow(actor: Actor, workflowId: string, options: { idempotencyKey?: string; input?: Record<string, unknown> } = {}): Promise<{ run: WorkflowRun; approval?: Approval; auditEvents: AuditEvent[]; finding?: AgentFinding }> {
     const workflow = await this.getWorkflow(actor, workflowId)
     if (workflow.status !== 'ACTIVE') throw new Error('Only active workflows can be run')
+    const workflowInput = validateWorkflowInput(workflow.inputs, options.input)
 
     const idempotencyKey = options.idempotencyKey ?? `${workflow.id}:manual:${Date.now()}`
     const { data: existing } = await this.supabase
@@ -506,7 +511,7 @@ export class SupabaseBusinessDataStore {
         idempotency_key: idempotencyKey,
         retry_count: 0,
         result_summary: 'Workflow running.',
-        result_metadata: {},
+        result_metadata: { workflowInput },
       })
       .select('*')
       .single()
@@ -520,6 +525,9 @@ export class SupabaseBusinessDataStore {
     let finalStatus = 'COMPLETED'
     let resultSummary = 'Workflow completed using mock agent runtime.'
     let currentStepId: string | undefined
+    let finding: AgentFinding | undefined
+    let modelUsage: ModelUsage | undefined
+    let prospect: ProspectEvidence | undefined
 
     for (const step of workflow.steps) {
       const { data: stepRow, error: stepError } = await this.supabase
@@ -577,7 +585,20 @@ export class SupabaseBusinessDataStore {
         break
       }
 
-      const execution = await this.executeWorkflowStep(actor, step.action, step.risk, step.connectorId)
+      let execution: ConnectorExecutionRecord
+      if (workflow.agentType === 'LEAD_RESEARCH' && step.id === 'research-lead') {
+        if (getBusinessAIMode() === 'live') {
+          try {
+            prospect = await researchProspectWebsite(String(workflowInput.leadUrl))
+            execution = { connectorId: 'web-research', action: step.action, ok: true, risk: step.risk, summary: `Collected public evidence from ${prospect.finalUrl}` }
+            auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'PROSPECT_RESEARCH_COMPLETED', entityId: stepRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: `Prospect research completed with ${prospect.text ? 1 : 0} page evidence item` }))
+          } catch {
+            execution = { connectorId: 'web-research', action: step.action, ok: false, risk: step.risk, summary: 'Prospect website research failed safely.', error: 'PROSPECT_RESEARCH_FAILED' }
+          }
+        } else {
+          execution = { connectorId: 'web-research', action: step.action, ok: true, risk: step.risk, summary: 'Mock mode used deterministic prospect evidence; no website request was made.' }
+        }
+      } else execution = await this.executeWorkflowStep(actor, step.action, step.risk, step.connectorId)
       connectorExecutions.push(execution)
       if (!execution.ok) {
         await this.supabase.from('workflow_steps').update({ status: 'FAILED', error: execution.error ?? execution.summary, completed_at: new Date().toISOString(), output_summary: execution.summary }).eq('id', stepRow.id)
@@ -589,21 +610,36 @@ export class SupabaseBusinessDataStore {
 
       await this.supabase.from('workflow_steps').update({ status: 'COMPLETED', completed_at: new Date().toISOString(), output_summary: execution.summary }).eq('id', stepRow.id)
       auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_STEP_COMPLETED', entityId: stepRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: execution.summary }))
+
+      if (workflow.agentType === 'LEAD_RESEARCH' && step.id === 'score-lead') {
+        try {
+          auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_STARTED', entityId: stepRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: 'Lead qualification generation started' }))
+          const result = await this.persistLeadResearchFinding(actor, workflow, runRow.id, workflowInput, prospect)
+          finding = result.finding; modelUsage = result.usage
+        } catch {
+          const summary = 'Lead qualification failed safely. No finding was persisted.'
+          await this.supabase.from('workflow_steps').update({ status: 'FAILED', error: summary, output_summary: summary, completed_at: new Date().toISOString() }).eq('id', stepRow.id)
+          await this.supabase.from('workflow_runs').update({ status: 'FAILED', result_summary: summary, completed_at: new Date().toISOString(), result_metadata: { workflowInput, connectorExecutions } }).eq('id', runRow.id)
+          await this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_FAILED', entityId: stepRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary })
+          await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_FAILED', entityId: runRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary })
+          throw new Error('Lead qualification could not be completed. Review the prospect URL and AI configuration, then try again.')
+        }
+      }
     }
 
-    let finding: AgentFinding | undefined
-    if (!approval && finalStatus !== 'FAILED') {
+    if (!finding && !approval && finalStatus !== 'FAILED') {
       finding = await this.persistRuntimeAgentFinding(actor, workflow, runRow.id, connectorExecutions)
       resultSummary = 'Workflow completed using connector-backed agent runtime.'
     }
 
     const { data: completedRunRow, error } = await this.supabase
       .from('workflow_runs')
-      .update({ status: finalStatus, result_summary: resultSummary, current_step_id: currentStepId, completed_at: finalStatus === 'RUNNING' || finalStatus === 'WAITING_FOR_APPROVAL' ? null : new Date().toISOString(), result_metadata: { connectorExecutions } })
+      .update({ status: finalStatus, result_summary: finding && approval ? 'Research completed — next action requires approval.' : resultSummary, current_step_id: currentStepId, completed_at: finalStatus === 'RUNNING' || finalStatus === 'WAITING_FOR_APPROVAL' ? null : new Date().toISOString(), result_metadata: { workflowInput, connectorExecutions, ...(modelUsage ? { ai: { aiMode: getBusinessAIMode(), provider: modelUsage.provider, model: modelUsage.model, tokensIn: modelUsage.tokensIn, tokensOut: modelUsage.tokensOut, estimatedCostUsd: modelUsage.estimatedCostUsd, latencyMs: modelUsage.latencyMs, modelRunId: modelUsage.runId, prospectUrl: workflowInput.leadUrl, researchEvidenceCount: prospect?.text ? 1 : 0 } } : {}) } })
       .eq('id', runRow.id)
       .select('*')
       .single()
     if (error || !completedRunRow) throw new Error('Unable to complete workflow')
+    if (finalStatus === 'COMPLETED') auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_COMPLETED', entityId: runRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: resultSummary }))
     const [run] = await this.hydrateRuns(actor.organizationId, [completedRunRow])
     return { run, approval, auditEvents, finding }
   }
@@ -633,10 +669,26 @@ export class SupabaseBusinessDataStore {
       output_summary: failed ? null : 'Approval resolved; workflow may continue.',
       completed_at: new Date().toISOString(),
     }).eq('id', approvalRow.workflow_step_id).eq('organization_id', actor.organizationId)
+    const { data: runRow } = await this.supabase.from('workflow_runs').select('*').eq('id', approvalRow.workflow_run_id).eq('organization_id', actor.organizationId).single()
+    const workflow = runRow ? await this.getWorkflow(actor, runRow.workflow_id) : undefined
+    const approvedStepIndex = workflow?.steps.findIndex((step) => step.id === approvalRow.proposed_payload?.stepId) ?? -1
+    const remainingSteps = approvedStepIndex >= 0 ? workflow!.steps.slice(approvedStepIndex + 1) : []
+    let resumeFailed = false
+    const connectorExecutions: ConnectorExecutionRecord[] = [...(runRow?.result_metadata?.connectorExecutions ?? [])]
+    if (!failed && workflow) {
+      connectorExecutions.push({ connectorId: approvalRow.target_system === 'crm' ? 'crm' : (approvalRow.target_system ?? 'pilot'), action: approvalRow.proposed_action, ok: true, risk: approvalRow.action_risk, summary: `Approved pilot action recorded as simulated; no external ${approvalRow.target_system ?? 'system'} write occurred.` })
+      for (const step of remainingSteps) {
+        const execution = await this.executeWorkflowStep(actor, step.action, step.risk, step.connectorId)
+        connectorExecutions.push(execution)
+        const { error: stepError } = await this.supabase.from('workflow_steps').insert({ organization_id: actor.organizationId, workflow_run_id: approvalRow.workflow_run_id, step_definition_id: step.id, name: step.name, risk: step.risk, status: execution.ok ? 'COMPLETED' : 'FAILED', started_at: new Date().toISOString(), completed_at: new Date().toISOString(), output_summary: execution.summary, error: execution.error })
+        if (stepError || !execution.ok) { resumeFailed = true; break }
+      }
+    }
+    const runFailed = failed || resumeFailed
     await this.supabase.from('workflow_runs').update({
-      status: failed ? 'FAILED' : 'COMPLETED',
-      completed_at: new Date().toISOString(),
-      result_summary: failed ? 'Workflow stopped after rejection.' : 'Workflow completed after approval.',
+      status: runFailed ? 'FAILED' : 'COMPLETED', completed_at: new Date().toISOString(), current_step_id: null,
+      result_summary: failed ? 'Workflow stopped after rejection.' : resumeFailed ? 'Workflow failed after approval while resuming remaining steps.' : 'Workflow completed after approval; pilot action was recorded as simulated.',
+      result_metadata: { ...(runRow?.result_metadata ?? {}), connectorExecutions },
     }).eq('id', approvalRow.workflow_run_id).eq('organization_id', actor.organizationId)
     await this.recordAuditEvent(actor, {
       eventType: failed ? 'APPROVAL_REJECTED' : 'APPROVAL_APPROVED',
@@ -645,6 +697,7 @@ export class SupabaseBusinessDataStore {
       agentType: approvalRow.agent_type,
       summary: `Approval ${decision.toLowerCase()}: ${approvalRow.proposed_action}`,
     })
+    await this.recordAuditEvent(actor, { eventType: runFailed ? 'WORKFLOW_FAILED' : 'WORKFLOW_COMPLETED', entityId: approvalRow.workflow_run_id, workflowRunId: approvalRow.workflow_run_id, agentType: approvalRow.agent_type, summary: runFailed ? 'Workflow ended after approval resolution.' : 'Workflow completed after approval; pilot action was simulated.' })
     return mapApproval(approvalRow)
   }
 
@@ -769,6 +822,29 @@ export class SupabaseBusinessDataStore {
     if (error || !data) throw new Error('Unable to persist agent finding')
     await this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_COMPLETED', entityId: data.id, workflowRunId, agentType: workflow.agentType, summary: data.title })
     return mapFinding(data)
+  }
+
+  private async persistLeadResearchFinding(actor: Actor, workflow: WorkflowDefinition, workflowRunId: string, workflowInput: Record<string, unknown>, prospect?: ProspectEvidence): Promise<{ finding: AgentFinding; usage: ModelUsage }> {
+    const [organization, memory, retrievedChunks, router] = await Promise.all([
+      this.getOrganization(actor),
+      this.getBusinessContextPayload(actor),
+      this.retrieveBusinessMemory(actor, `lead research ${String(workflowInput.leadUrl)}`, 5),
+      getModelRouter(),
+    ])
+    memory.retrievedChunks = retrievedChunks
+    const safeProspect = prospect ?? { requestedUrl: String(workflowInput.leadUrl), finalUrl: String(workflowInput.leadUrl), title: 'Mock prospect', description: 'Deterministic mock research fixture.', text: 'No public website request is made in mock mode.', warnings: ['Mock evidence only'] }
+    const prompt = buildLeadResearchPrompt({ organization, memory, prospectUrl: String(workflowInput.leadUrl), prospect: safeProspect })
+    const result = await router.extractStructured<unknown>(prompt, 'LEAD_RESEARCH')
+    if (!isLeadResearchOutput(result.data)) throw new Error('Invalid lead qualification output')
+    const structuredData = { ...result.data, provenance: { prospectUrl: workflowInput.leadUrl, finalUrl: safeProspect.finalUrl, evidenceCount: result.data.evidence.length }, ai: { mode: getBusinessAIMode(), provider: result.usage.provider, model: result.usage.model, tokensIn: result.usage.tokensIn, tokensOut: result.usage.tokensOut, estimatedCostUsd: result.usage.estimatedCostUsd, latencyMs: result.usage.latencyMs, modelRunId: result.usage.runId } }
+    const { data, error } = await this.supabase.from('agent_findings').insert({
+      organization_id: actor.organizationId, agent_type: workflow.agentType, workflow_run_id: workflowRunId,
+      finding_type: 'lead_research_qualification', title: `${result.data.company} lead qualification`, content: JSON.stringify(result.data), structured_data: structuredData,
+      source: getBusinessAIMode() === 'mock' ? 'AIBeat Business deterministic mock' : 'AIBeat Business Gemini analysis', source_url: String(workflowInput.leadUrl), source_date: new Date().toISOString().slice(0, 10), confidence: result.data.confidence, human_verified: false, status: 'ACTIVE',
+    }).select('*').single()
+    if (error || !data) throw new Error('Unable to persist lead qualification')
+    await this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_COMPLETED', entityId: data.id, workflowRunId, agentType: workflow.agentType, summary: `Lead qualification completed for ${result.data.company}` })
+    return { finding: mapFinding(data), usage: result.usage }
   }
 
   private async recordAuditEvent(actor: Actor, input: { eventType: string; entityId?: string; workflowRunId?: string; agentType?: string; summary: string }): Promise<AuditEvent> {

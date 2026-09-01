@@ -7,10 +7,10 @@ import { createClient } from '@/lib/supabase/server'
 
 const BUSINESS_DOCUMENT_BUCKET = 'business-documents'
 
-export async function runBusinessWorkflowAction(workflowId: string) {
+export async function runBusinessWorkflowAction(workflowId: string, input: Record<string, unknown> = {}) {
   const auth = await getAuthenticatedBusinessContext()
   const store = new SupabaseBusinessDataStore(createClient())
-  const result = await store.runWorkflow({ organizationId: auth.organizationId, userId: auth.userId }, workflowId)
+  const result = await store.runWorkflow({ organizationId: auth.organizationId, userId: auth.userId }, workflowId, { input })
   revalidateBusinessPaths()
   return result
 }
