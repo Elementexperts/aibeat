@@ -20,6 +20,7 @@ import {
   LayoutDashboard,
   Lock,
   LogOut,
+  MessagesSquare,
   PauseCircle,
   Play,
   Plug,
@@ -36,9 +37,12 @@ import { getAgentIndustryInstructions, INDUSTRY_PROFILE_LABELS } from '@/lib/bus
 import { decideApproval, runWorkflowManual } from '@/lib/business/workflows'
 import type { AgentEvaluationResult, AgentFinding, AgentType, Approval, BusinessDocumentIngestionResult, IndustryProfile, IntegrationConnection, IntegrationConnectionStatus, OrganizationMember, Role, WorkflowRun } from '@/lib/business/types'
 import { createClient } from '@/lib/supabase/client'
+import { AskAIBeat } from './AskAIBeat'
+import type { AIBeatAssistantMessage, AIBeatAssistantResponse } from '@/lib/business/assistant/types'
 
 export type BusinessWorkspaceRoute =
   | 'dashboard'
+  | 'ask'
   | 'workflows'
   | 'workflow-detail'
   | 'agents'
@@ -55,6 +59,7 @@ const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD
 
 const navItems = [
   { href: '/business/dashboard', label: 'Dashboard', key: 'dashboard', icon: LayoutDashboard },
+  { href: '/business/ask', label: 'Ask AIBeat', key: 'ask', icon: MessagesSquare },
   { href: '/business/workflows', label: 'Workflows', key: 'workflows', icon: GitBranch },
   { href: '/business/agents', label: 'Agents', key: 'agents', icon: Bot },
   { href: '/business/context', label: 'Business Memory', key: 'context', icon: Database },
@@ -88,6 +93,9 @@ export function BusinessWorkspace({
   onInviteMember,
   onUpdateMemberRole,
   onRunEvaluations,
+  onAskAIBeat,
+  onTestAIConnection,
+  initialWorkflowSuggestion,
   mode = 'authenticated',
 }: {
   route: BusinessWorkspaceRoute
@@ -100,6 +108,9 @@ export function BusinessWorkspace({
   onInviteMember?: (formData: FormData) => Promise<OrganizationMember>
   onUpdateMemberRole?: (memberId: string, role: Role) => Promise<OrganizationMember>
   onRunEvaluations?: () => Promise<AgentEvaluationResult[]>
+  onAskAIBeat?: (question: string, history?: AIBeatAssistantMessage[]) => Promise<{ ok: true; response: AIBeatAssistantResponse } | { ok: false; error: string; code?: string }>
+  onTestAIConnection?: () => Promise<{ ok: boolean; message: string; latencyMs?: number }>
+  initialWorkflowSuggestion?: { workflowId: string; input: Record<string, string> }
   mode?: WorkspaceMode
 }) {
   const fallbackData = useMemo(() => {
@@ -273,7 +284,8 @@ export function BusinessWorkspace({
         <section className="min-w-0">
           {isDemo && <DemoNotice />}
           {route === 'dashboard' && <Dashboard data={data} approvals={approvals} runs={runs} onRunWorkflow={runWorkflow} mode={mode} />}
-          {route === 'workflows' && <Workflows data={data} runs={runs} findings={findings} onRunWorkflow={runWorkflow} mode={mode} error={workflowError} runningWorkflowId={runningWorkflowId} />}
+          {route === 'ask' && <AskAIBeat onAsk={onAskAIBeat} demo={isDemo} />}
+          {route === 'workflows' && <Workflows data={data} runs={runs} findings={findings} onRunWorkflow={runWorkflow} mode={mode} error={workflowError} runningWorkflowId={runningWorkflowId} initialWorkflowSuggestion={initialWorkflowSuggestion} />}
           {route === 'workflow-detail' && activeWorkflow && <WorkflowDetail workflow={activeWorkflow} runs={runs.filter((run) => run.workflowId === activeWorkflow.id)} onRunWorkflow={runWorkflow} mode={mode} />}
           {route === 'agents' && (
             <Agents
@@ -297,7 +309,7 @@ export function BusinessWorkspace({
             }))
             return result
           } : undefined} mode={mode} />}
-          {route === 'ai-stack' && <AIStack data={data} />}
+          {route === 'ai-stack' && <AIStack data={data} onTestAIConnection={onTestAIConnection} />}
           {route === 'recommendations' && <Recommendations data={data} />}
           {route === 'approvals' && <Approvals approvals={approvals} onResolve={resolveApproval} mode={mode} />}
           {route === 'integrations' && <Integrations data={data} onUpdateIntegration={onUpdateIntegration} mode={mode} />}
@@ -592,8 +604,9 @@ function RecentActivitySection({ activities, approvals, runs }: { activities: Re
   )
 }
 
-function Workflows({ data, runs, findings, onRunWorkflow, mode, error, runningWorkflowId }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[]; findings: AgentFinding[]; onRunWorkflow: (id: string, input?: Record<string, unknown>) => void; mode: WorkspaceMode; error: string | null; runningWorkflowId: string | null }) {
-  const [workflowInputs, setWorkflowInputs] = useState<Record<string, Record<string, string>>>({})
+function Workflows({ data, runs, findings, onRunWorkflow, mode, error, runningWorkflowId, initialWorkflowSuggestion }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[]; findings: AgentFinding[]; onRunWorkflow: (id: string, input?: Record<string, unknown>) => void; mode: WorkspaceMode; error: string | null; runningWorkflowId: string | null; initialWorkflowSuggestion?: { workflowId: string; input: Record<string, string> } }) {
+  const suggestedWorkflow = initialWorkflowSuggestion ? data.workflows.find((workflow) => workflow.templateId === initialWorkflowSuggestion.workflowId || workflow.id === initialWorkflowSuggestion.workflowId) : undefined
+  const [workflowInputs, setWorkflowInputs] = useState<Record<string, Record<string, string>>>(suggestedWorkflow && initialWorkflowSuggestion ? { [suggestedWorkflow.id]: initialWorkflowSuggestion.input } : {})
   return (
     <Panel title="Structured Workflows" icon={GitBranch}>
       <div className="space-y-4">
@@ -640,7 +653,7 @@ function LeadQualification({ finding, run }: { finding: AgentFinding; run?: Work
     <div className="mt-4 grid gap-3 sm:grid-cols-2"><Metric label="Fit score" value={String(result.fitScore ?? '—')} /><Metric label="Confidence" value={typeof result.confidence === 'number' ? `${Math.round(result.confidence * 100)}%` : '—'} /></div>
     {[['Reasons', list('reasons')], ['Evidence', list('evidence')], ['Likely needs', list('likelyNeeds')], ['Risks', list('risks')]].map(([label, values]) => <div key={label as string} className="mt-4"><strong className="text-sm">{label as string}</strong><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-300">{(values as string[]).map((value) => <li key={value}>{value}</li>)}</ul></div>)}
     <p className="mt-4 text-sm"><strong>Recommended next action:</strong> {String(result.recommendedNextAction ?? '')}</p><p className="mt-2 text-sm"><strong>Outreach angle:</strong> {String(result.suggestedOutreachAngle ?? '')}</p>
-    {ai && <p className="mt-4 text-xs text-slate-400">AI: {String(ai.provider ?? ai.aiMode ?? ai.mode ?? 'mock')} / {String(ai.model ?? 'deterministic fixture')}</p>}
+    {ai && (ai.provider === 'mock' || ai.aiMode === 'mock' || ai.mode === 'mock' ? <p className="mt-4 text-xs font-semibold text-cyan-100">Mock AI · No external model call</p> : <div className="mt-4 grid gap-1 rounded-md border border-white/10 bg-black/20 p-3 text-xs text-slate-400 sm:grid-cols-2"><p>AI provider: {String(ai.provider)}</p><p>Model: {String(ai.model)}</p><p>Input tokens: {String(ai.tokensIn ?? 0)}</p><p>Output tokens: {String(ai.tokensOut ?? 0)}</p><p>Latency: {String(ai.latencyMs ?? 0)}ms</p><p className="break-all">Model run ID: {String(ai.modelRunId ?? '')}</p><p>Cost tracking: Not yet calculated</p></div>)}
   </div>
 }
 
@@ -790,9 +803,17 @@ function ContextView({ data, onUploadDocument, mode }: { data: ReturnType<typeof
   )
 }
 
-function AIStack({ data }: { data: ReturnType<typeof getBusinessWorkspaceData> }) {
+function AIStack({ data, onTestAIConnection }: { data: ReturnType<typeof getBusinessWorkspaceData>; onTestAIConnection?: () => Promise<{ ok: boolean; message: string; latencyMs?: number }> }) {
+  const [health, setHealth] = useState<{ ok: boolean; message: string; latencyMs?: number } | null>(null)
+  const [testing, setTesting] = useState(false)
+  async function testConnection() { if (!onTestAIConnection || testing) return; setTesting(true); try { setHealth(await onTestAIConnection()) } catch { setHealth({ ok: false, message: 'AI connection test could not be completed.' }) } finally { setTesting(false) } }
   return (
     <Panel title="AI Stack & Spend Intelligence" icon={CircleDollarSign}>
+      <div className="mb-5 rounded-lg border border-cyan-300/20 bg-cyan-300/[0.06] p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-cyan-100">AI Runtime</p><h3 className="mt-2 text-xl font-black">{data.aiRuntime.mode === 'live' ? 'Live AI' : 'Mock AI'}</h3><div className="mt-3 grid gap-1 text-sm text-slate-300"><p>Provider: {data.aiRuntime.provider === 'gemini' ? 'Gemini' : 'Mock'}</p><p>Model: {data.aiRuntime.model}</p><p>Status: {data.aiRuntime.configured ? 'Ready' : 'Configuration required'}</p>{data.aiRuntime.mode === 'mock' && <><p>Cost: $0</p><p>External AI calls: Disabled</p></>}</div></div>
+        {onTestAIConnection && (data.viewerRole === 'OWNER' || data.viewerRole === 'ADMIN') && <button type="button" disabled={testing} onClick={() => void testConnection()} className="rounded-md bg-cyan-300 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700">{testing ? 'Testing…' : 'Test AI connection'}</button>}</div>
+        {health && <p className={`mt-4 rounded-md p-3 text-sm ${health.ok ? 'bg-emerald-300/10 text-emerald-100' : 'bg-rose-300/10 text-rose-100'}`}>{health.message}{health.latencyMs != null ? ` (${health.latencyMs}ms)` : ''}</p>}
+      </div>
       <div className="mb-5 grid gap-3 md:grid-cols-4">
         <Metric label="Monthly Spend" value={money.format(data.spend.monthlySpend)} />
         <Metric label="Low-use Seats" value={String(data.spend.lowUseSeats)} />

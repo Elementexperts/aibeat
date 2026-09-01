@@ -14,6 +14,7 @@ export const BUSINESS_AUTHENTICATED_PATHS = new Set(['/business/onboarding'])
 
 export const BUSINESS_PRIVATE_PREFIXES = [
   '/business/dashboard',
+  '/business/ask',
   '/business/workflows',
   '/business/agents',
   '/business/context',

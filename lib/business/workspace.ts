@@ -5,6 +5,7 @@ import { demoAgentSummaries, demoBusinessMemoryHealth, demoExecutiveBriefItems, 
 import { INDUSTRY_PROFILE_LABELS, getIndustryProfile } from './industry-profiles'
 import { businessStore } from './store'
 import { getApprovals, getAuditEvents, getOrganizationWorkflows, getWorkflowRuns, getWorkflowTemplates } from './workflows'
+import type { Role } from './types'
 
 export const DEFAULT_DEMO_ORGANIZATION_ID = 'org-growth-labs'
 export const DEFAULT_DEMO_USER_ID = 'user-sarah'
@@ -67,6 +68,8 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
     agentSummaries,
     recentActivity,
     connectors,
+    aiRuntime: { mode: 'mock' as 'mock' | 'live', provider: 'mock' as 'mock' | 'gemini', model: 'deterministic', configured: true },
+    viewerRole: 'OWNER' as Role,
   }
 }
 

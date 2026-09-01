@@ -10,8 +10,9 @@ export const metadata: Metadata = {
   robots: privateBusinessRobots,
 }
 
-export default async function BusinessWorkflowsPage() {
+export default async function BusinessWorkflowsPage({ searchParams }: { searchParams: { workflow?: string; leadUrl?: string } }) {
   const data = await getAuthenticatedBusinessWorkspaceData()
-  return <BusinessWorkspace route="workflows" initialData={data} onRunWorkflow={runBusinessWorkflowAction} onDecideApproval={decideBusinessApprovalAction} />
+  const initialWorkflowSuggestion = searchParams.workflow === 'tpl-lead-research' && typeof searchParams.leadUrl === 'string' ? { workflowId: 'tpl-lead-research', input: { leadUrl: searchParams.leadUrl.slice(0, 2048) } } : undefined
+  return <BusinessWorkspace route="workflows" initialData={data} onRunWorkflow={runBusinessWorkflowAction} onDecideApproval={decideBusinessApprovalAction} initialWorkflowSuggestion={initialWorkflowSuggestion} />
 }
 

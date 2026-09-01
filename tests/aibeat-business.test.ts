@@ -17,6 +17,10 @@ import { decideApproval, getOrganizationWorkflows, runWorkflowManual } from '../
 import { isLeadResearchOutput, normalizeLeadUrl, validateWorkflowInput } from '../lib/business/lead-research'
 import { getBusinessAIMode, getModelRouter, MockModelRouter } from '../lib/business/model-router'
 import { mapGeminiUsage } from '../lib/business/model-providers/gemini'
+import { askAIBeat } from '../lib/business/assistant/assistant'
+import { AIBEAT_ALLOWED_ROUTES, AIBEAT_ALLOWED_WORKFLOW_IDS } from '../lib/business/assistant/product-guide'
+import { sanitizeAssistantSuggestion, validateAssistantMessage, validateAssistantResponse } from '../lib/business/assistant/validation'
+import type { AIBeatAssistantContext } from '../lib/business/assistant/types'
 
 beforeEach(() => {
   businessStore.reset()
@@ -25,6 +29,44 @@ beforeEach(() => {
 test('AIBeat Business AI mode defaults safely to mock', () => {
   assert.equal(getBusinessAIMode({}), 'mock')
   assert.equal(getBusinessAIMode({ AIBEAT_BUSINESS_AI_MODE: 'mock' }), 'mock')
+})
+
+const assistantContext: AIBeatAssistantContext = { organizationId: 'org-growth-labs', organizationName: 'Growth Labs', industry: 'DIGITAL_MARKETING_AGENCY', employeeCount: 42, memoryCategories: ['PRODUCT'], memoryExcerpts: ['AI workflow product'], workflows: [{ id: 'tpl-lead-research', name: 'Lead Research & Qualification', status: 'ACTIVE', inputs: ['leadUrl'] }], recentRuns: [], pendingApprovals: 1, integrations: [{ name: 'CRM', status: 'CONNECTED' }], ai: { mode: 'mock', provider: 'mock', model: 'deterministic' } }
+
+test('Ask AIBeat mock mode makes no model-router request and recommends Lead Research', async () => {
+  let called = false
+  const result = await askAIBeat({ question: 'I want more leads', context: assistantContext, env: { AIBEAT_BUSINESS_AI_MODE: 'mock' }, routerFactory: async () => { called = true; throw new Error('must not run') } })
+  assert.equal(called, false); assert.equal(result.usage.provider, 'mock'); assert.equal(result.suggestions.some((item) => item.workflowId === 'tpl-lead-research'), true)
+})
+
+test('Ask AIBeat mock Business Memory guidance points to organization context', async () => {
+  const result = await askAIBeat({ question: 'Where do I add company information to Business Memory?', context: assistantContext, env: { AIBEAT_BUSINESS_AI_MODE: 'mock' } })
+  assert.equal(result.intent, 'BUSINESS_MEMORY_HELP'); assert.equal(result.suggestions.some((item) => item.href === '/business/context'), true)
+})
+
+test('Ask AIBeat prepares but does not execute Lead Research', async () => {
+  const result = await askAIBeat({ question: 'Research example.com', context: assistantContext, env: { AIBEAT_BUSINESS_AI_MODE: 'mock' } })
+  assert.equal(result.intent, 'WORKFLOW_PREPARE'); assert.deepEqual(result.suggestions[0].workflowInput, { leadUrl: 'https://example.com/' })
+  const source = readFileSync('app/business/actions.ts', 'utf8'); const assistantBody = source.slice(source.indexOf('askAIBeatAction'), source.indexOf('testBusinessAIConnectionAction'))
+  assert.doesNotMatch(assistantBody, /runBusinessWorkflowAction|runWorkflow\(/)
+})
+
+test('assistant suggestions enforce source-controlled route and workflow allowlists', () => {
+  assert.equal(AIBEAT_ALLOWED_ROUTES.has('/business/context'), true); assert.equal(AIBEAT_ALLOWED_WORKFLOW_IDS.has('tpl-lead-research'), true)
+  assert.equal(sanitizeAssistantSuggestion({ label: 'Attack', href: 'javascript:alert(1)', workflowId: 'evil' }), undefined)
+  assert.deepEqual(sanitizeAssistantSuggestion({ label: 'Memory', href: '/business/context' }), { label: 'Memory', href: '/business/context', workflowId: undefined, workflowInput: undefined, intent: undefined })
+})
+
+test('assistant validates message limits and structured responses', () => {
+  assert.throws(() => validateAssistantMessage('x'.repeat(4001)), /4,000/)
+  assert.throws(() => validateAssistantResponse({ message: '', intent: 'PRODUCT_HELP' }, { provider: 'mock', model: 'mock', tokensIn: 0, tokensOut: 0, latencyMs: 0 }), /malformed/)
+  const valid = validateAssistantResponse({ message: 'Use Memory', intent: 'BUSINESS_MEMORY_HELP', suggestions: [{ label: 'Open', href: '/business/context' }], missingContext: [] }, { provider: 'mock', model: 'mock', tokensIn: 0, tokensOut: 0, latencyMs: 0 })
+  assert.equal(valid.suggestions[0].href, '/business/context')
+})
+
+test('assistant context remains organization scoped and runtime status never serializes API keys', () => {
+  const contextSource = readFileSync('lib/business/assistant/context.ts', 'utf8'); const runtimeSource = readFileSync('lib/business/ai-runtime.ts', 'utf8')
+  assert.match(contextSource, /organizationId: actor\.organizationId/); assert.doesNotMatch(runtimeSource, /apiKey:/); assert.doesNotMatch(runtimeSource, /slice\(.+GEMINI_API_KEY/)
 })
 
 test('mock model router needs no Gemini key and returns valid deterministic Lead Research', async () => {
@@ -49,6 +91,7 @@ test('Lead Research workflow input requires and normalizes a public web URL', ()
 
 test('live Gemini mode without server key fails before client initialization', async () => {
   await assert.rejects(() => getModelRouter({ AIBEAT_BUSINESS_AI_MODE: 'live', AIBEAT_BUSINESS_AI_PROVIDER: 'gemini' }), /GEMINI_API_KEY/)
+  await assert.rejects(() => getModelRouter({ AIBEAT_BUSINESS_AI_MODE: 'live', AIBEAT_BUSINESS_AI_PROVIDER: 'unsupported', GEMINI_API_KEY: 'not-used' }), /Unsupported live AI provider/)
 })
 
 test('Gemini usage mapping preserves real metadata and safely defaults missing counts', () => {
@@ -461,7 +504,7 @@ test('business route matrix marks public, onboarding, and private paths', () => 
   }
 
   assert.equal(isAuthenticatedBusinessPath('/business/onboarding'), true)
-  for (const path of ['/business/dashboard', '/business/workflows', '/business/workflows/wf-1', '/business/agents', '/business/context', '/business/ai-stack', '/business/recommendations', '/business/approvals', '/business/integrations', '/business/reports', '/business/audit', '/business/settings']) {
+  for (const path of ['/business/dashboard', '/business/ask', '/business/workflows', '/business/workflows/wf-1', '/business/agents', '/business/context', '/business/ai-stack', '/business/recommendations', '/business/approvals', '/business/integrations', '/business/reports', '/business/audit', '/business/settings']) {
     assert.equal(isPrivateBusinessPath(path), true, `${path} should be private`)
   }
 })
@@ -480,7 +523,7 @@ test('sitemap excludes authenticated workspace routes and includes public busine
   for (const path of ['/business/demo', '/business/pricing', '/business/sign-up', '/business/sign-in', '/business/forgot-password']) {
     assert.match(source, new RegExp(`'${path}'`))
   }
-  for (const path of ['/business/dashboard', '/business/workflows', '/business/agents', '/business/context', '/business/ai-stack', '/business/recommendations', '/business/approvals', '/business/integrations', '/business/reports', '/business/audit', '/business/settings']) {
+  for (const path of ['/business/dashboard', '/business/ask', '/business/workflows', '/business/agents', '/business/context', '/business/ai-stack', '/business/recommendations', '/business/approvals', '/business/integrations', '/business/reports', '/business/audit', '/business/settings']) {
     assert.doesNotMatch(source, new RegExp(`'${path}'`))
   }
 })

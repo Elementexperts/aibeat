@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/business/demo' },
 }
 
-const allowedViews = new Set<BusinessWorkspaceRoute>(['dashboard', 'workflows', 'agents', 'context', 'ai-stack', 'approvals', 'reports'])
+const allowedViews = new Set<BusinessWorkspaceRoute>(['dashboard', 'ask', 'workflows', 'agents', 'context', 'ai-stack', 'approvals', 'reports'])
 
 export default function BusinessDemoPage({ searchParams }: { searchParams: { view?: string } }) {
   const view = allowedViews.has(searchParams.view as BusinessWorkspaceRoute)

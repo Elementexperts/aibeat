@@ -4,8 +4,36 @@ import { revalidatePath } from 'next/cache'
 import { getAuthenticatedBusinessContext } from '@/lib/business/server-auth'
 import { SupabaseBusinessDataStore } from '@/lib/business/supabase-store'
 import { createClient } from '@/lib/supabase/server'
+import { askAIBeat } from '@/lib/business/assistant/assistant'
+import { buildAssistantContext } from '@/lib/business/assistant/context'
+import type { AIBeatAssistantMessage } from '@/lib/business/assistant/types'
+import { ModelConfigurationError, ModelProviderError, ModelResponseValidationError } from '@/lib/business/model-router'
+import { testAIConnection } from '@/lib/business/ai-runtime'
 
 const BUSINESS_DOCUMENT_BUCKET = 'business-documents'
+
+export async function askAIBeatAction(question: string, history: AIBeatAssistantMessage[] = []) {
+  const auth = await getAuthenticatedBusinessContext()
+  const store = new SupabaseBusinessDataStore(createClient())
+  try {
+    const context = await buildAssistantContext(store, { organizationId: auth.organizationId, userId: auth.userId }, question)
+    return { ok: true as const, response: await askAIBeat({ question, context, history: history.slice(-10) }) }
+  } catch (error) {
+    if (error instanceof ModelConfigurationError) return { ok: false as const, code: 'CONFIGURATION' as const, error: 'Live AI configuration is incomplete. Ask an administrator to review AI Stack.' }
+    if (error instanceof ModelProviderError) return { ok: false as const, code: error.code as 'TIMEOUT' | 'UNAVAILABLE', error: error.code === 'TIMEOUT' ? 'The configured AI provider timed out. Please try again.' : 'AIBeat could not reach the configured AI provider. Please try again.' }
+    if (error instanceof ModelResponseValidationError || (error instanceof Error && /malformed assistant response/i.test(error.message))) return { ok: false as const, code: 'MALFORMED_RESPONSE' as const, error: 'AIBeat received an invalid response from the configured provider. Please try again.' }
+    return { ok: false as const, code: 'WORKSPACE' as const, error: error instanceof Error && /characters or fewer|Enter a question/.test(error.message) ? error.message : 'AIBeat could not read the workspace context. Please try again.' }
+  }
+}
+
+export async function testBusinessAIConnectionAction() {
+  const auth = await getAuthenticatedBusinessContext()
+  if (auth.role !== 'OWNER' && auth.role !== 'ADMIN') return { ok: false as const, message: 'Only an organization owner or admin can test the AI connection.' }
+  const result = await testAIConnection()
+  const store = new SupabaseBusinessDataStore(createClient())
+  await store.recordRuntimeAuditEvent({ organizationId: auth.organizationId, userId: auth.userId }, 'AI_CONNECTION_TESTED', `AI connection test ${result.ok ? 'succeeded' : 'failed'} for ${result.status.provider}.`).catch(() => undefined)
+  return result
+}
 
 export async function runBusinessWorkflowAction(workflowId: string, input: Record<string, unknown> = {}) {
   const auth = await getAuthenticatedBusinessContext()

@@ -8,6 +8,7 @@ import { SupabaseBusinessDataStore } from './supabase-store'
 import { getWorkflowTemplates } from './workflows'
 import type { BusinessWorkspaceData } from './workspace'
 import { createClient } from '@/lib/supabase/server'
+import { getAIRuntimeStatus } from './ai-runtime'
 
 export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessWorkspaceData> {
   const auth = await getAuthenticatedBusinessContext()
@@ -131,5 +132,7 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
       agentType: event.agentType,
     })),
     connectors,
+    aiRuntime: getAIRuntimeStatus(),
+    viewerRole: auth.role,
   }
 }

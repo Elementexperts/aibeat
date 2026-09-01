@@ -1,0 +1,37 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { ArrowRight, Bot, Loader2, Send } from 'lucide-react'
+import type { AIBeatAssistantMessage, AIBeatAssistantResponse } from '@/lib/business/assistant/types'
+
+type ChatItem = { role: 'USER'; content: string } | { role: 'ASSISTANT'; response: AIBeatAssistantResponse }
+const examples = ['How should I set up AIBeat?', 'I want more qualified leads', 'Which workflow should I use?', 'What information is missing from Business Memory?', 'How do approvals work?']
+
+export function AskAIBeat({ onAsk, demo = false }: { onAsk?: (question: string, history?: AIBeatAssistantMessage[]) => Promise<{ ok: true; response: AIBeatAssistantResponse } | { ok: false; error: string; code?: string }>; demo?: boolean }) {
+  const [items, setItems] = useState<ChatItem[]>([]); const [draft, setDraft] = useState(''); const [pending, setPending] = useState(false); const [error, setError] = useState<string | null>(null)
+  async function submit(value = draft) {
+    const question = value.trim(); if (!question || pending) return
+    setDraft(''); setError(null); setItems((current) => [...current, { role: 'USER', content: question }]); setPending(true)
+    try {
+      const history: AIBeatAssistantMessage[] = items.slice(-10).map((item) => item.role === 'USER' ? { role: 'USER', content: item.content } : { role: 'ASSISTANT', content: item.response.message })
+      const result = onAsk ? await onAsk(question, history) : demoResponse(question)
+      if (!result.ok) setError(result.error); else setItems((current) => [...current, { role: 'ASSISTANT', response: result.response }])
+    } catch { setError('AIBeat could not answer right now. Please try again.') } finally { setPending(false) }
+  }
+  return <div className="grid min-h-[70vh] gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
+    <section className="flex min-h-[620px] flex-col rounded-lg border border-white/10 bg-[#101820] shadow-2xl shadow-black/20">
+      <div className="border-b border-white/10 p-5"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-md bg-cyan-300/10 text-cyan-100"><Bot className="h-5 w-5" /></span><div><h2 className="text-xl font-black">Ask AIBeat</h2><p className="text-sm text-slate-400">Your advisory guide to workflows, memory, approvals, and next steps.</p></div></div></div>
+      <div aria-live="polite" className="flex-1 space-y-4 overflow-y-auto p-5">
+        {!items.length && <div className="mx-auto max-w-2xl py-16 text-center"><h3 className="text-2xl font-black">Ask AIBeat what to do next.</h3><p className="mt-3 text-sm leading-6 text-slate-400">Describe a goal or ask how your workspace works. AIBeat recommends actions but never runs or approves them.</p><div className="mt-6 flex flex-wrap justify-center gap-2">{examples.map((example) => <button key={example} type="button" onClick={() => void submit(example)} className="rounded-full border border-cyan-300/20 bg-cyan-300/[0.06] px-3 py-2 text-xs font-semibold text-cyan-50 hover:bg-cyan-300/10">{example}</button>)}</div></div>}
+        {items.map((item, index) => item.role === 'USER' ? <div key={index} className="ml-auto max-w-2xl rounded-lg bg-emerald-300 px-4 py-3 text-sm text-slate-950"><strong className="block text-xs uppercase tracking-wider">You</strong><p className="mt-1 whitespace-pre-wrap">{item.content}</p></div> : <div key={index} className="max-w-2xl rounded-lg border border-white/10 bg-black/20 p-4 text-sm"><strong className="text-cyan-100">AIBeat</strong><p className="mt-2 whitespace-pre-wrap leading-6 text-slate-200">{item.response.message}</p>{item.response.missingContext.length > 0 && <p className="mt-3 text-xs text-amber-100">Helpful missing context: {item.response.missingContext.join(', ')}</p>}<div className="mt-4 flex flex-wrap gap-2">{item.response.suggestions.map((suggestion) => suggestion.href && <Link key={`${suggestion.label}-${suggestion.href}`} href={suggestionHref(suggestion)} className="inline-flex items-center gap-1 rounded-md border border-cyan-300/20 bg-cyan-300/10 px-3 py-2 text-xs font-black text-cyan-50">{suggestion.label}<ArrowRight className="h-3 w-3" /></Link>)}</div><p className="mt-3 text-[11px] text-slate-500">{item.response.usage.provider === 'mock' ? 'Mock AI · No external model call' : `${item.response.usage.provider} · ${item.response.usage.model} · ${item.response.usage.tokensIn} input / ${item.response.usage.tokensOut} output tokens · ${item.response.usage.latencyMs}ms`}</p></div>)}
+        {pending && <div className="flex items-center gap-2 text-sm text-slate-400"><Loader2 className="h-4 w-4 animate-spin" />AIBeat is thinking…</div>}{error && <div className="rounded-md border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-100">{error}</div>}
+      </div>
+      <div className="border-t border-white/10 p-4"><div className="flex items-end gap-2"><textarea aria-label="Ask AIBeat" maxLength={4000} rows={2} value={draft} onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submit() } }} placeholder="Ask about a goal, workflow, or workspace setup…" className="min-h-[52px] flex-1 resize-none rounded-md border border-white/10 bg-black/20 px-3 py-3 text-sm text-white placeholder:text-slate-500" /><button type="button" aria-label="Send question" disabled={pending || !draft.trim()} onClick={() => void submit()} className="flex h-[52px] w-[52px] items-center justify-center rounded-md bg-emerald-400 text-slate-950 disabled:bg-slate-700"><Send className="h-4 w-4" /></button></div><p className="mt-2 text-[11px] text-slate-500">Enter sends · Shift+Enter adds a line · Advisory only</p></div>
+    </section>
+    <aside className="h-fit rounded-lg border border-white/10 bg-[#101820] p-5"><h3 className="font-black">Suggested starting points</h3><div className="mt-4 space-y-2">{[['Business Memory','/business/context'],['Lead Research','/business/workflows'],['Approvals','/business/approvals'],['Integrations','/business/integrations'],['Reports','/business/reports']].map(([label, href]) => <Link key={href} href={href} className="flex items-center justify-between rounded-md border border-white/10 px-3 py-2 text-sm text-slate-300 hover:text-white">{label}<ArrowRight className="h-3 w-3" /></Link>)}</div></aside>
+  </div>
+}
+
+function suggestionHref(suggestion: AIBeatAssistantResponse['suggestions'][number]) { const params = new URLSearchParams(); if (suggestion.workflowId) params.set('workflow', suggestion.workflowId); const leadUrl = suggestion.workflowInput?.leadUrl; if (typeof leadUrl === 'string') params.set('leadUrl', leadUrl); return `${suggestion.href}${params.size ? `?${params}` : ''}` }
+function demoResponse(question: string): { ok: true; response: AIBeatAssistantResponse } { const lead = /lead|prospect/i.test(question); return { ok: true, response: { message: lead ? 'Lead Research & Qualification is the best starting workflow. This public demo will not call an external model or run the workflow.' : 'AIBeat Business combines governed workflows, shared Business Memory, specialized agents, and human approvals.', intent: lead ? 'WORKFLOW_DISCOVERY' : 'PRODUCT_HELP', suggestions: [{ label: lead ? 'Open Lead Research' : 'Explore Workflows', href: '/business/demo?view=workflows' }], missingContext: [], usage: { provider: 'mock', model: 'demo', tokensIn: 0, tokensOut: 0, latencyMs: 0 } } } }

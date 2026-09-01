@@ -25,6 +25,14 @@ export class ModelConfigurationError extends Error {
   }
 }
 
+export class ModelProviderError extends Error {
+  constructor(public readonly code: 'TIMEOUT' | 'UNAVAILABLE', message: string) { super(message); this.name = 'ModelProviderError' }
+}
+
+export class ModelResponseValidationError extends Error {
+  constructor(message = 'The AI provider returned malformed structured output.') { super(message); this.name = 'ModelResponseValidationError' }
+}
+
 function usage(model: string, runId: string): ModelUsage {
   return {
     provider: 'mock',

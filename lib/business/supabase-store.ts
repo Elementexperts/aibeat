@@ -7,7 +7,7 @@ import { rankBusinessMemoryChunks } from './vector-retrieval'
 import { canAutoExecuteRisk, sanitizeAuditSummary } from './security'
 import { buildLeadResearchPrompt } from './agent-prompts'
 import { isLeadResearchOutput, validateWorkflowInput } from './lead-research'
-import { getBusinessAIMode, getModelRouter, type ModelUsage } from './model-router'
+import { getBusinessAIMode, getModelRouter, ModelConfigurationError, ModelProviderError, ModelResponseValidationError, type ModelUsage } from './model-router'
 import { researchProspectWebsite, type ProspectEvidence } from './prospect-research'
 import type {
   AIRecommendation,
@@ -302,6 +302,10 @@ export class SupabaseBusinessDataStore {
     const { data, error } = await this.supabase.from('audit_events').select('*').eq('organization_id', actor.organizationId).order('created_at', { ascending: false }).limit(100)
     if (error) throw new Error('Unable to read audit events')
     return (data ?? []).map(mapAuditEvent)
+  }
+
+  async recordRuntimeAuditEvent(actor: Actor, eventType: 'AI_CONNECTION_TESTED' | 'ASSISTANT_FAILED', summary: string): Promise<AuditEvent> {
+    return this.recordAuditEvent(actor, { eventType, summary })
   }
 
   async getIntegrationConnections(actor: Actor): Promise<IntegrationConnection[]> {
@@ -616,13 +620,13 @@ export class SupabaseBusinessDataStore {
           auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_STARTED', entityId: stepRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: 'Lead qualification generation started' }))
           const result = await this.persistLeadResearchFinding(actor, workflow, runRow.id, workflowInput, prospect)
           finding = result.finding; modelUsage = result.usage
-        } catch {
-          const summary = 'Lead qualification failed safely. No finding was persisted.'
+        } catch (error) {
+          const summary = error instanceof ModelConfigurationError ? 'Live AI configuration is incomplete. No finding was persisted.' : error instanceof ModelProviderError && error.code === 'TIMEOUT' ? 'The configured AI provider timed out. No finding was persisted.' : error instanceof ModelProviderError ? 'AIBeat could not reach the configured AI provider. No finding was persisted.' : error instanceof ModelResponseValidationError || (error instanceof Error && /Invalid lead qualification output/.test(error.message)) ? 'The AI provider returned malformed structured output. No finding was persisted.' : 'Lead qualification failed safely. No finding was persisted.'
           await this.supabase.from('workflow_steps').update({ status: 'FAILED', error: summary, output_summary: summary, completed_at: new Date().toISOString() }).eq('id', stepRow.id)
           await this.supabase.from('workflow_runs').update({ status: 'FAILED', result_summary: summary, completed_at: new Date().toISOString(), result_metadata: { workflowInput, connectorExecutions } }).eq('id', runRow.id)
           await this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_FAILED', entityId: stepRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary })
           await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_FAILED', entityId: runRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary })
-          throw new Error('Lead qualification could not be completed. Review the prospect URL and AI configuration, then try again.')
+          throw new Error(summary)
         }
       }
     }

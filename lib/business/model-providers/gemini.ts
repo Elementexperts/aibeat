@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai'
-import type { ModelRouter, ModelUsage } from '../model-router'
+import { ModelProviderError, ModelResponseValidationError, type ModelRouter, type ModelUsage } from '../model-router'
 
 export const LEAD_RESEARCH_RESPONSE_SCHEMA = {
   type: 'object',
@@ -11,6 +11,14 @@ export const LEAD_RESEARCH_RESPONSE_SCHEMA = {
   },
   required: ['leadName', 'company', 'fitScore', 'confidence', 'reasons', 'evidence', 'likelyNeeds', 'risks', 'recommendedNextAction', 'suggestedOutreachAngle'],
   additionalProperties: false,
+} as const
+
+export const AIBEAT_ASSISTANT_RESPONSE_SCHEMA = {
+  type: 'object', properties: {
+    message: { type: 'string' }, intent: { type: 'string', enum: ['PRODUCT_HELP','WORKFLOW_DISCOVERY','WORKFLOW_PREPARE','BUSINESS_MEMORY_HELP','INTEGRATION_HELP','APPROVAL_HELP','REPORT_HELP','AI_STACK_HELP','GENERAL_BUSINESS_GUIDANCE'] },
+    suggestions: { type: 'array', items: { type: 'object', properties: { label: { type: 'string' }, href: { type: 'string' }, intent: { type: 'string' }, workflowId: { type: 'string' }, workflowInput: { type: 'object', additionalProperties: true } }, required: ['label'], additionalProperties: false } },
+    missingContext: { type: 'array', items: { type: 'string' } },
+  }, required: ['message', 'intent', 'suggestions', 'missingContext'], additionalProperties: false,
 } as const
 
 type GeminiUsage = { promptTokenCount?: number; responseTokenCount?: number }
@@ -28,8 +36,9 @@ export class GeminiModelRouter implements ModelRouter {
     try {
       const response = await this.client.models.generateContent({ model: this.model, contents: input, config: { ...config, abortSignal: AbortSignal.timeout(45_000) } })
       return { text: response.text ?? '', usage: mapGeminiUsage(response.usageMetadata, this.model, Date.now() - started, runId) }
-    } catch {
-      throw new Error('Gemini request failed. Check the configured model, API access, and try again.')
+    } catch (error) {
+      if (error instanceof Error && (error.name === 'AbortError' || /timeout|timed out/i.test(error.message))) throw new ModelProviderError('TIMEOUT', 'The configured AI provider timed out.')
+      throw new ModelProviderError('UNAVAILABLE', 'AIBeat could not reach the configured AI provider.')
     }
   }
   async classify(input: string) { const result = await this.request(`Classify this input with one concise label.\n${input}`); return { label: result.text.trim(), usage: result.usage } }
@@ -37,9 +46,9 @@ export class GeminiModelRouter implements ModelRouter {
   async reason(input: string) { return this.request(input) }
   async summarize(input: string) { const result = await this.request(`Summarize concisely.\n${input}`); return { summary: result.text, usage: result.usage } }
   async extractStructured<T>(input: string, schemaName: string) {
-    const schema = schemaName === 'LEAD_RESEARCH' ? LEAD_RESEARCH_RESPONSE_SCHEMA : undefined
+    const schema = schemaName === 'LEAD_RESEARCH' ? LEAD_RESEARCH_RESPONSE_SCHEMA : schemaName === 'AIBEAT_ASSISTANT' ? AIBEAT_ASSISTANT_RESPONSE_SCHEMA : undefined
     if (!schema) throw new Error(`Unsupported structured output schema: ${schemaName}`)
     const result = await this.request(input, { responseMimeType: 'application/json', responseJsonSchema: schema, temperature: 0.2 })
-    try { return { data: JSON.parse(result.text) as T, usage: result.usage } } catch { throw new Error('Gemini returned invalid structured output.') }
+    try { return { data: JSON.parse(result.text) as T, usage: result.usage } } catch { throw new ModelResponseValidationError() }
   }
 }
