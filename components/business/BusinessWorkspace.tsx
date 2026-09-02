@@ -38,6 +38,7 @@ import { decideApproval, runWorkflowManual } from '@/lib/business/workflows'
 import type { AgentEvaluationResult, AgentFinding, AgentType, Approval, BusinessDocumentIngestionResult, IndustryProfile, IntegrationConnection, IntegrationConnectionStatus, OrganizationMember, Role, WorkflowRun } from '@/lib/business/types'
 import { createClient } from '@/lib/supabase/client'
 import { AskAIBeat } from './AskAIBeat'
+import { ApprovalModal } from './ApprovalModal'
 import type { AIBeatAssistantMessage, AIBeatAssistantResponse } from '@/lib/business/assistant/types'
 import { buildWorkflowCatalog, getPreparedLeadResearchInput, validatePreparedLeadUrl } from '@/lib/business/workflow-catalog'
 import { defaultRunHistory, groupLeadQualifications, runProspectLabel, runProspectUrl, sortAndDedupeRuns } from '@/lib/business/workflow-history'
@@ -129,6 +130,7 @@ export function BusinessWorkspace({
   const [findings, setFindings] = useState<AgentFinding[]>(data.findings)
   const [workflowError, setWorkflowError] = useState<string | null>(null)
   const [runningWorkflowId, setRunningWorkflowId] = useState<string | null>(null)
+  const [selectedApprovalId, setSelectedApprovalId] = useState<string | null>(null)
   const [memoryData, setMemoryData] = useState(data)
   const [demoAgentOutput, setDemoAgentOutput] = useState<Record<string, unknown> | null>(null)
   const activeWorkflow = data.workflows.find((workflow) => workflow.id === workflowId) ?? data.workflows[0]
@@ -159,7 +161,10 @@ export function BusinessWorkspace({
         try {
           const result = await onRunWorkflow(id, input)
           setRuns((current) => [result.run, ...current.filter((run) => run.id !== result.run.id)])
-          if (result.approval) setApprovals((current) => [result.approval!, ...current.filter((approval) => approval.id !== result.approval?.id)])
+          if (result.approval) {
+            setApprovals((current) => [result.approval!, ...current.filter((approval) => approval.id !== result.approval?.id)])
+            setSelectedApprovalId(result.approval.id)
+          }
           if (result.finding) setFindings((current) => [result.finding!, ...current.filter((finding) => finding.id !== result.finding?.id)])
         } catch (error) { setWorkflowError(error instanceof Error ? error.message : 'Workflow could not be run.') }
         finally { setRunningWorkflowId(null) }
@@ -168,11 +173,10 @@ export function BusinessWorkspace({
     }
     const result = runWorkflowManual(workflow, data.organization.id === 'org-growth-labs' ? 'user-sarah' : data.organization.id)
     setRuns((current) => [result.run, ...current])
-    if (result.approval) setApprovals((current) => [result.approval!, ...current])
+    if (result.approval) { setApprovals((current) => [result.approval!, ...current]); setSelectedApprovalId(result.approval.id) }
   }
 
-  function resolveApproval(approval: Approval, decision: 'APPROVED' | 'REJECTED' | 'EDITED') {
-    const editedContent = decision === 'EDITED' ? `${approval.generatedContent}\n\nEdited by approver.` : undefined
+  function resolveApproval(approval: Approval, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) {
     if (!isDemo && onDecideApproval) {
       startTransition(async () => {
         const next = await onDecideApproval(approval.id, decision, editedContent)
@@ -186,10 +190,13 @@ export function BusinessWorkspace({
             resultSummary: decision === 'REJECTED' ? 'Workflow stopped after rejection.' : 'Workflow completed after approval.',
           }
         }))
+        setSelectedApprovalId(null)
       })
       return
     }
     setApprovals((current) => current.map((item) => (item.id === approval.id ? decideApproval(item, decision, 'user-sarah', editedContent) : item)))
+    setRuns((current) => current.map((run) => run.id === approval.workflowRunId ? { ...run, status: decision === 'REJECTED' ? 'FAILED' : 'COMPLETED', completedAt: new Date().toISOString(), resultSummary: decision === 'REJECTED' ? 'Workflow stopped after rejection.' : 'Workflow completed after approval.' } : run))
+    setSelectedApprovalId(null)
   }
 
   function runAgent(agentType: AgentType) {
@@ -285,9 +292,9 @@ export function BusinessWorkspace({
 
         <section className="min-w-0">
           {isDemo && <DemoNotice />}
-          {route === 'dashboard' && <Dashboard data={data} approvals={approvals} runs={runs} onRunWorkflow={runWorkflow} mode={mode} />}
+          {route === 'dashboard' && <Dashboard data={data} approvals={approvals} runs={runs} onRunWorkflow={runWorkflow} onAskAIBeat={onAskAIBeat} onReviewApproval={setSelectedApprovalId} mode={mode} />}
           {route === 'ask' && <AskAIBeat onAsk={onAskAIBeat} demo={isDemo} />}
-          {route === 'workflows' && <Workflows data={data} runs={runs} findings={findings} onRunWorkflow={runWorkflow} mode={mode} error={workflowError} runningWorkflowId={runningWorkflowId} initialWorkflowSuggestion={initialWorkflowSuggestion} />}
+          {route === 'workflows' && <Workflows data={data} runs={runs} findings={findings} approvals={approvals} onReviewApproval={setSelectedApprovalId} onRunWorkflow={runWorkflow} mode={mode} error={workflowError} runningWorkflowId={runningWorkflowId} initialWorkflowSuggestion={initialWorkflowSuggestion} />}
           {route === 'workflow-detail' && activeWorkflow && <WorkflowDetail workflow={activeWorkflow} runs={runs.filter((run) => run.workflowId === activeWorkflow.id)} onRunWorkflow={runWorkflow} mode={mode} />}
           {route === 'agents' && (
             <Agents
@@ -313,18 +320,19 @@ export function BusinessWorkspace({
           } : undefined} mode={mode} />}
           {route === 'ai-stack' && <AIStack data={data} onTestAIConnection={onTestAIConnection} />}
           {route === 'recommendations' && <Recommendations data={data} />}
-          {route === 'approvals' && <Approvals approvals={approvals} onResolve={resolveApproval} mode={mode} />}
+          {route === 'approvals' && <Approvals approvals={approvals} onReview={setSelectedApprovalId} mode={mode} />}
           {route === 'integrations' && <Integrations data={data} onUpdateIntegration={onUpdateIntegration} mode={mode} />}
           {route === 'reports' && <Reports data={data} runs={runs} onRunEvaluations={onRunEvaluations} mode={mode} />}
           {route === 'audit' && <Audit data={data} />}
           {route === 'settings' && <SettingsView data={data} selectedProfile={selectedProfile} setSelectedProfile={setSelectedProfile} onInviteMember={onInviteMember} onUpdateMemberRole={onUpdateMemberRole} mode={mode} />}
         </section>
       </div>
+      <ApprovalModal approval={approvals.find((approval) => approval.id === selectedApprovalId)} open={Boolean(selectedApprovalId)} simulated={isDemo || data.aiRuntime.mode === 'mock' || approvals.find((approval) => approval.id === selectedApprovalId)?.targetSystem.toLowerCase().includes('simulat') === true} onClose={() => setSelectedApprovalId(null)} onDecide={resolveApproval} />
     </div>
   )
 }
 
-function Dashboard({ data, approvals, runs, onRunWorkflow, mode }: { data: ReturnType<typeof getBusinessWorkspaceData>; approvals: Approval[]; runs: WorkflowRun[]; onRunWorkflow: (id: string) => void; mode: WorkspaceMode }) {
+function Dashboard({ data, approvals, runs, onRunWorkflow, onAskAIBeat, onReviewApproval, mode }: { data: ReturnType<typeof getBusinessWorkspaceData>; approvals: Approval[]; runs: WorkflowRun[]; onRunWorkflow: (id: string) => void; onAskAIBeat?: (question: string, history?: AIBeatAssistantMessage[]) => Promise<{ ok: true; response: AIBeatAssistantResponse } | { ok: false; error: string; code?: string }>; onReviewApproval: (id: string) => void; mode: WorkspaceMode }) {
   const metrics = [
     { label: 'AI Spend', value: `${money.format(data.roi.aiSpendMonthly)}/mo`, estimate: true },
     { label: 'Potential Savings', value: `${money.format(data.roi.potentialSavingsMonthly)}/mo`, estimate: true },
@@ -336,6 +344,19 @@ function Dashboard({ data, approvals, runs, onRunWorkflow, mode }: { data: Retur
 
   return (
     <div className="space-y-6">
+      <AskAIBeat variant="dashboard" onAsk={onAskAIBeat} demo={mode === 'demo'} />
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Panel title="Suggested next actions" icon={Sparkles}>
+          <div className="grid gap-3 sm:grid-cols-2">{data.optimizationOpportunities.slice(0, 4).map((item) => <Link key={item.id} href={item.ctaHref} className="rounded-md border border-white/10 bg-white/[0.03] p-4 hover:border-cyan-300/30"><strong className="text-sm text-white">{item.title}</strong><p className="mt-2 text-xs leading-5 text-slate-400">{item.potentialAction}</p></Link>)}</div>
+        </Panel>
+        <Panel title={`Pending approvals · ${approvals.filter((approval) => approval.status === 'PENDING').length}`} icon={ClipboardCheck}>
+          <div className="space-y-3">{approvals.filter((approval) => approval.status === 'PENDING').slice(0, 4).map((approval) => <div key={approval.id} className="flex items-center justify-between gap-3 rounded-md border border-amber-300/20 bg-amber-300/[0.06] p-4"><div><strong className="text-sm text-white">{AGENT_REGISTRY[approval.agentType].name}</strong><p className="mt-1 text-xs text-slate-400">{approval.affectedEntity}</p></div><button type="button" onClick={() => onReviewApproval(approval.id)} className="rounded-md bg-amber-200 px-3 py-2 text-xs font-black text-slate-950">Review</button></div>)}{!approvals.some((approval) => approval.status === 'PENDING') && <p className="text-sm text-slate-400">No decisions are waiting for review.</p>}</div>
+        </Panel>
+      </div>
+
+      <Panel title="Active and recent workflows" icon={GitBranch}><div className="grid gap-3 md:grid-cols-2">{sortAndDedupeRuns(runs).slice(0, 4).map((run) => <RunHistoryCard key={run.id} run={run} hasFinding={false} approval={approvals.find((approval) => approval.workflowRunId === run.id && approval.status === 'PENDING')} onReviewApproval={onReviewApproval} />)}{!runs.length && <p className="text-sm text-slate-400">No workflow runs yet. Ask AIBeat what to start with.</p>}</div></Panel>
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {metrics.map((metric) => (
           <Metric key={metric.label} label={metric.label} value={metric.value} estimate={metric.estimate} />
@@ -343,8 +364,6 @@ function Dashboard({ data, approvals, runs, onRunWorkflow, mode }: { data: Retur
       </div>
 
       <ExecutiveBriefSection items={data.executiveBriefItems} />
-
-      <OptimizationOpportunitiesSection opportunities={data.optimizationOpportunities} />
 
       <AgentTeamSection data={data} />
 
@@ -606,7 +625,7 @@ function RecentActivitySection({ activities, approvals, runs }: { activities: Re
   )
 }
 
-function Workflows({ data, runs, findings, onRunWorkflow, mode, error, runningWorkflowId, initialWorkflowSuggestion }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[]; findings: AgentFinding[]; onRunWorkflow: (id: string, input?: Record<string, unknown>) => void; mode: WorkspaceMode; error: string | null; runningWorkflowId: string | null; initialWorkflowSuggestion?: { workflowId: string; input: Record<string, string> } }) {
+function Workflows({ data, runs, findings, approvals, onReviewApproval, onRunWorkflow, mode, error, runningWorkflowId, initialWorkflowSuggestion }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[]; findings: AgentFinding[]; approvals: Approval[]; onReviewApproval: (id: string) => void; onRunWorkflow: (id: string, input?: Record<string, unknown>) => void; mode: WorkspaceMode; error: string | null; runningWorkflowId: string | null; initialWorkflowSuggestion?: { workflowId: string; input: Record<string, string> } }) {
   const catalog = buildWorkflowCatalog(data.workflows, data.templates)
   const suggestedWorkflow = initialWorkflowSuggestion ? catalog.find((workflow) => workflow.templateId === initialWorkflowSuggestion.workflowId || workflow.id === initialWorkflowSuggestion.workflowId) : undefined
   const [workflowInputs, setWorkflowInputs] = useState<Record<string, Record<string, string>>>(suggestedWorkflow && initialWorkflowSuggestion ? { [suggestedWorkflow.id]: initialWorkflowSuggestion.input } : {})
@@ -660,7 +679,7 @@ function Workflows({ data, runs, findings, onRunWorkflow, mode, error, runningWo
           </div>
         ))}
         <h3 className="pt-4 text-sm font-black uppercase tracking-[0.16em] text-slate-400">Run History</h3>
-        {visibleRuns.map((run) => <RunHistoryCard key={run.id} run={run} hasFinding={findings.some((finding) => finding.workflowRunId === run.id)} />)}
+        {visibleRuns.map((run) => <RunHistoryCard key={run.id} run={run} hasFinding={findings.some((finding) => finding.workflowRunId === run.id)} approval={approvals.find((approval) => approval.workflowRunId === run.id && approval.status === 'PENDING')} onReviewApproval={onReviewApproval} />)}
         {orderedRuns.length > 8 && <button type="button" onClick={() => setShowOlderRuns((current) => !current)} className="w-fit rounded-md border border-white/15 px-4 py-2 text-sm font-black text-white">{showOlderRuns ? 'Show recent runs' : `Show older runs (${orderedRuns.length - 8})`}</button>}
         <h3 id="lead-qualifications" className="scroll-mt-6 pt-4 text-sm font-black uppercase tracking-[0.16em] text-slate-400">Lead Qualifications</h3>
         {qualificationGroups.map((group) => <QualificationGroup key={group.key} group={group} runs={orderedRuns} />)}
@@ -669,13 +688,14 @@ function Workflows({ data, runs, findings, onRunWorkflow, mode, error, runningWo
   )
 }
 
-function RunHistoryCard({ run, hasFinding }: { run: WorkflowRun; hasFinding: boolean }) {
+function RunHistoryCard({ run, hasFinding, approval, onReviewApproval }: { run: WorkflowRun; hasFinding: boolean; approval?: Approval; onReviewApproval?: (id: string) => void }) {
   const ai = run.resultMetadata?.ai && typeof run.resultMetadata.ai === 'object' ? run.resultMetadata.ai as Record<string, unknown> : undefined
   const prospect = runProspectUrl(run)
   return <div className="rounded-lg border border-white/10 bg-black/20 p-4">
     <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{prospect ? 'Prospect' : 'Workflow run'}</p><strong className="mt-1 block text-base text-white">{runProspectLabel(run)}</strong></div><StatusBadge status={run.status} tone={run.status === 'WAITING_FOR_APPROVAL' ? 'amber' : run.status === 'FAILED' ? 'red' : run.status === 'COMPLETED' ? 'green' : 'cyan'} /></div>
     <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-400"><span>Started {formatDashboardTime(run.startedAt)}</span><span>{run.completedAt ? `Completed ${formatDashboardTime(run.completedAt)}` : run.status === 'WAITING_FOR_APPROVAL' ? 'Waiting for approval' : 'In progress'}</span>{Boolean(ai?.provider) && <span>{ai?.provider === 'mock' ? 'Mock AI · Mock test result' : `${String(ai?.provider)} · ${String(ai?.model ?? 'model unavailable')}`}</span>}</div>
     {run.resultSummary && <p className="mt-3 text-sm text-slate-300">{run.resultSummary}</p>}
+    {approval && onReviewApproval && <button type="button" onClick={() => onReviewApproval(approval.id)} className="mt-3 rounded-md bg-amber-200 px-3 py-2 text-sm font-black text-slate-950">Review approval</button>}
     {hasFinding && <a href="#lead-qualifications" className="mt-3 inline-block text-sm font-black text-emerald-200 hover:text-emerald-100">View result</a>}
   </div>
 }
@@ -909,7 +929,7 @@ function Recommendations({ data }: { data: ReturnType<typeof getBusinessWorkspac
   )
 }
 
-function Approvals({ approvals, onResolve, mode }: { approvals: Approval[]; onResolve: (approval: Approval, decision: 'APPROVED' | 'REJECTED' | 'EDITED') => void; mode: WorkspaceMode }) {
+function Approvals({ approvals, onReview, mode }: { approvals: Approval[]; onReview: (approvalId: string) => void; mode: WorkspaceMode }) {
   return (
     <Panel title="Approval Center" icon={ClipboardCheck}>
       <div className="grid gap-4">
@@ -925,9 +945,7 @@ function Approvals({ approvals, onResolve, mode }: { approvals: Approval[]; onRe
             </div>
             {approval.status === 'PENDING' && (
               <div className="mt-4 flex flex-wrap gap-2">
-                <button type="button" onClick={() => onResolve(approval, 'APPROVED')} className="rounded-md bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950">{mode === 'demo' ? 'Simulate Approval' : 'Approve'}</button>
-                <button type="button" onClick={() => onResolve(approval, 'EDITED')} className="rounded-md bg-cyan-300 px-3 py-2 text-sm font-black text-slate-950">{mode === 'demo' ? 'Simulate Edit' : 'Edit'}</button>
-                <button type="button" onClick={() => onResolve(approval, 'REJECTED')} className="rounded-md bg-rose-400 px-3 py-2 text-sm font-black text-slate-950">{mode === 'demo' ? 'Simulate Rejection' : 'Reject'}</button>
+                <button type="button" onClick={() => onReview(approval.id)} className="rounded-md bg-amber-200 px-3 py-2 text-sm font-black text-slate-950">{mode === 'demo' ? 'Review simulated approval' : 'Review approval'}</button>
               </div>
             )}
           </div>

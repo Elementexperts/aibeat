@@ -18,6 +18,7 @@ import { isLeadResearchOutput, normalizeLeadUrl, validateWorkflowInput } from '.
 import { getBusinessAIMode, getModelRouter, MockModelRouter } from '../lib/business/model-router'
 import { mapGeminiUsage } from '../lib/business/model-providers/gemini'
 import { askAIBeat } from '../lib/business/assistant/assistant'
+import { buildAssistantPrompt } from '../lib/business/assistant/prompt'
 import { AIBEAT_ALLOWED_ROUTES, AIBEAT_ALLOWED_WORKFLOW_IDS } from '../lib/business/assistant/product-guide'
 import { sanitizeAssistantSuggestion, validateAssistantMessage, validateAssistantResponse } from '../lib/business/assistant/validation'
 import type { AIBeatAssistantContext } from '../lib/business/assistant/types'
@@ -53,6 +54,48 @@ test('Ask AIBeat prepares but does not execute Lead Research', async () => {
   assert.equal(result.intent, 'WORKFLOW_PREPARE'); assert.deepEqual(result.suggestions[0].workflowInput, { leadUrl: 'https://example.com/' })
   const source = readFileSync('app/business/actions.ts', 'utf8'); const assistantBody = source.slice(source.indexOf('askAIBeatAction'), source.indexOf('testBusinessAIConnectionAction'))
   assert.doesNotMatch(assistantBody, /runBusinessWorkflowAction|runWorkflow\(/)
+})
+
+test('dashboard and dedicated page share the authenticated Ask AIBeat implementation', () => {
+  const dashboard = readFileSync('app/business/dashboard/page.tsx', 'utf8')
+  const askPage = readFileSync('app/business/ask/page.tsx', 'utf8')
+  const workspace = readFileSync('components/business/BusinessWorkspace.tsx', 'utf8')
+  assert.match(dashboard, /onAskAIBeat=\{askAIBeatAction\}/)
+  assert.match(askPage, /onAskAIBeat=\{askAIBeatAction\}/)
+  assert.match(workspace, /<AskAIBeat variant="dashboard"/)
+  assert.match(workspace, /route === 'ask' && <AskAIBeat/)
+})
+
+test('assistant accepts adjacent business guidance and live prompt encourages actionable depth', async () => {
+  const result = await askAIBeat({ question: 'How should a small agency decide what to automate first?', context: assistantContext, env: { AIBEAT_BUSINESS_AI_MODE: 'mock' } })
+  assert.equal(result.intent, 'GENERAL_BUSINESS_GUIDANCE')
+  assert.match(result.message, /Business Memory/)
+  assert.ok(result.suggestions.length >= 2)
+  const prompt = buildAssistantPrompt('How can AIBeat help my agency grow?', assistantContext, [])
+  assert.match(prompt, /250–700 words/)
+  assert.match(prompt, /next 1–3 actions/)
+  assert.doesNotMatch(prompt, /Keep advice concise and specific to AIBeat/)
+})
+
+test('contextual approval modal reuses decision action and supports explicit edited content', () => {
+  const workspace = readFileSync('components/business/BusinessWorkspace.tsx', 'utf8')
+  const modal = readFileSync('components/business/ApprovalModal.tsx', 'utf8')
+  assert.match(workspace, /setSelectedApprovalId\(result\.approval\.id\)/)
+  assert.match(workspace, /onDecideApproval\(approval\.id, decision, editedContent\)/)
+  assert.doesNotMatch(workspace, /Edited by approver/)
+  assert.match(modal, /role="dialog"/); assert.match(modal, /aria-modal="true"/); assert.match(modal, /event\.key === 'Escape'/)
+  assert.match(modal, /value=\{content\}/); assert.match(modal, /'EDITED', content\.trim\(\)/)
+  assert.match(modal, /Simulated action — no external/)
+  assert.match(workspace, /Review approval/)
+  assert.match(workspace, /Pending approvals/)
+  assert.match(workspace, /setSelectedApprovalId\(null\)/)
+})
+
+test('standalone approval center remains available', () => {
+  const page = readFileSync('app/business/approvals/page.tsx', 'utf8')
+  const workspace = readFileSync('components/business/BusinessWorkspace.tsx', 'utf8')
+  assert.match(page, /route="approvals"/)
+  assert.match(workspace, /Approval Center/)
 })
 
 test('workflows page accepts and renders a prepared Lead Research suggestion without auto-running', () => {
