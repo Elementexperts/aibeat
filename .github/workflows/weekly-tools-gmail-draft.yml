@@ -1,0 +1,31 @@
+name: Friday Weekly Tools Gmail Draft
+
+on:
+  schedule:
+    # 21:00 Asia/Tashkent (UTC+5).
+    - cron: '0 16 * * 5'
+  workflow_dispatch:
+
+jobs:
+  create-draft:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Create unsent weekly tools draft
+        env:
+          GMAIL_WEEKLY_TOOLS_DRAFT_ENABLED: ${{ vars.GMAIL_WEEKLY_TOOLS_DRAFT_ENABLED || 'false' }}
+          WEEKLY_TOOL_SLUGS: ${{ vars.WEEKLY_TOOL_SLUGS }}
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          GMAIL_DRAFT_TO: ${{ vars.GMAIL_DRAFT_TO }}
+          GMAIL_FROM_NAME: ${{ vars.GMAIL_FROM_NAME || 'AIBeat' }}
+          GMAIL_FROM_EMAIL: ${{ vars.GMAIL_FROM_EMAIL }}
+        run: npm run newsletter:weekly-tools-draft

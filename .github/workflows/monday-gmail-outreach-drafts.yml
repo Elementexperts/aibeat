@@ -1,0 +1,32 @@
+name: Monday Gmail Outreach Drafts
+
+on:
+  schedule:
+    # 21:00 Asia/Tashkent (UTC+5).
+    - cron: '0 16 * * 1'
+  workflow_dispatch:
+
+jobs:
+  create-drafts:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Create individual unsent outreach drafts
+        env:
+          GMAIL_OUTREACH_DRAFTS_ENABLED: ${{ vars.GMAIL_OUTREACH_DRAFTS_ENABLED || 'false' }}
+          GMAIL_OUTREACH_INPUT_PATH: ${{ vars.GMAIL_OUTREACH_INPUT_PATH || 'data/outreach/daily-manual-leads.csv' }}
+          GMAIL_OUTREACH_DRAFT_LIMIT: ${{ vars.GMAIL_OUTREACH_DRAFT_LIMIT || '10' }}
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          GMAIL_DRAFT_TO: ${{ vars.GMAIL_DRAFT_TO }}
+          GMAIL_FROM_NAME: ${{ vars.GMAIL_FROM_NAME || 'AIBeat' }}
+          GMAIL_FROM_EMAIL: ${{ vars.GMAIL_FROM_EMAIL }}
+        run: npm run outreach:gmail-drafts

@@ -1,4 +1,4 @@
-import { normalizeEmail } from './outreach-validation'
+import { isValidEmail, normalizeEmail } from './outreach-validation'
 import type { OutreachContactType, OutreachLead, OutreachPriority } from './outreach-types'
 
 const LAWFUL_BASIS = 'Manually reviewed public business contact from the daily lead input file for relevant B2B founder outreach. Draft creation only; sending remains disabled.'
@@ -179,7 +179,7 @@ export function parseDailyManualLeads(csv: string, now = new Date()): DailyManua
     const websiteUrl = normalizeWebsite(row.website || '')
 
     if (!websiteUrl) rowErrors.push('website is required and must be a valid URL or domain.')
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) rowErrors.push('email is required and must be valid.')
+    if (!isValidEmail(email)) rowErrors.push('email is required and must be valid.')
     if (seen.has(email)) rowErrors.push('duplicate email in daily manual file.')
 
     if (rowErrors.length > 0 || !websiteUrl) {

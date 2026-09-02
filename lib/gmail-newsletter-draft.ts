@@ -11,14 +11,30 @@ export interface GmailDraftConfig {
   fromEmail: string
 }
 
+export interface GmailDraftMessage {
+  to: string
+  subject: string
+  plainText: string
+  html: string
+  key: string
+}
+
 export async function createGmailNewsletterDraft(input: { newsletter: LatestNewsNewsletter; config: GmailDraftConfig; fetchImpl?: typeof fetch }) {
+  const key = newsletterDraftKey(input.newsletter)
+  return createGmailDraft({
+    message: { to: input.config.to, subject: input.newsletter.subject, plainText: input.newsletter.plainText, html: input.newsletter.html, key },
+    config: input.config,
+    fetchImpl: input.fetchImpl,
+  })
+}
+
+export async function createGmailDraft(input: { message: GmailDraftMessage; config: GmailDraftConfig; fetchImpl?: typeof fetch }) {
   const fetchImpl = input.fetchImpl ?? fetch
   const accessToken = await refreshGmailAccessToken(input.config, fetchImpl)
-  const newsletterKey = newsletterDraftKey(input.newsletter)
-  const existingDraftId = await findExistingDraft(accessToken, newsletterKey, fetchImpl)
+  const existingDraftId = await findExistingDraft(accessToken, input.message.key, fetchImpl)
   if (existingDraftId) return { created: false as const, draftId: existingDraftId, duplicate: true as const }
 
-  const raw = buildMimeMessage(input.newsletter, input.config, newsletterKey)
+  const raw = buildGenericMimeMessage(input.message, input.config)
   const response = await fetchImpl('https://gmail.googleapis.com/gmail/v1/users/me/drafts', {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -49,12 +65,16 @@ export function newsletterDraftKey(newsletter: LatestNewsNewsletter) {
 }
 
 export function buildMimeMessage(newsletter: LatestNewsNewsletter, config: Pick<GmailDraftConfig, 'to' | 'fromName' | 'fromEmail'>, newsletterKey = newsletterDraftKey(newsletter)) {
-  const boundary = `aibeat_${newsletterKey.replace(/[^a-z0-9]/gi, '_')}`
+  return buildGenericMimeMessage({ to: config.to, subject: newsletter.subject, plainText: newsletter.plainText, html: newsletter.html, key: newsletterKey }, config)
+}
+
+export function buildGenericMimeMessage(message: GmailDraftMessage, config: Pick<GmailDraftConfig, 'fromName' | 'fromEmail'>) {
+  const boundary = `aibeat_${message.key.replace(/[^a-z0-9]/gi, '_')}`
   return [
-    `To: ${sanitizeHeader(config.to)}`,
+    `To: ${sanitizeHeader(message.to)}`,
     `From: ${sanitizeHeader(config.fromName || 'AIBeat')} <${sanitizeHeader(config.fromEmail)}>`,
-    `Subject: ${encodeMimeHeader(newsletter.subject)}`,
-    `X-AIBeat-Newsletter-Key: ${newsletterKey}`,
+    `Subject: ${encodeMimeHeader(message.subject)}`,
+    `X-AIBeat-Newsletter-Key: ${sanitizeHeader(message.key)}`,
     'MIME-Version: 1.0',
     `Content-Type: multipart/alternative; boundary="${boundary}"`,
     '',
@@ -62,12 +82,12 @@ export function buildMimeMessage(newsletter: LatestNewsNewsletter, config: Pick<
     'Content-Type: text/plain; charset="UTF-8"',
     'Content-Transfer-Encoding: base64',
     '',
-    Buffer.from(newsletter.plainText, 'utf8').toString('base64'),
+    Buffer.from(message.plainText, 'utf8').toString('base64'),
     `--${boundary}`,
     'Content-Type: text/html; charset="UTF-8"',
     'Content-Transfer-Encoding: base64',
     '',
-    Buffer.from(newsletter.html, 'utf8').toString('base64'),
+    Buffer.from(message.html, 'utf8').toString('base64'),
     `--${boundary}--`,
   ].join('\r\n')
 }

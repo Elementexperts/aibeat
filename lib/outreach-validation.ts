@@ -1,6 +1,6 @@
 import type { OutreachConsentStatus, OutreachContactType, OutreachLead, OutreachPriority, OutreachStatus } from './outreach-types'
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_RE = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/i
 const BLOCKED_CONTACT_TYPES: OutreachContactType[] = ['privacy', 'legal', 'security', 'abuse', 'dpo', 'no-reply', 'noreply']
 const BLOCKED_LOCAL_PARTS = ['privacy', 'legal', 'security', 'abuse', 'dpo', 'no-reply', 'noreply']
 const TERMINAL_STATUSES: OutreachStatus[] = ['bounced', 'declined', 'replied', 'interested', 'unsubscribed', 'suppressed']
