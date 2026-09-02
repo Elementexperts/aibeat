@@ -25,6 +25,18 @@ jobs:
           NEWSLETTER_ARTICLE_LIMIT: '3'
           NEXT_PUBLIC_SITE_URL: 'https://www.aibeat.dev'
         run: npm run newsletter:preview
+      - name: Create Gmail draft when explicitly enabled
+        env:
+          NEWSLETTER_ARTICLE_LIMIT: '3'
+          NEXT_PUBLIC_SITE_URL: 'https://www.aibeat.dev'
+          GMAIL_CREATE_DRAFT_ENABLED: ${{ vars.GMAIL_CREATE_DRAFT_ENABLED || 'false' }}
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          GMAIL_DRAFT_TO: ${{ vars.GMAIL_DRAFT_TO }}
+          GMAIL_FROM_NAME: ${{ vars.GMAIL_FROM_NAME || 'AIBeat' }}
+          GMAIL_FROM_EMAIL: ${{ vars.GMAIL_FROM_EMAIL }}
+        run: npm run newsletter:gmail-draft
       - name: Upload preview artifacts
         uses: actions/upload-artifact@v4
         with:

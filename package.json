@@ -15,6 +15,7 @@
     "kit:setup-source-tags": "tsx scripts/setup-kit-source-tags.ts",
     "news:daily": "tsx scripts/fetch-and-post.ts",
     "newsletter:preview": "tsx scripts/generate-newsletter-preview.ts",
+    "newsletter:gmail-draft": "tsx scripts/create-gmail-newsletter-draft.ts",
     "leads:daily": "tsx scripts/daily-lead-discovery.ts",
     "outreach": "tsx lib/outreach-cli.ts",
     "reddit:generate": "tsx scripts/reddit/index.ts",
