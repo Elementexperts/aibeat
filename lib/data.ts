@@ -29,6 +29,7 @@ export interface Tool {
   pricingType: 'free' | 'freemium' | 'paid'
   affiliateUrl: string
   websiteUrl: string
+  affiliateOffer?: { discount: string; code: string }
   featured: boolean
   pros: string[]
   cons: string[]
@@ -353,8 +354,9 @@ export const TOOLS: Tool[] = [
     rating: 4.4,
     pricing: 'Paid plans available',
     pricingType: 'paid',
-    affiliateUrl: 'https://partners.pictory.ai/home',
+    affiliateUrl: 'https://pictory.ai?fpr=nomoz36',
     websiteUrl: 'https://pictory.ai',
+    affiliateOffer: { discount: '20% off', code: 'Cpiabd20' },
     featured: true,
     pros: ['Turns scripts into videos', 'Useful for social clips', 'Branding tools', 'Fast content repurposing'],
     cons: ['Paid plan needed for serious use', 'Template quality varies', 'Still needs human editing'],

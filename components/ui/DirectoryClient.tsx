@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { TOOLS, getPopularTools } from '@/lib/data'
 import { PUBLIC_ANALYTICS_EVENTS } from '@/lib/analytics'
 import { ToolLogo } from '@/components/ui/ToolLogo'
+import { ToolAffiliateOffer } from '@/components/ui/ToolAffiliateOffer'
 
 const ALL = 'All'
 const PRICING_OPTIONS = [ALL, 'Free', 'Freemium', 'Paid'] as const
@@ -174,8 +175,8 @@ export default function DirectoryClient() {
 
 function ToolCard({ tool, i, rank }: { tool: typeof TOOLS[number]; i: number; rank: number }) {
   return (
-    <Link href={`/tools/${tool.slug}`}>
-      <div className={`p-4 border-b border-border card-hover ${i % 4 !== 3 ? 'md:border-r' : ''} border-border`}>
+    <div className={`p-4 border-b border-border ${i % 4 !== 3 ? 'md:border-r' : ''}`}>
+      <Link href={`/tools/${tool.slug}`} className="block card-hover">
         <div className="mb-3 flex items-center justify-between gap-3">
           <ToolLogo tool={tool} className="w-9 h-9 rounded-md text-sm" />
           <span className="font-mono text-[10px] text-ink-4">#{rank}</span>
@@ -193,7 +194,12 @@ function ToolCard({ tool, i, rank }: { tool: typeof TOOLS[number]; i: number; ra
             {tool.pricingType === 'free' ? 'Free' : tool.pricingType === 'freemium' ? 'Freemium' : tool.pricing}
           </span>
         </div>
-      </div>
-    </Link>
+      </Link>
+      {tool.affiliateOffer && (
+        <div className="mt-3">
+          <ToolAffiliateOffer tool={tool} />
+        </div>
+      )}
+    </div>
   )
 }

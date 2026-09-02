@@ -4,6 +4,7 @@ import { getToolBySlug, TOOLS, CATEGORY_COLORS } from '@/lib/data'
 import type { Metadata } from 'next'
 import { ToolLogo } from '@/components/ui/ToolLogo'
 import { ToolShareLinks } from '@/components/ui/ToolShareLinks'
+import { ToolAffiliateOffer } from '@/components/ui/ToolAffiliateOffer'
 import { PUBLIC_ANALYTICS_EVENTS } from '@/lib/analytics'
 
 export async function generateStaticParams() {
@@ -59,6 +60,12 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
               </div>
             </div>
           </div>
+
+          {tool.affiliateOffer && (
+            <div className="mb-6">
+              <ToolAffiliateOffer tool={tool} />
+            </div>
+          )}
 
           {/* Quick Verdict */}
           <div className="bg-paper-2 border border-border p-4 mb-6">
