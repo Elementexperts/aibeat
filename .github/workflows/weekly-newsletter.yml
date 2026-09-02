@@ -1,0 +1,34 @@
+name: Weekly Newsletter Preview
+
+on:
+  schedule:
+    - cron: '0 16 * * 3'
+  workflow_dispatch:
+
+jobs:
+  generate-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate latest-news newsletter preview
+        env:
+          NEWSLETTER_ARTICLE_LIMIT: '3'
+          NEXT_PUBLIC_SITE_URL: 'https://www.aibeat.dev'
+        run: npm run newsletter:preview
+      - name: Upload preview artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aibeat-weekly-newsletter-preview
+          path: artifacts/newsletter/
+          if-no-files-found: error
+          retention-days: 14
