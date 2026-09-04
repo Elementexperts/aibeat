@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { recordPublicFormSubmission } from '@/lib/public-form-submissions'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX_FIELD_LENGTH = 500
@@ -105,44 +106,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Select a company size' }, { status: 400 })
   }
 
-  const apiKey = process.env.RESEND_API_KEY
-  const toEmails = getRecipients()
-  const fromEmail = process.env.BUSINESS_EARLY_ACCESS_FROM_EMAIL || process.env.SUBMISSION_FROM_EMAIL || DEFAULT_FROM_EMAIL
-
-  if (!apiKey) {
-    console.error('Missing RESEND_API_KEY env var')
-    return NextResponse.json({ error: 'Early access signup is not configured' }, { status: 500 })
-  }
-
-  if (toEmails.length === 0) {
-    console.error('No valid business early access recipients configured')
-    return NextResponse.json({ error: 'Early access signup is not configured' }, { status: 500 })
-  }
-
   try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: toEmails,
-        reply_to: email,
-        subject: `[AIBeat Business Early Access] ${company}`,
-        html: leadHtml({ email, company, companySize, designPartner }),
-        text: leadText({ email, company, companySize, designPartner }),
-      }),
-    })
-
-    if (!res.ok) {
-      const detail = await res.text()
-      console.error('Resend early access failed:', res.status, detail)
-      return NextResponse.json({ error: 'Could not join early access right now' }, { status: 502 })
-    }
-
-    return NextResponse.json({ success: true })
+    const submissionId = await recordPublicFormSubmission({ kind: 'business_early_access', email, payload: { email, company, companySize, designPartner } })
+    return NextResponse.json({ success: true, submissionId })
   } catch (error) {
     console.error('Business early access error:', error)
     return NextResponse.json({ error: 'Could not join early access right now' }, { status: 502 })

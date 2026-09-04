@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { recordPublicFormSubmission } from '@/lib/public-form-submissions'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const KIT_API_BASE = 'https://api.kit.com/v4'
@@ -94,35 +95,7 @@ function notificationText(input: { email: string; reason?: string; pageUrl?: str
 }
 
 async function sendNotification(input: { email: string; reason?: string; pageUrl?: string; kitStatus: string }) {
-  const apiKey = process.env.RESEND_API_KEY
-  const toEmails = getNotificationRecipients()
-
-  if (!apiKey || toEmails.length === 0) {
-    console.warn('Unsubscribe notification email is not configured')
-    return
-  }
-
-  const fromEmail = process.env.UNSUBSCRIBE_FROM_EMAIL || process.env.SUBMISSION_FROM_EMAIL || DEFAULT_FROM_EMAIL
-
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: toEmails,
-      reply_to: input.email,
-      subject: `[AIBeat Unsubscribe] ${input.email}`,
-      html: notificationHtml(input),
-      text: notificationText(input),
-    }),
-  })
-
-  if (!res.ok) {
-    console.error('Resend unsubscribe notification failed:', res.status, await res.text())
-  }
+  await recordPublicFormSubmission({ kind: 'unsubscribe', email: input.email, payload: input })
 }
 
 export async function POST(req: NextRequest) {

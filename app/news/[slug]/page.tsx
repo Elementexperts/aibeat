@@ -5,6 +5,7 @@ import { getArticleBySlug, getArticles } from '@/lib/articles'
 import type { Metadata } from 'next'
 import { ToolLogo } from '@/components/ui/ToolLogo'
 import { ToolShareLinks } from '@/components/ui/ToolShareLinks'
+import { SubscribeForm } from '@/components/subscribe/SubscribeForm'
 
 export async function generateStaticParams() {
   const articles = await getArticles()
@@ -140,8 +141,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           <div className="bg-ink p-4 text-white">
             <div className="font-serif text-lg font-bold mb-1">Get the daily brief</div>
             <p className="text-xs text-ink-4 mb-3">AI news + top tools every morning. Free.</p>
-            <input type="email" placeholder="your@email.com" className="w-full bg-transparent border border-ink-3 text-white text-xs px-3 py-2 mb-2 outline-none placeholder:text-ink-4" />
-            <button className="w-full bg-beat-red text-white text-xs py-2 font-semibold">Subscribe →</button>
+            <SubscribeForm dark buttonLabel="Subscribe →" className="[&_div]:flex-col [&_div]:gap-2 [&_button]:w-full [&_input]:w-full" />
           </div>
 
           {/* More Articles */}

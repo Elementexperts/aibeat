@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { COMPARISONS, TRENDING } from '@/lib/data'
 import type { Metadata } from 'next'
 import { ToolLogo } from '@/components/ui/ToolLogo'
+import { SubscribeForm } from '@/components/subscribe/SubscribeForm'
 
 export const metadata: Metadata = {
   title: 'AI Tool Comparisons — AIBeat.dev',
@@ -72,14 +73,7 @@ export default function ComparePage() {
             <p className="text-xs text-ink-4 mb-4 leading-relaxed">
               Join 8,400+ founders and freelancers getting AI news + top tool picks every morning. Free.
             </p>
-            <input
-              type="email"
-              placeholder="your@email.com"
-              className="w-full bg-transparent border border-ink-3 text-white text-xs px-3 py-2 mb-2 outline-none placeholder:text-ink-4"
-            />
-            <button className="w-full bg-beat-red text-white text-xs py-2 font-semibold hover:bg-red-700 transition-colors">
-              Get the daily brief →
-            </button>
+            <SubscribeForm dark buttonLabel="Get the daily brief →" className="[&_div]:flex-col [&_div]:gap-2 [&_button]:w-full [&_input]:w-full" />
             <p className="font-mono text-[10px] text-ink-4 mt-2">Free. No spam. Unsubscribe anytime.</p>
           </div>
 

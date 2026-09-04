@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { formatPlanPrice, getPlanById } from '@/data/founder-services'
 import { verifyAibeatLink, type VerificationMethod } from '@/lib/aibeat-link-verification'
+import { recordPublicFormSubmission } from '@/lib/public-form-submissions'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const URL_RE = /^https?:\/\/.+\..+/i
@@ -223,44 +224,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const apiKey = process.env.RESEND_API_KEY
-  const toEmails = getSubmissionRecipients()
-  const fromEmail = process.env.SUBMISSION_FROM_EMAIL || DEFAULT_SUBMISSION_FROM_EMAIL
-
-  if (!apiKey) {
-    console.error('Missing RESEND_API_KEY env var')
-    return NextResponse.json({ error: 'Submission email is not configured' }, { status: 500 })
-  }
-
-  if (toEmails.length === 0) {
-    console.error('SUBMISSION_TO_EMAIL has no valid email recipients')
-    return NextResponse.json({ error: 'Submission email is not configured' }, { status: 500 })
-  }
-
   try {
-    const submissionId = randomUUID()
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: toEmails,
-        reply_to: email || undefined,
-        subject: `New AIBeat ${plan.name} request: ${name}`,
-        html: submissionHtml({ type, name, url, category, description, email, selectedPlan, verificationPageUrl, verificationStatus }),
-        text: submissionText({ type, name, url, category, description, email, selectedPlan, verificationPageUrl, verificationStatus }),
-      }),
+    const submissionId = await recordPublicFormSubmission({
+      kind: 'tool_submission', email,
+      payload: { type, name, url, category, description, email, selectedPlan, verificationPageUrl, verificationMethod, verificationStatus },
     })
-
-    if (!res.ok) {
-      const detail = await res.text()
-      console.error('Resend submit failed:', res.status, detail)
-      return NextResponse.json({ error: 'Could not submit right now' }, { status: 502 })
-    }
-
     return NextResponse.json({ success: true, submissionId })
   } catch (err) {
     console.error('Submit form error:', err)

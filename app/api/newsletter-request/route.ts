@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sanitizeNewsletterAttribution } from '@/lib/newsletter-attribution'
+import { recordPublicFormSubmission } from '@/lib/public-form-submissions'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const DEFAULT_TO_EMAIL = 'info@aibeat.dev'
@@ -41,47 +42,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 })
   }
 
-  const apiKey = process.env.RESEND_API_KEY
-  const recipients = getRecipients()
-  if (!apiKey || recipients.length === 0) {
-    console.error('Newsletter request notification is not configured')
-    return NextResponse.json({ error: 'Newsletter signup is not configured' }, { status: 500 })
-  }
-
   const attribution = sanitizeNewsletterAttribution(body)
-  const details = [
-    ['Subscriber email', email],
-    ['Page URL', attribution.page_url || 'Not provided'],
-    ['Referrer', attribution.referrer || 'Not provided'],
-    ['UTM source', attribution.utm_source || 'Not provided'],
-    ['UTM campaign', attribution.utm_campaign || 'Not provided'],
-  ]
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: process.env.NEWSLETTER_FROM_EMAIL || process.env.SUBMISSION_FROM_EMAIL || DEFAULT_FROM_EMAIL,
-        to: recipients,
-        reply_to: email,
-        subject: `[AIBeat Newsletter Signup] ${email}`,
-        html: `<h1>New newsletter signup request</h1><table>${details.map(([label, value]) => `<tr><th align="left" style="padding:6px 12px 6px 0">${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`).join('')}</table>`,
-        text: ['New AIBeat newsletter signup request', '', ...details.map(([label, value]) => `${label}: ${value}`)].join('\n'),
-      }),
-    })
-
-    if (!response.ok) {
-      console.error('Resend newsletter notification failed:', response.status, await response.text())
-      return NextResponse.json({ error: 'Could not send your request right now' }, { status: 502 })
-    }
-
-    return NextResponse.json({ success: true })
+    const submissionId = await recordPublicFormSubmission({ kind: 'newsletter', email, payload: { email, ...attribution } })
+    return NextResponse.json({ success: true, submissionId })
   } catch (error) {
-    console.error('Newsletter notification error:', error instanceof Error ? error.message : 'Unknown error')
+    console.error('Newsletter storage error:', error instanceof Error ? error.message : 'Unknown error')
     return NextResponse.json({ error: 'Could not send your request right now' }, { status: 502 })
   }
 }
