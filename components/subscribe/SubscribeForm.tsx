@@ -41,7 +41,7 @@ export function SubscribeForm({
         utm_term: params.get('utm_term') || undefined,
       }
 
-      const res = await fetch('/api/subscribe', {
+      const res = await fetch('/api/newsletter-request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: normalizedEmail, ...attribution }),
@@ -65,8 +65,8 @@ export function SubscribeForm({
   if (submitted) {
     return (
       <div className={`border p-4 ${dark ? 'border-beat-green bg-ink-2 text-white' : 'bg-beat-green-light border-beat-green'}`}>
-        <p className={`text-sm font-semibold mb-1 ${dark ? 'text-white' : 'text-beat-green'}`}>You&apos;re in.</p>
-        <p className={`text-xs ${dark ? 'text-ink-4' : 'text-ink-2'}`}>Check your inbox to confirm.</p>
+        <p className={`text-sm font-semibold mb-1 ${dark ? 'text-white' : 'text-beat-green'}`}>Request received.</p>
+        <p className={`text-xs ${dark ? 'text-ink-4' : 'text-ink-2'}`}>Your subscription request has been received.</p>
       </div>
     )
   }
