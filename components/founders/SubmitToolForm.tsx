@@ -70,7 +70,9 @@ function textSnippet() {
 
 export function SubmitToolForm() {
   const searchParams = useSearchParams()
-  const initialPlan = getPlanById(searchParams.get('plan'))
+  const requestedPlanId = searchParams.get('plan')
+  const planLocked = getSubmissionPlans().some((plan) => plan.id === requestedPlanId)
+  const initialPlan = getPlanById(requestedPlanId)
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({ ...EMPTY_FORM, selectedPlan: initialPlan.id })
   const [submitted, setSubmitted] = useState(false)
@@ -182,7 +184,7 @@ export function SubmitToolForm() {
           ) : (
             <Link href="/for-founders" className="inline-flex justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">Compare plans</Link>
           )}
-          <button type="button" onClick={() => { setSubmitted(false); setSubmissionId(''); setForm({ ...EMPTY_FORM, selectedPlan: 'free' }); setStep(0); setError(null); setSubmitWithoutVerification(false) }} className="inline-flex justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white">Submit another</button>
+          <button type="button" onClick={() => { setSubmitted(false); setSubmissionId(''); setForm({ ...EMPTY_FORM, selectedPlan: initialPlan.id }); setStep(0); setError(null); setSubmitWithoutVerification(false) }} className="inline-flex justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white">Submit another</button>
         </div>
       </div>
     )
@@ -190,6 +192,17 @@ export function SubmitToolForm() {
 
   return (
     <form onSubmit={handleSubmit} className="premium-card p-5 md:p-6">
+      {planLocked && (
+        <div className="mb-6 rounded-2xl border border-cyan-300/30 bg-cyan-300/10 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">Selected package</p>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <strong className="text-lg text-white">{selectedPlan.name}</strong>
+            <span className="text-sm font-semibold text-cyan-100">{formatPlanPrice(selectedPlan)}</span>
+          </div>
+          <p className="mt-2 text-xs leading-5 text-slate-300">This package is locked from your pricing selection so you only need to complete the submission details.</p>
+        </div>
+      )}
+
       <div className="mb-6 grid gap-2 sm:grid-cols-3">
         {STEPS.map((label, index) => (
           <button key={label} type="button" onClick={() => setStep(index)} className={`rounded-full border px-3 py-2 text-xs ${step === index ? 'border-cyan-300/50 bg-cyan-300/10 text-cyan-100' : 'border-white/10 text-slate-500'}`}>
@@ -225,7 +238,7 @@ export function SubmitToolForm() {
           <FormInput label="Business email *" type="email" value={form.email} onChange={(value) => set('email', value)} placeholder="Use a domain email when possible" required />
           <FormInput label="Company *" value={form.company} onChange={(value) => set('company', value)} required />
           <div className="grid gap-5 sm:grid-cols-2">
-            <FormSelect label="Selected plan" value={form.selectedPlan} onChange={(value) => set('selectedPlan', value)} options={getSubmissionPlans().map((plan) => ({ label: `${plan.name} - ${formatPlanPrice(plan)}`, value: plan.id }))} />
+            <FormSelect label={planLocked ? 'Selected plan (locked)' : 'Selected plan'} value={form.selectedPlan} onChange={(value) => set('selectedPlan', value)} options={getSubmissionPlans().map((plan) => ({ label: `${plan.name} - ${formatPlanPrice(plan)}`, value: plan.id }))} disabled={planLocked} />
             <FormSelect label="Preferred contact" value={form.preferredChannel} onChange={(value) => set('preferredChannel', value)} options={CHANNELS} />
           </div>
           <FormTextarea label="Anything else? (optional)" value={form.notes} onChange={(value) => set('notes', value)} placeholder="Mention launch goals, newsletter interest, special use cases, or anything AIBeat should know." />
@@ -334,11 +347,11 @@ function FormTextarea({ label, value, onChange, placeholder, required = false }:
   )
 }
 
-function FormSelect({ label, value, onChange, options, required = false }: { label: string; value: string; onChange: (value: string) => void; options: Array<string | { label: string; value: string }>; required?: boolean }) {
+function FormSelect({ label, value, onChange, options, required = false, disabled = false }: { label: string; value: string; onChange: (value: string) => void; options: Array<string | { label: string; value: string }>; required?: boolean; disabled?: boolean }) {
   return (
     <label className="block">
       <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{label}</span>
-      <select required={required} value={value} onChange={(e) => onChange(e.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-[#0d0f14] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/50">
+      <select required={required} disabled={disabled} value={value} onChange={(e) => onChange(e.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-[#0d0f14] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300/50 disabled:cursor-not-allowed disabled:opacity-70">
         <option value="">Select an option</option>
         {options.map((option) => {
           const value = typeof option === 'string' ? option : option.value

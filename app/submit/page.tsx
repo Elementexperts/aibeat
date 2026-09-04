@@ -67,6 +67,19 @@ export default function SubmitPage() {
         </div>
       </section>
 
+      <section className="border-b border-white/10 bg-white/[0.025] py-16">
+        <div className="site-shell">
+          <div className="mb-10 max-w-2xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">Paid Spotlight</p>
+            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Three simple one-time listing packages</h2>
+            <p className="mt-4 text-sm leading-7 text-slate-400">
+              Choose a paid package only when the added review priority, content depth, or disclosed placement fits your goal.
+            </p>
+          </div>
+          <SubmissionPricingCards />
+        </div>
+      </section>
+
       <section className="site-shell grid gap-6 py-16 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="premium-card p-6">
           <FileCheck2 className="h-6 w-6 text-cyan-200" />
@@ -90,19 +103,6 @@ export default function SubmitPage() {
           <p className="mt-4 text-sm leading-7 text-slate-400">
             Free submission does not guarantee approval, placement, publication timing, or a Verified badge. Free editorial consideration remains available.
           </p>
-        </div>
-      </section>
-
-      <section className="border-y border-white/10 bg-white/[0.025] py-16">
-        <div className="site-shell">
-          <div className="mb-10 max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">Paid Spotlight</p>
-            <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Three simple one-time listing packages</h2>
-            <p className="mt-4 text-sm leading-7 text-slate-400">
-              Choose a paid package only when the added review priority, content depth, or disclosed placement fits your goal.
-            </p>
-          </div>
-          <SubmissionPricingCards />
         </div>
       </section>
 

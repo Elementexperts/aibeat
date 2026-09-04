@@ -109,6 +109,14 @@ test('free listing can explicitly be submitted without automatic badge verificat
   assert.match(submitRoute, /Manual review requested - submitted without badge verification/)
 })
 
+test('pricing links preselect and lock the chosen submission package', () => {
+  const form = readFileSync('components/founders/SubmitToolForm.tsx', 'utf8')
+
+  assert.match(form, /planLocked/)
+  assert.match(form, /Selected plan \(locked\)/)
+  assert.match(form, /disabled=\{planLocked\}/)
+})
+
 test('approved AIBeat destinations normalize www and common paths', () => {
   assert.equal(normalizeAibeatDestination('https://www.aibeat.dev/'), 'https://aibeat.dev')
   assert.equal(normalizeAibeatDestination('https://aibeat.dev/tools?utm_source=x'), 'https://aibeat.dev/tools')
