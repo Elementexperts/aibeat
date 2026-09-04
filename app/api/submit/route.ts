@@ -23,6 +23,7 @@ type SubmitPayload = {
   selectedPlan?: string
   verificationPageUrl?: string
   verificationMethod?: VerificationMethod
+  submitWithoutVerification?: boolean
   contactName?: string
   company?: string
   role?: string
@@ -215,7 +216,9 @@ export async function POST(req: NextRequest) {
 
   let verificationStatus = plan.verificationRequired ? 'Pending - not provided yet' : 'Not required'
 
-  if (plan.verificationRequired && verificationPageUrl) {
+  if (plan.verificationRequired && body.submitWithoutVerification === true) {
+    verificationStatus = 'Manual review requested - submitted without badge verification'
+  } else if (plan.verificationRequired && verificationPageUrl) {
     try {
       const verification = await verifyAibeatLink({ websiteUrl: url, verificationPageUrl, verificationMethod })
       verificationStatus = verification.ok ? 'Verified' : `Manual review needed - ${verification.reason || 'verification did not pass'}`

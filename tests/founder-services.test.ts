@@ -100,6 +100,15 @@ test('paid checkout is offered only after submit returns a captured submission i
   assert.match(checkoutRoute, /buildCheckoutSessionParams/)
 })
 
+test('free listing can explicitly be submitted without automatic badge verification', () => {
+  const form = readFileSync('components/founders/SubmitToolForm.tsx', 'utf8')
+  const submitRoute = readFileSync('app/api/submit/route.ts', 'utf8')
+
+  assert.match(form, /Submit without badge verification/)
+  assert.match(form, /submitWithoutVerification/)
+  assert.match(submitRoute, /Manual review requested - submitted without badge verification/)
+})
+
 test('approved AIBeat destinations normalize www and common paths', () => {
   assert.equal(normalizeAibeatDestination('https://www.aibeat.dev/'), 'https://aibeat.dev')
   assert.equal(normalizeAibeatDestination('https://aibeat.dev/tools?utm_source=x'), 'https://aibeat.dev/tools')

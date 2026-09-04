@@ -79,6 +79,7 @@ export function SubmitToolForm() {
   const [verifying, setVerifying] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [verification, setVerification] = useState<VerificationResult>({ ok: false, status: 'pending' })
+  const [submitWithoutVerification, setSubmitWithoutVerification] = useState(false)
   const [started, setStarted] = useState(false)
 
   const selectedPlan = useMemo(() => getPlanById(form.selectedPlan), [form.selectedPlan])
@@ -92,6 +93,7 @@ export function SubmitToolForm() {
     setForm((prev) => ({ ...prev, [field]: value }))
     if (field === 'verificationPageUrl' || field === 'verificationMethod' || field === 'url' || field === 'selectedPlan') {
       setVerification({ ok: false, status: selectedPlan.verificationRequired ? 'pending' : 'not_required' })
+      setSubmitWithoutVerification(false)
     }
   }
 
@@ -114,6 +116,7 @@ export function SubmitToolForm() {
       })
       const result = await res.json() as VerificationResult
       setVerification(result)
+      if (result.ok) setSubmitWithoutVerification(false)
       if (!result.ok) setError(result.reason || 'Verification failed. Please check the badge or text link and try again.')
     } catch {
       setError('Verification timed out or could not be completed. Please try again.')
@@ -138,7 +141,7 @@ export function SubmitToolForm() {
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, type: form.selectedPlan, category: form.category, description: `${form.shortDescription}\n\n${form.description}` }),
+        body: JSON.stringify({ ...form, submitWithoutVerification, type: form.selectedPlan, category: form.category, description: `${form.shortDescription}\n\n${form.description}` }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -179,7 +182,7 @@ export function SubmitToolForm() {
           ) : (
             <Link href="/for-founders" className="inline-flex justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">Compare plans</Link>
           )}
-          <button type="button" onClick={() => { setSubmitted(false); setSubmissionId(''); setForm({ ...EMPTY_FORM, selectedPlan: 'free' }); setStep(0); setError(null) }} className="inline-flex justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white">Submit another</button>
+          <button type="button" onClick={() => { setSubmitted(false); setSubmissionId(''); setForm({ ...EMPTY_FORM, selectedPlan: 'free' }); setStep(0); setError(null); setSubmitWithoutVerification(false) }} className="inline-flex justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-white">Submit another</button>
         </div>
       </div>
     )
@@ -277,6 +280,24 @@ export function SubmitToolForm() {
                   Status: {verification.ok ? 'Verified' : verification.status}. Submission is allowed either way.
                 </span>
               </div>
+
+              {!verification.ok && (
+                <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <input
+                    type="checkbox"
+                    checked={submitWithoutVerification}
+                    onChange={(event) => {
+                      setSubmitWithoutVerification(event.target.checked)
+                      if (event.target.checked) setError(null)
+                    }}
+                    className="mt-1 h-4 w-4 accent-cyan-300"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-white">Submit without badge verification</span>
+                    <span className="mt-1 block text-xs leading-5 text-slate-400">Choose this if automatic detection is not working. Your listing will be submitted for manual review.</span>
+                  </span>
+                </label>
+              )}
             </div>
           )}
         </div>
@@ -288,7 +309,7 @@ export function SubmitToolForm() {
         {step < STEPS.length - 1 ? (
           <button type="button" disabled={!currentStepValid()} onClick={() => setStep((value) => value + 1)} className="gradient-button rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-50">Continue</button>
         ) : (
-          <button type="submit" disabled={loading || !currentStepValid()} className="gradient-button rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-50">{loading ? 'Submitting...' : selectedPlan.billingType === 'free' ? 'Submit Free Listing Request' : 'Request This Plan'}</button>
+          <button type="submit" disabled={loading || !currentStepValid()} className="gradient-button rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-50">{loading ? 'Submitting...' : selectedPlan.billingType === 'free' && submitWithoutVerification ? 'Submit Without Badge Verification' : selectedPlan.billingType === 'free' ? 'Submit Free Listing Request' : 'Request This Plan'}</button>
         )}
       </div>
     </form>
