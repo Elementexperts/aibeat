@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { readFileSync } from 'node:fs'
 import { parseDailyManualLeads } from '../lib/daily-manual-outreach-leads'
 import { buildGenericMimeMessage } from '../lib/gmail-newsletter-draft'
 import { buildOutreachDraft } from '../lib/gmail-outreach-drafts'
@@ -49,4 +50,13 @@ test('spreadsheet import rejects malformed addresses before any Gmail draft can 
   const imported = parseDailyManualLeads('website,email,source,tool_name\nexample.ai,hello@example.ai.,Manual,Example AI\nexample.ai,�admin@example.ai,Manual,Example AI')
   assert.equal(imported.leads.length, 0)
   assert.deepEqual(imported.errors.map((item) => item.row), [2, 3])
+})
+
+test('scheduled Gmail outreach supports a batch of 50 individual drafts', () => {
+  const script = readFileSync('scripts/create-gmail-outreach-drafts.ts', 'utf8')
+  const workflow = readFileSync('.github/workflows/monday-gmail-outreach-drafts.yml', 'utf8')
+
+  assert.match(script, /Math\.min\(50,/)
+  assert.match(script, /GMAIL_OUTREACH_DRAFT_LIMIT \|\| '50'/)
+  assert.match(workflow, /GMAIL_OUTREACH_DRAFT_LIMIT:.*'50'/)
 })

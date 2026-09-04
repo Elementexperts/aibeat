@@ -9,7 +9,7 @@ loadEnv({ path: '.env.local', quiet: true })
 
 async function main() {
   const inputPath = resolve(process.env.GMAIL_OUTREACH_INPUT_PATH?.trim() || 'data/outreach/daily-manual-leads.csv')
-  const limit = Math.max(1, Math.min(25, Number.parseInt(process.env.GMAIL_OUTREACH_DRAFT_LIMIT || '10', 10) || 10))
+  const limit = Math.max(1, Math.min(50, Number.parseInt(process.env.GMAIL_OUTREACH_DRAFT_LIMIT || '50', 10) || 50))
   const imported = parseDailyManualLeads(await readFile(inputPath, 'utf8'))
   const approved = imported.leads.filter((lead) => lead.approved_for_outreach && lead.status !== 'suppressed').slice(0, limit)
   if (imported.errors.length) console.warn(`Skipped ${imported.errors.length} invalid outreach row(s): ${imported.errors.map((item) => item.row).join(', ')}`)
