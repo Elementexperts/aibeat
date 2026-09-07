@@ -19,13 +19,16 @@ test.afterEach(() => {
   process.env = { ...originalEnv }
 })
 
-test('stores a newsletter request in Supabase without calling an email provider', async () => {
+test('stores a newsletter request in Supabase and sends an owner notification', async () => {
+  process.env.RESEND_API_KEY = 'test_key'
+  process.env.SUBMISSION_TO_EMAIL = 'info@aibeat.dev'
+  delete process.env.NEWSLETTER_TO_EMAIL
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://project.supabase.co'
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'publishable_key'
   const calls: Array<{ url: string; init?: RequestInit }> = []
   globalThis.fetch = async (input, init) => {
     calls.push({ url: input.toString(), init })
-    return Response.json('submission_123')
+    return input.toString().includes('api.resend.com') ? Response.json({ id: 'email_123' }) : Response.json('submission_123')
   }
 
   const response = await POST(request({
@@ -35,7 +38,8 @@ test('stores a newsletter request in Supabase without calling an email provider'
   }))
 
   assert.equal(response.status, 200)
-  assert.equal(calls.length, 1)
+  assert.equal(calls.length, 2)
+  assert.deepEqual(JSON.parse(String(calls[1].init?.body)).to, ['hello@aibeat.dev', 'info@aibeat.dev'])
   assert.equal(calls[0].url, 'https://project.supabase.co/rest/v1/rpc/record_public_form_submission')
   const payload = JSON.parse(String(calls[0].init?.body))
   assert.equal(payload.submission_kind, 'newsletter')

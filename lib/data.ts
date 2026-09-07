@@ -1,3 +1,5 @@
+import { SUBMITTED_TOOLS } from '@/data/submitted-tools'
+
 // ============================================================
 // AIBeat.dev — Central Data Store
 // ============================================================
@@ -24,7 +26,7 @@ export interface Tool {
   logo: string
   logoInitials: string
   logoUrl?: string
-  rating: number
+  rating: number | null
   pricing: string
   pricingType: 'free' | 'freemium' | 'paid'
   affiliateUrl: string
@@ -265,6 +267,7 @@ export const ARTICLES: Article[] = [
 // TOOLS
 // ============================================================
 export const TOOLS: Tool[] = [
+  ...SUBMITTED_TOOLS,
   // — AI Writing —
   {
     slug: 'jasper',
@@ -2338,7 +2341,7 @@ export function getToolPopularityScore(tool: Tool) {
   const freeAccessBoost = tool.pricingType === 'free' ? 1 : tool.pricingType === 'freemium' ? 2 : 0
   const categoryBoost = ['AI Assistants', 'AI Coding', 'AI Infrastructure', 'Developer Platforms', 'AI Image', 'AI Video'].includes(tool.category) ? 1.5 : 0
   const homepageAnchorBoost = tool.slug === 'chatgpt' || tool.slug === 'openai-api' ? 10 : 0
-  return tool.rating * 10 + featuredBoost + freeAccessBoost + categoryBoost + homepageAnchorBoost
+  return (tool.rating ?? 0) * 10 + featuredBoost + freeAccessBoost + categoryBoost + homepageAnchorBoost
 }
 
 export function getPopularTools(limit?: number) {
@@ -2369,4 +2372,8 @@ export const CATEGORY_COLORS: Record<Category, string> = {
   tools: 'text-beat-green border-beat-green',
   compare: 'text-ink-2 border-ink-2',
   'deep-dive': 'text-ink-3 border-ink-3',
+}
+
+export function getToolRatingLabel(tool: Pick<Tool, 'rating'>) {
+  return tool.rating === null ? 'Not yet rated' : `AIBeat Score ${tool.rating}`
 }

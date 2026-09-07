@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { TRENDING, getFeaturedTools, CATEGORY_COLORS } from '@/lib/data'
+import { getToolRatingLabel, TRENDING, getFeaturedTools, CATEGORY_COLORS } from '@/lib/data'
 import type { Category } from '@/lib/data'
 import { getArticles } from '@/lib/articles'
 import { NewsBanner } from '@/components/ui/NewsBanner'
@@ -264,7 +264,7 @@ export default async function NewsPage({
                       <div className="text-xs font-semibold text-ink">{tool.name}</div>
                       <div className="text-[11px] text-ink-3 leading-snug">{tool.tagline}</div>
                       <div className="font-mono text-[10px] text-beat-green mt-0.5">
-                        * {tool.rating} . {tool.pricing}
+                        {getToolRatingLabel(tool)} . {tool.pricing}
                       </div>
                     </div>
                   </div>

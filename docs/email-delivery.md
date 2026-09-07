@@ -1,59 +1,35 @@
 # AIBeat Email Delivery
 
-AIBeat uses two separate email paths.
+Public tool submissions (`/api/submit`), newsletter requests (`/api/newsletter-request`), unsubscribe notifications (`/api/unsubscribe`), and business early access (`/api/business/early-access`) save to Supabase and then send an owner notification through Resend. All four use `lib/public-form-submissions.ts` and `lib/public-form-email.ts`.
 
-## Newsletter signup
+## Recipient configuration
 
-Newsletter forms use Kit through:
+`hello@aibeat.dev` is always included, including when an existing environment setting contains only `info@aibeat.dev`. Configured addresses are additional recipients; `info@aibeat.dev` remains included when configured. Public contact links are unchanged.
 
-- `app/api/subscribe/route.ts`
-- `KIT_API_KEY`
-- `KIT_FORM_ID`
+| Form | Recipient override |
+| --- | --- |
+| Tool submission | `SUBMISSION_TO_EMAIL` |
+| Newsletter request | `NEWSLETTER_TO_EMAIL` |
+| Unsubscribe | `UNSUBSCRIBE_TO_EMAIL` |
+| Business early access | `BUSINESS_EARLY_ACCESS_TO_EMAIL` |
 
-This adds or updates a subscriber in Kit. It does not send an admin notification email to the AIBeat owner.
+For each request, the first valid recipient list wins: route-specific setting, then `SUBMISSION_TO_EMAIL`, then no extra recipients. Blank or entirely invalid lists fall through. Lists accept commas or whitespace, normalize to lowercase, drop invalid addresses, and deduplicate, including the mandatory hello address. Route overrides replace shared extras.
 
-## Tool submission notifications
-
-The tool submission form uses Resend through:
-
-- `app/api/submit/route.ts`
-- `RESEND_API_KEY`
-- `SUBMISSION_TO_EMAIL`
-- `SUBMISSION_FROM_EMAIL`
-
-`SUBMISSION_TO_EMAIL` is the inbox that receives new tool submission notifications. It may contain one email address or multiple comma-separated addresses.
-
-Example:
+Example configuration (documentation only):
 
 ```bash
-SUBMISSION_TO_EMAIL=info@aibeat.dev,you@example.com
+SUBMISSION_TO_EMAIL=hello@aibeat.dev,info@aibeat.dev
+SUBMISSION_FROM_EMAIL=AIBeat <submissions@aibeat.dev>
 ```
 
-`SUBMISSION_FROM_EMAIL` must use a sender address or domain that is verified in Resend. A recommended production value is:
+## Sender and delivery
 
-```bash
-SUBMISSION_FROM_EMAIL=AIBeat Submissions <submissions@aibeat.dev>
-```
+`RESEND_API_KEY` is required for notifications. Sender precedence is the corresponding `NEWSLETTER_FROM_EMAIL`, `UNSUBSCRIBE_FROM_EMAIL`, or `BUSINESS_EARLY_ACCESS_FROM_EMAIL`, then `SUBMISSION_FROM_EMAIL`, then `AIBeat <submissions@aibeat.dev>`. Tool submissions use the shared sender. Blank sender values fall through. The sender domain must be verified in Resend. Replies go to the submitted email address.
 
-## Vercel checklist
+Supabase storage must succeed before sending. Provider rejection, network timeout (10 seconds), missing credentials, or a missing provider email ID produces an error response; the stored submission remains available for manual recovery. The submission ID is used as the Resend idempotency key. There is no automatic retry worker; resubmitting the form creates a new record and can produce another notification. Provider acceptance does not guarantee inbox delivery: check Resend delivery/bounce logs and mailbox spam filters if a notification is missing.
 
-For production delivery, confirm these variables exist in Vercel Project Settings for the Production environment:
+Unsubscribe still performs the Kit lookup/unsubscribe first, and records/notifies for both matching and unknown subscribers. A later notification failure does not undo a successful Kit unsubscribe.
 
-- `RESEND_API_KEY`
-- `SUBMISSION_TO_EMAIL`
-- `SUBMISSION_FROM_EMAIL`
-- `KIT_API_KEY`
-- `KIT_FORM_ID`
+The separate `/api/subscribe` Kit signup path uses `KIT_API_KEY` and `KIT_FORM_ID`; it does not create an owner notification.
 
-After changing any of these values, redeploy the site so the latest environment is used.
-
-## If emails are not arriving
-
-Check these first:
-
-- Confirm `SUBMISSION_TO_EMAIL` points to an inbox you can actually receive.
-- Confirm the `aibeat.dev` sender domain is verified in Resend.
-- Check Resend logs for accepted, bounced, or rejected messages.
-- Check spam, promotions, and quarantine folders.
-- If using `info@aibeat.dev`, confirm mailbox hosting or forwarding is active.
-- If newsletter signup succeeds but no email arrives to you, that is expected unless a separate admin notification is added.
+This code change does not update local or deployed environment values. Deployment requires existing Supabase configuration and usable Resend credentials with a verified sender. No live email is sent by the mocked tests.

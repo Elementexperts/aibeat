@@ -3,29 +3,11 @@ import { sanitizeNewsletterAttribution } from '@/lib/newsletter-attribution'
 import { recordPublicFormSubmission } from '@/lib/public-form-submissions'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const DEFAULT_TO_EMAIL = 'info@aibeat.dev'
-const DEFAULT_FROM_EMAIL = 'AIBeat Newsletter <submissions@aibeat.dev>'
 
 function getEmail(body: unknown) {
   if (typeof body !== 'object' || body === null) return undefined
   const email = (body as Record<string, unknown>).email
   return typeof email === 'string' ? email.trim().toLowerCase() : undefined
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
-
-function getRecipients() {
-  return (process.env.NEWSLETTER_TO_EMAIL || process.env.SUBMISSION_TO_EMAIL || DEFAULT_TO_EMAIL)
-    .split(/[,\s]+/)
-    .map((email) => email.trim().toLowerCase())
-    .filter((email, index, all) => EMAIL_RE.test(email) && all.indexOf(email) === index)
 }
 
 export async function POST(req: NextRequest) {

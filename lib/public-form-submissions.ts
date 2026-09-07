@@ -1,3 +1,4 @@
+import { sendPublicFormNotification } from './public-form-email'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
 
 export type PublicFormKind = 'newsletter' | 'tool_submission' | 'business_early_access' | 'unsubscribe'
@@ -30,5 +31,6 @@ export async function recordPublicFormSubmission(input: {
 
   const result = await response.json() as string | null
   if (!result) throw new Error('Supabase form storage did not return a submission ID.')
+  await sendPublicFormNotification({ ...input, submissionId: result })
   return result
 }

@@ -36,6 +36,8 @@ function setupKitFetch(options?: { subscriberId?: string }) {
       })
     }
 
+    if (url === 'https://api.resend.com/emails') return Response.json({ id: 'email_123' })
+
     if (url.includes('/unsubscribe')) {
       return new Response(null, { status: 204 })
     }
@@ -56,6 +58,7 @@ function resetEnv() {
 
 test.beforeEach(() => {
   resetEnv()
+  process.env.RESEND_API_KEY = 'test_key'
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://project.supabase.co'
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'publishable_key'
   console.info = () => undefined
@@ -91,7 +94,7 @@ test('unsubscribe looks up subscriber by email and calls Kit unsubscribe endpoin
 
   assert.equal(res.status, 200)
   assert.deepEqual(body, { success: true })
-  assert.equal(calls.length, 3)
+  assert.equal(calls.length, 4)
   assert.ok(calls[0].url.includes('/v4/subscribers?email_address=reader%40example.com'))
   assert.ok(calls[1].url.includes('/v4/subscribers/subscriber_123/unsubscribe'))
   assert.equal(calls[1].init?.method, 'POST')
@@ -110,7 +113,7 @@ test('unknown subscriber request returns success without calling unsubscribe end
 
   assert.equal(res.status, 200)
   assert.deepEqual(body, { success: true })
-  assert.equal(calls.length, 2)
+  assert.equal(calls.length, 3)
   assert.ok(calls[0].url.includes('/v4/subscribers?email_address=missing%40example.com'))
   assert.equal(calls[1].url, 'https://project.supabase.co/rest/v1/rpc/record_public_form_submission')
 })

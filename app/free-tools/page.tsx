@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { TOOLS, TRENDING } from '@/lib/data'
+import { TOOLS, TRENDING, getToolRatingLabel } from '@/lib/data'
 import type { Metadata } from 'next'
 import { ToolLogo } from '@/components/ui/ToolLogo'
 import { SubscribeForm } from '@/components/subscribe/SubscribeForm'
@@ -75,7 +75,7 @@ export default function FreeToolsPage() {
                           <div className="text-sm font-semibold text-ink mb-0.5">{tool.name}</div>
                           <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1">{tool.category}</div>
                           <p className="text-[11px] text-ink-3 leading-relaxed line-clamp-2">{tool.tagline}</p>
-                          <div className="font-mono text-[10px] text-beat-green mt-1.5">★ {tool.rating} · Free forever</div>
+                          <div className="font-mono text-[10px] text-beat-green mt-1.5">{getToolRatingLabel(tool)} · {tool.pricing}</div>
                         </div>
                       </div>
                     </div>
@@ -104,7 +104,7 @@ export default function FreeToolsPage() {
                           <div className="text-sm font-semibold text-ink mb-0.5">{tool.name}</div>
                           <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1">{tool.category}</div>
                           <p className="text-[11px] text-ink-3 leading-relaxed line-clamp-2">{tool.tagline}</p>
-                          <div className="font-mono text-[10px] text-yellow-700 mt-1.5">★ {tool.rating} · {tool.pricing}</div>
+                          <div className="font-mono text-[10px] text-yellow-700 mt-1.5">{getToolRatingLabel(tool)} · {tool.pricing}</div>
                         </div>
                       </div>
                     </div>

@@ -1,3 +1,4 @@
+import { getToolRatingLabel } from '@/lib/data'
 import Link from 'next/link'
 import { ArrowUpRight, Bookmark, Check, Sparkles } from 'lucide-react'
 import type { Tool } from '@/lib/data'
@@ -59,7 +60,7 @@ export function PremiumToolCard({ tool, variant = 'standard' }: PremiumToolCardP
               ))}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-cyan-300/10 px-3 py-1.5 text-xs font-semibold text-cyan-100">AIBeat Score {tool.rating}</span>
+              <span className="rounded-full bg-cyan-300/10 px-3 py-1.5 text-xs font-semibold text-cyan-100">{getToolRatingLabel(tool)}</span>
               <Link href="/ai-score" data-analytics-event={PUBLIC_ANALYTICS_EVENTS.aiScoreLearnMore} className="text-xs font-semibold text-cyan-200 hover:text-white">
                 How it works
               </Link>

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getToolBySlug, TOOLS, CATEGORY_COLORS } from '@/lib/data'
+import { getToolRatingLabel, getToolBySlug, TOOLS, CATEGORY_COLORS } from '@/lib/data'
 import type { Metadata } from 'next'
 import { ToolLogo } from '@/components/ui/ToolLogo'
 import { ToolShareLinks } from '@/components/ui/ToolShareLinks'
@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const tool = getToolBySlug(params.slug)
   if (!tool) return {}
   return {
-    title: `${tool.name} Review (2026) — Is It Worth It?`,
-    description: `Honest ${tool.name} review. Pricing, pros, cons, and best alternatives. Updated for 2026.`,
+    title: tool.rating === null ? `${tool.name} — Features, Pricing & Alternatives` : `${tool.name} Review (2026) — Is It Worth It?`,
+    description: tool.rating === null ? tool.description : `Honest ${tool.name} review. Pricing, pros, cons, and best alternatives. Updated for 2026.`,
   }
 }
 
@@ -48,7 +48,7 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
               <h1 className="font-serif text-3xl font-bold text-ink leading-tight">{tool.name}</h1>
               <p className="text-ink-3 text-sm mt-1">{tool.tagline}</p>
               <div className="flex items-center gap-3 mt-2">
-                <span className="text-cyan-700 text-sm font-semibold">AIBeat Score {tool.rating}</span>
+                <span className="text-cyan-700 text-sm font-semibold">{getToolRatingLabel(tool)}</span>
                 <Link href="/ai-score" data-analytics-event={PUBLIC_ANALYTICS_EVENTS.aiScoreLearnMore} className="text-xs text-ink-3 hover:text-beat-red">
                   How it works
                 </Link>
@@ -69,7 +69,7 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
 
           {/* Quick Verdict */}
           <div className="bg-paper-2 border border-border p-4 mb-6">
-            <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest mb-2">Quick verdict</div>
+            <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest mb-2">{tool.rating === null ? 'Product overview' : 'Quick verdict'}</div>
             <p className="text-sm text-ink-2 leading-relaxed">{tool.description}</p>
           </div>
 
