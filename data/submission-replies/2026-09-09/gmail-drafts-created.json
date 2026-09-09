@@ -1,0 +1,26 @@
+{
+  "created_at": "2026-09-09",
+  "status": "Created in Gmail; not sent",
+  "production_commit": "22505ee767714f73634ad9dae7d8184539136af0",
+  "live_pages_verified": true,
+  "drafts": [
+    {
+      "to": "igo@mail.aiuxslabs.com",
+      "subject": "Mrrlin is now featured on AIBeat",
+      "draft_id": "r6363226337265868094",
+      "message_id": "1a085c10eaa4a8b5"
+    },
+    {
+      "to": "info@modelrush.ai",
+      "subject": "ModelRush is now featured on AIBeat",
+      "draft_id": "r-3581552995106864586",
+      "message_id": "1a085c114aea8898"
+    },
+    {
+      "to": "info@removebgtools.online",
+      "subject": "RemoveBGTools is featured on AIBeat as a product preview",
+      "draft_id": "r-6701808657835163430",
+      "message_id": "1a085c116edd2352"
+    }
+  ]
+}
