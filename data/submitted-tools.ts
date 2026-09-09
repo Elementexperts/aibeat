@@ -1,8 +1,42 @@
 import type { Tool } from '@/lib/data'
 
-// Editorial additions reviewed against submissions and official sites on 2026-09-07.
-// See docs/submission-review-2026-09-07.md. No hands-on score has been assigned.
+// Editorial additions reviewed against submissions and official sites.
+// See docs/submission-review-2026-09-07.md and docs/submission-review-2026-09-09.md.
+// No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
+  {
+    slug: 'mrrlin', name: 'Mrrlin',
+    tagline: 'Coordinate AI agents from a business goal to reviewed deliverables',
+    description: 'Mrrlin is an AI execution workspace for founders and small teams. It organizes goals into tasks, coordinates agents, preserves project context, and uses review and retry steps before handing work back to people. Its workspace includes progress tracking and human approvals for sensitive actions such as sending and publishing. Access and pricing should be confirmed with the team; connected model subscriptions may be required.',
+    category: 'AI Agents', logo: '#7c3aed', logoInitials: 'M', rating: null,
+    pricing: 'Contact for pricing · Connected model subscriptions may be required', pricingType: 'paid',
+    websiteUrl: 'https://mrrlin.com/', affiliateUrl: 'https://mrrlin.com/', featured: true,
+    pros: ['Shared task progress and project context', 'Multi-agent coordination with review and retries', 'Human approval checkpoints for sensitive actions'],
+    cons: ['Public site does not specify a standard subscription price', 'Requires configuring the agents and tools used for execution', 'Generated deliverables still need review'],
+    alternatives: ['pragor', 'orkas', 'n8n'],
+  },
+  {
+    slug: 'modelrush', name: 'ModelRush',
+    tagline: 'Access hosted text, image, video, and voice models through APIs',
+    description: 'ModelRush provides hosted AI APIs and a browser playground for developers and product teams. Chat uses an OpenAI-compatible interface, while image, video, and voice capabilities have documented endpoints. The platform exposes model pricing, regional availability, and request tracking. The team describes paid, usage-based prepaid credits; confirm current billing in the dashboard because the public site also describes an evaluation phase. Some catalog models are age-restricted.',
+    category: 'Developer Tools', logo: '#2563eb', logoInitials: 'MR', rating: null,
+    pricing: 'Paid usage-based credits · Confirm current billing and model rates', pricingType: 'paid',
+    websiteUrl: 'https://modelrush.ai/', affiliateUrl: 'https://modelrush.ai/', featured: true,
+    pros: ['Text, image, video, and audio model access', 'OpenAI-compatible chat interface', 'Model-level pricing, regional routing, and request tracking'],
+    cons: ['Generation costs and availability vary by model and region', 'Public evaluation language differs from submitted billing details', 'Some models are age-restricted'],
+    alternatives: ['openai-api', 'hugging-face'],
+  },
+  {
+    slug: 'removebgtools', name: 'RemoveBGTools',
+    tagline: 'Preview a background-editing toolkit with AI removal still in development',
+    description: 'RemoveBGTools is a preview-stage background-editing website for product photos, profiles, and social visuals. Its current version offers image upload and preview flows. The official FAQ says the AI background-removal engine is planned for a future release, so automated cutouts and finished background removal are not currently confirmed features. The planned toolkit covers transparent images, white backgrounds, background changes, and blur effects.',
+    category: 'AI Image', logo: '#0d9488', logoInitials: 'BG', rating: null,
+    pricing: 'Free preview · AI background removal not yet available', pricingType: 'free',
+    websiteUrl: 'https://www.removebgtools.online/', affiliateUrl: 'https://www.removebgtools.online/', featured: true,
+    pros: ['Focused upload and image-preview workflow', 'Mobile-friendly preview interface', 'Planned tools cover product, profile, and social images'],
+    cons: ['Preview stage: AI background-removal engine is not yet available', 'Completed automatic cutouts are not a confirmed current capability', 'Future processing availability and pricing are unannounced'],
+    alternatives: ['sharpniq', 'blur-background'],
+  },
   {
     slug: 'reelfluent', name: 'ReelFluent',
     tagline: 'Practice English with short dramas, bilingual stories, and AI tutoring',
