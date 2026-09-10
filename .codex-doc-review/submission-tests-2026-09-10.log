@@ -1,0 +1,1106 @@
+
+> aibeat@0.1.0 test
+> node --import tsx --test tests/reddit/reddit-automation.test.ts tests/newsletter-attribution.test.ts tests/submitted-tools.test.ts tests/public-form-email.test.ts tests/newsletter-request.test.ts tests/newsletter-unsubscribe.test.ts tests/latest-news-newsletter.test.ts tests/gmail-scheduled-drafts.test.ts tests/kit-source-tags.test.ts tests/daily-lead-discovery.test.ts tests/betalist-outreach.test.ts tests/founder-services.test.ts tests/stripe-listing-packages.test.ts tests/linkedin-automation.test.ts tests/aibeat-business.test.ts
+
+TAP version 13
+# Subtest: AIBeat Business AI mode defaults safely to mock
+ok 1 - AIBeat Business AI mode defaults safely to mock
+  ---
+  duration_ms: 51.0573
+  type: 'test'
+  ...
+# Subtest: Ask AIBeat mock mode makes no model-router request and recommends Lead Research
+ok 2 - Ask AIBeat mock mode makes no model-router request and recommends Lead Research
+  ---
+  duration_ms: 13.0871
+  type: 'test'
+  ...
+# Subtest: Ask AIBeat mock Business Memory guidance points to organization context
+ok 3 - Ask AIBeat mock Business Memory guidance points to organization context
+  ---
+  duration_ms: 2.8561
+  type: 'test'
+  ...
+# Subtest: Ask AIBeat prepares but does not execute Lead Research
+ok 4 - Ask AIBeat prepares but does not execute Lead Research
+  ---
+  duration_ms: 12.9879
+  type: 'test'
+  ...
+# Subtest: dashboard and dedicated page share the authenticated Ask AIBeat implementation
+ok 5 - dashboard and dedicated page share the authenticated Ask AIBeat implementation
+  ---
+  duration_ms: 14.3115
+  type: 'test'
+  ...
+# Subtest: assistant accepts adjacent business guidance and live prompt encourages actionable depth
+ok 6 - assistant accepts adjacent business guidance and live prompt encourages actionable depth
+  ---
+  duration_ms: 87.9238
+  type: 'test'
+  ...
+# Subtest: contextual approval modal reuses decision action and supports explicit edited content
+ok 7 - contextual approval modal reuses decision action and supports explicit edited content
+  ---
+  duration_ms: 181.9789
+  type: 'test'
+  ...
+# Subtest: standalone approval center remains available
+ok 8 - standalone approval center remains available
+  ---
+  duration_ms: 6.1281
+  type: 'test'
+  ...
+# Subtest: workflows page accepts and renders a prepared Lead Research suggestion without auto-running
+ok 9 - workflows page accepts and renders a prepared Lead Research suggestion without auto-running
+  ---
+  duration_ms: 6.7526
+  type: 'test'
+  ...
+# Subtest: prepared Lead Research URL remains editable and invalid input cannot run
+ok 10 - prepared Lead Research URL remains editable and invalid input cannot run
+  ---
+  duration_ms: 2.3077
+  type: 'test'
+  ...
+# Subtest: workflow history sorts newest first, removes duplicate ids, and defaults to eight runs
+ok 11 - workflow history sorts newest first, removes duplicate ids, and defaults to eight runs
+  ---
+  duration_ms: 2.9137
+  type: 'test'
+  ...
+# Subtest: lead qualification history groups normalized prospect URLs without collapsing other domains
+ok 12 - lead qualification history groups normalized prospect URLs without collapsing other domains
+  ---
+  duration_ms: 2.9214
+  type: 'test'
+  ...
+# Subtest: a newly executed finding becomes the displayed latest qualification and increments history
+ok 13 - a newly executed finding becomes the displayed latest qualification and increments history
+  ---
+  duration_ms: 2.3366
+  type: 'test'
+  ...
+# Subtest: run history uses the normalized prospect label and identifies mock results
+ok 14 - run history uses the normalized prospect label and identifies mock results
+  ---
+  duration_ms: 3.4937
+  type: 'test'
+  ...
+# Subtest: duplicate-run guard only treats active statuses as blocking
+ok 15 - duplicate-run guard only treats active statuses as blocking
+  ---
+  duration_ms: 3.9801
+  type: 'test'
+  ...
+# Subtest: unknown workflow suggestions are ignored and direct workflow catalog retains all five templates
+ok 16 - unknown workflow suggestions are ignored and direct workflow catalog retains all five templates
+  ---
+  duration_ms: 2.0618
+  type: 'test'
+  ...
+# Subtest: template handoff reuses the existing workflow server action and submitted input
+ok 17 - template handoff reuses the existing workflow server action and submitted input
+  ---
+  duration_ms: 86.5
+  type: 'test'
+  ...
+# Subtest: assistant suggestions enforce source-controlled route and workflow allowlists
+ok 18 - assistant suggestions enforce source-controlled route and workflow allowlists
+  ---
+  duration_ms: 7.0389
+  type: 'test'
+  ...
+# Subtest: assistant validates message limits and structured responses
+ok 19 - assistant validates message limits and structured responses
+  ---
+  duration_ms: 3.4966
+  type: 'test'
+  ...
+# Subtest: assistant context remains organization scoped and runtime status never serializes API keys
+ok 20 - assistant context remains organization scoped and runtime status never serializes API keys
+  ---
+  duration_ms: 7.1659
+  type: 'test'
+  ...
+# Subtest: mock model router needs no Gemini key and returns valid deterministic Lead Research
+ok 21 - mock model router needs no Gemini key and returns valid deterministic Lead Research
+  ---
+  duration_ms: 4.2693
+  type: 'test'
+  ...
+# Subtest: Lead Research validation rejects malformed structured output
+ok 22 - Lead Research validation rejects malformed structured output
+  ---
+  duration_ms: 4.5056
+  type: 'test'
+  ...
+# Subtest: Lead Research workflow input requires and normalizes a public web URL
+ok 23 - Lead Research workflow input requires and normalizes a public web URL
+  ---
+  duration_ms: 2.1557
+  type: 'test'
+  ...
+# Subtest: live Gemini mode without server key fails before client initialization
+ok 24 - live Gemini mode without server key fails before client initialization
+  ---
+  duration_ms: 2.1194
+  type: 'test'
+  ...
+# Subtest: Gemini usage mapping preserves real metadata and safely defaults missing counts
+ok 25 - Gemini usage mapping preserves real metadata and safely defaults missing counts
+  ---
+  duration_ms: 1.522
+  type: 'test'
+  ...
+# Subtest: Lead Research implementation persists input and result before approval without a migration
+ok 26 - Lead Research implementation persists input and result before approval without a migration
+  ---
+  duration_ms: 4.091
+  type: 'test'
+  ...
+# Subtest: Business Context retrieval is tenant isolated
+ok 27 - Business Context retrieval is tenant isolated
+  ---
+  duration_ms: 2.4736
+  type: 'test'
+  ...
+# Subtest: industry profile changes agent behavior instructions
+ok 28 - industry profile changes agent behavior instructions
+  ---
+  duration_ms: 1.9094
+  type: 'test'
+  ...
+# Subtest: workflow manual run pauses at approval-required step
+ok 29 - workflow manual run pauses at approval-required step
+  ---
+  duration_ms: 111.8589
+  type: 'test'
+  ...
+# Subtest: approval decision records approver and continuation result
+ok 30 - approval decision records approver and continuation result
+  ---
+  duration_ms: 4.4751
+  type: 'test'
+  ...
+# Subtest: action risk classification blocks restricted and gates external actions
+ok 31 - action risk classification blocks restricted and gates external actions
+  ---
+  duration_ms: 5.1983
+  type: 'test'
+  ...
+# Subtest: agent structured output validates against registry schema
+ok 32 - agent structured output validates against registry schema
+  ---
+  duration_ms: 11.9321
+  type: 'test'
+  ...
+# Subtest: optimization opportunities connect spend recommendations to agents and workflows
+ok 33 - optimization opportunities connect spend recommendations to agents and workflows
+  ---
+  duration_ms: 473.3128
+  type: 'test'
+  ...
+# Subtest: workspace dashboard data exposes executive brief, grouped agents, and memory health
+ok 34 - workspace dashboard data exposes executive brief, grouped agents, and memory health
+  ---
+  duration_ms: 10.9187
+  type: 'test'
+  ...
+# Subtest: authenticated business context resolves active memberships only
+ok 35 - authenticated business context resolves active memberships only
+  ---
+  duration_ms: 2.1821
+  type: 'test'
+  ...
+# Subtest: tenant isolation blocks cross-organization reads and direct ID guessing
+ok 36 - tenant isolation blocks cross-organization reads and direct ID guessing
+  ---
+  duration_ms: 5.1326
+  type: 'test'
+  ...
+# Subtest: member role cannot write Business Memory while owner can
+ok 37 - member role cannot write Business Memory while owner can
+  ---
+  duration_ms: 22.3115
+  type: 'test'
+  ...
+# Subtest: persistent approval lifecycle blocks unauthorized users and writes audit
+ok 38 - persistent approval lifecycle blocks unauthorized users and writes audit
+  ---
+  duration_ms: 5.1621
+  type: 'test'
+  ...
+# Subtest: approval rejection persists failed workflow state
+ok 39 - approval rejection persists failed workflow state
+  ---
+  duration_ms: 2.6468
+  type: 'test'
+  ...
+# Subtest: workflow run persists and can be reloaded after store handoff
+ok 40 - workflow run persists and can be reloaded after store handoff
+  ---
+  duration_ms: 2.6715
+  type: 'test'
+  ...
+# Subtest: Business Memory carries findings across agents
+ok 41 - Business Memory carries findings across agents
+  ---
+  duration_ms: 12.3349
+  type: 'test'
+  ...
+# Subtest: pilot connector framework exposes OAuth lifecycle states for first three integrations
+ok 42 - pilot connector framework exposes OAuth lifecycle states for first three integrations
+  ---
+  duration_ms: 3.3059
+  type: 'test'
+  ...
+# Subtest: workflow execution uses connector-backed runtime and blocks expired OAuth tools
+ok 43 - workflow execution uses connector-backed runtime and blocks expired OAuth tools
+  ---
+  duration_ms: 6.2214
+  type: 'test'
+  ...
+# Subtest: document ingestion stores extracted chunks with source metadata and searchable vectors
+ok 44 - document ingestion stores extracted chunks with source metadata and searchable vectors
+  ---
+  duration_ms: 10.9867
+  type: 'test'
+  ...
+# Subtest: scheduler computes timezone-aware next run and executes due workflows once
+ok 45 - scheduler computes timezone-aware next run and executes due workflows once
+  ---
+  duration_ms: 90.3497
+  type: 'test'
+  ...
+# Subtest: scheduler dead-letters failing recurring triggers after max retries
+ok 46 - scheduler dead-letters failing recurring triggers after max retries
+  ---
+  duration_ms: 36.0113
+  type: 'test'
+  ...
+# Subtest: RLS migration contains organization-scoped policies for private tables
+ok 47 - RLS migration contains organization-scoped policies for private tables
+  ---
+  duration_ms: 7.0899
+  type: 'test'
+  ...
+# Subtest: business memory migration adds storage-backed chunks and scheduler tables
+ok 48 - business memory migration adds storage-backed chunks and scheduler tables
+  ---
+  duration_ms: 4.7792
+  type: 'test'
+  ...
+# Subtest: connector runtime migration adds pilot integrations and token lifecycle fields
+ok 49 - connector runtime migration adds pilot integrations and token lifecycle fields
+  ---
+  duration_ms: 3.3796
+  type: 'test'
+  ...
+# Subtest: business route matrix marks public, onboarding, and private paths
+ok 50 - business route matrix marks public, onboarding, and private paths
+  ---
+  duration_ms: 2.4662
+  type: 'test'
+  ...
+# Subtest: business safe next paths reject external and auth-loop redirects
+ok 51 - business safe next paths reject external and auth-loop redirects
+  ---
+  duration_ms: 1.9569
+  type: 'test'
+  ...
+# Subtest: sitemap excludes authenticated workspace routes and includes public business journey
+ok 52 - sitemap excludes authenticated workspace routes and includes public business journey
+  ---
+  duration_ms: 3.9916
+  type: 'test'
+  ...
+# Subtest: demo route renders explicit demo mode without authenticated mutating server actions
+ok 53 - demo route renders explicit demo mode without authenticated mutating server actions
+  ---
+  duration_ms: 6.445
+  type: 'test'
+  ...
+# Subtest: self-serve onboarding migration allows first owner without service role and avoids demo organization
+ok 54 - self-serve onboarding migration allows first owner without service role and avoids demo organization
+  ---
+  duration_ms: 5.7305
+  type: 'test'
+  ...
+# Subtest: BetaList seed contains reviewed leads and suppresses privacy inboxes
+ok 55 - BetaList seed contains reviewed leads and suppresses privacy inboxes
+  ---
+  duration_ms: 6.7268
+  type: 'test'
+  ...
+# Subtest: BetaList outreach copy includes the launch context and AIBeat submission link
+ok 56 - BetaList outreach copy includes the launch context and AIBeat submission link
+  ---
+  duration_ms: 1.6354
+  type: 'test'
+  ...
+# Subtest: individual drafts can be limited to BetaList leads only
+ok 57 - individual drafts can be limited to BetaList leads only
+  ---
+  duration_ms: 36.9037
+  type: 'test'
+  ...
+# Subtest: daily manual lead file accepts Excel-style rows and suppresses blocked inboxes
+ok 58 - daily manual lead file accepts Excel-style rows and suppresses blocked inboxes
+  ---
+  duration_ms: 10.5531
+  type: 'test'
+  ...
+# Subtest: public business email extraction blocks unsafe and personal contacts
+ok 59 - public business email extraction blocks unsafe and personal contacts
+  ---
+  duration_ms: 29.4361
+  type: 'test'
+  ...
+# Subtest: qualified AI launches score above the default threshold
+ok 60 - qualified AI launches score above the default threshold
+  ---
+  duration_ms: 1.5621
+  type: 'test'
+  ...
+# Subtest: daily discovery can qualify BetaList startup contacts
+ok 61 - daily discovery can qualify BetaList startup contacts
+  ---
+  duration_ms: 148.4814
+  type: 'test'
+  ...
+# Subtest: website detection ignores assets analytics and generic jobs links
+ok 62 - website detection ignores assets analytics and generic jobs links
+  ---
+  duration_ms: 101.4075
+  type: 'test'
+  ...
+# Subtest: daily discovery dry run validates leads and writes a report only
+ok 63 - daily discovery dry run validates leads and writes a report only
+  ---
+  duration_ms: 23.4346
+  type: 'test'
+  ...
+# Subtest: founder service plans expose active pricing from central configuration
+ok 64 - founder service plans expose active pricing from central configuration
+  ---
+  duration_ms: 5.107
+  type: 'test'
+  ...
+# Subtest: invalid plan falls back safely and Free Listing requires verification
+ok 65 - invalid plan falls back safely and Free Listing requires verification
+  ---
+  duration_ms: 0.7368
+  type: 'test'
+  ...
+# Subtest: feature matrix separates conditional and guaranteed newsletter benefits
+ok 66 - feature matrix separates conditional and guaranteed newsletter benefits
+  ---
+  duration_ms: 0.5692
+  type: 'test'
+  ...
+# Subtest: content labels keep Editors Pick non-purchasable and Sponsored purchasable
+ok 67 - content labels keep Editors Pick non-purchasable and Sponsored purchasable
+  ---
+  duration_ms: 5.2502
+  type: 'test'
+  ...
+# Subtest: analytics event mapping does not include personal data fields
+ok 68 - analytics event mapping does not include personal data fields
+  ---
+  duration_ms: 0.7756
+  type: 'test'
+  ...
+# Subtest: paid submission plans never include or grant Verified status
+ok 69 - paid submission plans never include or grant Verified status
+  ---
+  duration_ms: 0.9878
+  type: 'test'
+  ...
+# Subtest: paid pricing cards route to a preselected submission instead of direct checkout
+ok 70 - paid pricing cards route to a preselected submission instead of direct checkout
+  ---
+  duration_ms: 6.581
+  type: 'test'
+  ...
+# Subtest: paid checkout is offered only after submit returns a captured submission id
+ok 71 - paid checkout is offered only after submit returns a captured submission id
+  ---
+  duration_ms: 11.288
+  type: 'test'
+  ...
+# Subtest: free listing can explicitly be submitted without automatic badge verification
+ok 72 - free listing can explicitly be submitted without automatic badge verification
+  ---
+  duration_ms: 3.4939
+  type: 'test'
+  ...
+# Subtest: pricing links preselect and lock the chosen submission package
+ok 73 - pricing links preselect and lock the chosen submission package
+  ---
+  duration_ms: 2.9765
+  type: 'test'
+  ...
+# Subtest: approved AIBeat destinations normalize www and common paths
+ok 74 - approved AIBeat destinations normalize www and common paths
+  ---
+  duration_ms: 0.8519
+  type: 'test'
+  ...
+# Subtest: valid text backlink including nofollow and sponsored rel is accepted
+ok 75 - valid text backlink including nofollow and sponsored rel is accepted
+  ---
+  duration_ms: 58.7356
+  type: 'test'
+  ...
+# Subtest: valid visual badge must be wrapped in an AIBeat anchor
+ok 76 - valid visual badge must be wrapped in an AIBeat anchor
+  ---
+  duration_ms: 1.4691
+  type: 'test'
+  ...
+# Subtest: wrong destination missing link hidden link and unwrapped badge are rejected
+ok 77 - wrong destination missing link hidden link and unwrapped badge are rejected
+  ---
+  duration_ms: 0.8999
+  type: 'test'
+  ...
+# Subtest: server verification accepts official subdomains and rejects unrelated domains
+ok 78 - server verification accepts official subdomains and rejects unrelated domains
+  ---
+  duration_ms: 224.0234
+  type: 'test'
+  ...
+# Subtest: server verification rejects private hosts non-html oversized responses redirects and timeouts
+ok 79 - server verification rejects private hosts non-html oversized responses redirects and timeouts
+  ---
+  duration_ms: 5.6528
+  type: 'test'
+  ...
+# Subtest: founder pricing contains the requested initial public lineup
+ok 80 - founder pricing contains the requested initial public lineup
+  ---
+  duration_ms: 3.5858
+  type: 'test'
+  ...
+# Subtest: weekly tools draft contains exactly eight current tools and preserves Pictory promotion verbatim
+ok 81 - weekly tools draft contains exactly eight current tools and preserves Pictory promotion verbatim
+  ---
+  duration_ms: 30.0459
+  type: 'test'
+  ...
+# Subtest: weekly tool slug override is explicit and rejects missing or incomplete selections
+ok 82 - weekly tool slug override is explicit and rejects missing or incomplete selections
+  ---
+  duration_ms: 1.9675
+  type: 'test'
+  ...
+# Subtest: outreach draft uses approved spreadsheet facts, qualified metrics, and no guarantees
+ok 83 - outreach draft uses approved spreadsheet facts, qualified metrics, and no guarantees
+  ---
+  duration_ms: 11.1505
+  type: 'test'
+  ...
+# Subtest: suppressed contacts cannot produce outreach drafts
+ok 84 - suppressed contacts cannot produce outreach drafts
+  ---
+  duration_ms: 1.4069
+  type: 'test'
+  ...
+# Subtest: spreadsheet import rejects malformed addresses before any Gmail draft can be built
+ok 85 - spreadsheet import rejects malformed addresses before any Gmail draft can be built
+  ---
+  duration_ms: 1.7492
+  type: 'test'
+  ...
+# Subtest: scheduled Gmail outreach supports a batch of 50 individual drafts
+ok 86 - scheduled Gmail outreach supports a batch of 50 individual drafts
+  ---
+  duration_ms: 19.8721
+  type: 'test'
+  ...
+# Subtest: existing tags are reused
+ok 87 - existing tags are reused
+  ---
+  duration_ms: 153.1776
+  type: 'test'
+  ...
+# Subtest: missing tags are created
+ok 88 - missing tags are created
+  ---
+  duration_ms: 30.9805
+  type: 'test'
+  ...
+# Subtest: duplicate execution remains idempotent
+ok 89 - duplicate execution remains idempotent
+  ---
+  duration_ms: 5.8412
+  type: 'test'
+  ...
+# Subtest: API authentication errors fail safely
+ok 90 - API authentication errors fail safely
+  ---
+  duration_ms: 1.8479
+  type: 'test'
+  ...
+# Subtest: partial API failures do not produce an incomplete configuration
+ok 91 - partial API failures do not produce an incomplete configuration
+  ---
+  duration_ms: 6.6801
+  type: 'test'
+  ...
+# Subtest: incorrect or duplicate IDs are rejected
+ok 92 - incorrect or duplicate IDs are rejected
+  ---
+  duration_ms: 1.1293
+  type: 'test'
+  ...
+# Subtest: duplicate tag names are rejected
+ok 93 - duplicate tag names are rejected
+  ---
+  duration_ms: 0.6598
+  type: 'test'
+  ...
+# Subtest: API key never appears in normal output or thrown error messages
+ok 94 - API key never appears in normal output or thrown error messages
+  ---
+  duration_ms: 1.0864
+  type: 'test'
+  ...
+# Subtest: local env file is updated without replacing unrelated values
+ok 95 - local env file is updated without replacing unrelated values
+  ---
+  duration_ms: 12.517
+  type: 'test'
+  ...
+# Subtest: latest-news newsletter selects the newest three valid published articles
+ok 96 - latest-news newsletter selects the newest three valid published articles
+  ---
+  duration_ms: 142.2999
+  type: 'test'
+  ...
+# Subtest: newsletter HTML is email-safe, factual-source-only, and retains CTA and unsubscribe links
+ok 97 - newsletter HTML is email-safe, factual-source-only, and retains CTA and unsubscribe links
+  ---
+  duration_ms: 31.1056
+  type: 'test'
+  ...
+# Subtest: Avenyora is a unique non-featured freemium AI Lifestyle listing
+ok 98 - Avenyora is a unique non-featured freemium AI Lifestyle listing
+  ---
+  duration_ms: 1.5698
+  type: 'test'
+  ...
+# Subtest: Gmail integration builds a multipart draft and never calls the send endpoint
+ok 99 - Gmail integration builds a multipart draft and never calls the send endpoint
+  ---
+  duration_ms: 161.3413
+  type: 'test'
+  ...
+# Subtest: Gmail integration skips a draft with the same newsletter key
+ok 100 - Gmail integration skips a draft with the same newsletter key
+  ---
+  duration_ms: 4.2386
+  type: 'test'
+  ...
+# Subtest: Gmail draft configuration is explicit and rejects missing secrets
+ok 101 - Gmail draft configuration is explicit and rejects missing secrets
+  ---
+  duration_ms: 1.7707
+  type: 'test'
+  ...
+# ◇ injected env (38) from .env.local // tip: ⌘ override existing { override: true }
+# LinkedIn token refresh failed (401): invalid refresh token
+# Subtest: loads recent AIBeat news from generated MDX files
+ok 102 - loads recent AIBeat news from generated MDX files
+  ---
+  duration_ms: 30.8373
+  type: 'test'
+  ...
+# Subtest: generates humanized LinkedIn drafts with engagement question and source link
+ok 103 - generates humanized LinkedIn drafts with engagement question and source link
+  ---
+  duration_ms: 5.0337
+  type: 'test'
+  ...
+# Subtest: site URL is normalized when GitHub variables contain line breaks
+ok 104 - site URL is normalized when GitHub variables contain line breaks
+  ---
+  duration_ms: 52.7459
+  type: 'test'
+  ...
+# Subtest: LinkedIn draft payload uses DRAFT lifecycle and never publishes by default
+ok 105 - LinkedIn draft payload uses DRAFT lifecycle and never publishes by default
+  ---
+  duration_ms: 2.7729
+  type: 'test'
+  ...
+# Subtest: dry run writes exactly three local drafts and does not call LinkedIn
+ok 106 - dry run writes exactly three local drafts and does not call LinkedIn
+  ---
+  duration_ms: 114.2418
+  type: 'test'
+  ...
+# Subtest: automation falls back to older recent articles when one-day content is thin
+ok 107 - automation falls back to older recent articles when one-day content is thin
+  ---
+  duration_ms: 447.1201
+  type: 'test'
+  ...
+# Subtest: missing credentials are detected before LinkedIn API draft creation
+ok 108 - missing credentials are detected before LinkedIn API draft creation
+  ---
+  duration_ms: 14.3492
+  type: 'test'
+  ...
+# Subtest: refresh credentials satisfy LinkedIn access-token requirement
+ok 109 - refresh credentials satisfy LinkedIn access-token requirement
+  ---
+  duration_ms: 1.3085
+  type: 'test'
+  ...
+# Subtest: LinkedIn refresh token request uses OAuth refresh grant
+ok 110 - LinkedIn refresh token request uses OAuth refresh grant
+  ---
+  duration_ms: 139.1768
+  type: 'test'
+  ...
+# Subtest: LinkedIn profile lookup resolves personal author URN through OIDC userinfo
+ok 111 - LinkedIn profile lookup resolves personal author URN through OIDC userinfo
+  ---
+  duration_ms: 4.8242
+  type: 'test'
+  ...
+# Subtest: LinkedIn profile lookup falls back to /v2/me when userinfo is unavailable
+ok 112 - LinkedIn profile lookup falls back to /v2/me when userinfo is unavailable
+  ---
+  duration_ms: 2.9827
+  type: 'test'
+  ...
+# Subtest: author URN resolver refreshes token and returns only profile identity
+ok 113 - author URN resolver refreshes token and returns only profile identity
+  ---
+  duration_ms: 3.1375
+  type: 'test'
+  ...
+# Subtest: automation reports refresh failure without falling back to expired token
+ok 114 - automation reports refresh failure without falling back to expired token
+  ---
+  duration_ms: 132.2135
+  type: 'test'
+  ...
+# Subtest: LinkedIn client sends required versioned Posts API headers
+ok 115 - LinkedIn client sends required versioned Posts API headers
+  ---
+  duration_ms: 5.7147
+  type: 'test'
+  ...
+# Subtest: history prevents duplicate LinkedIn drafts for the same article
+ok 116 - history prevents duplicate LinkedIn drafts for the same article
+  ---
+  duration_ms: 176.0514
+  type: 'test'
+  ...
+# Subtest: UTM source normalization
+ok 117 - UTM source normalization
+  ---
+  duration_ms: 4.927
+  type: 'test'
+  ...
+# Subtest: source-to-environment-tag mapping
+ok 118 - source-to-environment-tag mapping
+  ---
+  duration_ms: 6.7335
+  type: 'test'
+  ...
+# Subtest: missing attribution uses fallback referrer and other source
+ok 119 - missing attribution uses fallback referrer and other source
+  ---
+  duration_ms: 2.3378
+  type: 'test'
+  ...
+# Subtest: missing source with AIBeat page URL maps to direct
+ok 120 - missing source with AIBeat page URL maps to direct
+  ---
+  duration_ms: 1.7865
+  type: 'test'
+  ...
+# Subtest: unknown source maps to other
+ok 121 - unknown source maps to other
+  ---
+  duration_ms: 1.1492
+  type: 'test'
+  ...
+# Subtest: malformed and overly long attribution is discarded or trimmed
+ok 122 - malformed and overly long attribution is discarded or trimmed
+  ---
+  duration_ms: 0.9099
+  type: 'test'
+  ...
+# Subtest: tagging failure does not reverse a successful subscription
+ok 123 - tagging failure does not reverse a successful subscription
+  ---
+  duration_ms: 34.2145
+  type: 'test'
+  ...
+# Subtest: missing tag ID does not block subscription
+ok 124 - missing tag ID does not block subscription
+  ---
+  duration_ms: 20.5683
+  type: 'test'
+  ...
+# Subtest: validated page URL is sent to Kit as referrer
+ok 125 - validated page URL is sent to Kit as referrer
+  ---
+  duration_ms: 7.7151
+  type: 'test'
+  ...
+# Subtest: no API keys or tag IDs are sent to the browser
+ok 126 - no API keys or tag IDs are sent to the browser
+  ---
+  duration_ms: 51.9188
+  type: 'test'
+  ...
+# Subtest: stores a newsletter request in Supabase and sends an owner notification
+ok 127 - stores a newsletter request in Supabase and sends an owner notification
+  ---
+  duration_ms: 58.3201
+  type: 'test'
+  ...
+# Subtest: rejects invalid subscriber email without sending
+ok 128 - rejects invalid subscriber email without sending
+  ---
+  duration_ms: 11.2233
+  type: 'test'
+  ...
+# Subtest: unsubscribe validates email input
+ok 129 - unsubscribe validates email input
+  ---
+  duration_ms: 52.4022
+  type: 'test'
+  ...
+# Subtest: unsubscribe looks up subscriber by email and calls Kit unsubscribe endpoint
+ok 130 - unsubscribe looks up subscriber by email and calls Kit unsubscribe endpoint
+  ---
+  duration_ms: 17.1435
+  type: 'test'
+  ...
+# Subtest: unknown subscriber request returns success without calling unsubscribe endpoint
+ok 131 - unknown subscriber request returns success without calling unsubscribe endpoint
+  ---
+  duration_ms: 11.374
+  type: 'test'
+  ...
+# Subtest: tool_submission: defaults, legacy recipients, normalization, and precedence
+ok 132 - tool_submission: defaults, legacy recipients, normalization, and precedence
+  ---
+  duration_ms: 13.6451
+  type: 'test'
+  ...
+# Subtest: tool_submission: stores before sending and preserves reply-to
+ok 133 - tool_submission: stores before sending and preserves reply-to
+  ---
+  duration_ms: 15.3118
+  type: 'test'
+  ...
+# Subtest: newsletter: defaults, legacy recipients, normalization, and precedence
+ok 134 - newsletter: defaults, legacy recipients, normalization, and precedence
+  ---
+  duration_ms: 1.7283
+  type: 'test'
+  ...
+# Subtest: newsletter: stores before sending and preserves reply-to
+ok 135 - newsletter: stores before sending and preserves reply-to
+  ---
+  duration_ms: 3.2245
+  type: 'test'
+  ...
+# Subtest: unsubscribe: defaults, legacy recipients, normalization, and precedence
+ok 136 - unsubscribe: defaults, legacy recipients, normalization, and precedence
+  ---
+  duration_ms: 5.8194
+  type: 'test'
+  ...
+# Subtest: unsubscribe: stores before sending and preserves reply-to
+ok 137 - unsubscribe: stores before sending and preserves reply-to
+  ---
+  duration_ms: 3.9927
+  type: 'test'
+  ...
+# Subtest: business_early_access: defaults, legacy recipients, normalization, and precedence
+ok 138 - business_early_access: defaults, legacy recipients, normalization, and precedence
+  ---
+  duration_ms: 1.0612
+  type: 'test'
+  ...
+# Subtest: business_early_access: stores before sending and preserves reply-to
+ok 139 - business_early_access: stores before sending and preserves reply-to
+  ---
+  duration_ms: 2.7544
+  type: 'test'
+  ...
+# Subtest: sender override takes precedence over shared sender
+ok 140 - sender override takes precedence over shared sender
+  ---
+  duration_ms: 5.8062
+  type: 'test'
+  ...
+# Subtest: storage failure prevents sending
+ok 141 - storage failure prevents sending
+  ---
+  duration_ms: 5.7054
+  type: 'test'
+  ...
+# Subtest: notification missing-key is surfaced after preserving submission
+ok 142 - notification missing-key is surfaced after preserving submission
+  ---
+  duration_ms: 1.9398
+  type: 'test'
+  ...
+# Subtest: notification rejected is surfaced after preserving submission
+ok 143 - notification rejected is surfaced after preserving submission
+  ---
+  duration_ms: 1.6918
+  type: 'test'
+  ...
+# Subtest: notification missing-id is surfaced after preserving submission
+ok 144 - notification missing-id is surfaced after preserving submission
+  ---
+  duration_ms: 2.5376
+  type: 'test'
+  ...
+# Subtest: notification network is surfaced after preserving submission
+ok 145 - notification network is surfaced after preserving submission
+  ---
+  duration_ms: 1.5404
+  type: 'test'
+  ...
+# Subtest: submit route sends through the shared notification path
+ok 146 - submit route sends through the shared notification path
+  ---
+  duration_ms: 31.6464
+  type: 'test'
+  ...
+# Subtest: early-access route sends through the shared notification path
+ok 147 - early-access route sends through the shared notification path
+  ---
+  duration_ms: 6.3842
+  type: 'test'
+  ...
+# ◇ injected env (38) from .env.local // tip: ◈ encrypted .env [www.dotenvx.com]
+# Subtest: weekly-tools post generation
+ok 148 - weekly-tools post generation
+  ---
+  duration_ms: 12.6787
+  type: 'test'
+  ...
+# Subtest: AI-news-roundup generation
+ok 149 - AI-news-roundup generation
+  ---
+  duration_ms: 3.8553
+  type: 'test'
+  ...
+# Subtest: empty article list behavior
+ok 150 - empty article list behavior
+  ---
+  duration_ms: 1.7495
+  type: 'test'
+  ...
+# Subtest: duplicate detection
+ok 151 - duplicate detection
+  ---
+  duration_ms: 175.2462
+  type: 'test'
+  ...
+# Subtest: stable content hash generation
+ok 152 - stable content hash generation
+  ---
+  duration_ms: 2.374
+  type: 'test'
+  ...
+# Subtest: dry-run behavior
+ok 153 - dry-run behavior
+  ---
+  duration_ms: 133.4931
+  type: 'test'
+  ...
+# Subtest: missing credentials behavior
+ok 154 - missing credentials behavior
+  ---
+  duration_ms: 208.0938
+  type: 'test'
+  ...
+# Subtest: publish-disabled behavior
+ok 155 - publish-disabled behavior
+  ---
+  duration_ms: 55.0523
+  type: 'test'
+  ...
+# Subtest: title validation
+ok 156 - title validation
+  ---
+  duration_ms: 1.5024
+  type: 'test'
+  ...
+# Subtest: history file updates
+ok 157 - history file updates
+  ---
+  duration_ms: 214.839
+  type: 'test'
+  ...
+# Subtest: AIBeat link-limit validation
+ok 158 - AIBeat link-limit validation
+  ---
+  duration_ms: 0.4965
+  type: 'test'
+  ...
+# Subtest: community-question rotation
+ok 159 - community-question rotation
+  ---
+  duration_ms: 105.2596
+  type: 'test'
+  ...
+# Subtest: loads recent local AIBeat content
+ok 160 - loads recent local AIBeat content
+  ---
+  duration_ms: 18.6109
+  type: 'test'
+  ...
+# Stripe webhook signature error: Unable to extract timestamp and signatures from header
+# Stripe checkout processed: {
+#   eventType: 'checkout.session.completed',
+#   status: 'fulfilled',
+#   sessionId: 'cs_test_123',
+#   tier: 'simple',
+#   submissionId: 'sub_test_123'
+# }
+# Duplicate Stripe webhook event ignored: evt_test_paid
+# Subtest: paid listing plan key allowlist accepts existing data ids and checkout tier allowlist accepts required browser ids
+ok 161 - paid listing plan key allowlist accepts existing data ids and checkout tier allowlist accepts required browser ids
+  ---
+  duration_ms: 4.3102
+  type: 'test'
+  ...
+# Subtest: simple maps only to STRIPE_PRICE_SIMPLE_PLACEMENT
+ok 162 - simple maps only to STRIPE_PRICE_SIMPLE_PLACEMENT
+  ---
+  duration_ms: 2.7147
+  type: 'test'
+  ...
+# Subtest: featured maps only to STRIPE_PRICE_FEATURED_PLACEMENT
+ok 163 - featured maps only to STRIPE_PRICE_FEATURED_PLACEMENT
+  ---
+  duration_ms: 5.8906
+  type: 'test'
+  ...
+# Subtest: spotlightPro maps only to STRIPE_PRICE_SPOTLIGHT_PRO
+ok 164 - spotlightPro maps only to STRIPE_PRICE_SPOTLIGHT_PRO
+  ---
+  duration_ms: 2.0429
+  type: 'test'
+  ...
+# Subtest: unknown tiers are rejected and missing required configuration fails safely
+ok 165 - unknown tiers are rejected and missing required configuration fails safely
+  ---
+  duration_ms: 4.0383
+  type: 'test'
+  ...
+# Subtest: client-provided price or amount fields cannot override server mappings in checkout params
+ok 166 - client-provided price or amount fields cannot override server mappings in checkout params
+  ---
+  duration_ms: 1.5791
+  type: 'test'
+  ...
+# Subtest: checkout session params use payment mode, literal session placeholder, metadata, and safe site URLs
+ok 167 - checkout session params use payment mode, literal session placeholder, metadata, and safe site URLs
+  ---
+  duration_ms: 1.5066
+  type: 'test'
+  ...
+# Subtest: successful checkout session creation response returns only redirect information
+ok 168 - successful checkout session creation response returns only redirect information
+  ---
+  duration_ms: 0.6443
+  type: 'test'
+  ...
+# Subtest: webhook idempotency rejects the same Stripe event more than once
+ok 169 - webhook idempotency rejects the same Stripe event more than once
+  ---
+  duration_ms: 1.7069
+  type: 'test'
+  ...
+# Subtest: valid paid checkout.session.completed is processed
+ok 170 - valid paid checkout.session.completed is processed
+  ---
+  duration_ms: 13.0144
+  type: 'test'
+  ...
+# Subtest: unpaid delayed checkout.session.completed is recorded pending and not fulfilled
+ok 171 - unpaid delayed checkout.session.completed is recorded pending and not fulfilled
+  ---
+  duration_ms: 1.0802
+  type: 'test'
+  ...
+# Subtest: checkout.session.async_payment_succeeded is fulfilled once
+ok 172 - checkout.session.async_payment_succeeded is fulfilled once
+  ---
+  duration_ms: 1.5639
+  type: 'test'
+  ...
+# Subtest: checkout.session.async_payment_failed is not fulfilled
+ok 173 - checkout.session.async_payment_failed is not fulfilled
+  ---
+  duration_ms: 1.3648
+  type: 'test'
+  ...
+# Subtest: price mismatch prevents webhook fulfilment
+ok 174 - price mismatch prevents webhook fulfilment
+  ---
+  duration_ms: 1.4777
+  type: 'test'
+  ...
+# Subtest: missing webhook signature is rejected
+ok 175 - missing webhook signature is rejected
+  ---
+  duration_ms: 14.0601
+  type: 'test'
+  ...
+# Subtest: invalid webhook signature is rejected
+ok 176 - invalid webhook signature is rejected
+  ---
+  duration_ms: 37.759
+  type: 'test'
+  ...
+# Subtest: valid signed paid webhook is accepted and duplicate event delivery does not duplicate fulfilment
+ok 177 - valid signed paid webhook is accepted and duplicate event delivery does not duplicate fulfilment
+  ---
+  duration_ms: 11.1694
+  type: 'test'
+  ...
+# Subtest: success-page access alone does not mark a submission as paid
+ok 178 - success-page access alone does not mark a submission as paid
+  ---
+  duration_ms: 21.3618
+  type: 'test'
+  ...
+# Subtest: reviewed submissions are unique featured listings with valid internal alternatives
+ok 179 - reviewed submissions are unique featured listings with valid internal alternatives
+  ---
+  duration_ms: 77.6075
+  type: 'test'
+  ...
+# Subtest: unscored listings display no invented score and keep ranking finite
+ok 180 - unscored listings display no invented score and keep ranking finite
+  ---
+  duration_ms: 104.6177
+  type: 'test'
+  ...
+1..180
+# tests 180
+# suites 0
+# pass 180
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 50974.0672
