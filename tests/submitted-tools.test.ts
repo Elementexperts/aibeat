@@ -4,7 +4,7 @@ import { TOOLS, getFeaturedTools, getPopularTools, getToolRatingLabel, getToolPo
 import { SUBMITTED_TOOLS } from '../data/submitted-tools'
 
 test('reviewed submissions are unique featured listings with valid internal alternatives', () => {
-  assert.equal(SUBMITTED_TOOLS.length, 11)
+  assert.equal(SUBMITTED_TOOLS.length, 13)
   assert.equal(new Set(TOOLS.map(t => t.slug)).size, TOOLS.length)
   for (const tool of SUBMITTED_TOOLS) {
     assert.equal(TOOLS.filter(t => t.slug === tool.slug).length, 1)
@@ -16,6 +16,7 @@ test('reviewed submissions are unique featured listings with valid internal alte
   }
   assert.deepEqual(getFeaturedTools().slice(0, 4).map(t => t.slug), SUBMITTED_TOOLS.slice(0, 4).map(t => t.slug))
   assert.equal(TOOLS.filter(t => t.slug === 'toolsvio').length, 1)
+  assert.ok(getFeaturedTools().some(t => t.slug === 'toolsvio'))
   const preview = TOOLS.find(t => t.slug === 'removebgtools')!
   assert.match(preview.tagline, /still in development/)
   assert.match(preview.pricing, /not yet available/)

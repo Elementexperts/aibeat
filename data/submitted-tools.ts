@@ -5,6 +5,28 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
   {
+    slug: 'astrea', name: 'Astrea',
+    tagline: 'Turn product ideas and reference images into AI advertising videos',
+    description: 'Astrea helps creators and marketing teams generate product advertising videos from ideas and reference images. Users guide the creative direction with prompts and existing assets, then generate and download clips for campaigns. Its paid plans support 720p and 1080p generation through monthly subscriptions or one-time credit packs. Free access is advertised, but the public pricing page does not specify a free credit allowance.',
+    category: 'AI Video', logo: '#b4000b', logoInitials: 'A', logoUrl: '/tool-logos/astrea.png', rating: null,
+    pricing: 'Free access advertised · Plans from $19.90/mo · Credit packs from $9.90', pricingType: 'freemium',
+    websiteUrl: 'https://astrea.studio/', affiliateUrl: 'https://astrea.studio/', featured: true,
+    pros: ['Prompt and reference-image inputs', '720p and 1080p generation on paid plans', 'Subscription and one-time credit options'],
+    cons: ['Generation consumes credits', 'Public pricing does not specify the free allowance', 'Generated ads need review for product accuracy'],
+    alternatives: ['solice', 'pictory', 'runway'],
+  },
+  {
+    slug: 'sistava', name: 'Sistava',
+    tagline: 'Delegate defined business workflows to AI employees in a shared workspace',
+    description: 'Sistava is an AI workforce platform for founders and teams. Users choose an available AI employee or define a role, supply business context, connect supported tools, and delegate work across sales, marketing, support, research, and operations. Teams retain responsibility for permissions, review, and consequential decisions. A free tier is advertised, with paid plans starting at $25 per month; credits and employee capacity vary by plan.',
+    category: 'AI Agents', logo: '#4966ef', logoInitials: 'S', logoUrl: '/tool-logos/sistava-icon.png', rating: null,
+    pricing: 'Free tier · Paid plans from $25/mo · Credit limits apply', pricingType: 'freemium',
+    websiteUrl: 'https://sistava.com/', affiliateUrl: 'https://sistava.com/', featured: true,
+    pros: ['Available employee roles and custom workflows', 'Shared context for business tasks', 'Supported app connections and plan-based employee capacity'],
+    cons: ['Tasks consume credits based on model and complexity', 'Integration availability and controls vary', 'Work requires human oversight and appropriate tool permissions'],
+    alternatives: ['mrrlin', 'orkas', 'lindy'],
+  },
+  {
     slug: 'mrrlin', name: 'Mrrlin',
     tagline: 'Coordinate AI agents from a business goal to reviewed deliverables',
     description: 'Mrrlin is an AI execution workspace for founders and small teams. It organizes goals into tasks, coordinates agents, preserves project context, and uses review and retry steps before handing work back to people. Its workspace includes progress tracking and human approvals for sensitive actions such as sending and publishing. Access and pricing should be confirmed with the team; connected model subscriptions may be required.',
