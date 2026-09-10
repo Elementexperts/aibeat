@@ -21,7 +21,7 @@ function request(body: Record<string, unknown>) {
   })
 }
 
-function setupKitFetch(options?: { subscriberId?: string }) {
+function setupKitFetch(options?: { subscriberId?: string; lookupStatus?: number; unsubscribeStatus?: number; storageStatus?: number; notificationStatus?: number }) {
   const calls: FetchCall[] = []
 
   globalThis.fetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
@@ -29,6 +29,7 @@ function setupKitFetch(options?: { subscriberId?: string }) {
     calls.push({ url, init })
 
     if (url.includes('/v4/subscribers?email_address=')) {
+      if (options?.lookupStatus) return new Response(null, { status: options.lookupStatus })
       return Response.json({
         subscribers: options?.subscriberId
           ? [{ id: options.subscriberId, email_address: 'reader@example.com' }]
@@ -36,14 +37,14 @@ function setupKitFetch(options?: { subscriberId?: string }) {
       })
     }
 
-    if (url === 'https://api.resend.com/emails') return Response.json({ id: 'email_123' })
+    if (url === 'https://api.resend.com/emails') return Response.json({ id: 'email_123' }, { status: options?.notificationStatus ?? 200 })
 
     if (url.includes('/unsubscribe')) {
-      return new Response(null, { status: 204 })
+      return new Response(null, { status: options?.unsubscribeStatus ?? 204 })
     }
 
     if (url.includes('/rest/v1/rpc/record_public_form_submission')) {
-      return Response.json('submission_123')
+      return Response.json('submission_123', { status: options?.storageStatus ?? 200 })
     }
 
     return Response.json({ error: 'unknown endpoint' }, { status: 404 })
@@ -117,3 +118,25 @@ test('unknown subscriber request returns success without calling unsubscribe end
   assert.ok(calls[0].url.includes('/v4/subscribers?email_address=missing%40example.com'))
   assert.equal(calls[1].url, 'https://project.supabase.co/rest/v1/rpc/record_public_form_submission')
 })
+
+for (const subscriberId of [undefined, 'subscriber_123']) {
+  for (const failure of ['storageStatus', 'notificationStatus'] as const) {
+    test(`confirmed Kit outcome survives ${failure}, subscriber=${subscriberId}`, async () => {
+      process.env.KIT_API_KEY = 'kit_secret'
+      setupKitFetch({ subscriberId, [failure]: 503 })
+      const response = await POST(request({ email: 'reader@example.com' }))
+      assert.equal(response.status, 200)
+      assert.deepEqual(await response.json(), { success: true })
+    })
+  }
+}
+
+for (const failure of ['lookupStatus', 'unsubscribeStatus'] as const) {
+  test(`Kit ${failure} still returns an error`, async () => {
+    process.env.KIT_API_KEY = 'kit_secret'
+    const calls = setupKitFetch({ subscriberId: 'subscriber_123', [failure]: 503 })
+    const response = await POST(request({ email: 'reader@example.com' }))
+    assert.equal(response.status, 502)
+    assert.ok(calls.every(({ url }) => url.startsWith('https://api.kit.com/')))
+  })
+}

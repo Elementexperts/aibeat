@@ -19,17 +19,17 @@ Example configuration (documentation only):
 
 ```bash
 SUBMISSION_TO_EMAIL=hello@aibeat.dev,info@aibeat.dev
-SUBMISSION_FROM_EMAIL=AIBeat <submissions@aibeat.dev>
+SUBMISSION_FROM_EMAIL=AIBeat <hello@aibeat.dev>
 ```
 
 ## Sender and delivery
 
-`RESEND_API_KEY` is required for notifications. Sender precedence is the corresponding `NEWSLETTER_FROM_EMAIL`, `UNSUBSCRIBE_FROM_EMAIL`, or `BUSINESS_EARLY_ACCESS_FROM_EMAIL`, then `SUBMISSION_FROM_EMAIL`, then `AIBeat <submissions@aibeat.dev>`. Tool submissions use the shared sender. Blank sender values fall through. The sender domain must be verified in Resend. Replies go to the submitted email address.
+`RESEND_API_KEY` is required for notifications. Sender precedence is the corresponding `NEWSLETTER_FROM_EMAIL`, `UNSUBSCRIBE_FROM_EMAIL`, or `BUSINESS_EARLY_ACCESS_FROM_EMAIL`, then `SUBMISSION_FROM_EMAIL`, then `AIBeat <hello@aibeat.dev>`. Tool submissions use the shared sender. Blank sender values fall through. The sender domain must be verified in Resend. Replies go to the submitted email address.
 
 Supabase storage must succeed before sending. Provider rejection, network timeout (10 seconds), missing credentials, or a missing provider email ID produces an error response; the stored submission remains available for manual recovery. The submission ID is used as the Resend idempotency key. There is no automatic retry worker; resubmitting the form creates a new record and can produce another notification. Provider acceptance does not guarantee inbox delivery: check Resend delivery/bounce logs and mailbox spam filters if a notification is missing.
 
-Unsubscribe still performs the Kit lookup/unsubscribe first, and records/notifies for both matching and unknown subscribers. A later notification failure does not undo a successful Kit unsubscribe.
+Unsubscribe still performs the Kit lookup/unsubscribe first, and records/notifies for both matching and unknown subscribers. A later storage or notification failure is logged and does not turn the confirmed Kit outcome into an unsubscribe error. Check server logs and stored submissions for notification recovery.
 
 The separate `/api/subscribe` Kit signup path uses `KIT_API_KEY` and `KIT_FORM_ID`; it does not create an owner notification.
 
-This code change does not update local or deployed environment values. Deployment requires existing Supabase configuration and usable Resend credentials with a verified sender. No live email is sent by the mocked tests.
+The local sender is configured as hello@aibeat.dev. In production, change SUBMISSION_FROM_EMAIL and any route-specific sender overrides that still use the old submissions address to AIBeat <hello@aibeat.dev>, then redeploy. Deployment requires existing Supabase configuration and usable Resend credentials with a verified sender. No live email is sent by the mocked tests.

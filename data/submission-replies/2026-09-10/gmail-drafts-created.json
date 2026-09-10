@@ -1,0 +1,36 @@
+{
+  "created_at": "2026-09-10",
+  "status": "Gmail drafts created; not sent",
+  "drafts": [
+    {
+      "name": "Astrea",
+      "to": "support@astrea.studio",
+      "slug": "astrea",
+      "detail": "The listing includes your official logo and introduces Astrea’s product advertising video workflow, reference-image inputs, and credit-based options.",
+      "subject": "Astrea is now featured on AIBeat",
+      "body": "Hi Astrea team,\n\nThank you for submitting Astrea! Your tool is now featured on AIBeat, and your listing is live:\n\nhttps://www.aibeat.dev/tools/astrea\n\nThe listing includes your official logo and introduces Astrea’s product advertising video workflow, reference-image inputs, and credit-based options.\n\nWe’d love for you to share the listing on your social channels or with your community. Sharing can help more people discover Astrea and support AIBeat’s work highlighting useful tools and emerging products. It’s entirely optional, and we’d really appreciate the support.\n\nHere’s a short post you’re welcome to use:\n“Astrea is now featured on AIBeat! Take a look at our listing: https://www.aibeat.dev/tools/astrea”\n\nPlease have a look and let us know if any details need updating.\n\nBest regards,\nNomoz Fayzullaev\nFounder, AIBeat\nhttps://www.aibeat.dev\nhello@aibeat.dev",
+      "draft_id": "r3811554212408353382",
+      "message_id": "1a089aeef197f6f3"
+    },
+    {
+      "name": "Sistava",
+      "to": "admin@sista.ai",
+      "slug": "sistava",
+      "detail": "The listing includes your official logo and highlights Sistava’s shared workspace for AI employees, business workflows, and human oversight.",
+      "subject": "Sistava is now featured on AIBeat",
+      "body": "Hi Sistava team,\n\nThank you for submitting Sistava! Your tool is now featured on AIBeat, and your listing is live:\n\nhttps://www.aibeat.dev/tools/sistava\n\nThe listing includes your official logo and highlights Sistava’s shared workspace for AI employees, business workflows, and human oversight.\n\nWe’d love for you to share the listing on your social channels or with your community. Sharing can help more people discover Sistava and support AIBeat’s work highlighting useful tools and emerging products. It’s entirely optional, and we’d really appreciate the support.\n\nHere’s a short post you’re welcome to use:\n“Sistava is now featured on AIBeat! Take a look at our listing: https://www.aibeat.dev/tools/sistava”\n\nPlease have a look and let us know if any details need updating.\n\nBest regards,\nNomoz Fayzullaev\nFounder, AIBeat\nhttps://www.aibeat.dev\nhello@aibeat.dev",
+      "draft_id": "r-4464209015055340983",
+      "message_id": "1a089aef0602a6e3"
+    },
+    {
+      "name": "Toolsvio",
+      "to": "info@toolsvio.online",
+      "slug": "toolsvio",
+      "detail": "We’ve added your existing listing to our featured collection and updated it with your official logo. The page highlights your available browser utilities and clearly identifies tools that are still coming soon.",
+      "subject": "Toolsvio is now featured on AIBeat",
+      "body": "Hi Toolsvio team,\n\nThank you for submitting Toolsvio! Your tool is now featured on AIBeat, and your listing is live:\n\nhttps://www.aibeat.dev/tools/toolsvio\n\nWe’ve added your existing listing to our featured collection and updated it with your official logo. The page highlights your available browser utilities and clearly identifies tools that are still coming soon.\n\nWe’d love for you to share the listing on your social channels or with your community. Sharing can help more people discover Toolsvio and support AIBeat’s work highlighting useful tools and emerging products. It’s entirely optional, and we’d really appreciate the support.\n\nHere’s a short post you’re welcome to use:\n“Toolsvio is now featured on AIBeat! Take a look at our listing: https://www.aibeat.dev/tools/toolsvio”\n\nPlease have a look and let us know if any details need updating.\n\nBest regards,\nNomoz Fayzullaev\nFounder, AIBeat\nhttps://www.aibeat.dev\nhello@aibeat.dev",
+      "draft_id": "r-4733394367354607716",
+      "message_id": "1a089aef3361788f"
+    }
+  ]
+}

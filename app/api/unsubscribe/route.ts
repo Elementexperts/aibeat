@@ -27,7 +27,12 @@ function parseSubscriberId(payload: unknown, email: string): string | undefined 
 }
 
 async function sendNotification(input: { email: string; reason?: string; pageUrl?: string; kitStatus: string }) {
-  await recordPublicFormSubmission({ kind: 'unsubscribe', email: input.email, payload: input })
+  try {
+    await recordPublicFormSubmission({ kind: 'unsubscribe', email: input.email, payload: input })
+  } catch (err) {
+    // Kit has already confirmed the outcome; notification failures must not undo it.
+    console.error('Unsubscribe notification/storage failed:', err instanceof Error ? err.message : 'Unknown error')
+  }
 }
 
 export async function POST(req: NextRequest) {

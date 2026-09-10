@@ -43,7 +43,7 @@ export async function sendPublicFormNotification(input: {
   if (!apiKey) throw new Error('Missing RESEND_API_KEY for public form notifications.')
   const from = process.env[FROM_VARIABLES[input.kind]]?.trim()
     || process.env.SUBMISSION_FROM_EMAIL?.trim()
-    || 'AIBeat <submissions@aibeat.dev>'
+    || 'AIBeat <hello@aibeat.dev>'
   const response = await (input.fetchImpl ?? fetch)('https://api.resend.com/emails', {
     method: 'POST',
     headers: {

@@ -34,7 +34,7 @@ for (const [index, kind] of Array.from(kinds.entries())) {
       const body = JSON.parse(String(init?.body))
       assert.deepEqual(body.to, ['hello@aibeat.dev'])
       assert.equal(body.reply_to, 'reader@example.com')
-      assert.equal(body.from, 'AIBeat <submissions@aibeat.dev>')
+      assert.equal(body.from, 'AIBeat <hello@aibeat.dev>')
       assert.match(body.text, /submission_123/)
       assert.equal((init?.headers as Record<string, string>)['Idempotency-Key'], 'public-form/submission_123')
       return Response.json({ id: 'email_123' })
@@ -45,7 +45,7 @@ for (const [index, kind] of Array.from(kinds.entries())) {
 
 test('sender override takes precedence over shared sender', async () => {
   process.env.NEWSLETTER_FROM_EMAIL = 'Newsletter <newsletter@aibeat.dev>'
-  process.env.SUBMISSION_FROM_EMAIL = 'Shared <submissions@aibeat.dev>'
+  process.env.SUBMISSION_FROM_EMAIL = 'Shared <hello@aibeat.dev>'
   await recordPublicFormSubmission({ kind: 'newsletter', payload: {}, fetchImpl: async (url, init) => {
     if (!String(url).includes('resend')) return Response.json('id')
     assert.equal(JSON.parse(String(init?.body)).from, process.env.NEWSLETTER_FROM_EMAIL)
