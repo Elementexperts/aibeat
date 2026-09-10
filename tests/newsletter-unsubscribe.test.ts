@@ -27,7 +27,7 @@ test.afterEach(() => { process.env = { ...originalEnv }; globalThis.fetch = orig
 test('stores unsubscribe without Kit or Resend and notifies through Gmail', async () => {
   const response = await POST(request({ email: ' Reader@Example.com ', reason: ' Too frequent ', page_url: 'https://www.aibeat.dev/unsubscribe' }))
   assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { success: true, submissionId: 'submission_123' })
+  assert.deepEqual(await response.json(), { success: true, submissionId: 'submission_123', notificationStatus: 'sent' })
   assert.equal(calls.length, 3)
   const stored = JSON.parse(String(calls[0].init?.body))
   assert.equal(stored.submission_kind, 'unsubscribe')
@@ -46,11 +46,15 @@ test('storage failure returns an error and sends no email', async () => {
 })
 test('Gmail failure does not reject a saved unsubscribe request', async () => {
   setup({ gmailFailure: true })
-  assert.equal((await POST(request({ email: 'reader@example.com' }))).status, 200)
+  const response = await POST(request({ email: 'reader@example.com' }))
+  assert.equal(response.status, 200)
+  assert.equal((await response.json()).notificationStatus, 'failed')
   assert.equal(calls.length, 3)
 })
 test('missing Gmail configuration still preserves unsubscribe request', async () => {
   delete process.env.GMAIL_REFRESH_TOKEN
-  assert.equal((await POST(request({ email: 'reader@example.com' }))).status, 200)
+  const response = await POST(request({ email: 'reader@example.com' }))
+  assert.equal(response.status, 200)
+  assert.equal((await response.json()).notificationStatus, 'failed')
   assert.equal(calls.length, 1)
 })

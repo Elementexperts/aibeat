@@ -17,6 +17,7 @@ export interface ModelRouter {
 }
 
 export type BusinessAIMode = 'mock' | 'live'
+export const DEFAULT_BUSINESS_MODEL = 'gemini-3.6-flash'
 
 export class ModelConfigurationError extends Error {
   constructor(message: string) {
@@ -94,7 +95,7 @@ export async function getModelRouter(env: Readonly<Record<string, string | undef
   if (getBusinessAIMode(env) === 'mock') return new MockModelRouter()
   const provider = env.AIBEAT_BUSINESS_AI_PROVIDER?.trim().toLowerCase() || 'gemini'
   if (provider !== 'gemini') throw new ModelConfigurationError(`Unsupported live AI provider: ${provider}`)
-  if (!env.GEMINI_API_KEY) throw new ModelConfigurationError('Live Gemini mode requires the server-side GEMINI_API_KEY environment variable.')
+  if (!env.GEMINI_API_KEY?.trim()) throw new ModelConfigurationError('Live Gemini mode requires the server-side GEMINI_API_KEY environment variable.')
   const { GeminiModelRouter } = await import('./model-providers/gemini')
-  return new GeminiModelRouter({ apiKey: env.GEMINI_API_KEY, model: env.AIBEAT_BUSINESS_MODEL || 'gemini-2.5-flash' })
+  return new GeminiModelRouter({ apiKey: env.GEMINI_API_KEY.trim(), model: env.AIBEAT_BUSINESS_MODEL?.trim() || DEFAULT_BUSINESS_MODEL })
 }

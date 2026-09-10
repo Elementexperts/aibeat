@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { getBusinessAIMode, getModelRouter, ModelConfigurationError, ModelProviderError } from './model-router'
+import { DEFAULT_BUSINESS_MODEL, getBusinessAIMode, getModelRouter, ModelConfigurationError, ModelProviderError } from './model-router'
 
 export interface AIRuntimeStatus {
   mode: 'mock' | 'live'
@@ -12,8 +12,8 @@ export interface AIRuntimeStatus {
 export function getAIRuntimeStatus(env: Readonly<Record<string, string | undefined>> = process.env): AIRuntimeStatus {
   const mode = getBusinessAIMode(env)
   if (mode === 'mock') return { mode, provider: 'mock', model: 'deterministic', configured: true }
-  const provider = env.AIBEAT_BUSINESS_AI_PROVIDER?.trim().toLowerCase()
-  return { mode, provider: 'gemini', model: env.AIBEAT_BUSINESS_MODEL?.trim() || 'gemini-2.5-flash', configured: provider === 'gemini' && Boolean(env.GEMINI_API_KEY) }
+  const provider = env.AIBEAT_BUSINESS_AI_PROVIDER?.trim().toLowerCase() || 'gemini'
+  return { mode, provider: 'gemini', model: env.AIBEAT_BUSINESS_MODEL?.trim() || DEFAULT_BUSINESS_MODEL, configured: provider === 'gemini' && Boolean(env.GEMINI_API_KEY?.trim()) }
 }
 
 export async function testAIConnection(): Promise<{ ok: boolean; message: string; status: AIRuntimeStatus; latencyMs?: number }> {

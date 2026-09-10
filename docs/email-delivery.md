@@ -31,3 +31,11 @@ Storage failure returns an error and sends no notification. After an unsubscribe
 Gmail OAuth refresh and send requests each have a 10-second timeout. There is no automatic retry or guaranteed deduplication of sends. Resubmission creates another record and can produce another notification. Provider acceptance is not proof of inbox delivery.
 
 Deploy the updated application with the Gmail credentials in the production environment. Local `.env.local` changes do not update hosting configuration. No live email is sent by the mocked tests. Legacy Kit code in the separate `/api/subscribe` route and outreach tools is outside this public-form workflow.
+
+## Diagnosing missing unsubscribe notices
+
+The unsubscribe response now includes `notificationStatus: sent` when Gmail accepts the notice, or `failed` when only the Supabase save succeeded. A successful request alone is not evidence of email delivery. Server logs record the submission ID and Gmail message ID on acceptance, or the missing credential names/provider error reason on failure; credentials are never logged.
+
+The website needs `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `GMAIL_REFRESH_TOKEN` in its hosting provider's **Production** environment. GitHub Actions repository secrets only apply to GitHub jobs and are not inherited by Vercel. After changing production variables, redeploy. Set `SUBMISSION_FROM_EMAIL` and `UNSUBSCRIBE_FROM_EMAIL` to `AIBeat <hello@aibeat.dev>` or leave them blank to use the default. The Gmail account must permit that sender.
+
+A saved request whose notice failed remains available in Supabase for manual recovery; it is not automatically retried. On September 10, the saved test request's missing notification was recovered using the local Gmail credentials and accepted by Gmail. Production hosting credentials could not be inspected because the available browser was not signed in to Vercel.

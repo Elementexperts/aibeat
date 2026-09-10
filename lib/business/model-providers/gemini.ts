@@ -1,3 +1,5 @@
+import { AGENT_REGISTRY } from '../agents'
+import type { AgentType } from '../types'
 import { GoogleGenAI } from '@google/genai'
 import { ModelProviderError, ModelResponseValidationError, type ModelRouter, type ModelUsage } from '../model-router'
 
@@ -21,9 +23,9 @@ export const AIBEAT_ASSISTANT_RESPONSE_SCHEMA = {
   }, required: ['message', 'intent', 'suggestions', 'missingContext'], additionalProperties: false,
 } as const
 
-type GeminiUsage = { promptTokenCount?: number; responseTokenCount?: number }
+type GeminiUsage = { promptTokenCount?: number; candidatesTokenCount?: number; responseTokenCount?: number }
 export function mapGeminiUsage(metadata: GeminiUsage | undefined, model: string, latencyMs: number, runId: string): ModelUsage {
-  return { provider: 'gemini', model, tokensIn: metadata?.promptTokenCount ?? 0, tokensOut: metadata?.responseTokenCount ?? 0, estimatedCostUsd: 0, latencyMs, runId }
+  return { provider: 'gemini', model, tokensIn: metadata?.promptTokenCount ?? 0, tokensOut: metadata?.candidatesTokenCount ?? metadata?.responseTokenCount ?? 0, estimatedCostUsd: 0, latencyMs, runId }
 }
 
 export class GeminiModelRouter implements ModelRouter {
@@ -46,9 +48,23 @@ export class GeminiModelRouter implements ModelRouter {
   async reason(input: string) { return this.request(input) }
   async summarize(input: string) { const result = await this.request(`Summarize concisely.\n${input}`); return { summary: result.text, usage: result.usage } }
   async extractStructured<T>(input: string, schemaName: string) {
-    const schema = schemaName === 'LEAD_RESEARCH' ? LEAD_RESEARCH_RESPONSE_SCHEMA : schemaName === 'AIBEAT_ASSISTANT' ? AIBEAT_ASSISTANT_RESPONSE_SCHEMA : undefined
+    const schema = schemaName === 'LEAD_RESEARCH' ? LEAD_RESEARCH_RESPONSE_SCHEMA : schemaName === 'AIBEAT_ASSISTANT' ? AIBEAT_ASSISTANT_RESPONSE_SCHEMA : getAgentResponseSchema(schemaName)
     if (!schema) throw new Error(`Unsupported structured output schema: ${schemaName}`)
     const result = await this.request(input, { responseMimeType: 'application/json', responseJsonSchema: schema, temperature: 0.2 })
     try { return { data: JSON.parse(result.text) as T, usage: result.usage } } catch { throw new ModelResponseValidationError() }
+  }
+}
+
+export function getAgentResponseSchema(schemaName: string) {
+  if (!Object.hasOwn(AGENT_REGISTRY, schemaName)) return undefined
+  const fields = AGENT_REGISTRY[schemaName as AgentType].outputSchema
+  return {
+    type: 'object',
+    properties: {
+      ...Object.fromEntries(Object.entries(fields).map(([key, type]) => [key, type === 'string[]' ? { type: 'array', items: { type: 'string' } } : { type }])),
+      confidence: { type: 'number', minimum: 0, maximum: 1 },
+    },
+    required: [...new Set([...Object.keys(fields), 'confidence'])],
+    additionalProperties: false,
   }
 }

@@ -87,7 +87,10 @@ export const AGENT_REGISTRY: Record<AgentType, AgentDefinition> = {
 export function validateAgentOutput(agentType: AgentType, output: Record<string, unknown>): boolean {
   if (agentType === 'LEAD_RESEARCH') return isLeadResearchOutput(output)
   const schema = AGENT_REGISTRY[agentType].outputSchema
-  return Object.keys(schema).every((key) => key in output)
+  return Object.entries(schema).every(([key, type]) => type === 'string[]'
+    ? Array.isArray(output[key]) && (output[key] as unknown[]).every((item) => typeof item === 'string')
+    : type === 'number' ? typeof output[key] === 'number' && Number.isFinite(output[key])
+    : typeof output[key] === type)
 }
 
 export function buildAgentInstruction(ctx: AgentExecutionContext, agentType: AgentType): string {

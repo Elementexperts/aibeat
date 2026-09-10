@@ -43,11 +43,12 @@ export async function sendPublicFormNotification(input: {
   const clientId = process.env.GMAIL_CLIENT_ID?.trim()
   const clientSecret = process.env.GMAIL_CLIENT_SECRET?.trim()
   const refreshToken = process.env.GMAIL_REFRESH_TOKEN?.trim()
-  if (!clientId || !clientSecret || !refreshToken) throw new Error('Missing Gmail OAuth configuration for public form notifications.')
+  const missing = [['GMAIL_CLIENT_ID', clientId], ['GMAIL_CLIENT_SECRET', clientSecret], ['GMAIL_REFRESH_TOKEN', refreshToken]].filter(([, value]) => !value).map(([name]) => name)
+  if (missing.length) throw new Error(`Missing production Gmail configuration: ${missing.join(', ')}. Set these in the website hosting environment; GitHub Actions secrets are separate.`)
   const tokenResponse = await fetchImpl('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken, grant_type: 'refresh_token' }),
+    body: new URLSearchParams({ client_id: clientId!, client_secret: clientSecret!, refresh_token: refreshToken!, grant_type: 'refresh_token' }),
     signal: AbortSignal.timeout(10_000),
   })
   if (!tokenResponse.ok) throw new Error(`Gmail OAuth refresh failed (${tokenResponse.status}).`)
@@ -75,7 +76,12 @@ export async function sendPublicFormNotification(input: {
     body: JSON.stringify({ raw: Buffer.from(mime, 'utf8').toString('base64url') }),
     signal: AbortSignal.timeout(10_000),
   })
-  if (!response.ok) throw new Error(`Public form notification failed (${response.status}).`)
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({})) as { error?: { errors?: Array<{ reason?: string }> } }
+    const reason = error.error?.errors?.[0]?.reason?.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 80)
+    throw new Error(`Public form notification failed (${response.status}${reason ? `, ${reason}` : ''}).`)
+  }
   const result = await response.json() as { id?: string }
   if (!result.id) throw new Error('Public form notification did not return an email ID.')
+  return result.id
 }

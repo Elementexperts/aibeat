@@ -1,4 +1,5 @@
-import { executeAgentMock, executeAgentRuntime } from './agents'
+import { executeAgentMock } from './agents'
+import { executeConfiguredAgentRuntime } from './agent-runtime'
 import { buildOAuthStartUrl, connectorRegistry, getEffectiveConnectionStatus, getIntegrationDefinition, integrationDefinitions } from './connectors'
 import { ingestBusinessDocument, type DocumentIngestionInput } from './document-ingestion'
 import { evaluateAgentFinding } from './evaluations'
@@ -662,8 +663,14 @@ export class SupabaseBusinessDataStore {
     }
 
     if (!finding && !approval && finalStatus !== 'FAILED') {
-      finding = await this.persistRuntimeAgentFinding(actor, workflow, runRow.id, connectorExecutions)
-      resultSummary = 'Workflow completed using connector-backed agent runtime.'
+      try {
+        finding = await this.persistRuntimeAgentFinding(actor, workflow, runRow.id, connectorExecutions)
+        resultSummary = getBusinessAIMode() === 'live' ? 'Workflow completed using live Gemini analysis.' : 'Workflow completed using mock agent runtime.'
+      } catch {
+        finalStatus = 'FAILED'
+        resultSummary = 'Agent generation failed. No finding was persisted.'
+        await this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_FAILED', workflowRunId: runRow.id, agentType: workflow.agentType, summary: resultSummary })
+      }
     }
 
     const { data: completedRunRow, error } = await this.supabase
@@ -818,7 +825,7 @@ export class SupabaseBusinessDataStore {
 
   private async persistRuntimeAgentFinding(actor: Actor, workflow: WorkflowDefinition, workflowRunId: string, connectorExecutions: ConnectorExecutionRecord[]): Promise<AgentFinding> {
     const organization = await this.getOrganization(actor)
-    const result = executeAgentRuntime(
+    const result = await executeConfiguredAgentRuntime(
       {
         organizationId: actor.organizationId,
         userId: actor.userId,

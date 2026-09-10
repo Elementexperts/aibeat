@@ -28,22 +28,23 @@ export async function createGmailNewsletterDraft(input: { newsletter: LatestNews
   })
 }
 
-export async function createGmailDraft(input: { message: GmailDraftMessage; config: GmailDraftConfig; fetchImpl?: typeof fetch }) {
+export async function createGmailDraft(input: { message: GmailDraftMessage; config: GmailDraftConfig; fetchImpl?: typeof fetch; updateExisting?: boolean }) {
   const fetchImpl = input.fetchImpl ?? fetch
   const accessToken = await refreshGmailAccessToken(input.config, fetchImpl)
-  const existingDraftId = await findExistingDraft(accessToken, input.message.key, fetchImpl)
-  if (existingDraftId) return { created: false as const, draftId: existingDraftId, duplicate: true as const }
+  const existingDraftId = await findExistingDraft(accessToken, input.message.key, fetchImpl, input.updateExisting)
+  if (existingDraftId && !input.updateExisting) return { created: false as const, draftId: existingDraftId, duplicate: true as const }
 
   const raw = buildGenericMimeMessage(input.message, input.config)
-  const response = await fetchImpl('https://gmail.googleapis.com/gmail/v1/users/me/drafts', {
-    method: 'POST',
+  const draftUrl = 'https://gmail.googleapis.com/gmail/v1/users/me/drafts'
+  const response = await fetchImpl(existingDraftId ? `${draftUrl}/${encodeURIComponent(existingDraftId)}` : draftUrl, {
+    method: existingDraftId ? 'PUT' : 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ message: { raw: base64UrlEncode(raw) } }),
   })
   if (!response.ok) throw new Error(`Gmail draft creation failed (${response.status}): ${(await response.text()).slice(0, 240)}`)
   const result = await response.json() as { id?: string }
   if (!result.id) throw new Error('Gmail draft creation response did not include a draft ID.')
-  return { created: true as const, draftId: result.id, duplicate: false as const }
+  return { created: !existingDraftId, ...(existingDraftId ? { updated: true as const } : {}), draftId: result.id, duplicate: false as const }
 }
 
 export function getGmailDraftConfig(env: Readonly<Record<string, string | undefined>> = process.env): GmailDraftConfig {
@@ -102,18 +103,25 @@ async function refreshGmailAccessToken(config: GmailDraftConfig, fetchImpl: type
   return result.access_token
 }
 
-async function findExistingDraft(accessToken: string, newsletterKey: string, fetchImpl: typeof fetch) {
-  const list = await fetchImpl('https://gmail.googleapis.com/gmail/v1/users/me/drafts?maxResults=50', { headers: { Authorization: `Bearer ${accessToken}` } })
-  if (!list.ok) throw new Error(`Gmail draft list failed (${list.status}): ${(await list.text()).slice(0, 240)}`)
-  const listed = await list.json() as { drafts?: Array<{ id?: string }> }
-  for (const draft of listed.drafts ?? []) {
-    if (!draft.id) continue
-    const response = await fetchImpl(`https://gmail.googleapis.com/gmail/v1/users/me/drafts/${encodeURIComponent(draft.id)}?format=metadata&metadataHeaders=X-AIBeat-Newsletter-Key`, { headers: { Authorization: `Bearer ${accessToken}` } })
-    if (!response.ok) continue
-    const detail = await response.json() as { message?: { payload?: { headers?: Array<{ name?: string; value?: string }> } } }
-    const match = detail.message?.payload?.headers?.some((header) => header.name?.toLowerCase() === 'x-aibeat-newsletter-key' && header.value === newsletterKey)
-    if (match) return draft.id
-  }
+async function findExistingDraft(accessToken: string, newsletterKey: string, fetchImpl: typeof fetch, matchLegacySuffix = false) {
+  let pageToken: string | undefined
+  do {
+    const query = new URLSearchParams({ maxResults: '50' })
+    if (pageToken) query.set('pageToken', pageToken)
+    const list = await fetchImpl(`https://gmail.googleapis.com/gmail/v1/users/me/drafts?${query}`, { headers: { Authorization: `Bearer ${accessToken}` } })
+    if (!list.ok) throw new Error(`Gmail draft list failed (${list.status}).`)
+    const listed = await list.json() as { drafts?: Array<{ id?: string }>; nextPageToken?: string }
+    for (const draft of listed.drafts ?? []) {
+      if (!draft.id) continue
+      const response = await fetchImpl(`https://gmail.googleapis.com/gmail/v1/users/me/drafts/${encodeURIComponent(draft.id)}?format=metadata&metadataHeaders=X-AIBeat-Newsletter-Key`, { headers: { Authorization: `Bearer ${accessToken}` } })
+      if (response.status === 404) continue // A draft can be deleted while scanning.
+      if (!response.ok) throw new Error(`Gmail draft inspection failed (${response.status}).`)
+      const detail = await response.json() as { message?: { payload?: { headers?: Array<{ name?: string; value?: string }> } } }
+      const match = detail.message?.payload?.headers?.some((header) => header.name?.toLowerCase() === 'x-aibeat-newsletter-key' && (header.value === newsletterKey || (matchLegacySuffix && header.value?.startsWith(`${newsletterKey}-`))))
+      if (match) return draft.id
+    }
+    pageToken = listed.nextPageToken
+  } while (pageToken)
   return undefined
 }
 

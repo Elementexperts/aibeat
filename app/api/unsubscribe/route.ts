@@ -28,13 +28,15 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    let notificationStatus: 'sent' | 'failed' = 'failed'
     const submissionId = await recordPublicFormSubmission({
       kind: 'unsubscribe',
       email: normalizedEmail,
       payload: { email: normalizedEmail, reason, pageUrl },
       notificationFailure: 'log',
+      onNotificationResult: (status) => { notificationStatus = status },
     })
-    return NextResponse.json({ success: true, submissionId })
+    return NextResponse.json({ success: true, submissionId, notificationStatus })
   } catch (err) {
     console.error('Unsubscribe storage failed:', err instanceof Error ? err.message : 'Unknown error')
     return NextResponse.json({ error: 'Could not save your unsubscribe request right now' }, { status: 502 })

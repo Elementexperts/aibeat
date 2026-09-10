@@ -8,6 +8,7 @@ export async function recordPublicFormSubmission(input: {
   email?: string
   payload: Record<string, unknown>
   notificationFailure?: 'throw' | 'log'
+  onNotificationResult?: (status: 'sent' | 'failed') => void
   fetchImpl?: typeof fetch
 }) {
   const url = `${getSupabaseUrl()}/rest/v1/rpc/record_public_form_submission`
@@ -33,8 +34,11 @@ export async function recordPublicFormSubmission(input: {
   const result = await response.json() as string | null
   if (!result) throw new Error('Supabase form storage did not return a submission ID.')
   try {
-    await sendPublicFormNotification({ ...input, submissionId: result })
+    const messageId = await sendPublicFormNotification({ ...input, submissionId: result })
+    console.info('Public form notification accepted by Gmail:', { submissionId: result, messageId })
+    input.onNotificationResult?.('sent')
   } catch (error) {
+    input.onNotificationResult?.('failed')
     if (input.notificationFailure !== 'log') throw error
     console.error('Stored public form notification failed:', { submissionId: result, message: error instanceof Error ? error.message : 'Unknown error' })
   }

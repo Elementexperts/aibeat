@@ -2,19 +2,19 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFileSync } from 'node:fs'
 import { parseDailyManualLeads } from '../lib/daily-manual-outreach-leads'
-import { buildGenericMimeMessage } from '../lib/gmail-newsletter-draft'
+import { buildGenericMimeMessage, createGmailDraft } from '../lib/gmail-newsletter-draft'
 import { buildOutreachDraft } from '../lib/gmail-outreach-drafts'
 import { buildWeeklyToolsNewsletter, PICTORY_PARTNER_HTML, selectWeeklyTools } from '../lib/weekly-tools-newsletter'
 import type { Tool } from '../lib/data'
 
 function tool(index: number): Tool {
-  return { slug: `tool-${index}`, name: `Tool ${index}`, tagline: `Useful workflow ${index}`, description: '', category: 'AI Tools', logo: '#000', logoInitials: 'T', logoUrl: `https://example.com/${index}.png`, rating: 4, pricing: 'Free', pricingType: 'free', affiliateUrl: `https://tool${index}.example`, websiteUrl: `https://tool${index}.example`, featured: false, pros: [], cons: [], alternatives: [] }
+  return { slug: `tool-${index}`, name: `Tool ${index}`, tagline: `Useful workflow ${index}`, description: '', category: 'AI Tools', logo: '#000', logoInitials: 'T', logoUrl: `https://example.com/${index}.png`, rating: 4, pricing: 'Free', pricingType: 'free', affiliateUrl: `https://tool${index}.example`, websiteUrl: `https://tool${index}.example`, featured: true, pros: [], cons: [], alternatives: [] }
 }
 
 test('weekly tools draft contains exactly eight current tools and preserves Pictory promotion verbatim', () => {
   const tools = Array.from({ length: 10 }, (_, index) => tool(index + 1))
   const newsletter = buildWeeklyToolsNewsletter({ tools, now: new Date('2026-09-04T16:00:00Z') })
-  assert.deepEqual(newsletter.selectedTools.map((item) => item.slug), ['tool-10', 'tool-9', 'tool-8', 'tool-7', 'tool-6', 'tool-5', 'tool-4', 'tool-3'])
+  assert.deepEqual(newsletter.selectedTools.map((item) => item.slug), ['tool-1', 'tool-2', 'tool-3', 'tool-4', 'tool-5', 'tool-6', 'tool-7', 'tool-8'])
   assert.equal(newsletter.html.includes(PICTORY_PARTNER_HTML), true)
   assert.match(newsletter.html, /Cpiabd20/)
   assert.match(newsletter.html, /Affiliate disclosure/)
@@ -59,4 +59,46 @@ test('scheduled Gmail outreach supports a batch of 50 individual drafts', () => 
   assert.match(script, /Math\.min\(50,/)
   assert.match(script, /GMAIL_OUTREACH_DRAFT_LIMIT \|\| '50'/)
   assert.match(workflow, /GMAIL_OUTREACH_DRAFT_LIMIT:.*'50'/)
+})
+
+
+test('weekly selection includes newly prepended featured tools and excludes nonfeatured entries', () => {
+  const tools = [tool(99), { ...tool(98), featured: false }, ...Array.from({ length: 9 }, (_, i) => tool(i + 1))]
+  assert.deepEqual(selectWeeklyTools({ tools }).map((t) => t.slug), ['tool-99', 'tool-1', 'tool-2', 'tool-3', 'tool-4', 'tool-5', 'tool-6', 'tool-7'])
+  assert.throws(() => selectWeeklyTools({ tools, slugs: Array(8).fill('tool-1') }), /duplicate/)
+})
+
+test('weekly tool images use absolute URLs and copy does not invent launch dates', () => {
+  const tools = Array.from({ length: 8 }, (_, i) => ({ ...tool(i + 1), logoUrl: '/tool-logos/example.png' }))
+  const newsletter = buildWeeklyToolsNewsletter({ tools })
+  assert.match(newsletter.html, /src="https:\/\/www.aibeat.dev\/tool-logos\/example.png"/)
+  assert.doesNotMatch(newsletter.html + newsletter.plainText, /last 10 days/)
+})
+
+
+test('rerunning this week updates the existing draft, including a legacy slug-suffixed key', async () => {
+  for (const suffix of ['', '-old-tool-selection']) {
+    const calls: Array<{ url: string; init?: RequestInit }> = []
+    const key = 'aibeat-weekly-tools-2026-W37'
+    const result = await createGmailDraft({
+      message: { key, to: 'hello@aibeat.dev', subject: 'Updated tools', plainText: 'Astrea and Sistava', html: '<p>Astrea and Sistava</p>' },
+      config: { clientId: 'client', clientSecret: 'secret', refreshToken: 'refresh', to: 'hello@aibeat.dev', fromEmail: 'hello@aibeat.dev' },
+      updateExisting: true,
+      fetchImpl: async (url, init) => {
+        calls.push({ url: String(url), init })
+        if (String(url).includes('oauth2')) return Response.json({ access_token: 'token' })
+        if (String(url).includes('/drafts?')) return String(url).includes('pageToken=next') ? Response.json({ drafts: [{ id: 'existing' }] }) : Response.json({ drafts: [], nextPageToken: 'next' })
+        if (init?.method === 'PUT') return Response.json({ id: 'existing' })
+        return Response.json({ message: { payload: { headers: [{ name: 'X-AIBeat-Newsletter-Key', value: key + suffix }] } } })
+      },
+    })
+    assert.equal(result.created, false)
+    assert.equal(result.duplicate, false)
+    assert.equal(calls.at(-1)?.init?.method, 'PUT')
+    assert.match(calls.at(-1)!.url, /drafts\/existing$/)
+    assert.ok(calls.every(({ url }) => !url.includes('/send')))
+    const mime = Buffer.from(JSON.parse(String(calls.at(-1)?.init?.body)).message.raw, 'base64url').toString()
+    assert.match(mime, /Subject: =\?UTF-8/)
+    assert.ok(mime.includes(Buffer.from('Astrea and Sistava').toString('base64')))
+  }
 })
