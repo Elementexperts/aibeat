@@ -39,25 +39,40 @@ export async function sendPublicFormNotification(input: {
   submissionId: string
   fetchImpl?: typeof fetch
 }) {
-  const apiKey = process.env.RESEND_API_KEY?.trim()
-  if (!apiKey) throw new Error('Missing RESEND_API_KEY for public form notifications.')
+  const fetchImpl = input.fetchImpl ?? fetch
+  const clientId = process.env.GMAIL_CLIENT_ID?.trim()
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET?.trim()
+  const refreshToken = process.env.GMAIL_REFRESH_TOKEN?.trim()
+  if (!clientId || !clientSecret || !refreshToken) throw new Error('Missing Gmail OAuth configuration for public form notifications.')
+  const tokenResponse = await fetchImpl('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken, grant_type: 'refresh_token' }),
+    signal: AbortSignal.timeout(10_000),
+  })
+  if (!tokenResponse.ok) throw new Error(`Gmail OAuth refresh failed (${tokenResponse.status}).`)
+  const token = await tokenResponse.json() as { access_token?: string }
+  if (!token.access_token) throw new Error('Gmail OAuth refresh did not return an access token.')
   const from = process.env[FROM_VARIABLES[input.kind]]?.trim()
     || process.env.SUBMISSION_FROM_EMAIL?.trim()
     || 'AIBeat <hello@aibeat.dev>'
-  const response = await (input.fetchImpl ?? fetch)('https://api.resend.com/emails', {
+  const cleanHeader = (value: string) => value.replace(/[\r\n]+/g, ' ').trim()
+  const text = `${SUBJECTS[input.kind]}\nSubmission ID: ${input.submissionId}\n\n${JSON.stringify(input.payload, null, 2)}`
+  const mime = [
+    `From: ${cleanHeader(from)}`,
+    `To: ${getPublicFormRecipients(input.kind).join(', ')}`,
+    ...(input.email && EMAIL_RE.test(input.email) ? [`Reply-To: ${cleanHeader(input.email)}`] : []),
+    `Subject: ${SUBJECTS[input.kind]}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/plain; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    Buffer.from(text, 'utf8').toString('base64').match(/.{1,76}/g)!.join('\r\n'),
+  ].join('\r\n')
+  const response = await fetchImpl('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'Idempotency-Key': `public-form/${input.submissionId}`,
-    },
-    body: JSON.stringify({
-      from,
-      to: getPublicFormRecipients(input.kind),
-      ...(input.email && EMAIL_RE.test(input.email) ? { reply_to: input.email } : {}),
-      subject: SUBJECTS[input.kind],
-      text: `${SUBJECTS[input.kind]}\nSubmission ID: ${input.submissionId}\n\n${JSON.stringify(input.payload, null, 2)}`,
-    }),
+    headers: { Authorization: `Bearer ${token.access_token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ raw: Buffer.from(mime, 'utf8').toString('base64url') }),
     signal: AbortSignal.timeout(10_000),
   })
   if (!response.ok) throw new Error(`Public form notification failed (${response.status}).`)

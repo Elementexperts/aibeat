@@ -46,9 +46,9 @@ export function UnsubscribeForm() {
   if (submitted) {
     return (
       <div className="border border-border bg-paper p-5">
-        <p className="font-serif text-xl font-bold text-ink">You are unsubscribed.</p>
+        <p className="font-serif text-xl font-bold text-ink">Unsubscribe request received.</p>
         <p className="text-sm text-ink-3 leading-relaxed mt-2">
-          Sorry to see you go. Your email has been removed from the AIBeat daily brief.
+          Your request has been saved. We will remove your email from future AIBeat newsletter sends.
         </p>
       </div>
     )

@@ -2,37 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { recordPublicFormSubmission } from '@/lib/public-form-submissions'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const KIT_API_BASE = 'https://api.kit.com/v4'
 const MAX_REASON_LENGTH = 600
 
 function getString(body: unknown, key: string): string | undefined {
   if (typeof body !== 'object' || body === null) return undefined
   const value = (body as Record<string, unknown>)[key]
   return typeof value === 'string' ? value : undefined
-}
-
-function parseSubscriberId(payload: unknown, email: string): string | undefined {
-  if (typeof payload !== 'object' || payload === null) return undefined
-  const subscribers = (payload as { subscribers?: unknown }).subscribers
-  if (!Array.isArray(subscribers)) return undefined
-
-  const match = subscribers.find((item) => {
-    if (typeof item !== 'object' || item === null) return false
-    const record = item as Record<string, unknown>
-    return typeof record.email_address === 'string' && record.email_address.toLowerCase() === email
-  }) as Record<string, unknown> | undefined
-
-  const id = match?.id
-  return typeof id === 'string' || typeof id === 'number' ? String(id) : undefined
-}
-
-async function sendNotification(input: { email: string; reason?: string; pageUrl?: string; kitStatus: string }) {
-  try {
-    await recordPublicFormSubmission({ kind: 'unsubscribe', email: input.email, payload: input })
-  } catch (err) {
-    // Kit has already confirmed the outcome; notification failures must not undo it.
-    console.error('Unsubscribe notification/storage failed:', err instanceof Error ? err.message : 'Unknown error')
-  }
 }
 
 export async function POST(req: NextRequest) {
@@ -52,64 +27,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Enter a valid email address' }, { status: 400 })
   }
 
-  const apiKey = process.env.KIT_API_KEY
-
-  if (!apiKey) {
-    console.error('Missing KIT_API_KEY env var')
-    return NextResponse.json({ error: 'Newsletter unsubscribe is not configured' }, { status: 500 })
-  }
-
   try {
-    const headers = {
-      'Content-Type': 'application/json',
-      'X-Kit-Api-Key': apiKey,
-    }
-
-    const subscriberRes = await fetch(`${KIT_API_BASE}/subscribers?email_address=${encodeURIComponent(normalizedEmail)}`, {
-      headers,
-    })
-
-    if (!subscriberRes.ok) {
-      console.error('Kit subscriber lookup failed:', subscriberRes.status)
-      return NextResponse.json({ error: 'Could not unsubscribe right now' }, { status: 502 })
-    }
-
-    const subscriberId = parseSubscriberId(await subscriberRes.json(), normalizedEmail)
-
-    if (!subscriberId) {
-      const kitStatus = 'No matching Kit subscriber found'
-      await sendNotification({
-        email: normalizedEmail,
-        reason,
-        pageUrl,
-        kitStatus,
-      })
-      console.info('AIBeat unsubscribe requested for non-matching email:', { email: normalizedEmail, reason, pageUrl })
-      return NextResponse.json({ success: true })
-    }
-
-    const unsubscribeRes = await fetch(`${KIT_API_BASE}/subscribers/${encodeURIComponent(subscriberId)}/unsubscribe`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({}),
-    })
-
-    if (!unsubscribeRes.ok) {
-      console.error('Kit unsubscribe failed:', unsubscribeRes.status)
-      return NextResponse.json({ error: 'Could not unsubscribe right now' }, { status: 502 })
-    }
-
-    await sendNotification({
+    const submissionId = await recordPublicFormSubmission({
+      kind: 'unsubscribe',
       email: normalizedEmail,
-      reason,
-      pageUrl,
-      kitStatus: `Unsubscribed in Kit (${subscriberId})`,
+      payload: { email: normalizedEmail, reason, pageUrl },
+      notificationFailure: 'log',
     })
-    console.info('AIBeat unsubscribe requested:', { email: normalizedEmail, subscriberId, reason, pageUrl })
-
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, submissionId })
   } catch (err) {
-    console.error('Kit unsubscribe error:', err instanceof Error ? err.message : 'Unknown error')
-    return NextResponse.json({ error: 'Could not unsubscribe right now' }, { status: 502 })
+    console.error('Unsubscribe storage failed:', err instanceof Error ? err.message : 'Unknown error')
+    return NextResponse.json({ error: 'Could not save your unsubscribe request right now' }, { status: 502 })
   }
 }

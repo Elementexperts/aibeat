@@ -1,35 +1,33 @@
 # AIBeat Email Delivery
 
-Public tool submissions (`/api/submit`), newsletter requests (`/api/newsletter-request`), unsubscribe notifications (`/api/unsubscribe`), and business early access (`/api/business/early-access`) save to Supabase and then send an owner notification through Resend. All four use `lib/public-form-submissions.ts` and `lib/public-form-email.ts`.
+Public tool submissions, newsletter requests, unsubscribe requests, and business early access save to Supabase using `record_public_form_submission`, then notify the owner using the Gmail Workspace API. These form notifications do not require Kit or Resend.
 
-## Recipient configuration
+## Configuration
 
-`hello@aibeat.dev` is always included, including when an existing environment setting contains only `info@aibeat.dev`. Configured addresses are additional recipients; `info@aibeat.dev` remains included when configured. Public contact links are unchanged.
+Deploy `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, plus the existing `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, and `GMAIL_REFRESH_TOKEN` credentials. The Gmail token must allow sending (gmail.send, gmail.compose, gmail.modify, or mail.google.com). The existing draft workflow's gmail.compose scope supports sending as well.
 
-| Form | Recipient override |
-| --- | --- |
-| Tool submission | `SUBMISSION_TO_EMAIL` |
-| Newsletter request | `NEWSLETTER_TO_EMAIL` |
-| Unsubscribe | `UNSUBSCRIBE_TO_EMAIL` |
-| Business early access | `BUSINESS_EARLY_ACCESS_TO_EMAIL` |
+Set `SUBMISSION_FROM_EMAIL=AIBeat <hello@aibeat.dev>`. The OAuth account must be hello@aibeat.dev or have that address configured as an allowed Gmail send-as alias. Route-specific `NEWSLETTER_FROM_EMAIL`, `UNSUBSCRIBE_FROM_EMAIL`, and `BUSINESS_EARLY_ACCESS_FROM_EMAIL` take precedence, so update any old submissions@aibeat.dev values in production. Blank sender values fall through to the shared setting, then AIBeat <hello@aibeat.dev>.
 
-For each request, the first valid recipient list wins: route-specific setting, then `SUBMISSION_TO_EMAIL`, then no extra recipients. Blank or entirely invalid lists fall through. Lists accept commas or whitespace, normalize to lowercase, drop invalid addresses, and deduplicate, including the mandatory hello address. Route overrides replace shared extras.
+`hello@aibeat.dev` is always a recipient. Route-specific `NEWSLETTER_TO_EMAIL`, `UNSUBSCRIBE_TO_EMAIL`, and `BUSINESS_EARLY_ACCESS_TO_EMAIL` replace shared extra recipients from `SUBMISSION_TO_EMAIL`. Lists accept commas or whitespace and are normalized and deduplicated. Replies go to the submitted email address.
 
-Example configuration (documentation only):
+## Unsubscribe workflow
 
-```bash
-SUBMISSION_TO_EMAIL=hello@aibeat.dev,info@aibeat.dev
-SUBMISSION_FROM_EMAIL=AIBeat <hello@aibeat.dev>
+The unsubscribe endpoint validates and normalizes the email, then saves a `public_form_submissions` record with kind `unsubscribe`, including the optional reason and page URL. It never calls Kit. The existing public-form migration is sufficient; no new migration is required.
+
+Success means the request is durably saved. The page says “Unsubscribe request received” because Gmail draft creation does not automatically manage a newsletter audience. Before any manual newsletter send, exclude all addresses returned by this query in the authenticated Supabase SQL editor:
+
+```sql
+select distinct lower(trim(email)) as email
+from public.public_form_submissions
+where kind = 'unsubscribe' and email is not null;
 ```
 
-## Sender and delivery
+Apply these exclusions to the final Gmail recipient list, including any recipients added manually after generating a draft. Marking requests completed must not remove them from the exclusion list. Existing Gmail newsletter scripts prepare drafts; they are not an automatic audience sender or suppression sync.
 
-`RESEND_API_KEY` is required for notifications. Sender precedence is the corresponding `NEWSLETTER_FROM_EMAIL`, `UNSUBSCRIBE_FROM_EMAIL`, or `BUSINESS_EARLY_ACCESS_FROM_EMAIL`, then `SUBMISSION_FROM_EMAIL`, then `AIBeat <hello@aibeat.dev>`. Tool submissions use the shared sender. Blank sender values fall through. The sender domain must be verified in Resend. Replies go to the submitted email address.
+Storage failure returns an error and sends no notification. After an unsubscribe is saved, Gmail failure is logged with the submission ID but does not reject the saved request. Review Supabase unsubscribe records before sends even if no notification arrived. Other public forms continue surfacing notification failures after saving their submission.
 
-Supabase storage must succeed before sending. Provider rejection, network timeout (10 seconds), missing credentials, or a missing provider email ID produces an error response; the stored submission remains available for manual recovery. The submission ID is used as the Resend idempotency key. There is no automatic retry worker; resubmitting the form creates a new record and can produce another notification. Provider acceptance does not guarantee inbox delivery: check Resend delivery/bounce logs and mailbox spam filters if a notification is missing.
+## Delivery and deployment
 
-Unsubscribe still performs the Kit lookup/unsubscribe first, and records/notifies for both matching and unknown subscribers. A later storage or notification failure is logged and does not turn the confirmed Kit outcome into an unsubscribe error. Check server logs and stored submissions for notification recovery.
+Gmail OAuth refresh and send requests each have a 10-second timeout. There is no automatic retry or guaranteed deduplication of sends. Resubmission creates another record and can produce another notification. Provider acceptance is not proof of inbox delivery.
 
-The separate `/api/subscribe` Kit signup path uses `KIT_API_KEY` and `KIT_FORM_ID`; it does not create an owner notification.
-
-The local sender is configured as hello@aibeat.dev. In production, change SUBMISSION_FROM_EMAIL and any route-specific sender overrides that still use the old submissions address to AIBeat <hello@aibeat.dev>, then redeploy. Deployment requires existing Supabase configuration and usable Resend credentials with a verified sender. No live email is sent by the mocked tests.
+Deploy the updated application with the Gmail credentials in the production environment. Local `.env.local` changes do not update hosting configuration. No live email is sent by the mocked tests. Legacy Kit code in the separate `/api/subscribe` route and outreach tools is outside this public-form workflow.
