@@ -64,7 +64,7 @@ export function getAgentResponseSchema(schemaName: string) {
       ...Object.fromEntries(Object.entries(fields).map(([key, type]) => [key, type === 'string[]' ? { type: 'array', items: { type: 'string' } } : { type }])),
       confidence: { type: 'number', minimum: 0, maximum: 1 },
     },
-    required: [...new Set([...Object.keys(fields), 'confidence'])],
+    required: Array.from(new Set([...Object.keys(fields), 'confidence'])),
     additionalProperties: false,
   }
 }
