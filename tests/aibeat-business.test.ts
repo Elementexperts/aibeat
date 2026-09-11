@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test, { beforeEach } from 'node:test'
 import { executeAgentMock, validateAgentOutput } from '../lib/business/agents'
+import { executeConfiguredAgentRuntime } from '../lib/business/agent-runtime'
+import { PilotConnector } from '../lib/business/connectors'
 import { getOptimizationOpportunities } from '../lib/business/ai-spend'
 import { archiveBusinessContextItem, getBusinessContextItem, getBusinessContextPayload, searchBusinessContext } from '../lib/business/context'
 import { getAgentIndustryInstructions } from '../lib/business/industry-profiles'
@@ -29,6 +31,35 @@ import type { AgentFinding, WorkflowRun } from '../lib/business/types'
 
 beforeEach(() => {
   businessStore.reset()
+})
+
+test('live agent receives workflow inputs and rejects malformed provider output', async () => {
+  const actor = { organizationId: 'org-growth-labs', userId: 'user-sarah' }
+  const ctx = { ...actor, workflowRunId: 'test-run', industryProfile: businessStore.getOrganization(actor).primaryProfile, permissions: [], businessContext: businessStore.getBusinessContextPayload(actor) }
+  let prompt = ''
+  const router = new MockModelRouter()
+  router.extractStructured = async <T>(input: string) => {
+    prompt = input
+    return { data: { opportunity: 'Test', brief: 'Brief', draft: 'Draft', sources: [], confidence: 0.5 } as T, usage: { provider: 'gemini', model: 'test', tokensIn: 10, tokensOut: 20, estimatedCostUsd: 0, latencyMs: 1, runId: 'test-model' } }
+  }
+  const result = await executeConfiguredAgentRuntime(ctx, 'MARKETING_CONTENT', [], { env: { AIBEAT_BUSINESS_AI_MODE: 'live' }, workflowInput: { campaignGoal: 'Launch a founder onboarding campaign' }, routerFactory: async () => router })
+  assert.match(prompt, /Launch a founder onboarding campaign/)
+  assert.equal(result.finding.status, 'DRAFT')
+  assert.equal(result.finding.structuredData?.ai && (result.finding.structuredData.ai as Record<string, unknown>).provider, 'gemini')
+  router.extractStructured = async <T>() => ({ data: { draft: 'Incomplete' } as T, usage: { provider: 'gemini', model: 'test', tokensIn: 0, tokensOut: 0, estimatedCostUsd: 0, latencyMs: 0, runId: 'invalid' } })
+  await assert.rejects(executeConfiguredAgentRuntime(ctx, 'MARKETING_CONTENT', [], { env: { AIBEAT_BUSINESS_AI_MODE: 'live' }, routerFactory: async () => router }), /malformed structured output/)
+})
+
+test('pilot connectors disclose simulation instead of claiming external execution', async () => {
+  const result = await new PilotConnector('crm', 'CRM', ['READ']).execute('read accounts', {})
+  assert.match(result.summary, /simulated/)
+  assert.match(result.summary, /no external data was read or changed/)
+})
+
+test('scheduler rejects invalid schedules and preserves calendar dates west of UTC', () => {
+  assert.throws(() => computeNextRunAt('whenever', 'UTC', new Date()), /Use Daily/)
+  assert.throws(() => computeNextRunAt('Daily 25:90', 'UTC', new Date()), /between/)
+  assert.equal(computeNextRunAt('Monday 09:00', 'America/New_York', new Date('2026-09-14T11:00:00Z')), '2026-09-14T13:00:00.000Z')
 })
 
 test('AIBeat Business AI mode defaults safely to mock', () => {

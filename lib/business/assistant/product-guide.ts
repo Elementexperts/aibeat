@@ -3,6 +3,7 @@ export const AIBEAT_ALLOWED_WORKFLOW_IDS = new Set(['tpl-lead-research', 'tpl-co
 
 export const AIBEAT_PRODUCT_GUIDE = `
 Dashboard: overview of important activity, KPIs, runs, findings, and pending decisions.
+Use these exact navigation paths, including in response prose: Dashboard /business/dashboard; Ask AIBeat /business/ask; Workflows /business/workflows; Agents /business/agents; Business Memory /business/context; AI Stack /business/ai-stack; Approvals /business/approvals; Integrations /business/integrations; Reports /business/reports; Settings /business/settings. Never invent shortened paths such as /memory.
 Ask AIBeat: advisory operating guide; it recommends but never executes or approves actions.
 Workflows: repeatable governed AI processes. Lead Research qualifies prospects; Competitor Monitoring watches markets; Marketing Content creates reviewable drafts; Weekly Reporting summarizes KPIs; Executive Daily Brief prioritizes management signals.
 Agents: the five specialized capabilities behind workflows.

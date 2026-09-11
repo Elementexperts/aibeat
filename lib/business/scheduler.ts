@@ -87,6 +87,7 @@ export function runSchedulerTick(store: BusinessDataStore, actor: BusinessActor,
       run.scheduledTriggerId = trigger.id
       run.scheduledFor = attempt.scheduledFor
       attempt.workflowRunId = run.id
+      if (run.status === 'FAILED') throw new Error(run.resultSummary || 'Scheduled workflow failed')
       attempt.status = 'COMPLETED'
       attempt.completedAt = new Date().toISOString()
       trigger.retryCount = 0
@@ -129,7 +130,9 @@ export function computeNextRunAt(schedule: string, timezone: string, from: Date)
   const zoned = getZonedParts(from, timezone)
   for (let dayOffset = 0; dayOffset < 14; dayOffset += 1) {
     const candidateDay = addUtcDays(Date.UTC(zoned.year, zoned.month - 1, zoned.day), dayOffset)
-    const candidateParts = getZonedParts(new Date(candidateDay), timezone)
+    // candidateDay is a calendar date, not an instant in the target timezone.
+    const calendar = new Date(candidateDay)
+    const candidateParts = { year: calendar.getUTCFullYear(), month: calendar.getUTCMonth() + 1, day: calendar.getUTCDate(), weekday: calendar.getUTCDay() }
     if (parsed.weekdays && !parsed.weekdays.includes(candidateParts.weekday)) continue
     const candidate = zonedWallTimeToUtc({
       year: candidateParts.year,
@@ -166,10 +169,12 @@ function retryAt(now: Date, retryCount: number): string {
 }
 
 function parseSchedule(schedule: string): { weekdays?: number[]; hour: number; minute: number } {
-  const lower = schedule.toLowerCase()
+  const lower = schedule.trim().toLowerCase()
+  if (!/^(daily|every day|weekdays|(?:sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:\s*,\s*(?:sunday|monday|tuesday|wednesday|thursday|friday|saturday))*)\s+\d{1,2}:\d{2}$/.test(lower)) throw new Error('Use Daily HH:mm, Weekdays HH:mm, or Monday HH:mm.')
   const time = lower.match(/(\d{1,2}):(\d{2})/)
   const hour = time ? Number(time[1]) : 9
   const minute = time ? Number(time[2]) : 0
+  if (hour > 23 || minute > 59) throw new Error('Schedule time must be between 00:00 and 23:59.')
   const weekdayMap: Record<string, number> = {
     sunday: 0,
     monday: 1,

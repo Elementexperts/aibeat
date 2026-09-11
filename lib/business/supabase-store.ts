@@ -591,6 +591,19 @@ export class SupabaseBusinessDataStore {
       }
 
       if (!canAutoExecuteRisk(step.risk) || workflow.approvalPolicy.requiredForRisks.includes(step.risk)) {
+        // Persist the exact draft before requesting review. Approval must never
+        // authorize a placeholder that will be generated only after the decision.
+        if (!finding) {
+          try {
+            finding = await this.persistRuntimeAgentFinding(actor, workflow, runRow.id, connectorExecutions, workflowInput)
+          } catch {
+            finalStatus = 'FAILED'
+            resultSummary = 'Draft generation failed. No approval was requested.'
+            await this.supabase.from('workflow_steps').update({ status: 'FAILED', error: resultSummary, completed_at: new Date().toISOString() }).eq('id', stepRow.id)
+            auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_FAILED', workflowRunId: runRow.id, agentType: workflow.agentType, summary: resultSummary }))
+            break
+          }
+        }
         const { data: approvalRow, error: approvalError } = await this.supabase
           .from('approvals')
           .insert({
@@ -602,7 +615,7 @@ export class SupabaseBusinessDataStore {
             action_type: step.action,
             action_risk: step.risk,
             proposed_action: step.action,
-            proposed_payload: { workflowId: workflow.id, stepId: step.id },
+            proposed_payload: { workflowId: workflow.id, stepId: step.id, findingId: finding.id, content: finding.content, workflowInput, executionMode: 'simulated' },
             target_system: step.connectorId ?? 'AIBeat Business',
             target_entity: workflow.name,
             reason: `${step.name} is classified as ${step.risk}.`,
@@ -664,7 +677,7 @@ export class SupabaseBusinessDataStore {
 
     if (!finding && !approval && finalStatus !== 'FAILED') {
       try {
-        finding = await this.persistRuntimeAgentFinding(actor, workflow, runRow.id, connectorExecutions)
+        finding = await this.persistRuntimeAgentFinding(actor, workflow, runRow.id, connectorExecutions, workflowInput)
         resultSummary = getBusinessAIMode() === 'live' ? 'Workflow completed using live Gemini analysis.' : 'Workflow completed using mock agent runtime.'
       } catch {
         finalStatus = 'FAILED'
@@ -719,6 +732,12 @@ export class SupabaseBusinessDataStore {
     if (!failed && workflow) {
       connectorExecutions.push({ connectorId: approvalRow.target_system === 'crm' ? 'crm' : (approvalRow.target_system ?? 'pilot'), action: approvalRow.proposed_action, ok: true, risk: approvalRow.action_risk, summary: `Approved pilot action recorded as simulated; no external ${approvalRow.target_system ?? 'system'} write occurred.` })
       for (const step of remainingSteps) {
+        if (!canAutoExecuteRisk(step.risk) || workflow.approvalPolicy.requiredForRisks.includes(step.risk)) {
+          // One approval never authorizes later restricted or approval-gated steps.
+          resumeFailed = true
+          connectorExecutions.push({ connectorId: step.connectorId ?? 'aibeat-runtime', action: step.action, ok: false, risk: step.risk, summary: 'A separate approval is required for this later step.', error: 'ADDITIONAL_APPROVAL_REQUIRED' })
+          break
+        }
         const execution = await this.executeWorkflowStep(actor, step.action, step.risk, step.connectorId)
         connectorExecutions.push(execution)
         const { error: stepError } = await this.supabase.from('workflow_steps').insert({ organization_id: actor.organizationId, workflow_run_id: approvalRow.workflow_run_id, step_definition_id: step.id, name: step.name, risk: step.risk, status: execution.ok ? 'COMPLETED' : 'FAILED', started_at: new Date().toISOString(), completed_at: new Date().toISOString(), output_summary: execution.summary, error: execution.error })
@@ -823,7 +842,7 @@ export class SupabaseBusinessDataStore {
     return { connectorId, action, ok: result.ok, risk, summary: result.summary, error: result.error }
   }
 
-  private async persistRuntimeAgentFinding(actor: Actor, workflow: WorkflowDefinition, workflowRunId: string, connectorExecutions: ConnectorExecutionRecord[]): Promise<AgentFinding> {
+  private async persistRuntimeAgentFinding(actor: Actor, workflow: WorkflowDefinition, workflowRunId: string, connectorExecutions: ConnectorExecutionRecord[], workflowInput: Record<string, unknown> = {}): Promise<AgentFinding> {
     const organization = await this.getOrganization(actor)
     const result = await executeConfiguredAgentRuntime(
       {
@@ -836,6 +855,7 @@ export class SupabaseBusinessDataStore {
       },
       workflow.agentType,
       connectorExecutions,
+      { workflowInput },
     )
 
     const { data, error } = await this.supabase
@@ -1137,7 +1157,7 @@ function mapApproval(row: Row): Approval {
     proposedPayload: row.proposed_payload ?? {},
     targetSystem: row.target_system,
     affectedEntity: row.target_entity,
-    generatedContent: row.edited_payload?.content ?? `Generated content for ${row.proposed_action} is ready for review.`,
+    generatedContent: row.edited_payload?.content ?? row.proposed_payload?.content ?? 'No saved draft is attached to this older approval. Review the workflow finding before deciding.',
     reason: row.reason,
     risk: row.action_risk,
     status: row.status,

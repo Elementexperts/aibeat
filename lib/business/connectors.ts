@@ -33,8 +33,8 @@ export class PilotConnector implements Connector {
   async execute(action: string, input: unknown): Promise<ConnectorResult> {
     return {
       ok: true,
-      data: { action, input, connectorId: this.id },
-      summary: `${this.name} executed ${action}`,
+      data: { action, input, connectorId: this.id, executionMode: 'simulated' },
+      summary: `${this.name} simulated ${action}; no external data was read or changed.`,
     }
   }
 }
