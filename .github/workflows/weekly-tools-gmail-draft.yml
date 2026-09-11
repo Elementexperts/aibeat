@@ -1,6 +1,10 @@
 name: Friday Weekly Tools Gmail Draft
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   schedule:
     # 21:00 Asia/Tashkent (UTC+5).
     - cron: '0 16 * * 5'
@@ -12,11 +16,11 @@ on:
         type: string
 
 concurrency:
-  group: weekly-tools-gmail-draft
+  group: weekly-tools-gmail-draft-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  create-draft:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -30,6 +34,20 @@ jobs:
       - run: npm ci
       - name: Check newsletter formatting and draft behavior
         run: node --import tsx --test tests/gmail-scheduled-drafts.test.ts tests/latest-news-newsletter.test.ts
+  create-draft:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
       - name: Create unsent weekly tools draft
         env:
           GMAIL_WEEKLY_TOOLS_DRAFT_ENABLED: ${{ vars.GMAIL_WEEKLY_TOOLS_DRAFT_ENABLED || 'false' }}
