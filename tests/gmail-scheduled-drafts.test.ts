@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFileSync } from 'node:fs'
 import { parseDailyManualLeads } from '../lib/daily-manual-outreach-leads'
-import { buildGenericMimeMessage, createGmailDraft } from '../lib/gmail-newsletter-draft'
+import { buildGenericMimeMessage, createGmailDraft, validateWeeklyReviewRecipient } from '../lib/gmail-newsletter-draft'
 import { buildOutreachDraft } from '../lib/gmail-outreach-drafts'
 import { buildWeeklyToolsNewsletter, PICTORY_PARTNER_HTML, selectWeeklyTools } from '../lib/weekly-tools-newsletter'
 import type { Tool } from '../lib/data'
@@ -26,6 +26,34 @@ test('weekly tool slug override is explicit and rejects missing or incomplete se
   assert.deepEqual(selectWeeklyTools({ tools, slugs: tools.map((item) => item.slug) }).map((item) => item.slug), tools.map((item) => item.slug))
   assert.throws(() => selectWeeklyTools({ tools, slugs: ['missing', ...tools.slice(1).map((item) => item.slug)] }), /unknown tool slug/)
   assert.throws(() => selectWeeklyTools({ tools, slugs: tools.slice(0, 7).map((item) => item.slug) }), /exactly 8/)
+})
+
+test('weekly newsletter includes a visible unsubscribe route in both alternatives', () => {
+  const newsletter = buildWeeklyToolsNewsletter()
+  assert.match(newsletter.html, /href="https:\/\/www.aibeat.dev\/unsubscribe"[^>]*>Unsubscribe from AIBeat Weekly/)
+  assert.match(newsletter.plainText, /Unsubscribe from AIBeat Weekly: https:\/\/www.aibeat.dev\/unsubscribe/)
+  assert.doesNotMatch(newsletter.subject, /Gift|^Fwd:|^Re:/)
+})
+
+test('MIME preserves Unicode bodies, folds encoded headers, and uses bounded lines and boundaries', () => {
+  const body = 'Useful tools — 世界 🎵\n'.repeat(200)
+  const raw = buildGenericMimeMessage({ to: 'review@example.com', subject: '世界 🎵 '.repeat(40), plainText: body, html: `<p>${body}</p>`, key: 'k'.repeat(180) }, { fromName: 'AIBeat, Weekly', fromEmail: 'hello@aibeat.dev' })
+  assert.match(raw, /Date: .+ GMT\r\n/)
+  assert.match(raw, /Message-ID: <[^>]+@aibeat.dev>/)
+  assert.ok(raw.split('\r\n').every((line) => line.length <= 998))
+  const boundary = raw.match(/boundary="([^"]+)"/)![1]
+  assert.ok(boundary.length <= 70)
+  const textPart = raw.split(`--${boundary}`)[1].split('\r\n\r\n')[1].trim()
+  assert.ok(textPart.split('\r\n').every((line) => line.length <= 76))
+  assert.equal(Buffer.from(textPart, 'base64').toString('utf8'), body)
+  assert.doesNotMatch(raw, /List-Unsubscribe-Post:/)
+})
+
+test('weekly draft recipient must be one reviewer, with no header injection or lists', () => {
+  validateWeeklyReviewRecipient('editor@example.com')
+  for (const address of ['a@example.com,b@example.com', 'a@example.com\r\nBcc: b@example.com', 'Editor <a@example.com>', 'a@example.com.']) {
+    assert.throws(() => validateWeeklyReviewRecipient(address), /one bare review email/)
+  }
 })
 
 test('outreach draft uses approved spreadsheet facts, qualified metrics, and no guarantees', () => {

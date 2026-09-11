@@ -28,6 +28,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Check newsletter formatting and draft behavior
+        run: node --import tsx --test tests/gmail-scheduled-drafts.test.ts tests/latest-news-newsletter.test.ts
       - name: Create unsent weekly tools draft
         env:
           GMAIL_WEEKLY_TOOLS_DRAFT_ENABLED: ${{ vars.GMAIL_WEEKLY_TOOLS_DRAFT_ENABLED || 'false' }}
@@ -36,7 +38,8 @@ jobs:
           GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
           GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
           GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
-          GMAIL_DRAFT_TO: ${{ vars.GMAIL_DRAFT_TO }}
+          # One internal reviewer only. This workflow does not manage an audience.
+          GMAIL_DRAFT_TO: ${{ vars.GMAIL_WEEKLY_TOOLS_REVIEW_TO || vars.GMAIL_DRAFT_TO }}
           GMAIL_FROM_NAME: ${{ vars.GMAIL_FROM_NAME || 'AIBeat' }}
           GMAIL_FROM_EMAIL: ${{ vars.GMAIL_FROM_EMAIL || 'hello@aibeat.dev' }}
         run: npm run newsletter:weekly-tools-draft

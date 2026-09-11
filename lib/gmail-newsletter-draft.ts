@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { LatestNewsNewsletter } from './latest-news-newsletter'
 
 const GMAIL_COMPOSE_SCOPE = 'https://www.googleapis.com/auth/gmail.compose'
@@ -70,11 +71,13 @@ export function buildMimeMessage(newsletter: LatestNewsNewsletter, config: Pick<
 }
 
 export function buildGenericMimeMessage(message: GmailDraftMessage, config: Pick<GmailDraftConfig, 'fromName' | 'fromEmail'>) {
-  const boundary = `aibeat_${message.key.replace(/[^a-z0-9]/gi, '_')}`
+  const boundary = `aibeat_${randomUUID()}`
   return [
     `To: ${sanitizeHeader(message.to)}`,
-    `From: ${sanitizeHeader(config.fromName || 'AIBeat')} <${sanitizeHeader(config.fromEmail)}>`,
+    `From: ${encodeMimeHeader(config.fromName || 'AIBeat')} <${sanitizeHeader(config.fromEmail)}>`,
     `Subject: ${encodeMimeHeader(message.subject)}`,
+    `Date: ${new Date().toUTCString()}`,
+    `Message-ID: <${randomUUID()}@${sanitizeHeader(config.fromEmail).split('@')[1]}>`,
     `X-AIBeat-Newsletter-Key: ${sanitizeHeader(message.key)}`,
     'MIME-Version: 1.0',
     `Content-Type: multipart/alternative; boundary="${boundary}"`,
@@ -83,13 +86,14 @@ export function buildGenericMimeMessage(message: GmailDraftMessage, config: Pick
     'Content-Type: text/plain; charset="UTF-8"',
     'Content-Transfer-Encoding: base64',
     '',
-    Buffer.from(message.plainText, 'utf8').toString('base64'),
+    encodeMimeBody(message.plainText),
     `--${boundary}`,
     'Content-Type: text/html; charset="UTF-8"',
     'Content-Transfer-Encoding: base64',
     '',
-    Buffer.from(message.html, 'utf8').toString('base64'),
+    encodeMimeBody(message.html),
     `--${boundary}--`,
+    '',
   ].join('\r\n')
 }
 
@@ -126,5 +130,22 @@ async function findExistingDraft(accessToken: string, newsletterKey: string, fet
 }
 
 function sanitizeHeader(value: string) { return value.replace(/[\r\n]+/g, ' ').trim() }
-function encodeMimeHeader(value: string) { return `=?UTF-8?B?${Buffer.from(sanitizeHeader(value), 'utf8').toString('base64')}?=` }
+function encodeMimeHeader(value: string) {
+  // Keep encoded words below 75 characters without splitting UTF-8 code points.
+  const chunks: string[] = []
+  let chunk = ''
+  for (const character of sanitizeHeader(value)) {
+    if (Buffer.byteLength(chunk + character, 'utf8') > 42) { chunks.push(chunk); chunk = '' }
+    chunk += character
+  }
+  if (chunk) chunks.push(chunk)
+  return chunks.map((part) => `=?UTF-8?B?${Buffer.from(part, 'utf8').toString('base64')}?=`).join('\r\n ')
+}
+function encodeMimeBody(value: string) { return Buffer.from(value, 'utf8').toString('base64').match(/.{1,76}/g)?.join('\r\n') ?? '' }
+
+export function validateWeeklyReviewRecipient(value: string) {
+  if (!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)+$/.test(value)) {
+    throw new Error('GMAIL_DRAFT_TO must be one bare review email address, not a recipient list.')
+  }
+}
 function base64UrlEncode(value: string) { return Buffer.from(value, 'utf8').toString('base64url') }

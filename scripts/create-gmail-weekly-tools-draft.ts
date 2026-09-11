@@ -1,6 +1,6 @@
 import { appendFileSync } from 'node:fs'
 import { config as loadEnv } from 'dotenv'
-import { createGmailDraft, getGmailDraftConfig } from '../lib/gmail-newsletter-draft'
+import { createGmailDraft, getGmailDraftConfig, validateWeeklyReviewRecipient } from '../lib/gmail-newsletter-draft'
 import { buildWeeklyToolsNewsletter } from '../lib/weekly-tools-newsletter'
 
 loadEnv({ path: '.env.local', quiet: true })
@@ -16,6 +16,10 @@ async function main() {
     return
   }
   const config = getGmailDraftConfig()
+  validateWeeklyReviewRecipient(config.to)
+  const guidance = 'Review draft only. Before sending: verify SPF/DKIM/DMARC, use confirmed subscribers, exclude unsubscribes and bounced contacts, and avoid repeated BCC resends. The body unsubscribe form is not RFC 8058 one-click unsubscribe.'
+  console.log(guidance)
+  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Delivery review\n\n${guidance}\n\n`)
   const result = await createGmailDraft({ message: { to: config.to, subject: newsletter.subject, plainText: newsletter.plainText, html: newsletter.html, key: newsletter.key }, config, updateExisting: true })
   console.log(result.created ? `Created weekly tools Gmail draft: ${result.draftId}` : `Updated weekly tools Gmail draft: ${result.draftId}`)
 }
