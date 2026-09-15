@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import { organizationSchema, websiteSchema, jsonLd } from '@/lib/site-seo'
 import './globals.css'
 import { Navbar } from '@/components/layout/Navbar'
 import { TopBar } from '@/components/layout/TopBar'
@@ -10,7 +11,7 @@ import { PublicAnalytics } from '@/components/analytics/PublicAnalytics'
 
 const siteUrl = 'https://www.aibeat.dev'
 const previewImage = '/og-image.png'
-const logoImage = '/aibeat-logo.png'
+const analyticsId = /^G-[A-Z0-9]+$/.test(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || '') ? process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID! : 'G-JD3XXLRLZ5'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -24,6 +25,11 @@ export const metadata: Metadata = {
   creator: 'AIBeat.dev',
   alternates: {
     canonical: '/',
+  },
+  other: process.env.VERCEL_GIT_COMMIT_SHA ? { 'aibeat-build-revision': process.env.VERCEL_GIT_COMMIT_SHA } : undefined,
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { 'msvalidate.01': process.env.BING_SITE_VERIFICATION } : undefined,
   },
   icons: {
     icon: [
@@ -78,22 +84,14 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const structuredData = {
-    '@context': 'https://schema.org',
-    '@type': 'NewsMediaOrganization',
-    name: 'AIBeat.dev',
-    url: siteUrl,
-    logo: `${siteUrl}${logoImage}`,
-    image: `${siteUrl}${previewImage}`,
-    description: metadata.description,
-    sameAs: ['https://www.linkedin.com/company/aibeat-dev'],
-  }
+  const structuredData = { '@context': 'https://schema.org', '@graph': [organizationSchema, websiteSchema] }
 
   return (
     <html lang="en">
       <head>
+        <link rel="alternate" type="application/rss+xml" title="AIBeat AI News" href="https://www.aibeat.dev/feed.xml" />
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-JD3XXLRLZ5"
+          src={`https://www.googletagmanager.com/gtag/js?id=${analyticsId}`}
           strategy="afterInteractive"
         />
         <script
@@ -106,13 +104,13 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-JD3XXLRLZ5');
+            gtag('config', '${analyticsId}');
           `}
         </Script>
-        <Script
+        <script
           id="organization-schema"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(structuredData) }}
         />
       </head>
       <body>

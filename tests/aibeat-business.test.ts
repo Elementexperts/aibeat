@@ -688,10 +688,10 @@ test('business safe next paths reject external and auth-loop redirects', () => {
 
 test('sitemap excludes authenticated workspace routes and includes public business journey', () => {
   const source = readFileSync('app/sitemap.ts', 'utf8')
-  for (const path of ['/business/demo', '/business/pricing', '/business/sign-up', '/business/sign-in', '/business/forgot-password']) {
+  for (const path of ['/business/demo', '/business/pricing', '/business/ai-spend-calculator']) {
     assert.match(source, new RegExp(`'${path}'`))
   }
-  for (const path of ['/business/dashboard', '/business/ask', '/business/workflows', '/business/agents', '/business/context', '/business/ai-stack', '/business/recommendations', '/business/approvals', '/business/integrations', '/business/reports', '/business/audit', '/business/settings']) {
+  for (const path of ['/business/sign-up', '/business/sign-in', '/business/forgot-password', '/business/dashboard', '/business/ask', '/business/workflows', '/business/agents', '/business/context', '/business/ai-stack', '/business/recommendations', '/business/approvals', '/business/integrations', '/business/reports', '/business/audit', '/business/settings']) {
     assert.doesNotMatch(source, new RegExp(`'${path}'`))
   }
 })

@@ -1,3 +1,6 @@
+import { breadcrumbs, canonicalUrl, jsonLd } from '@/lib/site-seo'
+import { toolSchema, articleMentionsTool } from '@/lib/tool-seo'
+import { getArticles } from '@/lib/articles'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getToolRatingLabel, getToolBySlug, TOOLS, CATEGORY_COLORS } from '@/lib/data'
@@ -15,6 +18,9 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const tool = getToolBySlug(params.slug)
   if (!tool) return {}
   return {
+    alternates: { canonical: canonicalUrl(`/tools/${tool.slug}`) },
+    openGraph: { type: 'website', url: canonicalUrl(`/tools/${tool.slug}`), title: tool.name, description: tool.description },
+    twitter: { card: 'summary_large_image', title: tool.name, description: tool.description },
     title: tool.rating === null ? `${tool.name} — Features, Pricing & Alternatives` : `${tool.name} Review (2026) — Is It Worth It?`,
     description: tool.rating === null ? tool.description : `Honest ${tool.name} review. Pricing, pros, cons, and best alternatives. Updated for 2026.`,
   }
@@ -23,11 +29,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default function ToolPage({ params }: { params: { slug: string } }) {
   const tool = getToolBySlug(params.slug)
   if (!tool) notFound()
+  const relatedNews = getArticles().filter(article => articleMentionsTool(article, tool)).slice(0, 3)
   const hasAffiliateLink = tool.affiliateUrl !== tool.websiteUrl
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd([toolSchema(tool), breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Directory', path: '/directory' }, { name: tool.name, path: `/tools/${tool.slug}` }])]) }} />
       {/* BREADCRUMB */}
       <div className="font-mono text-[11px] text-ink-4 mb-6 flex items-center gap-2">
         <Link href="/" className="hover:text-ink">Home</Link>
@@ -67,6 +75,8 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
             </div>
           )}
 
+          <p className="text-sm mb-4"><Link href={`/directory?category=${encodeURIComponent(tool.category)}`} className="underline">Explore {tool.category} tools</Link></p>
+          {relatedNews.length > 0 && <section className="mb-6"><h2 className="font-serif text-xl mb-2">Related news</h2><ul>{relatedNews.map(article => <li key={article.slug}><Link className="text-sm underline" href={`/news/${article.slug}`}>{article.title}</Link></li>)}</ul></section>}
           {/* Quick Verdict */}
           <div className="bg-paper-2 border border-border p-4 mb-6">
             <div className="font-mono text-[10px] text-ink-4 uppercase tracking-widest mb-2">{tool.rating === null ? 'Product overview' : 'Quick verdict'}</div>

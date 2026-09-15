@@ -16,13 +16,21 @@ const CATEGORY_LABELS: Record<Category, string> = {
   'deep-dive': 'Deep Dive',
 }
 
-export const metadata: Metadata = {
-  title: 'AI News - AIBeat.dev',
-  description: 'Breaking AI news, tool launches, and analysis for founders and freelancers. Updated daily.',
+export function generateMetadata({ searchParams }: { searchParams?: { category?: string; page?: string } }): Metadata {
+  const category = isCategory(searchParams?.category) ? searchParams.category : undefined
+  const total = getArticles().filter(article => !category || article.category === category).length
+  const requested = Number(searchParams?.page || 1)
+  const page = Math.min(Math.max(1, Math.floor(Number.isFinite(requested) ? requested : 1)), Math.max(1, Math.ceil(Math.max(0, total - 1) / ARTICLES_PER_PAGE)))
+  return {
+    title: `${category ? CATEGORY_LABELS[category] + ' — ' : ''}AI News${page > 1 ? ` — Page ${page}` : ''}`,
+    description: 'Breaking AI news, tool launches, and analysis for founders and freelancers. Updated daily.',
+    alternates: { canonical: `https://www.aibeat.dev${pageHref(page)}` },
+    robots: category ? { index: false, follow: true } : { index: true, follow: true },
+  }
 }
 
 function isCategory(value: string | undefined): value is Category {
-  return Boolean(value && value in CATEGORY_LABELS)
+  return Boolean(value && Object.prototype.hasOwnProperty.call(CATEGORY_LABELS, value))
 }
 
 function categoryHref(category?: Category) {
@@ -54,7 +62,7 @@ export default async function NewsPage({
   }
 
   const selectedCategory = isCategory(searchParams?.category) ? searchParams?.category : undefined
-  const requestedPage = Number(searchParams?.page ?? '1')
+  const requestedPage = Math.floor(Number(searchParams?.page ?? '1'))
   const categoryCounts = articles.reduce<Record<Category, number>>((counts, article) => {
     counts[article.category] = (counts[article.category] ?? 0) + 1
     return counts
@@ -121,7 +129,7 @@ export default async function NewsPage({
                   </span>
                   <span className="font-mono text-[10px] text-ink-4">{heroArticle.publishedAt}</span>
                 </div>
-                <NewsImage src={heroArticle.coverImageUrl} title={heroArticle.title} priority />
+                <NewsImage src={heroArticle.coverImageUrl} title={heroArticle.title} alt={heroArticle.coverImageAlt} width={heroArticle.coverImageWidth} height={heroArticle.coverImageHeight} priority />
                 <Link href={`/news/${heroArticle.slug}`}>
                   <h2 className="headline-hero hover:text-beat-red transition-colors cursor-pointer mb-3">
                     {heroArticle.title}

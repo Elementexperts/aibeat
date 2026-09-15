@@ -1,3 +1,6 @@
+import { articleMetadata, articleSchema, articleBreadcrumbs, articleSources, modifiedDate } from '@/lib/article-seo'
+import { jsonLd } from '@/lib/site-seo'
+import { articleMentionsTool } from '@/lib/tool-seo'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { NewsImage } from '@/components/ui/NewsImage'
@@ -16,38 +19,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const article = await getArticleBySlug(params.slug)
   if (!article) return {}
-  const url = `/news/${article.slug}`
-
-  return {
-    title: article.title,
-    description: article.deck,
-    alternates: {
-      canonical: url,
-    },
-    openGraph: {
-      type: 'article',
-      url,
-      title: article.title,
-      description: article.deck,
-      siteName: 'AIBeat.dev',
-      publishedTime: article.publishedAt,
-      authors: [article.author],
-      images: [
-        {
-          url: article.coverImageUrl?.startsWith('/news-images/') ? article.coverImageUrl : '/og-image.png',
-          width: 1200,
-          height: 630,
-          alt: `${article.title} - AIBeat.dev`,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: article.title,
-      description: article.deck,
-      images: [article.coverImageUrl?.startsWith('/news-images/') ? article.coverImageUrl : '/og-image.png'],
-    },
-  }
+  return articleMetadata(article)
 }
 
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
@@ -57,17 +29,19 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   ])
   if (!article) notFound()
 
-  const relatedTools = article.relatedTools?.map((slug: string) => TOOLS.find(t => t.slug === slug)).filter(Boolean) || []
-  const moreArticles = allArticles.filter(a => a.slug !== article.slug).slice(0, 3)
+  const relatedTools = TOOLS.filter(tool => articleMentionsTool(article, tool)).slice(0, 5)
+  const sources = articleSources(article)
+  const moreArticles = allArticles.filter(a => a.slug !== article.slug && a.category === article.category).slice(0, 3)
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd([articleSchema(article), articleBreadcrumbs(article)]) }} />
       {/* BREADCRUMB */}
       <div className="font-mono text-[11px] text-ink-4 mb-6 flex items-center gap-2">
         <Link href="/" className="hover:text-ink">Home</Link>
         <span>/</span>
-        <Link href="/news" className="hover:text-ink">News</Link>
+        <Link href="/news" className="hover:text-ink">AI News</Link>
         <span>/</span>
         <span className="text-ink truncate">{article.title.slice(0, 40)}...</span>
       </div>
@@ -78,7 +52,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
         <article>
           <div className="flex items-center gap-2 mb-4">
             <span className={`cat-tag ${CATEGORY_COLORS[article.category]}`}>{article.category}</span>
-            <span className="font-mono text-[10px] text-ink-4">{article.publishedAt}</span>
+            <time dateTime={article.publishedAt} className="font-mono text-[10px] text-ink-4">{article.publishedAt.slice(0, 10)}</time>
             <span className="font-mono text-[10px] text-ink-4">· {article.readTime} min read</span>
           </div>
 
@@ -89,11 +63,12 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             {article.deck}
           </p>
           <div className="font-mono text-xs text-ink-4 mb-6 pb-4 border-b border-border">
-            By {article.author}
+            By {article.author.startsWith('AIBeat') ? <Link href="/about">{article.author}</Link> : article.author}
+            {article.updatedAt && modifiedDate(article) !== article.publishedAt && <> · Updated <time dateTime={modifiedDate(article)}>{article.updatedAt.slice(0, 10)}</time></>}
           </div>
 
           <figure className="mb-6">
-            <NewsImage src={article.coverImageUrl} title={article.title} priority />
+            <NewsImage src={article.coverImageUrl} title={article.title} alt={article.coverImageAlt} width={article.coverImageWidth} height={article.coverImageHeight} priority />
             {article.coverImageUrl?.startsWith('/news-images/') && article.coverImageSource !== 'placeholder' && (
               <figcaption className="text-xs text-ink-4">
                 {article.coverImageSource === 'ai' ? 'AI-generated illustration' : 'Source image'}
@@ -115,6 +90,10 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             </div>
           )}
 
+          {sources.length > 0 && <section aria-labelledby="article-sources" className="mt-8 text-sm">
+            <h2 id="article-sources" className="font-serif text-xl font-bold mb-3">Sources</h2>
+            <ul className="list-disc pl-5 space-y-2">{sources.map(source => <li key={source.url}><a href={source.url} className="underline" rel="noopener noreferrer" target="_blank">{source.name}</a></li>)}</ul>
+          </section>}
           {/* AFFILIATE DISCLOSURE */}
           <div className="mt-8 p-3 bg-paper-2 border border-border text-[11px] text-ink-4 font-mono">
             Disclosure: Some links in this article are affiliate links. AIBeat.dev earns a commission if you sign up — at no extra cost to you. We never let affiliate relationships influence our editorial judgments.
@@ -136,7 +115,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           {relatedTools.length > 0 && (
             <div className="border border-border p-4">
               <div className="section-label">Tools mentioned</div>
-              {relatedTools.map((tool: any) => (
+              {relatedTools.map((tool) => (
                 <Link key={tool.slug} href={`/tools/${tool.slug}`}>
                   <div className="flex items-center gap-2.5 py-2.5 border-b border-border last:border-0 card-hover">
                     <ToolLogo tool={tool} className="w-8 h-8 rounded text-xs" imageClassName="p-1" />

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { TOOLS } from '@/lib/data'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/categories' },
   title: 'AI Tool Categories',
   description: 'Browse AI tools by workflow, category, pricing, and use case on AIBeat.',
 }

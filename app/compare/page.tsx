@@ -5,6 +5,7 @@ import { ToolLogo } from '@/components/ui/ToolLogo'
 import { SubscribeForm } from '@/components/subscribe/SubscribeForm'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/compare' },
   title: 'AI Tool Comparisons — AIBeat.dev',
   description: "Head-to-head AI tool comparisons. We test both so you don&apos;t have to.",
 }

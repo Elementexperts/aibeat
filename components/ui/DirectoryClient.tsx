@@ -10,9 +10,9 @@ import { ToolAffiliateOffer } from '@/components/ui/ToolAffiliateOffer'
 const ALL = 'All'
 const PRICING_OPTIONS = [ALL, 'Free', 'Freemium', 'Paid'] as const
 
-export default function DirectoryClient() {
+export default function DirectoryClient({ initialCategory = ALL }: { initialCategory?: string }) {
   const [search, setSearch] = useState('')
-  const [activeCategory, setActiveCategory] = useState(ALL)
+  const [activeCategory, setActiveCategory] = useState(initialCategory)
   const [activePricing, setActivePricing] = useState<string>(ALL)
   const rankedTools = useMemo(() => getPopularTools(), [])
 

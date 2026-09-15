@@ -13,7 +13,7 @@ const CANONICAL_HOST = 'www.aibeat.dev'
 export async function middleware(request: NextRequest) {
   const host = request.headers.get('host')?.toLowerCase() || ''
 
-  if (host.endsWith('.vercel.app')) {
+  if (host === 'aibeat.dev' || host.endsWith('.vercel.app')) {
     const url = request.nextUrl.clone()
     url.protocol = 'https'
     url.host = CANONICAL_HOST

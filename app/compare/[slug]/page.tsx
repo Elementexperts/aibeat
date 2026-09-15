@@ -13,6 +13,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const comp = getComparisonBySlug(params.slug)
   if (!comp) return {}
   return {
+    alternates: { canonical: `/compare/${params.slug}` },
     title: comp.title,
     description: comp.deck,
   }

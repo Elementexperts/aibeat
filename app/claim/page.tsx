@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/claim' },
   title: 'Claim an AIBeat Listing',
   description: 'Request ownership review for an AIBeat tool listing and submit listing updates for manual approval.',
 }

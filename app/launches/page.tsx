@@ -4,6 +4,7 @@ import { getFeaturedTools } from '@/lib/data'
 import { PremiumToolCard } from '@/components/ui/PremiumToolCard'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/launches' },
   title: 'AI Startup Launches',
   description: 'Explore AI products and startup launches curated by AIBeat.',
 }

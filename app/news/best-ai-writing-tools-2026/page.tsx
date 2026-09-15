@@ -1,21 +1,14 @@
+import { articleMetadata, articleSchema, articleBreadcrumbs } from '@/lib/article-seo'
+import { jsonLd } from '@/lib/site-seo'
+import { getArticles } from '@/lib/articles'
 import Link from 'next/link'
 import { TOOLS, ARTICLES } from '@/lib/data'
 import type { Metadata } from 'next'
 import { ToolLogo } from '@/components/ui/ToolLogo'
 import { SubscribeForm } from '@/components/subscribe/SubscribeForm'
 
-export const metadata: Metadata = {
-  title: '11 Best AI Writing Tools in 2026 (Tested & Ranked) — AIBeat.dev',
-  description:
-    'We tested 20+ AI writing tools over 30 days and ranked the 11 that actually deliver. Complete breakdown: pricing, pros, cons, and who each tool is best for.',
-  openGraph: {
-    title: '11 Best AI Writing Tools in 2026 (Tested & Ranked)',
-    description:
-      'We tested 20+ AI writing tools over 30 days and ranked the 11 that actually deliver.',
-    type: 'article',
-    publishedTime: '2026-05-28',
-  },
-}
+const story = { ...ARTICLES.find(article => article.slug === 'best-ai-writing-tools-2026')!, content: '', deck: 'We tested 20+ AI writing tools over 30 days and ranked the 11 that actually deliver. Complete breakdown: pricing, pros, cons, and who each tool is best for.' }
+export const metadata: Metadata = articleMetadata(story)
 
 const RANKED_TOOLS = [
   {
@@ -334,17 +327,18 @@ const relatedTools = ['jasper', 'copy-ai', 'writesonic', 'rytr', 'notion']
   .map((slug) => TOOLS.find((t) => t.slug === slug))
   .filter(Boolean) as typeof TOOLS
 
-const moreArticles = ARTICLES.filter((a) => a.slug !== 'best-ai-writing-tools-2026').slice(0, 3)
+const moreArticles = getArticles().filter(a => a.category === 'tools').slice(0, 3)
 
 export default function BestAIWritingToolsPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd([articleSchema(story), articleBreadcrumbs(story)]) }} />
       {/* BREADCRUMB */}
       <div className="font-mono text-[11px] text-ink-4 mb-6 flex items-center gap-2">
         <Link href="/" className="hover:text-ink">Home</Link>
         <span>/</span>
-        <Link href="/news" className="hover:text-ink">News</Link>
+        <Link href="/news" className="hover:text-ink">AI News</Link>
         <span>/</span>
         <span className="text-ink">11 Best AI Writing Tools in 2026</span>
       </div>
@@ -357,7 +351,7 @@ export default function BestAIWritingToolsPage() {
           {/* HEADER */}
           <div className="flex items-center gap-2 mb-4">
             <span className="cat-tag text-beat-green border-beat-green">tools</span>
-            <span className="font-mono text-[10px] text-ink-4">2026-05-28</span>
+            <time dateTime="2026-05-28" className="font-mono text-[10px] text-ink-4">2026-05-28</time>
             <span className="font-mono text-[10px] text-ink-4">· 10 min read</span>
           </div>
           <h1 className="font-serif text-3xl md:text-4xl font-bold leading-tight text-ink mb-4">
@@ -368,7 +362,7 @@ export default function BestAIWritingToolsPage() {
             Complete breakdown: pricing, pros, cons, and who each tool is best for.
           </p>
           <div className="font-mono text-xs text-ink-4 mb-8 pb-4 border-b border-border">
-            By AIBeat Staff
+            By <Link href="/about">AIBeat Staff</Link>
           </div>
 
           {/* INTRO */}

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { ForgotPasswordForm } from './ForgotPasswordForm'
 
 export const metadata: Metadata = {
+  robots: { index: false, follow: true },
   title: 'Forgot Password | AIBeat Business',
   description: 'Request a password reset link for AIBeat Business.',
   alternates: { canonical: '/business/forgot-password' },

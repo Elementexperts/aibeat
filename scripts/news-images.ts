@@ -7,7 +7,7 @@ import sharp from 'sharp'
 
 const MAX_BYTES = 8 * 1024 * 1024
 export const IMAGE_WIDTHS = [240, 640, 1200] as const
-export type PreparedNewsImage = { url: string; source: string; sourceUrl: string }
+export type PreparedNewsImage = { url: string; source: string; sourceUrl: string; width?: number; height?: number }
 
 export function isPublicAddress(address: string): boolean {
   if (isIP(address) === 6) return /^[23][0-9a-f]{3}:/i.test(address)
@@ -64,11 +64,11 @@ export async function downloadNewsImage(value: string): Promise<Buffer> {
 
 export async function optimizeNewsImage(input: Buffer, outputDir: string) {
   // Normalize orientation and strip metadata. Pixel limits also bound decompression.
-  const normalized = await sharp(input, { limitInputPixels: 40_000_000, animated: false }).rotate().resize(1200, 630, { fit: 'cover' }).webp({ quality: 76 }).toBuffer()
+  const normalized = await sharp(input, { limitInputPixels: 40_000_000, animated: false }).rotate().resize(1200, 675, { fit: 'cover' }).webp({ quality: 76 }).toBuffer()
   const hash = createHash('sha256').update(normalized).digest('hex').slice(0, 20)
   await mkdir(outputDir, { recursive: true })
   const outputs = await Promise.all(IMAGE_WIDTHS.map(async (width) => {
-    const data = width === 1200 ? normalized : await sharp(normalized).resize(width, Math.round(width * 630 / 1200)).webp({ quality: 72 }).toBuffer()
+    const data = width === 1200 ? normalized : await sharp(normalized).resize(width, Math.round(width * 675 / 1200)).webp({ quality: 72 }).toBuffer()
     const name = `${hash}-${width}.webp`
     await writeFile(join(outputDir, name), data)
     return { width, bytes: data.length, name }
@@ -87,7 +87,7 @@ export async function prepareNewsImage(options: {
     if (!candidate.url) continue
     try {
       const image = await optimizeNewsImage(await downloadNewsImage(candidate.url), options.outputDir || join(process.cwd(), 'public/news-images'))
-      return { url: image.url, source: candidate.source, sourceUrl: options.sourceUrl || '' }
+      return { url: image.url, width: 1200, height: 675, source: candidate.source, sourceUrl: options.sourceUrl || '' }
     } catch {
       console.warn(`News ${candidate.source} image unavailable; using the next fallback.`)
     }

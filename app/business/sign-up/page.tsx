@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { SignUpForm } from './SignUpForm'
 
 export const metadata: Metadata = {
+  robots: { index: false, follow: true },
   title: 'Start Early Access | AIBeat Business',
   description: 'Create an AIBeat Business account and continue to organization onboarding.',
   alternates: { canonical: '/business/sign-up' },

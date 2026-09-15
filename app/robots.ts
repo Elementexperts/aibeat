@@ -1,12 +1,12 @@
 import { MetadataRoute } from 'next'
+import { SITE_URL } from '@/lib/site-seo'
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent: '*',
-      allow: '/',
-      disallow: ['/api/', '/_next/'],
-    },
-    sitemap: 'https://aibeat.dev/sitemap.xml',
+    rules: [
+      { userAgent: '*', allow: '/', disallow: ['/api/'] },
+      { userAgent: 'OAI-SearchBot', allow: '/', disallow: ['/api/'] },
+    ],
+    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/news-sitemap.xml`],
   }
 }

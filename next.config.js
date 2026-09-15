@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Match the actual precomputed WebP widths used by NewsImage's loader.
+    deviceSizes: [640, 1200],
+    imageSizes: [240],
     domains: ['images.unsplash.com', 'logo.clearbit.com'],
   },
   async headers() {

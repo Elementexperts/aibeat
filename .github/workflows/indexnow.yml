@@ -1,0 +1,30 @@
+name: Notify IndexNow after news deployment
+on:
+  push:
+    branches: [main]
+    paths: ['content/articles/**', 'app/news/best-ai-writing-tools-2026/page.tsx']
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Commit before the article changes (SHA or HEAD~1)
+        default: HEAD~1
+        required: true
+permissions:
+  contents: read
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run news:indexnow
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+          INDEXNOW_BASE_SHA: ${{ github.event.before || inputs.base_ref || 'HEAD~1' }}

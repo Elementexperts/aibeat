@@ -4,6 +4,7 @@ import { ArrowLeft, MailX } from 'lucide-react'
 import { UnsubscribeForm } from '@/components/subscribe/UnsubscribeForm'
 
 export const metadata: Metadata = {
+  robots: { index: false, follow: true },
   title: 'Unsubscribe from AIBeat Daily',
   description: 'Unsubscribe from the AIBeat Daily newsletter.',
   alternates: { canonical: '/unsubscribe' },

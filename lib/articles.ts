@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
 import { cache } from 'react'
+import { publishedArticles } from './news-feeds'
 
 const ARTICLES_DIR = path.join(process.cwd(), 'content/articles')
 
@@ -12,10 +13,17 @@ export interface Article {
   category: 'breaking' | 'news' | 'tools' | 'compare' | 'deep-dive'
   author: string
   publishedAt: string
+  updatedAt?: string
+  draft?: boolean
+  tags?: string[]
+  sources?: Array<{ name: string; url: string }>
   readTime: number
   featured: boolean
   content: string
   coverImageUrl?: string
+  coverImageAlt?: string
+  coverImageWidth?: number
+  coverImageHeight?: number
   coverImageSource?: string
   coverImageSourceUrl?: string
   relatedTools?: string[]
@@ -38,13 +46,13 @@ const readAllArticles = cache((): Article[] => {
 })
 
 export function getArticles(): Article[] {
-  return readAllArticles()
+  return publishedArticles(readAllArticles())
 }
 
 export function getArticleBySlug(slug: string): Article | null {
-  return readAllArticles().find(a => a.slug === slug) ?? null
+  return publishedArticles(readAllArticles()).find(a => a.slug === slug) ?? null
 }
 
 export function getFeaturedArticles(): Article[] {
-  return readAllArticles().filter(a => a.featured)
+  return publishedArticles(readAllArticles()).filter(a => a.featured)
 }

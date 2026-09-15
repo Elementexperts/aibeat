@@ -17,7 +17,7 @@ test('news images become three bounded WebP assets with stable content-based URL
       const metadata = await sharp(await readFile(join(dir, output.name))).metadata()
       assert.equal(metadata.format, 'webp')
       assert.equal(metadata.width, output.width)
-      assert.equal(metadata.height, Math.round(output.width * 630 / 1200))
+      assert.equal(metadata.height, Math.round(output.width * 675 / 1200))
       assert.equal(metadata.exif, undefined)
       assert.ok(output.bytes < 200_000)
     }

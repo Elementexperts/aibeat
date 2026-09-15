@@ -5,6 +5,7 @@ import { ToolLogo } from '@/components/ui/ToolLogo'
 import { PUBLIC_ANALYTICS_EVENTS } from '@/lib/analytics'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/tools' },
   title: 'AI Tool Reviews — AIBeat.dev',
   description: 'Honest, hands-on reviews of the best AI tools for founders and freelancers. Updated monthly.',
 }

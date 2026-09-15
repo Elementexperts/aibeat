@@ -38,6 +38,9 @@ jobs:
           git fetch origin main
           git pull --rebase origin main
 
+      - name: Record publication baseline
+        run: echo "INDEXNOW_BASE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
       - name: Validate news automation secrets
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -95,3 +98,10 @@ jobs:
           else
             echo "VERCEL_DEPLOY_HOOK_URL is not configured; relying on GitHub integration auto-deploy."
           fi
+
+      # GITHUB_TOKEN pushes do not trigger the separate push workflow.
+      - name: Notify IndexNow when production content is live
+        continue-on-error: true
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+        run: npm run news:indexnow

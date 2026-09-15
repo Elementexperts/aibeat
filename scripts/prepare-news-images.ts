@@ -20,12 +20,12 @@ async function main() {
     }
     const image = await prepareNewsImage({ url: current || undefined, source: file.data.coverImageSource, sourceUrl: file.data.coverImageSourceUrl })
     // Keep the external URL for a future retry if this run could not retrieve it.
-    // The UI renders its local fallback while metadata still points externally.
+    // The UI and metadata use the branded fallback until a local image is prepared.
     if (image.source === 'placeholder') continue
     const boundary = raw.indexOf('\n---', 3)
     if (boundary < 0) continue
     let frontmatter = raw.slice(0, boundary)
-    for (const [key, value] of Object.entries({ coverImageUrl: image.url, coverImageSource: image.source, coverImageSourceUrl: image.sourceUrl })) {
+    for (const [key, value] of Object.entries({ coverImageUrl: image.url, coverImageWidth: image.width, coverImageHeight: image.height, coverImageAlt: file.data.coverImageAlt || file.data.title, coverImageSource: image.source, coverImageSourceUrl: image.sourceUrl })) {
       const pattern = new RegExp(`^${key}:.*$`, 'm')
       const line = `${key}: ${JSON.stringify(value)}`
       frontmatter = pattern.test(frontmatter) ? frontmatter.replace(pattern, () => line) : `${frontmatter}\n${line}`

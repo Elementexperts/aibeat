@@ -315,7 +315,7 @@ export default async function HomePage() {
 
             <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
               <Link href={`/news/${heroArticle.slug}`} className="premium-card p-6">
-                <NewsImage src={heroArticle.coverImageUrl} title={heroArticle.title} />
+                <NewsImage src={heroArticle.coverImageUrl} title={heroArticle.title} alt={heroArticle.coverImageAlt} width={heroArticle.coverImageWidth} height={heroArticle.coverImageHeight} />
                 <span className="rounded-full bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">{heroArticle.category}</span>
                 <h3 className="mt-6 text-3xl font-black leading-tight text-white md:text-5xl">{heroArticle.title}</h3>
                 <p className="mt-5 max-w-2xl text-base leading-7 text-slate-400">{heroArticle.deck}</p>

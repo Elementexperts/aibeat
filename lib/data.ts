@@ -18,6 +18,7 @@ export interface Article {
 }
 
 export interface Tool {
+  listingType?: 'software' | 'service'
   slug: string
   name: string
   tagline: string
@@ -1697,6 +1698,7 @@ export const TOOLS: Tool[] = [
   },
   {
     slug: 'alchemy-leads',
+    listingType: 'service',
     name: 'Alchemy Leads',
     tagline: 'Revenue-first SEO, GEO, and digital marketing agency',
     description: 'Alchemy Leads is a digital marketing agency focused on search visibility, generative engine optimization, paid media, content marketing, digital PR, web development, and analytics for growth-oriented brands.',
@@ -2315,10 +2317,10 @@ export const COMPARISONS: Comparison[] = [
 // ============================================================
 export const TRENDING = [
   { query: 'Best AI writing tools', change: '+1,900%', href: '/news/best-ai-writing-tools-2026' },
-  { query: 'AI news today', change: 'BREAKOUT', href: '/news/ai-news-today-may-2026' },
+  { query: 'AI news today', change: 'BREAKOUT', href: '/news' },
   { query: 'Best free CRM tools', change: '+110%', href: '/compare/hubspot-vs-salesforce' },
-  { query: 'Cursor AI review', change: '+340%', href: '/news/cursor-ai-review-2026' },
-  { query: 'Free invoicing tools', change: '+89%', href: '/news/free-invoicing-tools-beat-freshbooks' },
+  { query: 'Cursor AI review', change: '+340%', href: '/tools/cursor' },
+  { query: 'Invoicing tools', change: '+89%', href: '/directory?category=Invoicing' },
 ]
 
 // ============================================================

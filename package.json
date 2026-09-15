@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/reddit/reddit-automation.test.ts tests/newsletter-attribution.test.ts tests/submitted-tools.test.ts tests/public-form-email.test.ts tests/newsletter-request.test.ts tests/newsletter-unsubscribe.test.ts tests/latest-news-newsletter.test.ts tests/gmail-scheduled-drafts.test.ts tests/news-images.test.ts tests/kit-source-tags.test.ts tests/daily-lead-discovery.test.ts tests/betalist-outreach.test.ts tests/founder-services.test.ts tests/stripe-listing-packages.test.ts tests/linkedin-automation.test.ts tests/aibeat-business.test.ts",
+    "test": "node --import tsx --test tests/reddit/reddit-automation.test.ts tests/newsletter-attribution.test.ts tests/submitted-tools.test.ts tests/public-form-email.test.ts tests/newsletter-request.test.ts tests/newsletter-unsubscribe.test.ts tests/latest-news-newsletter.test.ts tests/gmail-scheduled-drafts.test.ts tests/news-images.test.ts tests/kit-source-tags.test.ts tests/daily-lead-discovery.test.ts tests/betalist-outreach.test.ts tests/founder-services.test.ts tests/stripe-listing-packages.test.ts tests/linkedin-automation.test.ts tests/aibeat-business.test.ts tests/news-seo.test.ts",
     "kit:setup-source-tags": "tsx scripts/setup-kit-source-tags.ts",
     "news:daily": "tsx scripts/fetch-and-post.ts",
     "news:images": "tsx scripts/prepare-news-images.ts",
@@ -24,7 +24,8 @@
     "reddit:generate": "tsx scripts/reddit/index.ts",
     "reddit:publish": "tsx scripts/reddit/index.ts --publish",
     "linkedin:drafts": "tsx scripts/linkedin/index.ts --dry-run",
-    "linkedin:whoami": "tsx scripts/linkedin/index.ts --whoami"
+    "linkedin:whoami": "tsx scripts/linkedin/index.ts --whoami",
+    "news:indexnow": "tsx scripts/notify-indexnow.ts"
   },
   "dependencies": {
     "@google/genai": "^2.20.0",

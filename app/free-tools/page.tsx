@@ -5,6 +5,7 @@ import { ToolLogo } from '@/components/ui/ToolLogo'
 import { SubscribeForm } from '@/components/subscribe/SubscribeForm'
 
 export const metadata: Metadata = {
+  alternates: { canonical: '/free-tools' },
   title: 'Free AI Tools — AIBeat.dev',
   description: 'The best free and freemium AI tools for founders and freelancers. No credit card required.',
 }
