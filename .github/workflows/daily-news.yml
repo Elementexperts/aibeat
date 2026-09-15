@@ -67,8 +67,8 @@ jobs:
         env:
           VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
-          git config user.name "AIBeat Bot"
-          git config user.email "bot@aibeat.dev"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           # Sync with latest remote first
           git fetch origin main
