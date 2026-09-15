@@ -65,6 +65,7 @@ type ManualLeadRow = {
   tool_name?: string
   category?: string
   personalized_opening?: string
+  product_benefit?: string
 }
 
 export type DailyManualLeadImport = {
@@ -205,6 +206,7 @@ export function parseDailyManualLeads(csv: string, now = new Date()): DailyManua
       source,
       public_contact_source_url: sourceUrl(source, websiteUrl),
       personalized_opening: openingFor(row, toolName, source),
+      product_benefit: row.product_benefit?.trim() || undefined,
       status: blocked ? 'suppressed' : 'approved',
       priority: priorityForContact(contactType),
       qualification_score: blocked ? 0 : 78,

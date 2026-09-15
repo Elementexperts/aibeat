@@ -80,13 +80,13 @@ test('spreadsheet import rejects malformed addresses before any Gmail draft can 
   assert.deepEqual(imported.errors.map((item) => item.row), [2, 3])
 })
 
-test('scheduled Gmail outreach supports a batch of 50 individual drafts', () => {
+test('scheduled Gmail outreach supports a batch of 120 individual drafts', () => {
   const script = readFileSync('scripts/create-gmail-outreach-drafts.ts', 'utf8')
   const workflow = readFileSync('.github/workflows/monday-gmail-outreach-drafts.yml', 'utf8')
 
-  assert.match(script, /Math\.min\(50,/)
-  assert.match(script, /GMAIL_OUTREACH_DRAFT_LIMIT \|\| '50'/)
-  assert.match(workflow, /GMAIL_OUTREACH_DRAFT_LIMIT:.*'50'/)
+  assert.match(script, /Math\.min\(120,/)
+  assert.match(script, /GMAIL_OUTREACH_DRAFT_LIMIT \|\| '120'/)
+  assert.match(workflow, /GMAIL_OUTREACH_DRAFT_LIMIT:.*'120'/)
 })
 
 
@@ -129,4 +129,21 @@ test('rerunning this week updates the existing draft, including a legacy slug-su
     assert.match(mime, /Subject: =\?UTF-8/)
     assert.ok(mime.includes(Buffer.from('Astrea and Sistava').toString('base64')))
   }
+})
+
+test('outreach tailors benefits from reviewed CSV facts and links to submission in both formats', () => {
+  const imported = parseDailyManualLeads('website,email,source,tool_name,category,personalized_opening,product_benefit\nexample.ai,hello@example.ai,Manual,Example & AI,Productivity,Your document workflow caught my eye.,Turn meeting notes into action items.')
+  const draft = buildOutreachDraft(imported.leads[0])
+  assert.match(draft.plainText, /Your document workflow caught my eye/)
+  assert.match(draft.plainText, /Turn meeting notes into action items/)
+  assert.match(draft.plainText, /readers exploring Productivity tools/)
+  assert.match(draft.plainText, /Submit Example & AI here/)
+  assert.match(draft.plainText, /https:\/\/www.aibeat.dev\/submit/)
+  assert.match(draft.html, /href="https:\/\/www.aibeat.dev\/submit">Submit Example &amp; AI to AIBeat<\/a>/)
+  const other = buildOutreachDraft({ ...imported.leads[0], tool_name: 'Dev Tool', category: 'Developer', product_benefit: undefined })
+  assert.match(other.plainText, /readers exploring Developer tools/)
+  assert.doesNotMatch(other.plainText, /Turn meeting notes into action items/)
+  const minimal = buildOutreachDraft(parseDailyManualLeads('website,email,source\nminimal.ai,hello@minimal.ai,Manual').leads[0])
+  assert.match(minimal.plainText, /readers looking for useful AI products/)
+  assert.doesNotMatch(minimal.plainText, /undefined|null/)
 })

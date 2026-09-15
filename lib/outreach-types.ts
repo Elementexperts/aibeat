@@ -33,6 +33,7 @@ export type OutreachLead = {
   source: string
   public_contact_source_url: string
   personalized_opening?: string
+  product_benefit?: string
   status: OutreachStatus
   priority: OutreachPriority
   qualification_score?: number
