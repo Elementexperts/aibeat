@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { NewsImage } from '@/components/ui/NewsImage'
 import type { Metadata } from 'next'
 import { ArrowRight, Compass, Newspaper, Rocket, Search, ShieldCheck, Sparkles, Zap } from 'lucide-react'
 import { TOOLS, getFeaturedTools, getPopularTools } from '@/lib/data'
@@ -314,6 +315,7 @@ export default async function HomePage() {
 
             <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
               <Link href={`/news/${heroArticle.slug}`} className="premium-card p-6">
+                <NewsImage src={heroArticle.coverImageUrl} title={heroArticle.title} />
                 <span className="rounded-full bg-cyan-300/10 px-3 py-1 text-xs font-semibold text-cyan-100">{heroArticle.category}</span>
                 <h3 className="mt-6 text-3xl font-black leading-tight text-white md:text-5xl">{heroArticle.title}</h3>
                 <p className="mt-5 max-w-2xl text-base leading-7 text-slate-400">{heroArticle.deck}</p>
@@ -321,10 +323,13 @@ export default async function HomePage() {
               </Link>
               <div className="grid gap-4">
                 {secondaryArticles.map((article) => (
-                  <Link key={article.slug} href={`/news/${article.slug}`} className="premium-card p-5">
+                  <Link key={article.slug} href={`/news/${article.slug}`} className="premium-card flex items-start gap-4 p-5">
+                    <NewsImage src={article.coverImageUrl} title={article.title} thumbnail />
+                    <div className="min-w-0">
                     <div className="text-xs uppercase tracking-[0.18em] text-slate-500">{article.category}</div>
                     <h3 className="mt-3 text-lg font-semibold leading-snug text-white">{article.title}</h3>
                     <div className="mt-3 text-xs text-slate-500">{article.publishedAt} - {article.readTime} min read</div>
+                    </div>
                   </Link>
                 ))}
               </div>

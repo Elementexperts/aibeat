@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { NewsImage } from '@/components/ui/NewsImage'
 import { TOOLS, CATEGORY_COLORS } from '@/lib/data'
 import { getArticleBySlug, getArticles } from '@/lib/articles'
 import type { Metadata } from 'next'
@@ -33,7 +34,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       authors: [article.author],
       images: [
         {
-          url: '/og-image.png',
+          url: article.coverImageUrl?.startsWith('/news-images/') ? article.coverImageUrl : '/og-image.png',
           width: 1200,
           height: 630,
           alt: `${article.title} - AIBeat.dev`,
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       card: 'summary_large_image',
       title: article.title,
       description: article.deck,
-      images: ['/og-image.png'],
+      images: [article.coverImageUrl?.startsWith('/news-images/') ? article.coverImageUrl : '/og-image.png'],
     },
   }
 }
@@ -90,6 +91,18 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           <div className="font-mono text-xs text-ink-4 mb-6 pb-4 border-b border-border">
             By {article.author}
           </div>
+
+          <figure className="mb-6">
+            <NewsImage src={article.coverImageUrl} title={article.title} priority />
+            {article.coverImageUrl?.startsWith('/news-images/') && article.coverImageSource !== 'placeholder' && (
+              <figcaption className="text-xs text-ink-4">
+                {article.coverImageSource === 'ai' ? 'AI-generated illustration' : 'Source image'}
+                {article.coverImageSource === 'og' && /^https?:\/\//.test(article.coverImageSourceUrl || '') && (
+                  <> · <a href={article.coverImageSourceUrl} target="_blank" rel="noopener noreferrer" className="underline">Original source</a></>
+                )}
+              </figcaption>
+            )}
+          </figure>
 
           {article.content ? (
             <div

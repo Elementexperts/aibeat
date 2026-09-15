@@ -8,6 +8,7 @@ import { resolve } from 'path'
 config({ path: resolve(process.cwd(), '.env.local') })
 
 import Parser from 'rss-parser'
+import { prepareNewsImage } from './news-images'
 import { writeFileSync, existsSync, mkdirSync } from 'fs'
 import { join } from 'path'
 
@@ -72,9 +73,9 @@ async function fetchOgImage(url: string): Promise<string | null> {
     const html = await res.text()
     const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
                  ?? html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
-    if (ogMatch?.[1]) return ogMatch[1]
+    if (ogMatch?.[1]) return new URL(ogMatch[1].replace(/&amp;/g, '&'), res.url || url).href
     const twMatch = html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i)
-    if (twMatch?.[1]) return twMatch[1]
+    if (twMatch?.[1]) return new URL(twMatch[1].replace(/&amp;/g, '&'), res.url || url).href
     return null
   } catch { return null }
 }
@@ -383,19 +384,17 @@ async function main() {
 
     if (!generated) { failed++; continue }
 
-    const ogImage    = await fetchOgImage(sourceUrl)
-    const coverImage = ogImage
-      ? { url: ogImage,                    source: 'og', sourceUrl }
-      : { url: pollinationsUrl(generated.title), source: 'ai', sourceUrl }
-
-    console.log(ogImage ? `     🖼️  OG image found` : `     🎨  Using Pollinations fallback`)
-
     const finalSlug = slugify(generated.title)
     if (alreadyExists(finalSlug)) {
       console.log(`  ⏭️  Already exists (rewritten slug): "${finalSlug}"`)
       skipped++
       continue
     }
+
+    const ogImage    = await fetchOgImage(sourceUrl)
+    const coverImage = await prepareNewsImage({ url: ogImage || undefined, source: 'og', sourceUrl, fallbackUrl: pollinationsUrl(generated.title) })
+
+    console.log(`     Prepared image: ${coverImage.source}`)
 
     writeMdxFile({
       slug:        finalSlug,

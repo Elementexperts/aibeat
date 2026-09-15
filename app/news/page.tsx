@@ -1,8 +1,8 @@
 import Link from 'next/link'
+import { NewsImage } from '@/components/ui/NewsImage'
 import { getToolRatingLabel, TRENDING, getFeaturedTools, CATEGORY_COLORS } from '@/lib/data'
 import type { Category } from '@/lib/data'
 import { getArticles } from '@/lib/articles'
-import { NewsBanner } from '@/components/ui/NewsBanner'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
 import { ToolLogo } from '@/components/ui/ToolLogo'
 import type { Metadata } from 'next'
@@ -121,7 +121,7 @@ export default async function NewsPage({
                   </span>
                   <span className="font-mono text-[10px] text-ink-4">{heroArticle.publishedAt}</span>
                 </div>
-                <NewsBanner category={heroArticle.category} title={heroArticle.title} />
+                <NewsImage src={heroArticle.coverImageUrl} title={heroArticle.title} priority />
                 <Link href={`/news/${heroArticle.slug}`}>
                   <h2 className="headline-hero hover:text-beat-red transition-colors cursor-pointer mb-3">
                     {heroArticle.title}
@@ -155,7 +155,8 @@ export default async function NewsPage({
                     <span className="font-mono text-lg font-medium text-border-dark min-w-[28px] leading-tight">
                       {String(pageStart + i + 2).padStart(2, '0')}
                     </span>
-                    <div className="flex-1">
+                    <NewsImage src={article.coverImageUrl} title={article.title} thumbnail />
+                    <div className="min-w-0 flex-1">
                       <h2 className="headline-md hover:text-beat-red transition-colors mb-2">
                         {article.title}
                       </h2>

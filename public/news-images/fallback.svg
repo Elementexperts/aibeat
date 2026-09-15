@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101d35"/><stop offset="1" stop-color="#07121f"/></linearGradient></defs>
+  <path fill="url(#bg)" d="M0 0h1200v630H0z"/>
+  <g fill="none" stroke="#224257" stroke-width="2"><circle cx="955" cy="300" r="245"/><circle cx="955" cy="300" r="180"/><circle cx="955" cy="300" r="110"/></g>
+  <path fill="none" stroke="#67e8f9" stroke-width="12" stroke-linejoin="round" d="M80 355h120l45-85 55 170 65-230 60 145h160"/>
+  <text x="80" y="140" fill="#67e8f9" font-family="Arial,sans-serif" font-size="36" letter-spacing="8">AIBEAT</text>
+  <text x="80" y="540" fill="#e2e8f0" font-family="Arial,sans-serif" font-size="38">AI NEWS &amp; IDEAS</text>
+</svg>

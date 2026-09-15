@@ -55,6 +55,11 @@ jobs:
           FAIL_ON_NEWS_ERROR: 'false'
         run: npm run news:daily
 
+      - name: Prepare recent article images
+        env:
+          NEWS_IMAGE_BACKFILL_LIMIT: 12
+        run: npm run news:images
+
       - name: Commit and push article
         env:
           VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
@@ -67,16 +72,16 @@ jobs:
           git pull --rebase --autostash origin main
 
           # Stage generated content
-          git add content/articles/
+          git add content/articles/ public/news-images/
 
           # Skip if nothing changed
           if git diff --cached --quiet; then
-            echo "No new article this run (duplicate or failed). Skipping commit."
+            echo "No article or image changes this run. Skipping commit."
             exit 0
           fi
 
-          NEW_FILE=$(git diff --cached --name-only | grep '^content/articles/' | head -1)
-          SLUG=$(basename "$NEW_FILE" .mdx)
+          NEW_FILE=$(git diff --cached --name-only | grep '^content/articles/' | head -1 || true)
+          SLUG=$(basename "${NEW_FILE:-news-image-refresh}" .mdx)
 
           git commit -m "article: ${SLUG}"
           git push origin HEAD:main
