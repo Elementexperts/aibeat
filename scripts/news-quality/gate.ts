@@ -1,7 +1,8 @@
-import { QUALITY, TRUSTED_EDITORIAL_SOURCE_POINTS } from './config'
+import { HIGH_RISK_RULES, QUALITY, TRUSTED_EDITORIAL_SOURCE_POINTS } from './config'
 import { Rejection, type FactSheet, type Source, type Draft, type Review, type HistoricalStory, type NewsEvent, type Candidate } from './types'
 
-import { consequential, trustedEditorial } from './trust'
+import { trustedEditorial } from './trust'
+import { centralRisk, claimRisk } from './risk'
 
 export const normalize = (text: string) => text.toLowerCase().normalize('NFKC').replace(/\s+/g, ' ').trim()
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0
@@ -27,6 +28,7 @@ export function parseFacts(input: unknown): FactSheet {
   requireValid(list(v.uncertainClaims) && list(v.conflictingClaims) && Array.isArray(v.confirmedFacts) && v.confirmedFacts.length > 0 && v.confirmedFacts.length <= QUALITY.maxFacts)
   for (const f of v.confirmedFacts) requireValid(f && text(f.id) && text(f.claim) && typeof f.core === 'boolean' && score(f.confidence) && Array.isArray(f.supportedBy) && f.supportedBy.length > 0 && f.supportedBy.every(s => text(s.sourceId) && text(s.excerpt) && s.excerpt.length >= 20))
   requireValid(new Set(v.confirmedFacts.map(f => f.id)).size === v.confirmedFacts.length && v.confirmedFacts.some(f => f.core))
+  validateRisk(v, v.confirmedFacts)
   return v
 }
 export function parseDraft(input: unknown): Draft {
@@ -43,7 +45,16 @@ export function parseReview(input: unknown): Review {
   const v = input as Review
   requireValid(v && list(v.supportedFactIds) && list(v.unsupportedClaims) && list(v.conflictingClaims) && list(v.unverifiedEntities) && list(v.authoritativePrimaryIds) && list(v.trustedEditorialSourceIds) && Array.isArray(v.derivativeGroups) && v.derivativeGroups.every(list))
   requireValid(['eventDateVerified', 'independentReporting', 'analysisGrounded', 'originalValue', 'clearWriting'].every(k => typeof v[k as keyof Review] === 'boolean') && ['low', 'medium', 'high'].includes(v.riskLevel))
+  validateRisk(v)
   return v
+}
+function validateRisk(v: FactSheet | Review, facts?: FactSheet['confirmedFacts']) {
+  requireValid(Array.isArray(v.riskAssessments) && v.riskAssessments.every(r => r && text(r.factId) && HIGH_RISK_RULES.some(rule => rule.category === r.category)))
+  if (v.riskLevel === 'high') requireValid(v.riskAssessments.length > 0)
+  if (facts) {
+    requireValid(v.riskAssessments.every(r => facts.some(f => f.id === r.factId)))
+    if (v.riskLevel === 'high') requireValid(v.riskAssessments.some(r => facts.some(f => f.id === r.factId && f.core)))
+  }
 }
 export function numbers(value: string) {
   return (value.match(/(?:[$€£]\s*)?\b\d+(?:[.,]\d+)*(?:\s*(?:million|billion|trillion|percent|%|thousand))?/gi) || []).map(n => normalize(n).replace(/,/g, '').replace(/\s+/g, ''))
@@ -57,7 +68,7 @@ export function checkQuotes(value: string) {
   if (/["“”«»]|‘[^’]+’|(?:^|\s)'[^']{4,}'/.test(value)) throw new Rejection('UNVERIFIED_QUOTE')
 }
 export function highRisk(candidate: Candidate, facts: FactSheet) {
-  return facts.riskLevel === 'high' || consequential([candidate.title, facts.story, ...facts.confirmedFacts.map(f => f.claim), ...facts.uncertainClaims].join(' '))
+  return !!centralRisk(candidate, facts)
 }
 export function sourcePolicy(sources: Source[], high: boolean, trustedId?: string) {
   const primary = sources.filter(s => s.tier === 1)
@@ -83,7 +94,10 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
       return source
     })
     // Every fact, not just the headline, needs qualifying support.
-    sourcePolicy(support, high || consequential(fact.claim), trustedId)
+    try { sourcePolicy(support, high || !!claimRisk(fact, facts), trustedId) } catch (error) {
+      if (!high && claimRisk(fact, facts) && error instanceof Rejection) error.detail = `CLAIM_ONLY:${claimRisk(fact, facts)}`
+      throw error
+    }
     for (const source of support) if (!Number.isFinite(date(source.publishedAt)) || date(source.publishedAt) > now.getTime()) throw new Rejection('INVALID_DATE', `SOURCE_PUBLICATION_DATE_INVALID:${source.id}`)
     if (fact.core && !support.some(source => now.getTime() - date(source.publishedAt) <= QUALITY.freshnessHours * 3600000)) throw new Rejection('STALE_STORY')
   }
@@ -112,6 +126,7 @@ export function cleanDraft(draft: Draft, facts: FactSheet) {
   return { draft: { ...draft, sections }, removedParagraphs }
 }
 export function publicationScore(facts: FactSheet, sources: Source[], review: Review, candidate: Candidate, trustedId?: string, forceHighRisk = false) {
+  validateRisk(review, facts.confirmedFacts)
   if (review.conflictingClaims.length) throw new Rejection('CONFLICTING_SOURCES')
   if (review.unverifiedEntities.length) throw new Rejection('UNVERIFIED_ENTITY')
   if (!review.eventDateVerified) throw new Rejection('INVALID_DATE', 'REVIEW_EVENT_DATE_NOT_VERIFIED')
@@ -125,9 +140,18 @@ export function publicationScore(facts: FactSheet, sources: Source[], review: Re
     for (const source of adjusted) if (existing.has(source.group)) source.group = merged
   }
   for (const source of adjusted) if (source.tier === 1 && !review.authoritativePrimaryIds.includes(source.id)) source.tier = 3
-  const high = forceHighRisk || highRisk(candidate, facts) || review.riskLevel === 'high'
+  const high = forceHighRisk || !!centralRisk(candidate, facts, review)
   const single = !high && review.trustedEditorialSourceIds.includes(trustedId || '') && !review.derivativeGroups.some(g => g.includes(trustedId || '')) && adjusted.some(s => s.id === trustedId && trustedEditorial(s))
-  for (const fact of facts.confirmedFacts) sourcePolicy(adjusted.filter(s => fact.supportedBy.some(c => c.sourceId === s.id)), high || consequential(fact.claim), single ? trustedId : undefined)
+  for (const fact of facts.confirmedFacts) {
+    const consequential = high || !!claimRisk(fact, facts, review)
+    try {
+      sourcePolicy(adjusted.filter(s => fact.supportedBy.some(c => c.sourceId === s.id)), consequential, single ? trustedId : undefined)
+      if (consequential && !review.independentReporting) throw new Rejection('UNVERIFIED_HIGH_RISK_CLAIM')
+    } catch (error) {
+      if (!high && error instanceof Rejection) error.detail = `CLAIM_ONLY:${claimRisk(fact, facts, review)}`
+      throw error
+    }
+  }
   const primary = adjusted.some(s => s.tier === 1)
   if (!primary && !single && !review.independentReporting) throw new Rejection('INSUFFICIENT_EVIDENCE')
   if (high && !review.independentReporting) throw new Rejection('UNVERIFIED_HIGH_RISK_CLAIM')

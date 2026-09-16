@@ -1,20 +1,28 @@
-import { consequential, originalEditorial, ordinaryTrustedCandidate } from './trust'
+import { originalEditorial, ordinaryTrustedCandidate } from './trust'
+import { storyRisk, centralRisk, claimRisk } from './risk'
 import { failureDetail, safeLabel } from './diagnostics'
 import { checkFresh, checkFacts, cleanDraft, duplicateEvent, highRisk, parseFacts, parseDraft, parseReview, publicationScore, sourcePolicy } from './gate'
 import { Rejection, type Approved, type Candidate, type HistoricalStory, type Model, type Source } from './types'
 
-export async function evaluateCandidate(candidate: Candidate, sources: Source[], history: HistoricalStory[], model: Model, now = new Date(), forceHighRisk = false): Promise<Approved> {
+export async function evaluateCandidate(candidate: Candidate, sources: Source[], history: HistoricalStory[], model: Model, now = new Date(), forceHighRisk = false, log: (message: string) => void = () => {}): Promise<Approved> {
   checkFresh(candidate.publishedAt, now)
   const original = originalEditorial(candidate, sources)
   const retrievedOriginal = sources.find(s => s.url === candidate.url || s.requestedUrl === candidate.url)
-  const initialHigh = forceHighRisk || consequential([candidate.title, retrievedOriginal?.title, retrievedOriginal?.text].join(' '))
+  const initialRisk = storyRisk(candidate, retrievedOriginal)
+  const initialHigh = forceHighRisk || initialRisk.level === 'high'
   const trustedId = !initialHigh && original && ordinaryTrustedCandidate(candidate, original) ? original.id : undefined
   if (trustedId) checkFresh(original!.publishedAt, now, 'ORIGINAL_PUBLICATION_DATE')
   sourcePolicy(sources, initialHigh, trustedId)
   const evidenceMode = trustedId ? 'TRUSTED_SINGLE_SOURCE' : 'ENHANCED_VERIFICATION'
   const evidence = sources.map(({ links, imageUrl, ...source }) => source)
   const facts = parseFacts(await model('facts', { candidate, evidenceMode, trustedEditorialSourceId: trustedId, sources: evidence, now: now.toISOString() }))
-  if (initialHigh) facts.riskLevel = 'high'
+  const factTrigger = centralRisk(candidate, facts)
+  log(`[AIBeat Quality Gate] Risk: ${initialHigh || factTrigger ? 'HIGH' : facts.riskLevel.toUpperCase()} | Risk trigger: ${factTrigger || (forceHighRisk ? 'PRIOR_HIGH_RISK_ASSESSMENT' : initialRisk.trigger)} | Stage: facts`)
+  if (factTrigger && facts.riskLevel !== 'high') log(`[AIBeat Quality Gate] Risk escalated: ${facts.riskLevel.toUpperCase()} → HIGH | Trigger: ${factTrigger}`)
+  for (const fact of facts.confirmedFacts.filter(f => !f.core)) {
+    const trigger = claimRisk(fact, facts)
+    if (trigger) log(`[AIBeat Quality Gate] Claim risk: HIGH | Trigger: ${trigger} | Scope: NON_CORE_CLAIM`)
+  }
   checkFacts(candidate, facts, sources, now, trustedId, initialHigh)
   if (duplicateEvent(facts.event, candidate.title, history)) throw new Rejection('DUPLICATE_STORY')
   const cleaned = cleanDraft(parseDraft(await model('draft', { confirmedFacts: facts.confirmedFacts, event: facts.event })), facts)
@@ -26,10 +34,15 @@ export async function evaluateCandidate(candidate: Candidate, sources: Source[],
   }
   if (duplicateEvent(facts.event, cleaned.draft.title, history)) throw new Rejection('DUPLICATE_STORY')
   const review = parseReview(await model('review', { candidate, evidenceMode, trustedEditorialSourceId: trustedId, facts, draft: cleaned.draft, sources: evidence, now: now.toISOString() }))
+  const reviewTrigger = centralRisk(candidate, facts, review)
+  log(`[AIBeat Quality Gate] Risk: ${initialHigh || reviewTrigger ? 'HIGH' : review.riskLevel.toUpperCase()} | Risk trigger: ${reviewTrigger || (forceHighRisk ? 'PRIOR_HIGH_RISK_ASSESSMENT' : initialRisk.trigger)} | Stage: review`)
+  if (reviewTrigger && review.riskLevel !== 'high') log(`[AIBeat Quality Gate] Risk escalated: ${review.riskLevel.toUpperCase()} → HIGH | Trigger: ${reviewTrigger}`)
   const qualityScore = publicationScore(facts, sources, review, candidate, trustedId, initialHigh)
-  if (highRisk(candidate, facts) || review.riskLevel === 'high') facts.riskLevel = 'high'
+  if (initialHigh || highRisk(candidate, facts) || reviewTrigger) facts.riskLevel = 'high'
+  else if (review.riskLevel === 'medium') facts.riskLevel = 'medium'
   const used = new Set(facts.confirmedFacts.flatMap(f => f.supportedBy.map(s => s.sourceId)))
-  return { ...cleaned, facts, sources: sources.filter(s => used.has(s.id)), qualityScore, evidenceMode: facts.riskLevel === 'high' ? 'ENHANCED_VERIFICATION' : evidenceMode }
+  const hasConsequentialClaim = facts.confirmedFacts.some(f => claimRisk(f, facts, review))
+  return { ...cleaned, facts, sources: sources.filter(s => used.has(s.id)), qualityScore, evidenceMode: facts.riskLevel === 'high' || hasConsequentialClaim ? 'ENHANCED_VERIFICATION' : evidenceMode }
 }
 
 // The only side-effect boundary. Rejections cannot reach final image/MDX creation.
@@ -55,16 +68,16 @@ export async function processCandidate(candidate: Candidate, dependencies: {
     stage = 'minimum_evidence'
     const original = sources.find(s => s.url === candidate.url || s.requestedUrl === candidate.url)
     const single = original && ordinaryTrustedCandidate(candidate, original)
-    dependencies.log(`[AIBeat Quality Gate] Publisher: ${safeLabel(original?.name || 'Unknown')} | Publisher trust: ${original?.editorial?.publisherTrust || 'NOT_TRUSTED'} | Content type: ${original?.editorial?.contentType || 'AMBIGUOUS'} | Risk: ${consequential(candidate.title + ' ' + (original?.text || '')) ? 'HIGH' : 'LOW/MEDIUM_PENDING_REVIEW'} | Evidence mode: ${single ? 'TRUSTED_SINGLE_SOURCE' : 'ENHANCED_VERIFICATION'}`)
+    dependencies.log(`[AIBeat Quality Gate] Publisher: ${safeLabel(original?.name || 'Unknown')} | Publisher trust: ${original?.editorial?.publisherTrust || 'NOT_TRUSTED'} | Content type: ${original?.editorial?.contentType || 'AMBIGUOUS'} | Risk: ${storyRisk(candidate, original).level.toUpperCase()} | Risk trigger: ${storyRisk(candidate, original).trigger} | Evidence mode: ${single ? 'TRUSTED_SINGLE_SOURCE' : 'ENHANCED_VERIFICATION'}`)
     let approved: Approved
     try {
-      approved = await evaluateCandidate(candidate, sources, dependencies.history, trackedModel, dependencies.now)
+      approved = await evaluateCandidate(candidate, sources, dependencies.history, trackedModel, dependencies.now, false, dependencies.log)
     } catch (error) {
-      if (!single || !dependencies.collectEnhanced || !(error instanceof Rejection) || !['NO_PRIMARY_SOURCE', 'UNVERIFIED_HIGH_RISK_CLAIM'].includes(error.reason)) throw error
+      if ((error instanceof Rejection && error.detail?.startsWith('CLAIM_ONLY:')) || !single || !dependencies.collectEnhanced || !(error instanceof Rejection) || !['NO_PRIMARY_SOURCE', 'UNVERIFIED_HIGH_RISK_CLAIM'].includes(error.reason)) throw error
       dependencies.log('[AIBeat Quality Gate] Risk: HIGH | Evidence mode: ENHANCED_VERIFICATION | Model escalated risk; retrieving corroboration within existing budgets.')
       stage = 'source_discovery'
       sources = await dependencies.collectEnhanced()
-      approved = await evaluateCandidate(candidate, sources, dependencies.history, trackedModel, dependencies.now, true)
+      approved = await evaluateCandidate(candidate, sources, dependencies.history, trackedModel, dependencies.now, true, dependencies.log)
     }
     stage = 'source_availability'
     await dependencies.verifyAvailable?.(approved.sources)

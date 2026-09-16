@@ -70,6 +70,21 @@ export function classifySource(value: string) {
   return rule || { host, name: host, group: host, tier: 3 as const }
 }
 
-export const HIGH_RISK = /\b(lawsuit|sues?|suing|court|regulat\w*|criminal|alleg\w*|government|contract|acqui\w*|merger|funding|raised?|valuation|layoffs?|laid off|depart\w*|resign\w*|fired|breach\w*|hack\w*|vulnerab\w*|earnings|revenue|profit|ban(?:s|ned)?|sanction\w*|policy|ceo|cfo|executive|appointed|headcount|\$|billion|million)\b/i
+// Contextual consequential-claim rules. Generic roles, money, customers and
+// security/safety features do not independently imply consequential reporting.
+export const HIGH_RISK_RULES = [
+  { category: 'LAWSUIT', pattern: /\b(lawsuits?|sues?|suing|sued)\b/i },
+  { category: 'COURT_DECISION', pattern: /\b(court|judge|tribunal)\b.{0,60}\b(rules?|ruled|ruling|orders?|ordered|decisions?|convicts?|sentences?|blocks?)\b/i },
+  { category: 'REGULATORY_ENFORCEMENT', pattern: /\b(regulator\w*|government|ftc|sec|commission|authority|doj)\b.{0,80}\b(enforcement|investigat\w*|fines?|fined|penalt\w*|charges?|charged|crackdown|antitrust|prosec\w*)\b|\b(enforcement action|regulatory action|antitrust investigation)\b/i },
+  { category: 'SECURITY_BREACH', pattern: /\b((?:security|data) breach\w*|data leaks?|ransomware attack|cyberattack|stolen (?:user|customer|personal) data|actively exploited vulnerabilit\w*)\b|\b(?:company|platform|service|systems?|accounts?)\b.{0,40}\b(?:hacked|breached)\b/i },
+  { category: 'ACQUISITION', pattern: /\b(acquisitions?|mergers?|takeovers?)\b|\b(?:acquires?|acquired|buying|buys?)\b.{0,60}\b(?:company|startup|rival|business|stake)\b/i },
+  { category: 'FUNDING', pattern: /\b(?:funding|financing|investment) round\b|\b(?:raises?|raised|secures?|secured)\s+(?:(?:another|about|over)\s+)?[$€£]\s*\d|\b(?:raises?|raised|secures?|secured)\b.{0,60}\b(?:funding|capital)\b|\b(?:million|billion)\b.{0,30}\b(?:funding|financing|investment)\b/i },
+  { category: 'EMPLOYMENT_REDUCTION', pattern: /\b(layoffs?|laid off|laying off|job cuts?|workforce reduction)\b|\b(?:cuts?|cutting|eliminates?|eliminating|slashes?)\b.{0,35}\b(?:jobs?|staff|workforce|employees|headcount)\b/i },
+  { category: 'SERIOUS_ALLEGATION', pattern: /\b(?:accused|allegations?|allegedly|charges?|charged|investigated)\b.{0,90}\b(?:fraud|abuse|assault|harassment|bribery|corruption|misconduct|criminal|privacy violations?|deception)\b|\b(?:criminal charges?|arrested|indicted|financial misconduct|material fraud|fraud allegations?)\b/i },
+  { category: 'SERIOUS_SAFETY_INCIDENT', pattern: /\b(?:fatal accident|fatalit\w*|serious safety (?:incident|allegation)\w*|safety allegations?|serious injur\w*|caus(?:es?|ed|ing) (?:deaths?|injur\w*))\b/i },
+  { category: 'BAN_OR_SANCTIONS', pattern: /\b(?:sanctions?|banned|ban on|bans? (?:the|a|an|imports?|exports?|sales?|use|access|company|platform|app|product))\b/i },
+] as const
+// Legacy read-only historical audit uses the same contextual vocabulary.
+export const HIGH_RISK = new RegExp(HIGH_RISK_RULES.map(rule => rule.pattern.source).join('|'), 'i')
 
 export const NEUTRAL_IMAGE_PROMPT = 'Neutral abstract editorial illustration of computing and connected geometric shapes, restrained colors, subtle AIBeat branding. No people, executive portraits, photographs of events, screenshots, interfaces, quotations, numbers, company logos, contracts, courtroom scenes, or depictions of completed deals.'

@@ -5,6 +5,8 @@ import matter from 'gray-matter'
 import { QUALITY, classifySource } from '../scripts/news-quality/config'
 import { checkFresh, cleanDraft, duplicateEvent, renderDraft, renderApproved } from '../scripts/news-quality/gate'
 import { classifyEditorial } from '../scripts/news-quality/trust'
+import { classifyRisk, storyRisk } from '../scripts/news-quality/risk'
+import { ordinaryTrustedCandidate } from '../scripts/news-quality/trust'
 import { evaluateCandidate, processCandidate } from '../scripts/news-quality/pipeline'
 import { SourceFetcher, extractSource, canonicalSource, collectSources, mergeSourceOrigins } from '../scripts/news-quality/sources'
 import { documentLinks, publicationDate } from '../scripts/news-quality/documents'
@@ -22,13 +24,13 @@ const reporting: Source = { ...primary, id: 's2', name: 'Independent News', url:
 const facts: FactSheet = {
   story: candidate.title, event: { entities: ['Acme'], action: 'launch', product: 'Atlas', eventDate: '2026-09-15' }, eventSourceId: 's1', eventDateEvidence: candidate.publishedAt,
   confirmedFacts: [{ id: 'f1', claim: 'Acme launched the Atlas editor for developers.', core: true, confidence: 95, supportedBy: [{ sourceId: 's1', excerpt }] }],
-  uncertainClaims: [], conflictingClaims: [], riskLevel: 'low', confidence: 95,
+  uncertainClaims: [], conflictingClaims: [], riskLevel: 'low', riskAssessments: [], confidence: 95,
 }
 const draft: Draft = { title: candidate.title, deck: 'Acme announced its Atlas editor for developers.', sections: [
   { heading: 'What happened', kind: 'facts', paragraphs: [{ text: 'Acme announced the Atlas editor for developers.', factIds: ['f1'] }] },
   { heading: 'Why it matters', kind: 'analysis', paragraphs: [{ text: 'For developers, this could provide another editing option to evaluate.', factIds: ['f1'] }] },
 ] }
-const review: Review = { supportedFactIds: ['f1'], unsupportedClaims: [], conflictingClaims: [], unverifiedEntities: [], derivativeGroups: [], authoritativePrimaryIds: ['s1'], trustedEditorialSourceIds: [], eventDateVerified: true, independentReporting: false, analysisGrounded: true, originalValue: true, clearWriting: true, riskLevel: 'low' }
+const review: Review = { supportedFactIds: ['f1'], unsupportedClaims: [], conflictingClaims: [], unverifiedEntities: [], derivativeGroups: [], authoritativePrimaryIds: ['s1'], trustedEditorialSourceIds: [], eventDateVerified: true, independentReporting: false, analysisGrounded: true, originalValue: true, clearWriting: true, riskLevel: 'low', riskAssessments: [] }
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value))
 function model(f = facts, d = draft, r = review): Model { return async stage => clone(stage === 'facts' ? f : stage === 'draft' ? d : r) }
 const rejected = (reason: string) => (error: unknown) => error instanceof Rejection && error.reason === reason
@@ -56,11 +58,11 @@ test('high-risk reporting also requires independent reputable corroboration for 
   await assert.rejects(evaluateCandidate({ ...candidate, title: 'Acme faces a lawsuit' }, [primary], [], model(), now), rejected('UNVERIFIED_HIGH_RISK_CLAIM'))
 })
 test('high-risk facts pass only with primary and independent reporting for every fact', async () => {
-  const f = clone(facts); f.riskLevel = 'high'
+  const f = clone(facts); f.riskLevel = 'high'; f.riskAssessments = [{ factId: 'f1', category: 'SERIOUS_ALLEGATION' }]
   f.confirmedFacts[0].supportedBy.push({ sourceId: 's2', excerpt })
-  const approved = await evaluateCandidate(candidate, [primary, reporting], [], model(f, draft, { ...review, riskLevel: 'high', independentReporting: true }), now)
+  const approved = await evaluateCandidate(candidate, [primary, reporting], [], model(f, draft, { ...review, riskLevel: 'high', riskAssessments: [{ factId: 'f1', category: 'SERIOUS_ALLEGATION' }], independentReporting: true }), now)
   assert.equal(approved.facts.riskLevel, 'high')
-  await assert.rejects(evaluateCandidate(candidate, [primary], [], model(facts, draft, { ...review, riskLevel: 'high' }), now), rejected('UNVERIFIED_HIGH_RISK_CLAIM'))
+  await assert.rejects(evaluateCandidate(candidate, [primary], [], model(facts, draft, { ...review, riskLevel: 'high', riskAssessments: [{ factId: 'f1', category: 'SERIOUS_ALLEGATION' }] }), now), rejected('UNVERIFIED_HIGH_RISK_CLAIM'))
 })
 test('copied passages and low confidence fail before publication', async () => {
   const copied = 'Acme announced the Atlas editor for developers and made the new editing workspace available today.'
@@ -383,14 +385,14 @@ for (const title of ['Acme announces acquisition', 'Acme reports security breach
   test(`trusted publisher remains strict: ${title}`, async () => {
     await assert.rejects(evaluateCandidate({ ...trustedCandidate, title }, [trustedSource()], [], model(trustedFacts(), draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
   })
-test('risk in source body or source headline cannot hide behind an ordinary RSS title', async () => {
-  for (const source of [{ ...trustedSource(), text: trustedSource().text + ' Acme disclosed a security breach.' }, { ...trustedSource(), title: 'Acme announces acquisition' }]) {
-    await assert.rejects(evaluateCandidate(trustedCandidate, [source], [], model(trustedFacts(), draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
-  }
+test('incidental body text does not escalate the story but a consequential source headline does', async () => {
+  const background = { ...trustedSource(), text: trustedSource().text + ' A related-story card discusses an earlier security breach.' }
+  assert.equal((await evaluateCandidate(trustedCandidate, [background], [], model(trustedFacts(), draft, trustedReview), now)).evidenceMode, 'TRUSTED_SINGLE_SOURCE')
+  await assert.rejects(evaluateCandidate(trustedCandidate, [{ ...trustedSource(), title: 'Acme announces acquisition' }], [], model(trustedFacts(), draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
 })
 test('model and semantic reviewer can escalate risk but cannot waive primary evidence', async () => {
-  await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], model({ ...trustedFacts(), riskLevel: 'high' }, draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
-  await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], model(trustedFacts(), draft, { ...trustedReview, riskLevel: 'high' }), now), rejected('NO_PRIMARY_SOURCE'))
+  await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], model({ ...trustedFacts(), riskLevel: 'high', riskAssessments: [{ factId: 'f1', category: 'SERIOUS_ALLEGATION' }] }, draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
+  await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], model(trustedFacts(), draft, { ...trustedReview, riskLevel: 'high', riskAssessments: [{ factId: 'f1', category: 'SERIOUS_ALLEGATION' }] }), now), rejected('NO_PRIMARY_SOURCE'))
 })
 test('semantic reviewer can reject original editorial status, contradictions, or unsupported claims', async () => {
   for (const [r, reason] of [
@@ -437,7 +439,7 @@ test('model risk escalation retries bounded discovery once and cannot be downgra
   const logs: string[] = []
   const accepted = await processCandidate(trustedCandidate, {
     collect: async () => [trustedSource()], collectEnhanced: async () => { expansions++; return [trustedSource()] },
-    model: async stage => { if (stage === 'facts') { factCalls++; return { ...trustedFacts(), riskLevel: 'high' } } return {} },
+    model: async stage => { if (stage === 'facts') { factCalls++; return { ...trustedFacts(), riskLevel: 'high', riskAssessments: [{ factId: 'f1', category: 'SERIOUS_ALLEGATION' }] } } return {} },
     history: [], now, publish: async () => { writes++ }, log: m => logs.push(m),
   })
   assert.equal(accepted, false); assert.equal(expansions, 1); assert.equal(factCalls, 1); assert.equal(writes, 0)
@@ -450,7 +452,7 @@ test('late risk escalation can publish only after primary plus independent evide
   const accepted = await processCandidate(trustedCandidate, {
     collect: async () => [trustedSource()], collectEnhanced: async () => [trustedSource(), official],
     model: async stage => {
-      if (stage === 'facts') return ++calls === 1 ? { ...trustedFacts(), riskLevel: 'high' } : clone(f)
+      if (stage === 'facts') return ++calls === 1 ? { ...trustedFacts(), riskLevel: 'high', riskAssessments: [{ factId: 'f1', category: 'SERIOUS_ALLEGATION' }] } : clone(f)
       if (stage === 'draft') return clone(draft)
       return { ...trustedReview, authoritativePrimaryIds: ['s2'], independentReporting: true }
     }, history: [], now, log: () => {}, publish: async approved => {
@@ -482,4 +484,107 @@ test('new reviewer classification is mandatory and attribution escapes publisher
   await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], async stage => stage === 'facts' ? trustedFacts() : stage === 'draft' ? draft : r, now), rejected('MALFORMED_MODEL_OUTPUT'))
   const approved = await evaluateCandidate(trustedCandidate, [{ ...trustedSource(), name: '<script>{secret}</script>' }], [], model(trustedFacts(), draft, trustedReview), now)
   assert.doesNotMatch(renderApproved(approved), /<script>|\{secret\}/)
+})
+
+for (const title of [
+  'The Boox Palma 3 gets stylus support and a sleek redesign',
+  'The EOS R8 Mark II is Canon’s lightest full-frame camera with stabilization, priced at $1,499',
+  'OpenAI releases a new developer API feature',
+  'Microsoft announces Windows and Surface event for October 7th',
+  'Meta launches smart glasses with a security feature',
+  'Google releases software for government customers',
+  'Canon raises camera price to $1,499',
+]) test(`ordinary headline stays single-source eligible: ${title}`, () => {
+  const c = { ...trustedCandidate, title }
+  const s = { ...trustedSource(), title, text: trustedSource().text + ' CEO statement. Google Privacy Policy and Terms of Service apply. A million pixels. Government customers.' }
+  assert.equal(storyRisk(c, s).level, 'low')
+  assert.ok(ordinaryTrustedCandidate(c, s))
+})
+for (const [claim, trigger] of [
+  ['Company announces acquisition of rival', 'ACQUISITION'],
+  ['Company confirms security breach', 'SECURITY_BREACH'],
+  ['Company faces lawsuit over stolen data', 'LAWSUIT'],
+  ['Regulator opens enforcement action', 'REGULATORY_ENFORCEMENT'],
+  ['Company cuts 5,000 jobs', 'EMPLOYMENT_REDUCTION'],
+  ['CEO accused of criminal fraud', 'SERIOUS_ALLEGATION'],
+  ['Company raises $50 million in a funding round', 'FUNDING'],
+  ['Court orders company to stop sales', 'COURT_DECISION'],
+  ['Device caused serious injuries', 'SERIOUS_SAFETY_INCIDENT'],
+  ['Government bans the product', 'BAN_OR_SANCTIONS'],
+]) test(`consequential claim remains HIGH: ${trigger}`, () => {
+  assert.deepEqual(classifyRisk(claim), { level: 'high', trigger })
+})
+test('generic topic words and uncertainty never default to HIGH', () => {
+  for (const value of ['company', 'price', 'data', 'AI', 'camera', 'support', 'release', 'market', 'Microsoft', 'Meta', 'Google', 'government', 'financial', 'security', 'safety', 'person', 'CEO', 'policy', 'million', 'billion', 'raise', 'department', 'security feature', 'government customers', 'AI safety research']) assert.notEqual(classifyRisk(value).level, 'high', value)
+  assert.equal(classifyRisk('Unclear development').level, 'medium')
+  assert.equal(classifyRisk('Company makes major competitive claims for new AI benchmark').level, 'medium')
+  assert.equal(storyRisk({ ...trustedCandidate, title: 'Company makes major competitive benchmark claims' }, trustedSource()).level, 'medium')
+  assert.equal(storyRisk(trustedCandidate, { ...trustedSource(), title: 'Company makes major competitive benchmark claims' }).level, 'medium')
+})
+test('MEDIUM remains eligible and passes the complete existing evidence gate', async () => {
+  const c = { ...trustedCandidate, title: 'Acme announces strategic partnership for Atlas editor' }
+  const s = { ...trustedSource(), title: c.title }
+  assert.equal(storyRisk(c, s).level, 'medium'); assert.ok(ordinaryTrustedCandidate(c, s))
+  const approved = await evaluateCandidate(c, [s], [], model({ ...trustedFacts(), riskLevel: 'medium' }, draft, { ...trustedReview, riskLevel: 'medium' }), now)
+  assert.equal(approved.evidenceMode, 'TRUSTED_SINGLE_SOURCE'); assert.equal(approved.facts.riskLevel, 'medium')
+})
+test('ordinary retail price is verified exactly and can pass as single-source LOW', async () => {
+  const f = trustedFacts(); f.confirmedFacts[0].claim += ' The retail price is $499.'
+  const passage = excerpt + ' The retail price is $499.'
+  f.confirmedFacts[0].supportedBy[0].excerpt = passage
+  const s = { ...trustedSource(), text: passage + trustedSource().text }
+  assert.equal((await evaluateCandidate(trustedCandidate, [s], [], model(f, draft, trustedReview), now)).evidenceMode, 'TRUSTED_SINGLE_SOURCE')
+  f.confirmedFacts[0].claim = f.confirmedFacts[0].claim.replace('$499', '$999')
+  await assert.rejects(evaluateCandidate(trustedCandidate, [s], [], model(f, draft, trustedReview), now), rejected('UNSUPPORTED_CLAIM'))
+})
+test('uncertain allegations omitted from facts do not escalate unrelated verified launch claims', async () => {
+  const f = { ...trustedFacts(), uncertainClaims: ['Unverified historical allegation about a lawsuit; exclude from prose.'] }
+  assert.equal((await evaluateCandidate(trustedCandidate, [trustedSource()], [], model(f, draft, trustedReview), now)).evidenceMode, 'TRUSTED_SINGLE_SOURCE')
+})
+test('non-core consequential claim requires its own strong evidence without escalating launch facts', async () => {
+  const f = trustedFacts(), extra = 'Acme confirms a security breach affecting its service.'
+  f.confirmedFacts.push({ id: 'f2', claim: extra, core: false, confidence: 95, supportedBy: [{ sourceId: 's1', excerpt: extra }, { sourceId: 's2', excerpt: extra }] })
+  f.riskAssessments = [{ factId: 'f2', category: 'SECURITY_BREACH' }]
+  const original = { ...trustedSource(), text: trustedSource().text + ' ' + extra }
+  const official = { ...primary, id: 's2', text: extra, url: 'https://openai.com/index/incident', group: 'openai' }
+  const r: Review = { ...trustedReview, supportedFactIds: ['f1', 'f2'], authoritativePrimaryIds: ['s2'], independentReporting: true, riskAssessments: f.riskAssessments }
+  // f1 has only trusted editorial support; f2 has both independent reporting and primary.
+  const approved = await evaluateCandidate(trustedCandidate, [original, official], [], model(f, draft, r), now)
+  assert.notEqual(approved.facts.riskLevel, 'high')
+  assert.equal(approved.evidenceMode, 'ENHANCED_VERIFICATION')
+  f.confirmedFacts[1].supportedBy.pop()
+  await assert.rejects(evaluateCandidate(trustedCandidate, [original], [], model(f, draft, r), now), (error: unknown) => error instanceof Rejection && error.reason === 'NO_PRIMARY_SOURCE' && error.detail === 'CLAIM_ONLY:SECURITY_BREACH')
+})
+test('model cannot hide a central high-risk claim in a LOW label', async () => {
+  const f = trustedFacts(), passage = 'Acme confirms a security breach affecting its service.'
+  f.confirmedFacts[0].claim = passage; f.confirmedFacts[0].supportedBy[0].excerpt = passage
+  const logs: string[] = []
+  await assert.rejects(evaluateCandidate(trustedCandidate, [{ ...trustedSource(), text: trustedSource().text + passage }], [], model(f, draft, trustedReview), now, false, m => logs.push(m)), rejected('NO_PRIMARY_SOURCE'))
+  assert.match(logs.join('\n'), /Risk escalated: LOW → HIGH \| Trigger: SECURITY_BREACH/)
+})
+test('HIGH requires a valid category and concrete core fact reference; malformed risk fails safely', async () => {
+  for (const change of [
+    { riskLevel: 'uncertain' },
+    { riskLevel: 'high', riskAssessments: [] },
+    { riskLevel: 'high', riskAssessments: [{ factId: 'missing', category: 'LAWSUIT' }] },
+    { riskLevel: 'high', riskAssessments: [{ factId: 'f1', category: 'CEO' }] },
+    { riskAssessments: undefined },
+  ]) await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], async stage => stage === 'facts' ? { ...trustedFacts(), ...change } : {}, now), rejected('MALFORMED_MODEL_OUTPUT'))
+})
+
+for (const [entity, product, title, claim] of [
+  ['Boox', 'Palma 3', 'The Boox Palma 3 gets stylus support and a sleek redesign', 'Boox introduced Palma 3 with stylus input.'],
+  ['Canon', 'EOS R8 Mark II', 'Canon announces EOS R8 Mark II for $1,499', 'Canon introduced EOS R8 Mark II at a retail price of $1,499.'],
+]) test(`${entity} publication boundary is reachable despite privacy boilerplate`, async () => {
+  const c = { ...trustedCandidate, title }
+  const passage = `${entity} announced ${product} on September 15, 2026. ${claim}`
+  const s = { ...trustedSource(), title, text: passage + ' Google Privacy Policy and Terms of Service apply. A CEO attended the event.' }
+  const f: FactSheet = { ...trustedFacts(), story: title, event: { entities: [entity], product, action: 'launch', eventDate: '2026-09-15' }, confirmedFacts: [{ id: 'f1', claim, core: true, confidence: 95, supportedBy: [{ sourceId: 's1', excerpt: passage }] }] }
+  const d: Draft = { title, deck: claim, sections: [{ heading: 'What happened', kind: 'facts', paragraphs: [{ text: claim, factIds: ['f1'] }] }] }
+  let writes = 0, availability = 0
+  const logs: string[] = []
+  const accepted = await processCandidate(c, { collect: async () => [s], model: model(f, d, trustedReview), history: [], now,
+    verifyAvailable: async () => { availability++ }, publish: async approved => { writes++; assert.equal(approved.evidenceMode, 'TRUSTED_SINGLE_SOURCE') }, log: m => logs.push(m) })
+  assert.equal(accepted, true); assert.equal(availability, 1); assert.equal(writes, 1)
+  assert.match(logs.join('\n'), /Risk: LOW \| Risk trigger: ROUTINE_PRODUCT_ANNOUNCEMENT/)
 })

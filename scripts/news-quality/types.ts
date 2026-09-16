@@ -18,11 +18,11 @@ export type NewsEvent = { entities: string[]; action: string; product: string; e
 export type FactSheet = {
   story: string; event: NewsEvent; eventSourceId: string; eventDateEvidence: string;
   confirmedFacts: Fact[]; uncertainClaims: string[]; conflictingClaims: string[];
-  riskLevel: Risk; confidence: number;
+  riskLevel: Risk; riskAssessments: import('./risk').ClaimRisk[]; confidence: number;
 }
 export type Paragraph = { text: string; factIds: string[] }
 export type Draft = { title: string; deck: string; sections: Array<{ heading: string; kind: 'facts' | 'analysis'; paragraphs: Paragraph[] }> }
-export type Review = { supportedFactIds: string[]; unsupportedClaims: string[]; conflictingClaims: string[]; unverifiedEntities: string[]; derivativeGroups: string[][]; authoritativePrimaryIds: string[]; trustedEditorialSourceIds: string[]; eventDateVerified: boolean; independentReporting: boolean; analysisGrounded: boolean; originalValue: boolean; clearWriting: boolean; riskLevel: Risk }
+export type Review = { supportedFactIds: string[]; unsupportedClaims: string[]; conflictingClaims: string[]; unverifiedEntities: string[]; derivativeGroups: string[][]; authoritativePrimaryIds: string[]; trustedEditorialSourceIds: string[]; eventDateVerified: boolean; independentReporting: boolean; analysisGrounded: boolean; originalValue: boolean; clearWriting: boolean; riskLevel: Risk; riskAssessments: import('./risk').ClaimRisk[] }
 export type HistoricalStory = { slug: string; title: string; deck?: string; publishedAt: string; newsEvent?: NewsEvent; sources?: Array<{ name: string; url: string }> }
 export type Approved = { draft: Draft; facts: FactSheet; sources: Source[]; qualityScore: number; removedParagraphs: number; evidenceMode: EvidenceMode }
 export type Model = (stage: 'facts' | 'draft' | 'review', input: unknown) => Promise<unknown>

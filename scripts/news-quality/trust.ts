@@ -1,12 +1,10 @@
-import { HIGH_RISK, TRUSTED_EDITORIAL_PUBLISHERS, classifySource } from './config'
+import { TRUSTED_EDITORIAL_PUBLISHERS, classifySource } from './config'
 import { articleNodes, attrs, decode, metadata } from './documents'
 import type { Candidate, EditorialClassification, Source } from './types'
 
 const plain = (value: string) => decode(value.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim()
-export const ordinaryTechnology = /\b(launch\w*|releas\w*|updat\w*|announc\w*|introduc\w*|unveil\w*|feature\w*|available|availability|rollout|rolls? out|software|hardware|developer tools?|model|editor|device|camera)\b/i
-export function consequential(value: string) {
-  return HIGH_RISK.test(value) || /\b(data leaks?|serious safety|safety allegations?|fatalit\w*|fatal accident|injur\w*|criminal charges?|arrest\w*)\b/i.test(value)
-}
+export { routineTechnology as ordinaryTechnology } from './risk'
+import { storyRisk } from './risk'
 export function classifyEditorial(url: string, html: string): EditorialClassification {
   const rule = classifySource(url)
   const host = new URL(url).hostname.toLowerCase().replace(/^www\./, '')
@@ -54,6 +52,5 @@ export function originalEditorial(candidate: Candidate, sources: Source[]) {
   return sources.find(source => (source.url === candidate.url || source.requestedUrl === candidate.url) && trustedEditorial(source))
 }
 export function ordinaryTrustedCandidate(candidate: Candidate, source: Source) {
-  return originalEditorial(candidate, [source]) && ordinaryTechnology.test(candidate.title + ' ' + (source.title || '')) &&
-    !consequential(candidate.title + ' ' + (source.title || '') + ' ' + source.text)
+  return originalEditorial(candidate, [source]) && storyRisk(candidate, source).level !== 'high'
 }
