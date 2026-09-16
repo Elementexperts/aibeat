@@ -35,3 +35,7 @@ data/linkedin/drafts/*
 
 # Supabase CLI
 supabase/.temp/
+
+# Private editorial audit reports
+/reports/news-quality-audit.json
+/reports/news-quality-audit.md

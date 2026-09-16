@@ -26,7 +26,12 @@ export interface Article {
   coverImageHeight?: number
   coverImageSource?: string
   coverImageSourceUrl?: string
+  qualityScore?: number
+  sourceCount?: number
+  primarySourceCount?: number
+  newsEvent?: { entities: string[]; action: string; product: string; eventDate: string }
   relatedTools?: string[]
+  relatedArticles?: string[]
 }
 
 // cache() deduplicates calls within a single request — no matter how many

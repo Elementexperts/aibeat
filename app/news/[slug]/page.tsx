@@ -31,7 +31,8 @@ export default async function ArticlePage({ params }: { params: { slug: string }
 
   const relatedTools = TOOLS.filter(tool => articleMentionsTool(article, tool)).slice(0, 5)
   const sources = articleSources(article)
-  const moreArticles = allArticles.filter(a => a.slug !== article.slug && a.category === article.category).slice(0, 3)
+  const explicitRelated = allArticles.filter(a => a.slug !== article.slug && article.relatedArticles?.includes(a.slug)).slice(0, 3)
+  const moreArticles = explicitRelated.length ? explicitRelated : allArticles.filter(a => a.slug !== article.slug && a.category === article.category).slice(0, 3)
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
