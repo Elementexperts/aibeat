@@ -1,0 +1,36 @@
+import Parser from 'rss-parser'
+import { checkFresh } from './gate'
+import { documentLinks } from './documents'
+import { diagnosticUrl, failureDetail } from './diagnostics'
+import { SourceFetcher, canonicalSource } from './sources'
+import { Rejection, type Candidate } from './types'
+
+export const RSS_FEEDS = [
+  'https://techcrunch.com/category/artificial-intelligence/feed/',
+  'https://feeds.feedburner.com/venturebeat/SZYF',
+  'https://www.theverge.com/rss/index.xml',
+  'https://hnrss.org/frontpage?q=AI+LLM+GPT+Claude+Gemini',
+]
+export async function discoverFeed(feed: string, fetcher: SourceFetcher, log: (message: string) => void, now = new Date()): Promise<Candidate[]> {
+  try {
+    const response = await fetcher.get(feed)
+    let data
+    try { data = await new Parser().parseString(response.body) } catch { throw new Rejection('SOURCE_RETRIEVAL_FAILED', 'FEED_PARSE_ERROR') }
+    const candidates: Candidate[] = []
+    let rejected = 0
+    for (const item of data.items.slice(0, 20)) {
+      try {
+        if (!item.title || !item.link || !item.isoDate) { rejected++; continue }
+        const url = canonicalSource(item.link)
+        checkFresh(item.isoDate, now, 'RSS_PUBLICATION_DATE')
+        const html = [item.content, item['content:encoded'], item.summary].filter(v => typeof v === 'string').join(' ')
+        candidates.push({ title: item.title, url, publishedAt: item.isoDate, discoveryLinks: documentLinks(html, url).map(l => l.url).slice(0, 30) })
+      } catch { rejected++ }
+    }
+    log(`[AIBeat Discovery] Feed: ${diagnosticUrl(feed)} | Items: ${data.items.length} | Recent candidates: ${candidates.length} | Invalid/stale entries: ${rejected}`)
+    return candidates
+  } catch (error) {
+    log(`[AIBeat Discovery] Feed unavailable: ${diagnosticUrl(feed)} | ${failureDetail(error)} | Continuing`)
+    return []
+  }
+}

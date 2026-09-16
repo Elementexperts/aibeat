@@ -15,6 +15,8 @@ export const SOURCE_RULES: SourceRule[] = [
     ['deepmind.google', 'Google DeepMind', 'google'], ['blog.google', 'Google', 'google'],
     ['research.google', 'Google Research', 'google'], ['blogs.microsoft.com', 'Microsoft', 'microsoft'],
     ['learn.microsoft.com', 'Microsoft documentation', 'microsoft'], ['microsoft.com', 'Microsoft', 'microsoft'],
+    ['blogs.windows.com', 'Windows Blog', 'microsoft'],
+    ['blog.adobe.com', 'Adobe Blog', 'adobe'], ['news.adobe.com', 'Adobe Newsroom', 'adobe'],
     ['aws.amazon.com', 'Amazon Web Services', 'amazon'], ['aboutamazon.com', 'Amazon', 'amazon'],
     ['ai.meta.com', 'Meta AI', 'meta'], ['about.fb.com', 'Meta', 'meta'],
     ['blogs.nvidia.com', 'NVIDIA', 'nvidia'], ['nvidianews.nvidia.com', 'NVIDIA', 'nvidia'],
@@ -38,6 +40,18 @@ export const SOURCE_RULES: SourceRule[] = [
     ['cnbc.com', 'CNBC', 'nbcu'], ['zdnet.com', 'ZDNET', 'ziffdavis'],
   ].map(([host, name, group]) => ({ host, name, group, tier: 2 as const })),
 ]
+
+// Verified public entry points, not guessed article paths. Only URLs actually
+// returned by these documents/feeds may enter the evidence queue.
+export const OFFICIAL_DISCOVERY = [
+  { mentions: /\b(microsoft|windows|surface|copilot)\b/i, urls: ['https://blogs.windows.com/', 'https://blogs.microsoft.com/feed/'] },
+  { mentions: /\b(nvidia|jensen huang)\b/i, urls: ['https://blogs.nvidia.com/feed/'] },
+  { mentions: /\b(openai|chatgpt|gpt)\b/i, urls: ['https://openai.com/news/'] },
+  { mentions: /\b(anthropic|claude)\b/i, urls: ['https://www.anthropic.com/news'] },
+  { mentions: /\b(google|deepmind|gemini)\b/i, urls: ['https://blog.google/'] },
+  { mentions: /\b(meta|facebook|llama)\b/i, urls: ['https://about.fb.com/news/'] },
+  { mentions: /\b(adobe|firefly|photoshop)\b/i, urls: ['https://blog.adobe.com/'] },
+] as const
 
 export function classifySource(value: string) {
   const url = new URL(value)

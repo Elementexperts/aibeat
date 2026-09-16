@@ -2,14 +2,14 @@
 import { config } from 'dotenv'
 import { resolve, join } from 'node:path'
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import Parser from 'rss-parser'
+import { RSS_FEEDS, discoverFeed } from './news-quality/feeds'
 import matter from 'gray-matter'
 import { prepareNewsImage } from './news-images'
 import { QUALITY, NEUTRAL_IMAGE_PROMPT, classifySource } from './news-quality/config'
 import { SourceFetcher, canonicalSource, collectSources } from './news-quality/sources'
 import { createModel } from './news-quality/model'
 import { processCandidate } from './news-quality/pipeline'
-import { renderDraft, checkFresh } from './news-quality/gate'
+import { renderDraft } from './news-quality/gate'
 import { Rejection, type Approved, type Candidate, type HistoricalStory } from './news-quality/types'
 import { TOOLS } from '../lib/data'
 config({ path: resolve(process.cwd(), '.env.local') })
@@ -18,12 +18,6 @@ const CONTENT_DIR = resolve(process.cwd(), 'content/articles')
 const LINKEDIN_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN
 const LINKEDIN_PUBLISH_ENABLED = process.env.LINKEDIN_PUBLISH_ENABLED === 'true'
 const SITE_BASE = 'https://www.aibeat.dev'
-const RSS_FEEDS = [
-  'https://techcrunch.com/category/artificial-intelligence/feed/',
-  'https://feeds.feedburner.com/venturebeat/SZYF',
-  'https://www.theverge.com/rss/index.xml',
-  'https://hnrss.org/frontpage?q=AI+LLM+GPT+Claude+Gemini',
-]
 
 function slugify(text: string) {
   return text.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').slice(0, 80).replace(/-$/, '')
@@ -155,22 +149,12 @@ async function main() {
   const history = readHistory()
   const candidates: Candidate[] = []
   const seen = new Set<string>()
-  const parser = new Parser()
   for (const feed of RSS_FEEDS) {
-    try {
-      const response = await fetcher.get(feed)
-      const data = await parser.parseString(response.body)
-      for (const item of data.items.slice(0, 20)) {
-        try {
-          if (!item.title || !item.link || !item.isoDate) continue
-          const url = canonicalSource(item.link)
-          checkFresh(item.isoDate, new Date())
-          if (seen.has(url)) continue
-          seen.add(url)
-          candidates.push({ title: item.title, url, publishedAt: item.isoDate })
-        } catch { /* Stale, invalid or unsafe discovery entry. */ }
-      }
-    } catch { console.warn('[AIBeat Quality Gate] Discovery source unavailable; continuing.') }
+    for (const candidate of await discoverFeed(feed, fetcher, console.log)) {
+      if (seen.has(candidate.url)) continue
+      seen.add(candidate.url)
+      candidates.push(candidate)
+    }
   }
   const selected = candidates.sort((a, b) => classifySource(a.url).tier - classifySource(b.url).tier || Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, QUALITY.maxCandidates)
   let saved = 0
@@ -181,7 +165,7 @@ async function main() {
       continue
     }
     const accepted = await processCandidate(candidate, {
-      collect: () => collectSources(candidate, candidates, fetcher), model, history, log: console.log,
+      collect: () => collectSources(candidate, candidates, fetcher, console.log), model, history, log: console.log,
       verifyAvailable: sources => fetcher.verifyAvailable(sources),
       publish: async approved => {
         const article = await saveApproved(approved, history)

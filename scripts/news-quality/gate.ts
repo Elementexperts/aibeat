@@ -12,10 +12,11 @@ export function date(value: string) {
   if (!Number.isFinite(parsed) || new Date(value.slice(0, 10)).toISOString().slice(0, 10) !== value.slice(0, 10)) return NaN
   return parsed
 }
-export function checkFresh(value: string, now: Date) {
+export function checkFresh(value: string, now: Date, context = 'DATE') {
   const parsed = date(value)
-  if (!Number.isFinite(parsed) || parsed > now.getTime()) throw new Rejection('INVALID_DATE')
-  if (now.getTime() - parsed > QUALITY.freshnessHours * 3600000) throw new Rejection('STALE_STORY')
+  if (!Number.isFinite(parsed)) throw new Rejection('INVALID_DATE', `${context}_UNPARSABLE`)
+  if (parsed > now.getTime()) throw new Rejection('INVALID_DATE', `${context}_IN_FUTURE`)
+  if (now.getTime() - parsed > QUALITY.freshnessHours * 3600000) throw new Rejection('STALE_STORY', `${context}_OUTSIDE_48H`)
 }
 export function parseFacts(input: unknown): FactSheet {
   const v = input as FactSheet
@@ -64,12 +65,12 @@ export function sourcePolicy(sources: Source[], high: boolean) {
   if (!high && !primary.length && new Set(reputable.map(s => s.group)).size < 2) throw new Rejection('INSUFFICIENT_EVIDENCE')
 }
 export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Source[], now: Date) {
-  checkFresh(candidate.publishedAt, now)
-  checkFresh(facts.event.eventDate, now)
+  checkFresh(candidate.publishedAt, now, 'RSS_PUBLICATION_DATE')
+  checkFresh(facts.event.eventDate, now, 'EVENT_DATE')
   if (facts.conflictingClaims.length) throw new Rejection('CONFLICTING_SOURCES')
   if (facts.confidence < QUALITY.minStoryConfidence) throw new Rejection('INSUFFICIENT_EVIDENCE')
   const eventSource = sources.find(s => s.id === facts.eventSourceId)
-  if (!eventSource || !normalize(eventSource.text + ' ' + eventSource.publishedAt).includes(normalize(facts.eventDateEvidence))) throw new Rejection('INVALID_DATE')
+  if (!eventSource || !normalize(eventSource.text + ' ' + eventSource.publishedAt).includes(normalize(facts.eventDateEvidence))) throw new Rejection('INVALID_DATE', 'EVENT_DATE_EVIDENCE_NOT_FOUND')
   const high = highRisk(candidate, facts)
   for (const fact of facts.confirmedFacts) {
     if (fact.confidence < QUALITY.minFactConfidence) throw new Rejection('INSUFFICIENT_EVIDENCE')
@@ -81,7 +82,7 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
     })
     // Every fact, not just the headline, needs qualifying support.
     sourcePolicy(support, high || HIGH_RISK.test(fact.claim))
-    for (const source of support) if (!Number.isFinite(date(source.publishedAt)) || date(source.publishedAt) > now.getTime()) throw new Rejection('INVALID_DATE')
+    for (const source of support) if (!Number.isFinite(date(source.publishedAt)) || date(source.publishedAt) > now.getTime()) throw new Rejection('INVALID_DATE', `SOURCE_PUBLICATION_DATE_INVALID:${source.id}`)
     if (fact.core && !support.some(source => now.getTime() - date(source.publishedAt) <= QUALITY.freshnessHours * 3600000)) throw new Rejection('STALE_STORY')
   }
   const evidence = normalize(facts.confirmedFacts.flatMap(f => f.supportedBy.map(s => s.excerpt)).join(' '))
@@ -111,7 +112,7 @@ export function cleanDraft(draft: Draft, facts: FactSheet) {
 export function publicationScore(facts: FactSheet, sources: Source[], review: Review, candidate: Candidate) {
   if (review.conflictingClaims.length) throw new Rejection('CONFLICTING_SOURCES')
   if (review.unverifiedEntities.length) throw new Rejection('UNVERIFIED_ENTITY')
-  if (!review.eventDateVerified) throw new Rejection('INVALID_DATE')
+  if (!review.eventDateVerified) throw new Rejection('INVALID_DATE', 'REVIEW_EVENT_DATE_NOT_VERIFIED')
   if (review.unsupportedClaims.length || facts.confirmedFacts.some(f => !review.supportedFactIds.includes(f.id))) throw new Rejection('UNSUPPORTED_CLAIM')
   if (!review.analysisGrounded || !review.originalValue || !review.clearWriting) throw new Rejection('LOW_INFORMATION_VALUE')
   const adjusted = sources.map(s => ({ ...s }))

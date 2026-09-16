@@ -5,7 +5,10 @@ import matter from 'gray-matter'
 import { QUALITY, classifySource } from '../scripts/news-quality/config'
 import { checkFresh, cleanDraft, duplicateEvent, renderDraft } from '../scripts/news-quality/gate'
 import { evaluateCandidate, processCandidate } from '../scripts/news-quality/pipeline'
-import { SourceFetcher, extractSource, canonicalSource } from '../scripts/news-quality/sources'
+import { SourceFetcher, extractSource, canonicalSource, collectSources, mergeSourceOrigins } from '../scripts/news-quality/sources'
+import { documentLinks, publicationDate } from '../scripts/news-quality/documents'
+import { discoverFeed } from '../scripts/news-quality/feeds'
+import { diagnosticUrl } from '../scripts/news-quality/diagnostics'
 import { createModel } from '../scripts/news-quality/model'
 import { auditStories } from '../scripts/news-quality/audit'
 import { Rejection, type Candidate, type FactSheet, type Draft, type Review, type Source, type Model } from '../scripts/news-quality/types'
@@ -105,7 +108,7 @@ test('malformed extraction safely rejects without final images or MDX writes', a
   let writes = 0; const logs: string[] = []
   const accepted = await processCandidate(candidate, { collect: async () => [primary], model: async () => null, history: [], publish: async () => { writes++ }, log: message => logs.push(message), now })
   assert.equal(accepted, false); assert.equal(writes, 0)
-  assert.match(logs[0], /MALFORMED_MODEL_OUTPUT/)
+  assert.match(logs.join('\n'), /MALFORMED_MODEL_OUTPUT/)
 })
 test('source retrieval failure skips all final side effects', async () => {
   let writes = 0
@@ -177,4 +180,137 @@ test('daily images, commits and IndexNow are gated on accepted publication; bot/
   assert.match(source, /41898282\+github-actions\[bot\]@users.noreply.github.com/)
   assert.doesNotMatch(source, /VERCEL_DEPLOY_HOOK/)
   assert.match(readFileSync('scripts/notify-indexnow.ts', 'utf8'), /response.ok &&/)
+})
+
+const evidenceHtml = (links = '', date = '2026-09-15T09:00:00Z') => `<meta property="article:published_time" content="${date}"><article>${'Acme Atlas editor launch supports developers building software. '.repeat(8)}${links}</article>`
+function fixtureFetcher(pages: Record<string, string | number>) {
+  const requested: string[] = []
+  const fetcher = new SourceFetcher((async (input: string | URL | Request) => {
+    const url = String(input); requested.push(url)
+    const page = pages[url]
+    return typeof page === 'string' ? new Response(page, { headers: { 'Content-Type': 'text/html' } }) : new Response('', { status: page || 404 })
+  }) as typeof fetch, async () => {})
+  return { fetcher, requested }
+}
+test('collector follows official links on the second reporting document, not just the first', async () => {
+  const first = 'https://theverge.com/news/acme', second = 'https://techcrunch.com/acme-atlas', official = 'https://openai.com/index/atlas'
+  const {fetcher} = fixtureFetcher({ [first]: evidenceHtml(`<a href="${second}">Acme Atlas editor launch</a>`), [second]: evidenceHtml(`<a href="${official}">Official announcement</a>`), [official]: evidenceHtml() })
+  const result = await collectSources({...candidate,url:first},[],fetcher,()=>{},now)
+  assert.ok(result.some(s=>s.url===official && s.tier===1))
+})
+test('undated discovery pages still yield canonical and official source URLs without becoming evidence', async () => {
+  const first = 'https://theverge.com/news/acme', official = 'https://openai.com/index/atlas'
+  const {fetcher} = fixtureFetcher({ [first]: `<link rel="canonical" href="${official}"><article>No usable date</article>`, [official]: evidenceHtml() })
+  const logs: string[]=[]
+  const result = await collectSources({...candidate,url:first},[],fetcher,m=>logs.push(m),now)
+  assert.equal(result.length,1); assert.equal(result[0].url,official)
+  assert.match(logs.join('\n'),/PUBLICATION_DATE_MISSING/)
+})
+test('RSS outbound primary hints survive an inaccessible article', async () => {
+  const official = 'https://openai.com/index/atlas'
+  const {fetcher}=fixtureFetcher({[candidate.url]:403,[official]:evidenceHtml()})
+  const result=await collectSources({...candidate,discoveryLinks:[official]},[],fetcher,()=>{},now)
+  assert.equal(result[0].url,official)
+})
+test('known official feeds supply actual relevant URLs; feed entries are not evidence', async () => {
+  const official='https://blogs.nvidia.com/blog/atlas-release/'
+  const {fetcher,requested}=fixtureFetcher({[candidate.url]:evidenceHtml(),'https://blogs.nvidia.com/feed/':`<rss version="2.0"><channel><title>NVIDIA</title><item><title>Nvidia Atlas editor launch</title><link>${official}</link></item><item><title>Unrelated event</title><link>https://blogs.nvidia.com/blog/unrelated/</link></item></channel></rss>`,[official]:evidenceHtml()})
+  const result=await collectSources({...candidate,title:'Nvidia launches Atlas editor'},[],fetcher,()=>{},now)
+  assert.ok(result.some(s=>s.url===official && s.tier===1))
+  assert.ok(!result.some(s=>s.url.endsWith('/feed/')))
+  assert.ok(!requested.some(u=>u.includes('unrelated')))
+  assert.ok(requested.length<=QUALITY.maxSourceAttempts)
+})
+test('official pages are prioritized ahead of same-publisher navigation and capacity', async () => {
+  const official='https://openai.com/index/atlas'
+  const links=Array.from({length:8},(_,i)=>`<a href="https://theverge.com/news/unrelated-${i}">Unrelated gadget ${i}</a>`).join('')+`<a href="${official}">Official source</a>`
+  const {fetcher,requested}=fixtureFetcher({[candidate.url]:evidenceHtml(links),[official]:evidenceHtml()})
+  const result=await collectSources(candidate,[],fetcher,()=>{},now)
+  assert.equal(result.filter(s=>s.tier===1).length,1)
+  assert.equal(requested.length,2)
+})
+test('failed official retrieval logs HTTP status and counts without logging query secrets', async () => {
+  const official='https://openai.com/index/atlas?token=secret-value'
+  const {fetcher}=fixtureFetcher({[candidate.url]:evidenceHtml(`<a href="${official}">Official announcement</a>`),[official]:404})
+  const logs:string[]=[]
+  await collectSources(candidate,[],fetcher,m=>logs.push(m),now)
+  assert.match(logs.join('\n'),/Primary retrieval failed:.*HTTP_404/)
+  assert.match(logs.join('\n'),/Official-domain candidates: 1/)
+  assert.doesNotMatch(logs.join('\n'),/secret-value/)
+  assert.equal(diagnosticUrl('https://user:secret@example.com/a?key=x#x'),'https://example.com/a')
+})
+test('official URLs remain exact-host; arbitrary linked domains are never promoted or crawled', async () => {
+  const spoof='https://openai.com.evil.example/index/atlas'
+  const {fetcher,requested}=fixtureFetcher({[candidate.url]:evidenceHtml(`<a href="${spoof}">Official release</a>`)})
+  await collectSources(candidate,[],fetcher,()=>{},now)
+  assert.equal(requested.length,1); assert.equal(classifySource(spoof).tier,3)
+  assert.equal(classifySource('https://blogs.windows.com/windowsexperience/2026/09/15/news').tier,1)
+  assert.equal(classifySource('https://blogs.windows.com/community/post').tier,3)
+})
+test('discovery links support structured citations and apostrophes in double-quoted attributes', () => {
+  const links=documentLinks(`<a href="https://openai.com/index/editor's-release">source</a><script type="application/ld+json">{"@type":"NewsArticle","citation":{"url":"https://ftc.gov/news/decision"}}</script>`,'https://theverge.com/news/a')
+  assert.ok(links.some(l=>l.url.includes("editor's-release")))
+  assert.ok(links.some(l=>l.url==='https://ftc.gov/news/decision'))
+})
+test('date parsing reads itemprop and typed JSON-LD instead of arbitrary embedded datePublished', () => {
+  assert.equal(publicationDate('<meta itemprop="datePublished" content="2026-09-15T09:00:00Z">',''),'2026-09-15T09:00:00.000Z')
+  const html='<script type="application/json">{"datePublished":"1999-01-01"}</script><script type="application/ld+json">{"@graph":[{"@type":"WebSite","datePublished":"2000-01-01"},{"@type":"NewsArticle","datePublished":"2026-09-15T09:00:00Z"}]}</script>'
+  assert.equal(publicationDate(html,''),'2026-09-15T09:00:00.000Z')
+})
+test('missing, impossible and conflicting publication dates fail with distinct diagnostics', () => {
+  for(const [html,detail] of [
+    ['<meta property="article:modified_time" content="2026-09-15">','PUBLICATION_DATE_MISSING'],
+    ['<meta property="article:published_time" content="2026-02-30">','PUBLICATION_DATE_UNPARSABLE'],
+    ['<meta property="article:published_time" content="2026-09-15"><script type="application/ld+json">{"@type":"Article","datePublished":"2026-01-01"}</script>','PUBLICATION_DATES_CONFLICT'],
+  ]) assert.throws(()=>publicationDate(html,''),(e:unknown)=>e instanceof Rejection && e.detail===detail)
+})
+test('future event, stale event, missing date evidence and reviewer refusal remain different failures', async () => {
+  const scenarios:[FactSheet,Review,string][]=[
+    [{...facts,event:{...facts.event,eventDate:'2026-10-07'}},review,'EVENT_DATE_IN_FUTURE'],
+    [{...facts,event:{...facts.event,eventDate:'2026-01-01'}},review,'EVENT_DATE_OUTSIDE_48H'],
+    [{...facts,eventDateEvidence:'Missing evidence'},review,'EVENT_DATE_EVIDENCE_NOT_FOUND'],
+    [facts,{...review,eventDateVerified:false},'REVIEW_EVENT_DATE_NOT_VERIFIED'],
+  ]
+  for(const [f,r,detail] of scenarios) await assert.rejects(evaluateCandidate(candidate,[primary],[],model(f,draft,r),now),(e:unknown)=>e instanceof Rejection && e.detail===detail)
+})
+test('feed failures identify exact endpoint and distinguish HTTP, malformed XML and empty feed', async () => {
+  const url='https://feeds.feedburner.com/venturebeat/SZYF', logs:string[]=[]
+  await discoverFeed(url,fixtureFetcher({[url]:404}).fetcher,m=>logs.push(m),now)
+  assert.match(logs.join('\n'),/feeds.feedburner.com\/venturebeat\/SZYF.*HTTP_404/)
+  await discoverFeed(url,fixtureFetcher({[url]:'not a feed'}).fetcher,m=>logs.push(m),now)
+  assert.match(logs.join('\n'),/FEED_PARSE_ERROR/)
+  const empty:string[]=[]
+  await discoverFeed(url,fixtureFetcher({[url]:'<rss version="2.0"><channel><title>Empty</title></channel></rss>'}).fetcher,m=>empty.push(m),now)
+  assert.match(empty.join('\n'),/Items: 0/); assert.doesNotMatch(empty.join('\n'),/unavailable/)
+})
+test('existing hard budgets and freshness thresholds remain unchanged', async () => {
+  assert.equal(QUALITY.maxFetches,32); assert.equal(QUALITY.maxSourceAttempts,6); assert.equal(QUALITY.maxSources,4)
+  assert.equal(QUALITY.maxModelCalls,9); assert.equal(QUALITY.freshnessHours,48)
+  assert.equal(QUALITY.publishThreshold,75); assert.equal(QUALITY.minFactConfidence,85); assert.equal(QUALITY.minStoryConfidence,85)
+  const {fetcher}=fixtureFetcher({})
+  for(let i=0;i<QUALITY.maxFetches;i++) await assert.rejects(fetcher.get(`https://example.com/${i}`))
+  await assert.rejects(fetcher.get('https://example.com/overflow'),rejected('BUDGET_EXHAUSTED'))
+  assert.equal(fetcher.count,32)
+})
+test('mentioning Reuters never makes two Verge articles independent', () => {
+  const a=extractSource('https://theverge.com/news/a',evidenceHtml(),'s1')
+  const b=extractSource('https://theverge.com/news/b',evidenceHtml('<p>According to Reuters, another report exists.</p>'),'s2')
+  assert.equal(a.group,b.group)
+  mergeSourceOrigins([a,b]); assert.equal(a.group,b.group)
+})
+test('byline syndication collapses origins without splitting same-owner publications', () => {
+  const a=extractSource('https://theverge.com/news/a','<meta name="author" content="Reuters">'+evidenceHtml(),'s1')
+  const b=extractSource('https://theverge.com/news/b',evidenceHtml('<p>A different original report.</p>'),'s2')
+  const c=extractSource('https://reuters.com/news/a',evidenceHtml('<p>The wire original.</p>'),'s3')
+  mergeSourceOrigins([a,b,c]); assert.equal(new Set([a.group,b.group,c.group]).size,1)
+})
+test('discovery ignores navigation, admin handlers and tag pagination on official sites', () => {
+  const links=documentLinks('<nav><a href="https://openai.com/index/noise">Noise</a></nav><article><a href="/wp-admin/admin-post.php">Action</a><a href="/news/tag/ai/page/2/">Archive</a><a href="/news/real-release/">Real release</a></article>','https://about.fb.com/news/story/')
+  assert.deepEqual(links.map(l=>l.url),['https://about.fb.com/news/real-release/'])
+})
+test('organization mentions in article text can select an official endpoint within the same budget', async () => {
+  const official='https://blogs.nvidia.com/blog/atlas-release/'
+  const {fetcher,requested}=fixtureFetcher({[candidate.url]:evidenceHtml('<p>Nvidia participated in the Atlas launch.</p>'),'https://blogs.nvidia.com/feed/':`<rss version="2.0"><channel><title>NVIDIA</title><item><title>Acme Atlas editor launch</title><link>${official}</link></item></channel></rss>`,[official]:evidenceHtml()})
+  const result=await collectSources(candidate,[],fetcher,()=>{},now)
+  assert.ok(result.some(s=>s.url===official)); assert.ok(requested.length<=QUALITY.maxSourceAttempts)
 })

@@ -1,4 +1,5 @@
 import { HIGH_RISK } from './config'
+import { failureDetail, safeLabel } from './diagnostics'
 import { checkFresh, checkFacts, cleanDraft, duplicateEvent, highRisk, parseFacts, parseDraft, parseReview, publicationScore, sourcePolicy } from './gate'
 import { Rejection, type Approved, type Candidate, type HistoricalStory, type Model, type Source } from './types'
 
@@ -31,17 +32,29 @@ export async function processCandidate(candidate: Candidate, dependencies: {
   verifyAvailable?: (sources: Source[]) => Promise<void>;
 }) {
   let sources: Source[] = []
+  let stage = 'candidate_date'
   try {
+    dependencies.log(`[AIBeat Quality Gate] Candidate: ${safeLabel(candidate.title)}`)
     checkFresh(candidate.publishedAt, dependencies.now || new Date())
+    stage = 'source_discovery'
     sources = await dependencies.collect()
-    const approved = await evaluateCandidate(candidate, sources, dependencies.history, dependencies.model, dependencies.now)
+    const trackedModel: Model = async (modelStage, input) => {
+      stage = modelStage
+      const output = await dependencies.model(modelStage, input)
+      stage = `${modelStage}_validation`
+      return output
+    }
+    stage = 'minimum_evidence'
+    const approved = await evaluateCandidate(candidate, sources, dependencies.history, trackedModel, dependencies.now)
+    stage = 'source_availability'
     await dependencies.verifyAvailable?.(approved.sources)
+    stage = 'publication'
     await dependencies.publish(approved)
     dependencies.log(`[AIBeat Quality Gate] PUBLISH | Sources: ${approved.sources.length} | Primary: ${approved.sources.filter(s => s.tier === 1).length} | Risk: ${approved.facts.riskLevel} | Facts: ${approved.facts.confirmedFacts.length} | Uncertain claims omitted: ${approved.facts.uncertainClaims.length} | Paragraphs removed: ${approved.removedParagraphs} | Score: ${approved.qualityScore}`)
     return true
   } catch (error) {
-    const reason = error instanceof Rejection ? error.reason : 'MALFORMED_MODEL_OUTPUT'
-    dependencies.log(`[AIBeat Quality Gate] SKIPPED: ${candidate.title.replace(/[\r\n\x00-\x1f]/g, ' ').slice(0, 140)} | Reason: ${reason} | Sources checked: ${sources.length} | Primary: ${sources.filter(s => s.tier === 1).length}`)
+    const reason = error instanceof Rejection ? failureDetail(error) : stage === 'source_discovery' || stage === 'source_availability' ? failureDetail(error) : 'MALFORMED_MODEL_OUTPUT'
+    dependencies.log(`[AIBeat Quality Gate] SKIPPED: ${safeLabel(candidate.title)} | Stage: ${stage} | Reason: ${reason} | Sources checked: ${sources.length} | Primary: ${sources.filter(s => s.tier === 1).length}`)
     return false
   }
 }
