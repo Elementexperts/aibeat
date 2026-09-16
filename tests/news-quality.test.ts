@@ -13,6 +13,7 @@ import { documentLinks, publicationDate } from '../scripts/news-quality/document
 import { discoverFeed } from '../scripts/news-quality/feeds'
 import { diagnosticUrl } from '../scripts/news-quality/diagnostics'
 import { createModel } from '../scripts/news-quality/model'
+import { ModelFailure } from '../scripts/news-quality/model-diagnostics'
 import { auditStories } from '../scripts/news-quality/audit'
 import { Rejection, type Candidate, type FactSheet, type Draft, type Review, type Source, type Model } from '../scripts/news-quality/types'
 
@@ -587,4 +588,76 @@ for (const [entity, product, title, claim] of [
     verifyAvailable: async () => { availability++ }, publish: async approved => { writes++; assert.equal(approved.evidenceMode, 'TRUSTED_SINGLE_SOURCE') }, log: m => logs.push(m) })
   assert.equal(accepted, true); assert.equal(availability, 1); assert.equal(writes, 1)
   assert.match(logs.join('\n'), /Risk: LOW \| Risk trigger: ROUTINE_PRODUCT_ANNOUNCEMENT/)
+})
+
+const completion = (content: unknown, finish_reason = 'stop') => Response.json({ choices: [{ finish_reason, message: { content } }], usage: { prompt_tokens: 1000, completion_tokens: 3000, total_tokens: 4000 } })
+for (const [label, response, category] of [
+  ['HTTP 429', () => Response.json({ error: 'secret request material' }, { status: 429 }), 'MODEL_RATE_LIMITED'],
+  ['HTTP 500', () => Response.json({ error: 'secret request material' }, { status: 500 }), 'MODEL_SERVER_ERROR'],
+  ['HTTP 401', () => Response.json({ error: 'secret request material' }, { status: 401 }), 'MODEL_HTTP_ERROR'],
+  ['length', () => completion('{', 'length'), 'MODEL_TRUNCATED'],
+  ['missing content', () => completion(undefined), 'MODEL_EMPTY_CONTENT'],
+  ['blank content', () => completion('  '), 'MODEL_EMPTY_CONTENT'],
+  ['invalid JSON', () => completion('{secret response material'), 'MODEL_INVALID_JSON'],
+  ['invalid finish reason', () => completion('{}', 'secret finish value'), 'MODEL_INVALID_FINISH_REASON'],
+  ['invalid schema', () => completion('{}'), 'MODEL_SCHEMA_INVALID'],
+  ['unexpected exception', () => { throw new Error('secret exception material') }, 'MODEL_UNEXPECTED_ERROR'],
+  ['timeout', () => { throw new DOMException('secret timeout material', 'TimeoutError') }, 'MODEL_TIMEOUT'],
+  ['invalid envelope', () => new Response('secret non-JSON envelope'), 'MODEL_UNEXPECTED_ERROR'],
+] as [string, () => Response, string][]) test(`model diagnostics: ${label} maps safely to ${category}`, async () => {
+  const logs: string[] = []; let calls = 0
+  const m = createModel('secret-api-key', 'openai/gpt-oss-120b', (async () => { calls++; return response() }) as typeof fetch, line => logs.push(line))
+  await assert.rejects(m('facts', { evidence: 'secret source document' }), (e: unknown) => e instanceof ModelFailure && e.category === category && e.reason === 'MALFORMED_MODEL_OUTPUT')
+  assert.equal(calls, 1); assert.equal(logs.length, 1)
+  assert.match(logs[0], new RegExp(`Failure: ${category}`)); assert.match(logs[0], /Attempt: 1\/1/)
+  assert.doesNotMatch(logs[0], /secret/)
+  if (label === 'length') assert.match(logs[0], /Finish reason: length.*Prompt tokens: 1000.*Completion tokens: 3000.*Total tokens: 4000/)
+  if (label === 'invalid JSON') assert.match(logs[0], /JSON parse: FAIL.*Problem: json_syntax_error/)
+  if (label === 'invalid schema') assert.match(logs[0], /JSON parse: PASS.*Schema validation: FAIL.*Field: story \| Problem: missing_required_field/)
+})
+test('facts/draft/review success logs reuse existing schemas without changing request settings', async () => {
+  const outputs = { facts, draft, review }; const logs: string[] = []; let calls = 0
+  for (const stage of ['facts', 'draft', 'review'] as const) {
+    const m = createModel('fixture-key', 'openai/gpt-oss-120b', (async (url, options) => {
+      calls++; assert.equal(url, 'https://api.groq.com/openai/v1/chat/completions')
+      const body = JSON.parse(options!.body as string)
+      assert.deepEqual(body.response_format, { type: 'json_object' }); assert.equal(body.max_tokens, QUALITY.maxOutputTokens)
+      assert.equal(body.temperature, 0.1); assert.equal(body.model, 'openai/gpt-oss-120b')
+      return completion(JSON.stringify(outputs[stage]))
+    }) as typeof fetch, line => logs.push(line))
+    assert.deepEqual(await m(stage, {}), outputs[stage])
+    assert.match(logs[logs.length - 1], /Provider: Groq.*HTTP status: 200.*JSON parse: PASS \| Schema validation: PASS/)
+  }
+  assert.equal(calls, 3)
+})
+test('schema failure reports one safe missing-field issue without response values', async () => {
+  const value = { ...facts } as Partial<FactSheet>; delete value.confirmedFacts; delete value.confidence
+  const logs: string[] = []
+  const m = createModel('fixture-key', 'fixture-model', (async () => completion(JSON.stringify(value))) as typeof fetch, line => logs.push(line))
+  await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_SCHEMA_INVALID')
+  assert.match(logs[0], /Field: confirmedFacts \| Problem: missing_required_field/)
+  assert.equal((logs[0].match(/Field:/g) || []).length, 1); assert.ok(!logs[0].includes(excerpt))
+})
+test('diagnostic observation preserves extra-property acceptance and does not normalize fenced JSON', async () => {
+  const extra = { ...facts, extra: 'not previously forbidden' }
+  const valid = createModel('key', 'fixture', (async () => completion(JSON.stringify(extra))) as typeof fetch, () => {})
+  assert.deepEqual(await valid('facts', {}), extra)
+  const fenced = createModel('key', 'fixture', (async () => completion('```json\n' + JSON.stringify(facts) + '\n```')) as typeof fetch, () => {})
+  await assert.rejects(fenced('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_INVALID_JSON')
+})
+test('diagnostic model names cannot expose the credential or inject log fields', async () => {
+  for (const modelName of ['secret-api-key', 'prefix-secret-api-key', 'bad\nInjected: value']) {
+    const logs: string[] = []
+    const m = createModel('secret-api-key', modelName, (async () => completion(JSON.stringify(facts))) as typeof fetch, line => logs.push(line))
+    await m('facts', {})
+    assert.match(logs[0], /Model: REDACTED_INVALID_MODEL_ID/); assert.doesNotMatch(logs[0], /secret-api-key|Injected/)
+  }
+})
+test('malformed, unsupported, low-confidence outputs still skip without retry or side effects', async () => {
+  for (const content of ['{bad', JSON.stringify({ ...facts, confidence: 20 }), JSON.stringify({ ...facts, confirmedFacts: [{ ...facts.confirmedFacts[0], claim: 'Acme has 900 users.' }] })]) {
+    let calls = 0, writes = 0
+    const m = createModel('key', 'fixture', (async () => { calls++; return completion(content) }) as typeof fetch, () => {})
+    assert.equal(await processCandidate(candidate, { collect: async () => [primary], model: m, history: [], now, log: () => {}, publish: async () => { writes++ } }), false)
+    assert.equal(calls, 1); assert.equal(writes, 0)
+  }
 })
