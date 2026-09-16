@@ -10,6 +10,7 @@ export type SourceRule = { host: string; name: string; tier: 1 | 2; group: strin
 // Editorial configuration, not a model-provided reputation score. Exact hosts only.
 // Add official paths and publishers here after checking ownership and editorial standards.
 export const SOURCE_RULES: SourceRule[] = [
+  { host: 'forbes.com', name: 'Forbes', group: 'forbes', tier: 2, path: /^\/sites\/[^/]+\/\d{4}\/\d{2}\/\d{2}\// },
   ...[
     ['openai.com', 'OpenAI', 'openai'], ['anthropic.com', 'Anthropic', 'anthropic'],
     ['deepmind.google', 'Google DeepMind', 'google'], ['blog.google', 'Google', 'google'],
@@ -40,6 +41,14 @@ export const SOURCE_RULES: SourceRule[] = [
     ['cnbc.com', 'CNBC', 'nbcu'], ['zdnet.com', 'ZDNET', 'ziffdavis'],
   ].map(([host, name, group]) => ({ host, name, group, tier: 2 as const })),
 ]
+
+// These existing editorial domains are candidates for document-level trust, not
+// blanket endorsements of everything published on the host. Forbes requires an
+// explicit staff byline; all hosts require article/author evidence and review.
+export const TRUSTED_EDITORIAL_PUBLISHERS = SOURCE_RULES.filter(rule => rule.tier === 2).map(rule => ({
+  host: rule.host, staffEvidence: rule.host === 'forbes.com' ? 'explicit' as const : 'article-and-author' as const,
+}))
+export const TRUSTED_EDITORIAL_SOURCE_POINTS = 22
 
 // Verified public entry points, not guessed article paths. Only URLs actually
 // returned by these documents/feeds may enter the evidence queue.

@@ -1,9 +1,10 @@
 import { lookup } from 'node:dns/promises'
 import { isPublicAddress } from '../news-images'
 import Parser from 'rss-parser'
-import { documentLinks, metadata, publicationDate, decode } from './documents'
+import { articleNodes, documentLinks, metadata, publicationDate, decode } from './documents'
 import { diagnosticUrl, failureDetail } from './diagnostics'
 import { classifySource, QUALITY, OFFICIAL_DISCOVERY } from './config'
+import { classifyEditorial, ordinaryTrustedCandidate } from './trust'
 import { eventTokens, normalize } from './gate'
 import { Rejection, type Candidate, type Source } from './types'
 
@@ -95,7 +96,11 @@ export function extractSource(url: string, html: string, id: string): Source {
   if (/\b(?:by|via|reporting by) (?:the )?Associated Press\b/i.test(byline) || /^(?:The )?Associated Press$/i.test(meta.author || '')) originGroups.push('ap')
   let imageUrl: string | undefined
   try { if (meta['og:image']) imageUrl = canonicalSource(new URL(meta['og:image'], url).href) } catch { /* Optional image. */ }
-  return { id, url, name: classification.name, tier: classification.tier, group, text, publishedAt, links: Array.from(new Set(links)), imageUrl, originGroups }
+  const editorial = classifyEditorial(url, html)
+  const tier = classification.tier === 2 && editorial.contentType !== 'STAFF_REPORTING' ? 3 : classification.tier
+  const headline = articleNodes(html).find(node => typeof node.headline === 'string')?.headline
+  const title = decode(meta['og:title'] || (typeof headline === 'string' ? headline : '') || html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1]?.replace(/<[^>]*>/g, ' ') || '').slice(0, 220)
+  return { id, url, title, editorial, name: classification.name, tier, group, text, publishedAt, links: Array.from(new Set(links)), imageUrl, originGroups }
 }
 export function relatedCandidate(a: Candidate, b: Candidate) {
   const first = eventTokens(a.title), second = eventTokens(b.title)
@@ -113,7 +118,7 @@ export function mergeSourceOrigins(sources: Source[]) {
   }
   sources.forEach((s, i) => { s.group = Array.from(groups[i]).sort().join('|') })
 }
-export async function collectSources(candidate: Candidate, candidates: Candidate[], fetcher: SourceFetcher, log: (message: string) => void = () => {}, now = new Date()) {
+export async function collectSources(candidate: Candidate, candidates: Candidate[], fetcher: SourceFetcher, log: (message: string) => void = () => {}, now = new Date(), forceEnhanced = false) {
   const sources: Source[] = []
   const queue = [candidate.url]
   const seen = new Set<string>()
@@ -137,6 +142,7 @@ export async function collectSources(candidate: Candidate, candidates: Candidate
   for (const related of candidates.filter(c => c.url !== candidate.url && relatedCandidate(candidate, c))) enqueue(related.url, related.title)
   try {
     while (attempts < QUALITY.maxSourceAttempts) {
+      if (sources.length >= QUALITY.maxSources && sources.some(s => s.tier === 1)) break
       const primaryIndex = queue.findIndex(url => classifySource(url).tier === 1 && !seen.has(url))
       // Leave room for a primary source even after four secondary documents.
       const needPrimary = !sources.some(s => s.tier === 1)
@@ -174,6 +180,7 @@ export async function collectSources(candidate: Candidate, candidates: Candidate
         }
         if (sources.some(s => s.url === page.url)) continue
         const source = extractSource(page.url, page.body, `s${++serial}`)
+        source.requestedUrl = url
         if (sources.length >= QUALITY.maxSources) {
           const replace = sources.findIndex(s => s.tier !== 1)
           if (source.tier !== 1 || replace < 0) continue
@@ -183,6 +190,10 @@ export async function collectSources(candidate: Candidate, candidates: Candidate
         const age = now.getTime() - Date.parse(source.publishedAt)
         const dateStatus = age < 0 ? 'FUTURE_PUBLICATION_DATE' : age > QUALITY.freshnessHours * 3600000 ? 'OUTSIDE_48H_CONTEXT_ONLY' : 'WITHIN_48H'
         log(`[AIBeat Discovery] Retrieved: ${diagnosticUrl(source.url)} | Tier: ${source.tier} | Published: ${source.publishedAt} | ${dateStatus}`)
+        if (!forceEnhanced && ordinaryTrustedCandidate(candidate, source)) {
+          log('[AIBeat Discovery] Original trusted editorial article retrieved; deferring corroboration to risk validation.')
+          return sources
+        }
       } catch (error) {
         log(`[AIBeat Discovery] ${hub ? 'Official endpoint' : tier === 1 ? 'Primary retrieval' : 'Discovery retrieval'} failed: ${diagnosticUrl(url)} | ${failureDetail(error)}`)
         if (error instanceof Rejection && error.reason === 'BUDGET_EXHAUSTED') throw error

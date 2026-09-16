@@ -9,7 +9,7 @@ import { QUALITY, NEUTRAL_IMAGE_PROMPT, classifySource } from './news-quality/co
 import { SourceFetcher, canonicalSource, collectSources } from './news-quality/sources'
 import { createModel } from './news-quality/model'
 import { processCandidate } from './news-quality/pipeline'
-import { renderDraft } from './news-quality/gate'
+import { renderApproved } from './news-quality/gate'
 import { Rejection, type Approved, type Candidate, type HistoricalStory } from './news-quality/types'
 import { TOOLS } from '../lib/data'
 config({ path: resolve(process.cwd(), '.env.local') })
@@ -46,7 +46,7 @@ async function saveApproved(approved: Approved, history: HistoricalStory[]) {
   // A neutral abstract fallback never depicts an alleged event as having happened.
   const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(NEUTRAL_IMAGE_PROMPT)}?width=1200&height=675&nologo=true`
   const coverImage = await prepareNewsImage({ url: source.imageUrl, source: 'og', sourceUrl: source.url, fallbackUrl })
-  const content = renderDraft(draft)
+  const content = renderApproved(approved)
   const relatedTools = TOOLS.filter(tool => facts.event.entities.some(entity => entity.toLowerCase() === tool.name.toLowerCase()) || (facts.event.product && facts.event.product.toLowerCase() === tool.name.toLowerCase())).map(tool => tool.slug).slice(0, 3)
   const relatedArticles = history.filter(article => facts.event.product.length >= 4 && (article.title + ' ' + (article.deck || '')).toLowerCase().includes(facts.event.product.toLowerCase())).sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, 3).map(article => article.slug)
   const metadata = {
@@ -55,7 +55,7 @@ async function saveApproved(approved: Approved, history: HistoricalStory[]) {
     coverImageUrl: coverImage.url, coverImageAlt: coverImage.source === 'ai' ? 'Abstract illustration of computing and connected geometric shapes' : draft.title,
     coverImageWidth: coverImage.width || 1200, coverImageHeight: coverImage.height || 630,
     coverImageSource: coverImage.source, coverImageSourceUrl: coverImage.sourceUrl,
-    sources: sources.map(source => ({ name: `${source.name} — ${source.tier === 1 ? 'primary source' : 'reporting'}`, url: source.url })),
+    sources: sources.map(source => ({ name: `${source.name}${source.title ? ' — ' + source.title : ''} — ${source.tier === 1 ? 'primary source' : 'reporting'}`, url: source.url })),
     qualityScore, sourceCount: sources.length, primarySourceCount: sources.filter(s => s.tier === 1).length,
     newsEvent: facts.event, relatedTools, relatedArticles,
   }
@@ -165,7 +165,8 @@ async function main() {
       continue
     }
     const accepted = await processCandidate(candidate, {
-      collect: () => collectSources(candidate, candidates, fetcher, console.log), model, history, log: console.log,
+      collect: () => collectSources(candidate, candidates, fetcher, console.log),
+      collectEnhanced: () => collectSources(candidate, candidates, fetcher, console.log, new Date(), true), model, history, log: console.log,
       verifyAvailable: sources => fetcher.verifyAvailable(sources),
       publish: async approved => {
         const article = await saveApproved(approved, history)

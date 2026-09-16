@@ -3,7 +3,8 @@ import test from 'node:test'
 import { readFileSync } from 'node:fs'
 import matter from 'gray-matter'
 import { QUALITY, classifySource } from '../scripts/news-quality/config'
-import { checkFresh, cleanDraft, duplicateEvent, renderDraft } from '../scripts/news-quality/gate'
+import { checkFresh, cleanDraft, duplicateEvent, renderDraft, renderApproved } from '../scripts/news-quality/gate'
+import { classifyEditorial } from '../scripts/news-quality/trust'
 import { evaluateCandidate, processCandidate } from '../scripts/news-quality/pipeline'
 import { SourceFetcher, extractSource, canonicalSource, collectSources, mergeSourceOrigins } from '../scripts/news-quality/sources'
 import { documentLinks, publicationDate } from '../scripts/news-quality/documents'
@@ -27,7 +28,7 @@ const draft: Draft = { title: candidate.title, deck: 'Acme announced its Atlas e
   { heading: 'What happened', kind: 'facts', paragraphs: [{ text: 'Acme announced the Atlas editor for developers.', factIds: ['f1'] }] },
   { heading: 'Why it matters', kind: 'analysis', paragraphs: [{ text: 'For developers, this could provide another editing option to evaluate.', factIds: ['f1'] }] },
 ] }
-const review: Review = { supportedFactIds: ['f1'], unsupportedClaims: [], conflictingClaims: [], unverifiedEntities: [], derivativeGroups: [], authoritativePrimaryIds: ['s1'], eventDateVerified: true, independentReporting: false, analysisGrounded: true, originalValue: true, clearWriting: true, riskLevel: 'low' }
+const review: Review = { supportedFactIds: ['f1'], unsupportedClaims: [], conflictingClaims: [], unverifiedEntities: [], derivativeGroups: [], authoritativePrimaryIds: ['s1'], trustedEditorialSourceIds: [], eventDateVerified: true, independentReporting: false, analysisGrounded: true, originalValue: true, clearWriting: true, riskLevel: 'low' }
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value))
 function model(f = facts, d = draft, r = review): Model { return async stage => clone(stage === 'facts' ? f : stage === 'draft' ? d : r) }
 const rejected = (reason: string) => (error: unknown) => error instanceof Rejection && error.reason === reason
@@ -313,4 +314,172 @@ test('organization mentions in article text can select an official endpoint with
   const {fetcher,requested}=fixtureFetcher({[candidate.url]:evidenceHtml('<p>Nvidia participated in the Atlas launch.</p>'),'https://blogs.nvidia.com/feed/':`<rss version="2.0"><channel><title>NVIDIA</title><item><title>Acme Atlas editor launch</title><link>${official}</link></item></channel></rss>`,[official]:evidenceHtml()})
   const result=await collectSources(candidate,[],fetcher,()=>{},now)
   assert.ok(result.some(s=>s.url===official)); assert.ok(requested.length<=QUALITY.maxSourceAttempts)
+})
+
+const editorialHtml = (author = 'Alex Reporter', extra = '', published = candidate.publishedAt) =>
+  `<meta property="og:type" content="article"><meta name="author" content="${author}"><meta property="og:title" content="Acme launches Atlas editor"><meta property="article:published_time" content="${published}"><article><p class="byline">${author}</p><p>${excerpt}</p><p>${'The editing workspace provides a place for developers to work with their software projects. '.repeat(4)}</p>${extra}</article>`
+const techUrl = 'https://techcrunch.com/2026/09/15/acme-atlas/'
+const trustedCandidate = { ...candidate, url: techUrl }
+const trustedReview: Review = { ...review, authoritativePrimaryIds: [], trustedEditorialSourceIds: ['s1'] }
+const trustedSource = () => extractSource(techUrl, editorialHtml(), 's1')
+const trustedFacts = (): FactSheet => ({ ...clone(facts), eventDateEvidence: '2026-09-15T09:00:00.000Z' })
+
+for (const [publisher, url, author] of [
+  ['TechCrunch', techUrl, 'Alex Reporter'],
+  ['Reuters', 'https://www.reuters.com/technology/acme-atlas-2026-09-15/', 'Alex Reporter'],
+  ['Forbes staff', 'https://www.forbes.com/sites/alex/2026/09/15/acme-atlas/', 'Alex Reporter, Forbes Staff'],
+]) test(`${publisher} ordinary launch passes from one original editorial source with explicit attribution`, async () => {
+  const source = extractSource(url, editorialHtml(author), 's1')
+  const approved = await evaluateCandidate({ ...candidate, url }, [source], [], model(trustedFacts(), draft, trustedReview), now)
+  assert.equal(approved.evidenceMode, 'TRUSTED_SINGLE_SOURCE')
+  assert.equal(approved.qualityScore, 87)
+  const rendered = renderApproved(approved)
+  assert.match(rendered, /Based on reporting by <a href=/)
+  assert.ok(rendered.includes(source.name)); assert.match(rendered, /AIBeat analysis/)
+  assert.doesNotMatch(rendered, /qualityScore|Score:|87/)
+})
+
+for (const [label, suffix, author, extra] of [
+  ['contributor', 'alex', 'Alex Reporter, Contributor', ''],
+  ['opinion', 'alex', 'Alex Reporter, Forbes Staff', '<meta name="article:section" content="Opinion">'],
+  ['sponsored', 'brandvoice', 'Alex Reporter, Forbes Staff', '<p>BrandVoice paid program</p>'],
+  ['ambiguous', 'alex', 'Alex Reporter', ''],
+  ['press release', 'forbespr', 'Forbes Press Releases, Forbes Staff', ''],
+]) test(`Forbes ${label} cannot use the trusted-source bypass`, async () => {
+  const url = `https://www.forbes.com/sites/${suffix}/2026/09/15/acme-atlas/`
+  const source = extractSource(url, editorialHtml(author, extra), 's1')
+  assert.notEqual(source.editorial?.contentType, 'STAFF_REPORTING'); assert.equal(source.tier, 3)
+  await assert.rejects(evaluateCandidate({ ...candidate, url }, [source], [], model(trustedFacts(), draft, trustedReview), now), rejected('INSUFFICIENT_EVIDENCE'))
+})
+
+test('a Forbes staff mention in ordinary body text is not an explicit staff byline', () => {
+  const result = classifyEditorial('https://forbes.com/sites/alex/2026/09/15/atlas/', editorialHtml('Alex Reporter', '<p>Forbes Staff attended a separate event.</p>'))
+  assert.equal(result.contentType, 'AMBIGUOUS')
+})
+test('structured author staff metadata qualifies but contributor overrides it', () => {
+  const url = 'https://forbes.com/sites/alex/2026/09/15/atlas/'
+  const structured = '<script type="application/ld+json">{"@type":"NewsArticle","author":{"name":"Alex","jobTitle":"Forbes Staff"}}</script>'
+  assert.equal(classifyEditorial(url, editorialHtml() + structured).contentType, 'STAFF_REPORTING')
+  assert.equal(classifyEditorial(url, editorialHtml('Alex, Contributor') + structured).contentType, 'CONTRIBUTOR')
+  assert.equal(classifyEditorial(url, editorialHtml('Alex, Forbes Staff', '<p>' + 'Article text. '.repeat(100) + '</p><span class="byline">Alex, Contributor</span>')).contentType, 'CONTRIBUTOR')
+})
+test('unknown hosts, unverified subdomains, aggregation, missing author, and community pages cannot bypass', async () => {
+  for (const [url, html] of [
+    ['https://unknown.example/atlas', editorialHtml()],
+    ['https://community.techcrunch.com/atlas', editorialHtml()],
+    ['https://techcrunch.com.evil.example/atlas', editorialHtml()],
+    ['https://techcrunch.com/community/atlas', editorialHtml()],
+    [techUrl, editorialHtml('Alex', '<p>Originally published by another outlet.</p>')],
+    [techUrl, editorialHtml('')],
+    [techUrl, editorialHtml('By Reuters')],
+  ]) {
+    const source = extractSource(url, html, 's1')
+    await assert.rejects(evaluateCandidate({ ...candidate, url }, [source], [], model(trustedFacts(), draft, trustedReview), now), rejected('INSUFFICIENT_EVIDENCE'))
+  }
+  // Finding one trusted secondary article cannot promote an unknown original.
+  await assert.rejects(evaluateCandidate(candidate, [trustedSource()], [], model(trustedFacts(), draft, trustedReview), now), rejected('INSUFFICIENT_EVIDENCE'))
+})
+for (const title of ['Acme announces acquisition', 'Acme reports security breach', 'Acme faces serious safety allegations'])
+  test(`trusted publisher remains strict: ${title}`, async () => {
+    await assert.rejects(evaluateCandidate({ ...trustedCandidate, title }, [trustedSource()], [], model(trustedFacts(), draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
+  })
+test('risk in source body or source headline cannot hide behind an ordinary RSS title', async () => {
+  for (const source of [{ ...trustedSource(), text: trustedSource().text + ' Acme disclosed a security breach.' }, { ...trustedSource(), title: 'Acme announces acquisition' }]) {
+    await assert.rejects(evaluateCandidate(trustedCandidate, [source], [], model(trustedFacts(), draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
+  }
+})
+test('model and semantic reviewer can escalate risk but cannot waive primary evidence', async () => {
+  await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], model({ ...trustedFacts(), riskLevel: 'high' }, draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
+  await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], model(trustedFacts(), draft, { ...trustedReview, riskLevel: 'high' }), now), rejected('NO_PRIMARY_SOURCE'))
+})
+test('semantic reviewer can reject original editorial status, contradictions, or unsupported claims', async () => {
+  for (const [r, reason] of [
+    [{ ...trustedReview, trustedEditorialSourceIds: [] }, 'INSUFFICIENT_EVIDENCE'],
+    [{ ...trustedReview, derivativeGroups: [['s1']] }, 'INSUFFICIENT_EVIDENCE'],
+    [{ ...trustedReview, conflictingClaims: ['Material disagreement'] }, 'CONFLICTING_SOURCES'],
+    [{ ...trustedReview, unsupportedClaims: ['Unsupported claim'] }, 'UNSUPPORTED_CLAIM'],
+  ] as [Review, string][]) await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], model(trustedFacts(), draft, r), now), rejected(reason))
+})
+test('trusted single-source unsupported numeric facts fail and unsupported analysis numbers are removed', async () => {
+  const f = trustedFacts(); f.confirmedFacts[0].claim += ' It has 900 users.'
+  await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], model(f, draft, trustedReview), now), rejected('UNSUPPORTED_CLAIM'))
+  const d = clone(draft); d.sections[1].paragraphs.push({ text: 'It has 900 users.', factIds: ['f1'] })
+  const approved = await evaluateCandidate(trustedCandidate, [trustedSource()], [], model(trustedFacts(), d, trustedReview), now)
+  assert.equal(approved.removedParagraphs, 1); assert.doesNotMatch(renderApproved(approved), /900/)
+})
+test('stale trusted original cannot be rescued by a fresh feed timestamp', async () => {
+  const source = extractSource(techUrl, editorialHtml('Alex', '', '2026-09-01T09:00:00Z'), 's1')
+  await assert.rejects(evaluateCandidate(trustedCandidate, [source], [], model(trustedFacts(), draft, trustedReview), now), rejected('STALE_STORY'))
+})
+test('duplicate trusted-source event remains rejected', async () => {
+  const history = [{ slug: 'atlas', title: draft.title, publishedAt: candidate.publishedAt, newsEvent: facts.event }]
+  await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], history, model(trustedFacts(), draft, trustedReview), now), rejected('DUPLICATE_STORY'))
+})
+test('ordinary trusted article uses one GET plus availability HEAD and skips corroboration', async () => {
+  const { fetcher, requested } = fixtureFetcher({ [techUrl]: editorialHtml('Alex', '<a href="https://openai.com/index/atlas">Official announcement</a>') })
+  const sources = await collectSources(trustedCandidate, [], fetcher, () => {}, now)
+  assert.equal(requested.length, 1); assert.equal(sources.length, 1)
+  const approved = await evaluateCandidate(trustedCandidate, sources, [], model(trustedFacts(), draft, trustedReview), now)
+  await fetcher.verifyAvailable(approved.sources)
+  assert.equal(fetcher.count, 2)
+})
+test('high-risk original and explicit enhanced discovery follow actual official links', async () => {
+  const official = 'https://openai.com/index/atlas'
+  for (const force of [false, true]) {
+    const { fetcher, requested } = fixtureFetcher({ [techUrl]: editorialHtml('Alex', `<a href="${official}">Official announcement</a>`), [official]: evidenceHtml() })
+    const c = force ? trustedCandidate : { ...trustedCandidate, title: 'Acme announces acquisition' }
+    const sources = await collectSources(c, [], fetcher, () => {}, now, force)
+    assert.ok(requested.includes(official)); assert.ok(sources.some(s => s.tier === 1))
+  }
+})
+test('model risk escalation retries bounded discovery once and cannot be downgraded on retry', async () => {
+  let expansions = 0, factCalls = 0, writes = 0
+  const logs: string[] = []
+  const accepted = await processCandidate(trustedCandidate, {
+    collect: async () => [trustedSource()], collectEnhanced: async () => { expansions++; return [trustedSource()] },
+    model: async stage => { if (stage === 'facts') { factCalls++; return { ...trustedFacts(), riskLevel: 'high' } } return {} },
+    history: [], now, publish: async () => { writes++ }, log: m => logs.push(m),
+  })
+  assert.equal(accepted, false); assert.equal(expansions, 1); assert.equal(factCalls, 1); assert.equal(writes, 0)
+  assert.match(logs.join('\n'), /Model escalated risk/); assert.match(logs.join('\n'), /NO_PRIMARY_SOURCE/)
+})
+test('late risk escalation can publish only after primary plus independent evidence and fresh review', async () => {
+  let calls = 0, writes = 0
+  const f = trustedFacts(); f.confirmedFacts[0].supportedBy.push({ sourceId: 's2', excerpt })
+  const official: Source = { ...primary, id: 's2', url: 'https://openai.com/index/atlas', group: 'openai', publishedAt: trustedSource().publishedAt }
+  const accepted = await processCandidate(trustedCandidate, {
+    collect: async () => [trustedSource()], collectEnhanced: async () => [trustedSource(), official],
+    model: async stage => {
+      if (stage === 'facts') return ++calls === 1 ? { ...trustedFacts(), riskLevel: 'high' } : clone(f)
+      if (stage === 'draft') return clone(draft)
+      return { ...trustedReview, authoritativePrimaryIds: ['s2'], independentReporting: true }
+    }, history: [], now, log: () => {}, publish: async approved => {
+      writes++; assert.equal(approved.facts.riskLevel, 'high'); assert.equal(approved.evidenceMode, 'ENHANCED_VERIFICATION')
+    },
+  })
+  assert.equal(accepted, true); assert.equal(writes, 1); assert.equal(calls, 2)
+})
+test('semantic rejection never triggers corroboration retries or publication', async () => {
+  let sideEffects = 0
+  const accepted = await processCandidate(trustedCandidate, {
+    collect: async () => [trustedSource()], collectEnhanced: async () => { sideEffects++; return [] },
+    model: model(trustedFacts(), draft, { ...trustedReview, unsupportedClaims: ['Unverified assertion'] }),
+    history: [], now, log: () => {}, publish: async () => { sideEffects++ },
+  })
+  assert.equal(accepted, false); assert.equal(sideEffects, 0)
+})
+test('single-source availability failure still prevents final image and article side effects', async () => {
+  let writes = 0
+  assert.equal(await processCandidate(trustedCandidate, {
+    collect: async () => [trustedSource()], model: model(trustedFacts(), draft, trustedReview),
+    history: [], now, log: () => {}, verifyAvailable: async () => { throw new Rejection('SOURCE_RETRIEVAL_FAILED', 'HTTP_404') },
+    publish: async () => { writes++ },
+  }), false)
+  assert.equal(writes, 0)
+})
+test('new reviewer classification is mandatory and attribution escapes publisher text', async () => {
+  const r = { ...trustedReview } as Partial<Review>; delete r.trustedEditorialSourceIds
+  await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], async stage => stage === 'facts' ? trustedFacts() : stage === 'draft' ? draft : r, now), rejected('MALFORMED_MODEL_OUTPUT'))
+  const approved = await evaluateCandidate(trustedCandidate, [{ ...trustedSource(), name: '<script>{secret}</script>' }], [], model(trustedFacts(), draft, trustedReview), now)
+  assert.doesNotMatch(renderApproved(approved), /<script>|\{secret\}/)
 })
