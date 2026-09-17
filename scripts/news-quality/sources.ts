@@ -57,8 +57,10 @@ export class SourceFetcher {
         value = canonicalSource(new URL(location, value).href)
         continue
       }
-      if (!response.ok || !/html|xml|text\/plain/i.test(response.headers.get('content-type') || '') || Number(response.headers.get('content-length')) > QUALITY.maxSourceBytes || !response.body) {
-        await response.body?.cancel(); throw new Rejection('SOURCE_RETRIEVAL_FAILED', !response.ok ? `HTTP_${response.status}` : Number(response.headers.get('content-length')) > QUALITY.maxSourceBytes ? 'BODY_TOO_LARGE' : 'UNSUPPORTED_CONTENT_TYPE_OR_EMPTY_BODY')
+      const primaryHtml = classifySource(value).tier === 1 && /html/i.test(response.headers.get('content-type') || '')
+      const hardLimit = primaryHtml ? QUALITY.maxSourceBytes * 4 : QUALITY.maxSourceBytes
+      if (!response.ok || !/html|xml|text\/plain/i.test(response.headers.get('content-type') || '') || Number(response.headers.get('content-length')) > hardLimit || !response.body) {
+        await response.body?.cancel(); throw new Rejection('SOURCE_RETRIEVAL_FAILED', !response.ok ? `HTTP_${response.status}` : Number(response.headers.get('content-length')) > hardLimit ? 'BODY_TOO_LARGE' : 'UNSUPPORTED_CONTENT_TYPE_OR_EMPTY_BODY')
       }
       const chunks: Uint8Array[] = []
       const reader = response.body.getReader()
@@ -68,11 +70,19 @@ export class SourceFetcher {
           const item = await reader.read()
           if (item.done) break
           size += item.value.length
-          if (size > QUALITY.maxSourceBytes) throw new Rejection('SOURCE_RETRIEVAL_FAILED', 'BODY_TOO_LARGE')
+          if (size > hardLimit) throw new Rejection('SOURCE_RETRIEVAL_FAILED', 'BODY_TOO_LARGE')
           chunks.push(item.value)
         }
       } finally { await reader.cancel() }
-      return { url: value, body: Buffer.concat(chunks).toString('utf8') }
+      let body = Buffer.concat(chunks).toString('utf8')
+      if (primaryHtml && size > QUALITY.maxSourceBytes) {
+        // Bounded 4 MB scan, then retain at most the existing 1 MB document cap.
+        // Keep full article markup and JSON-LD; discard inert hydration/style data.
+        body = body.replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi, (tag, attributes: string) => /type\s*=\s*['"]application\/ld\+json['"]/i.test(attributes) ? tag : '')
+          .replace(/<style\b[^>]*>[\s\S]*?<\/style>|<!--[\s\S]*?-->/gi, '')
+        if (Buffer.byteLength(body) > QUALITY.maxSourceBytes || !/<(?:article|main)\b[^>]*>[\s\S]*?<\/(?:article|main)>/i.test(body)) throw new Rejection('SOURCE_RETRIEVAL_FAILED', 'BODY_TOO_LARGE')
+      }
+      return { url: value, body }
     }
     throw new Rejection('SOURCE_RETRIEVAL_FAILED')
   }
@@ -82,7 +92,7 @@ export function extractSource(url: string, html: string, id: string): Source {
   const meta = metadata(html)
   const body = (html.match(/<article\b[^>]*>([\s\S]*?)<\/article>/i) || html.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i))?.[1]
   if (!body) throw new Rejection('SOURCE_RETRIEVAL_FAILED', 'ARTICLE_BODY_MISSING')
-  const publishedAt = publicationDate(html, body)
+  const publishedAt = publicationDate(html, body, classification.tier === 1)
   const cleaned = body.replace(/<(script|style|nav|footer|header|aside)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ')
   const text = decode(cleaned.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim().slice(0, QUALITY.maxSourceChars)
   if (text.length < QUALITY.minSourceChars || /enable javascript to continue|verify you are human|access denied/i.test(text)) throw new Rejection('LOW_INFORMATION_VALUE')
@@ -174,9 +184,14 @@ export async function collectSources(candidate: Candidate, candidates: Candidate
         // Extract links BEFORE date/body validation, from EVERY retrieved page.
         // This allows a paywall shell or undated document to lead to real evidence.
         for (const link of documentLinks(page.body, page.url)) enqueue(link.url, link.label)
-        const articleText = (page.body.match(/<article\b[^>]*>([\s\S]*?)<\/article>/i)?.[1] || page.body.match(/<main\b[^>]*>([\s\S]*?)<\/main>/i)?.[1] || '').replace(/<(script|style|nav|footer|header|aside)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]*>/g, ' ').slice(0, QUALITY.maxSourceChars)
-        for (const entry of OFFICIAL_DISCOVERY) if (entry.mentions.test(articleText)) for (const endpoint of entry.urls) {
-          if (plannedHubs.size < 2 && !plannedHubs.has(endpoint)) { hubs.push(endpoint); plannedHubs.add(endpoint) }
+        // Only a related article headline can add a known organization. Body
+        // mentions (customers, competitors, navigation) do not establish relevance.
+        const pageMeta = metadata(page.body)
+        const pageHeadline = decode(pageMeta['og:title'] || page.body.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1]?.replace(/<[^>]*>/g, ' ') || '')
+        if (relatedCandidate(candidate, { ...candidate, title: pageHeadline })) {
+          for (const entry of OFFICIAL_DISCOVERY) if (entry.mentions.test(pageHeadline)) for (const endpoint of entry.urls) {
+            if (plannedHubs.size < 2 && !plannedHubs.has(endpoint)) { hubs.push(endpoint); plannedHubs.add(endpoint) }
+          }
         }
         if (sources.some(s => s.url === page.url)) continue
         const source = extractSource(page.url, page.body, `s${++serial}`)

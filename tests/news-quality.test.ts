@@ -3,7 +3,7 @@ import test from 'node:test'
 import { readFileSync } from 'node:fs'
 import matter from 'gray-matter'
 import { QUALITY, classifySource } from '../scripts/news-quality/config'
-import { checkFacts, checkFresh, cleanDraft, duplicateEvent, renderDraft, renderApproved } from '../scripts/news-quality/gate'
+import { numbersSupported, parseDraft, checkFacts, checkFresh, cleanDraft, duplicateEvent, renderDraft, renderApproved } from '../scripts/news-quality/gate'
 import { classifyEditorial } from '../scripts/news-quality/trust'
 import { classifyRisk, storyRisk } from '../scripts/news-quality/risk'
 import { ordinaryTrustedCandidate } from '../scripts/news-quality/trust'
@@ -312,11 +312,11 @@ test('discovery ignores navigation, admin handlers and tag pagination on officia
   const links=documentLinks('<nav><a href="https://openai.com/index/noise">Noise</a></nav><article><a href="/wp-admin/admin-post.php">Action</a><a href="/news/tag/ai/page/2/">Archive</a><a href="/news/real-release/">Real release</a></article>','https://about.fb.com/news/story/')
   assert.deepEqual(links.map(l=>l.url),['https://about.fb.com/news/real-release/'])
 })
-test('organization mentions in article text can select an official endpoint within the same budget', async () => {
+test('incidental organization body mentions do not select an official endpoint', async () => {
   const official='https://blogs.nvidia.com/blog/atlas-release/'
   const {fetcher,requested}=fixtureFetcher({[candidate.url]:evidenceHtml('<p>Nvidia participated in the Atlas launch.</p>'),'https://blogs.nvidia.com/feed/':`<rss version="2.0"><channel><title>NVIDIA</title><item><title>Acme Atlas editor launch</title><link>${official}</link></item></channel></rss>`,[official]:evidenceHtml()})
   const result=await collectSources(candidate,[],fetcher,()=>{},now)
-  assert.ok(result.some(s=>s.url===official)); assert.ok(requested.length<=QUALITY.maxSourceAttempts)
+  assert.ok(!result.some(s=>s.url===official)); assert.ok(!requested.includes('https://blogs.nvidia.com/feed/')); assert.ok(requested.length<=QUALITY.maxSourceAttempts)
 })
 
 const editorialHtml = (author = 'Alex Reporter', extra = '', published = candidate.publishedAt) =>
@@ -741,10 +741,10 @@ test('facts diagnostics preserve paraphrases and normalized verbatim excerpts', 
   f.confirmedFacts[0].supportedBy[0].excerpt = excerpt.toUpperCase().replaceAll(' ', '  ')
   const logs: string[] = []; checkFacts(candidate, f, [primary], now, undefined, false, line => logs.push(line)); assert.equal(logs.length, 0)
 })
-test('equivalent numeric representations stay rejected with specific diagnostics', () => {
-  const f = clone(facts), s = { ...primary, text: primary.text + ' The release costs 10 dollars.' }
-  f.confirmedFacts[0].claim = 'The release costs $10.'; f.confirmedFacts[0].supportedBy[0].excerpt = 'The release costs 10 dollars.'
-  assert.throws(() => checkFacts(candidate, f, [s], now), e => e instanceof Rejection && e.reason === 'UNSUPPORTED_CLAIM' && e.detail === 'CLAIM_NUMBER_NOT_IN_EXCERPT')
+test('equivalent numeric representations pass without changing citation provenance', () => {
+  const f = clone(facts), s = { ...primary, text: excerpt + ' The release costs 10 dollars.' }
+  f.confirmedFacts[0].claim = 'The release costs $10.'; f.confirmedFacts[0].supportedBy[0].excerpt = excerpt + ' The release costs 10 dollars.'
+  assert.equal(checkFacts(candidate, f, [s], now).confirmedFacts.length, 1)
 })
 test('ninth HTTP request receives 429 without retry or sleep', async () => {
   let calls = 0; const logs: string[] = []; const waits: number[] = []
@@ -753,4 +753,138 @@ test('ninth HTTP request receives 429 without retry or sleep', async () => {
   await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
   assert.equal(calls, 9); assert.equal(waits.length, 0); assert.match(logs.at(-1)!, /Attempt: 1\/3.*MODEL_RATE_LIMITED/)
   assert.ok(!logs.some(line => line.includes('Retrying after:')))
+})
+
+// Production-unblock acceptance boundaries, specified before normalization changes.
+for (const [claim, evidence] of [
+  ['$10', '10 dollars'], ['$2,200', '2200 dollars'], ['10%', '10 percent'],
+  ['34', '34'], ['10.00', '10'], ['18 million', '18,000,000'],
+  ['$18m', '18 million dollars'], ['2 billion', '2000 million'],
+  ['Raised 18 million', 'Raised $18 million'], ['Raised $18 million', 'Raised 18 million USD'],
+]) test(`numeric equivalent: ${claim} / ${evidence}`, () => assert.equal(numbersSupported(claim, evidence), true))
+for (const [claim, evidence] of [
+  ['10', '100'], ['18 million', '18 billion'], ['$10', '€10'],
+  ['5%', '0.5%'], ['10%', '10'], ['$10', '10'], ['18 million users', '$18 million'],
+  ['Raised $18 million', 'Raised 18 million'], ['10.01', '10'], ['-10', '10'],
+  ['$10', '10 Canadian dollars'], ['10', '1,0'], ['9007199254740993', '9007199254740992'],
+]) test(`numeric mismatch: ${claim} / ${evidence}`, () => assert.equal(numbersSupported(claim, evidence), false))
+
+for (const [a, b] of [['5m cable', '5 million cable'], ['Raised 18 million users', 'Raised $18 million'], ['10 percent', '10 dollars'], ['€10', '$10'], ['18 billion', '18 million']]) test(`ambiguous/mismatched units stay rejected: ${a}`, () => assert.equal(numbersSupported(a, b), false))
+for (const key of ['citation_date', 'dc.date.issued', 'dcterms.issued', 'dc.date.published', 'parsely-pub-date', 'og:article:published_time']) test(`official structured publication date: ${key}`, () => {
+  const html = `<meta name="${key}" content="2026-09-15T09:00:00Z">`
+  assert.equal(publicationDate(html, '', true), '2026-09-15T09:00:00.000Z')
+  assert.throws(() => publicationDate(html, ''), rejected('INVALID_DATE'))
+})
+test('official typed dates, microdata and date rejection boundaries', () => {
+  assert.equal(publicationDate('<script type="application/ld+json">{"@type":"https://schema.org/ScholarlyArticle","datePublished":{"@value":"2026-09-15"}}</script>', '', true), '2026-09-15T00:00:00.000Z')
+  assert.equal(publicationDate('<time itemprop="datePublished" datetime="2026-09-15"></time>', '', true), '2026-09-15T00:00:00.000Z')
+  for (const html of ['<p>Published September 15 2026</p>', '<meta name="dateModified" content="2026-09-15">', '<meta name="date" content="2026-09-15">']) assert.throws(() => publicationDate(html, '', true), rejected('INVALID_DATE'))
+  assert.throws(() => publicationDate('<meta name="citation_date" content="2026-09-15"><meta property="article:published_time" content="2026-09-14">', '', true), e => e instanceof Rejection && e.detail === 'PUBLICATION_DATES_CONFLICT')
+})
+test('only a related article headline can add an official organization', async () => {
+  for (const headline of ['Nvidia launches Atlas editor', 'Nvidia reports unrelated earnings']) {
+    const { fetcher, requested } = fixtureFetcher({ [candidate.url]: evidenceHtml(`<h1>${headline}</h1>`), 'https://blogs.nvidia.com/feed/': '<rss version="2.0"><channel><title>Nvidia</title></channel></rss>' })
+    await collectSources(candidate, [], fetcher, () => {}, now)
+    assert.equal(requested.includes('https://blogs.nvidia.com/feed/'), headline.includes('Atlas'))
+  }
+})
+test('funding stories do not select Microsoft feeds from incidental product mentions', async () => {
+  const c = { ...candidate, title: 'ExampleCo raises $18 million for audio technology' }
+  const { fetcher, requested } = fixtureFetcher({ [c.url]: evidenceHtml('<p>Customers use Microsoft Windows and Copilot.</p>') })
+  await collectSources(c, [], fetcher, () => {}, now)
+  assert.ok(!requested.some(url => /microsoft|windows/.test(url)))
+})
+test('large official HTML retains complete evidence within retained cap', async () => {
+  const html = '<script type="application/json">' + 'x'.repeat(1_100_000) + '</script>' + evidenceHtml()
+  const fetcher = new SourceFetcher((async () => new Response(html, { headers: { 'content-type': 'text/html', 'content-length': String(Buffer.byteLength(html)) } })) as typeof fetch, async () => {})
+  const page = await fetcher.get('https://www.anthropic.com/news/fixture')
+  assert.ok(Buffer.byteLength(page.body) <= QUALITY.maxSourceBytes)
+  assert.equal(extractSource(page.url, page.body, 's1').publishedAt, '2026-09-15T09:00:00.000Z')
+  assert.equal(fetcher.count, 1)
+})
+for (const kind of ['hard-cap', 'retained-cap', 'non-primary', 'missing-body']) test(`large HTML fails closed: ${kind}`, async () => {
+  const html = kind === 'hard-cap' ? 'x'.repeat(4_000_001) : kind === 'retained-cap' ? evidenceHtml('<p>' + 'x'.repeat(1_100_000) + '</p>') : '<script>' + 'x'.repeat(1_100_000) + '</script>' + (kind === 'missing-body' ? '' : evidenceHtml())
+  const fetcher = new SourceFetcher((async () => new Response(html, { headers: { 'content-type': 'text/html' } })) as typeof fetch, async () => {})
+  await assert.rejects(fetcher.get(kind === 'non-primary' ? 'https://theverge.com/news/test' : 'https://anthropic.com/news/test'), e => e instanceof Rejection && e.detail === 'BODY_TOO_LARGE')
+})
+function optionalNumericFact() {
+  const f = clone(facts)
+  f.confirmedFacts.push({ id: 'f2', core: false, confidence: 95, claim: 'The Atlas editor offers 100 themes.', supportedBy: [{ sourceId: 's1', excerpt }] })
+  return f
+}
+test('independent low-risk optional numeric fact drops before draft and review', async () => {
+  const f = optionalNumericFact(), logs: string[] = []
+  const approved = await evaluateCandidate(candidate, [primary], [], async (stage, input) => {
+    if (stage === 'facts') return f
+    if (stage === 'draft') { assert.equal((input as {confirmedFacts: unknown[]}).confirmedFacts.length, 1); return draft }
+    assert.equal((input as {facts: FactSheet}).facts.confirmedFacts.length, 1); return review
+  }, now, false, line => logs.push(line))
+  assert.equal(approved.facts.confirmedFacts.length, 1); assert.equal(f.confirmedFacts.length, 2)
+  assert.match(logs.join(' '), /Result: DROP/)
+})
+for (const problem of ['core', 'unknown-id', 'invented-excerpt', 'confidence', 'qualification', 'dependent-core', 'risk', 'source-policy']) test(`optional fact cannot bypass ${problem}`, () => {
+  const f = optionalNumericFact(), extra = f.confirmedFacts[1]
+  let sources = [primary]
+  if (problem === 'core') extra.core = true
+  if (problem === 'unknown-id') extra.supportedBy[0].sourceId = 'invented'
+  if (problem === 'invented-excerpt') extra.supportedBy[0].excerpt = 'An invented source passage with 100 themes.'
+  if (problem === 'confidence') extra.confidence = 20
+  if (problem === 'qualification') extra.claim = 'The Atlas editor requires 100 paid licenses.'
+  if (problem === 'dependent-core') f.confirmedFacts[0].claim = 'This editor launched for developers.'
+  if (problem === 'risk') { extra.claim = 'Acme raised $100 million in funding.'; f.riskAssessments = [{ factId: 'f2', category: 'FUNDING' }] }
+  if (problem === 'source-policy') { sources = [primary, { ...reporting, id: 's2' }]; extra.supportedBy[0].sourceId = 's2' }
+  assert.throws(() => checkFacts(candidate, f, sources, now), e => e instanceof Rejection)
+})
+test('draft object schema remains strict and prompt explicitly describes its shape', async () => {
+  for (const value of [null, [], 'text', {draft}, {title: 'x', deck: 'y', sections: []}]) assert.throws(() => parseDraft(value), rejected('MALFORMED_MODEL_OUTPUT'))
+  assert.deepEqual(parseDraft(draft), draft)
+  const m = createModel('key', 'fixture', (async (_url, init) => {
+    const request = JSON.parse(init!.body as string)
+    assert.match(request.messages[0].content, /exactly one top-level JSON object/)
+    assert.equal(request.max_tokens, 3000); assert.equal(request.model, 'fixture')
+    return completion(JSON.stringify(draft))
+  }) as typeof fetch, () => {}, noWait)
+  assert.deepEqual(await m('draft', {}), draft)
+})
+test('facts prompt specifies supplied IDs and minimal verbatim numerical evidence', async () => {
+  const m = createModel('key', 'fixture', (async (_url, init) => {
+    const prompt = JSON.parse(init!.body as string).messages[0].content
+    assert.match(prompt, /exact supplied source IDs/); assert.match(prompt, /Claims may be paraphrased; evidence excerpts may not/)
+    assert.match(prompt, /minimal contiguous excerpts/); assert.match(prompt, /each cited excerpt/)
+    return completion(JSON.stringify(facts))
+  }) as typeof fetch, () => {}, noWait)
+  await m('facts', {})
+})
+
+test('numeric punctuation, negative signs and explicit foreign dollar symbols are conservative', () => {
+  assert.equal(numbersSupported('34', '34, plus other features'), true)
+  assert.equal(numbersSupported('−10', '10'), false)
+  assert.equal(numbersSupported('$10', 'A$10'), false)
+  assert.equal(numbersSupported('$10', 'C$10'), false)
+})
+test('dateModified time does not substitute for publication', () => {
+  assert.throws(() => publicationDate('', '<time itemprop="dateModified" datetime="2026-09-15"></time>', true), rejected('INVALID_DATE'))
+})
+test('large-page byte cap cancels a streaming response without reading indefinitely', async () => {
+  let cancelled = false, pulls = 0
+  const body = new ReadableStream<Uint8Array>({ pull(controller) { pulls++; controller.enqueue(new Uint8Array(500_000).fill(32)) }, cancel() { cancelled = true } })
+  const fetcher = new SourceFetcher((async () => new Response(body, { headers: { 'content-type': 'text/html' } })) as typeof fetch, async () => {})
+  await assert.rejects(fetcher.get('https://anthropic.com/news/test'), e => e instanceof Rejection && e.detail === 'BODY_TOO_LARGE')
+  assert.ok(cancelled); assert.ok(pulls <= 10)
+})
+test('large primary extraction retains JSON-LD and still rejects missing publication date', async () => {
+  for (const hasDate of [true, false]) {
+    const html = '<script>' + 'x'.repeat(1_100_000) + '</script>' + (hasDate ? '<script type="application/ld+json">{"@type":"NewsArticle","datePublished":"2026-09-15"}</script>' : '') + '<article>' + 'Evidence about the Atlas editor and developers. '.repeat(15) + '</article>'
+    const fetcher = new SourceFetcher((async () => new Response(html, { headers: { 'content-type': 'text/html' } })) as typeof fetch, async () => {})
+    const page = await fetcher.get('https://anthropic.com/news/test')
+    if (hasDate) assert.equal(extractSource(page.url, page.body, 's1').publishedAt, '2026-09-15T00:00:00.000Z')
+    else assert.throws(() => extractSource(page.url, page.body, 's1'), rejected('INVALID_DATE'))
+  }
+})
+
+test('fractional percentages and negative currency preserve actual values', () => {
+  assert.equal(numbersSupported('.5%', '0.5 percent'), true)
+  assert.equal(numbersSupported('5%', '.5%'), false)
+  assert.equal(numbersSupported('-$10', '$10'), false)
+  assert.equal(numbersSupported('-$10', '-10 dollars'), true)
 })

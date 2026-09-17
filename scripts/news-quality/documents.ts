@@ -19,9 +19,10 @@ export function articleNodes(html: string): Record<string, unknown>[] {
     if (!value || typeof value !== 'object') return
     const object = value as Record<string, unknown>
     const types = Array.isArray(object['@type']) ? object['@type'] : [object['@type']]
-    if (types.some(t => typeof t === 'string' && /^(?:NewsArticle|Article|BlogPosting|TechArticle|ScholarlyArticle|Report)$/.test(t))) nodes.push(object)
+    if (types.some(t => typeof t === 'string' && /^(?:NewsArticle|Article|BlogPosting|TechArticle|ScholarlyArticle|Report)$/.test(t.replace(/^https?:\/\/schema\.org\//, '')))) nodes.push(object)
     if (object['@graph']) walk(object['@graph'])
     if (object.mainEntity) walk(object.mainEntity)
+    if (object.mainEntityOfPage && typeof object.mainEntityOfPage === 'object') walk(object.mainEntityOfPage)
   }
   for (const match of Array.from(html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi))) {
     if (attrs(match[1]).type?.toLowerCase() !== 'application/ld+json') continue
@@ -29,12 +30,22 @@ export function articleNodes(html: string): Record<string, unknown>[] {
   }
   return nodes
 }
-export function publicationDate(html: string, body: string) {
+export function publicationDate(html: string, body: string, official = false) {
   const meta = metadata(html)
   const raw = [meta['article:published_time'], meta.datepublished, meta.citation_publication_date,
-    ...articleNodes(html).map(n => n.datePublished)].filter((v): v is string => typeof v === 'string' && !!v.trim())
+    ...articleNodes(html).map(n => typeof n.datePublished === 'object' && n.datePublished ? (n.datePublished as Record<string, unknown>)['@value'] : n.datePublished)].filter((v): v is string => typeof v === 'string' && !!v.trim())
+  if (official) {
+    for (const key of ['citation_date', 'dc.date.issued', 'dcterms.issued', 'dc.date.published', 'parsely-pub-date', 'og:article:published_time']) {
+      if (meta[key]?.trim()) raw.push(meta[key])
+    }
+    // Microdata explicitly marked datePublished; never arbitrary date text.
+    for (const tag of html.match(/<(?:time|span|data)\b[^>]*>/gi) || []) {
+      const a = attrs(tag)
+      if (a.itemprop?.split(/\s+/).includes('datePublished') && (a.datetime || a.content || a.value)) raw.push(a.datetime || a.content || a.value)
+    }
+  }
   if (!raw.length) {
-    const tag = body.match(/<time\b[^>]*>/i)?.[0]
+    const tag = (body.match(/<time\b[^>]*>/gi) || []).find(tag => !/dateModified/i.test(attrs(tag).itemprop || ''))
     const value = tag && attrs(tag).datetime
     if (value) raw.push(value)
   }

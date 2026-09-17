@@ -1,8 +1,9 @@
+import { quantitiesSupported } from './quantities'
 import { HIGH_RISK_RULES, QUALITY, TRUSTED_EDITORIAL_SOURCE_POINTS } from './config'
 import { Rejection, type FactSheet, type Source, type Draft, type Review, type HistoricalStory, type NewsEvent, type Candidate } from './types'
 
 import { trustedEditorial } from './trust'
-import { centralRisk, claimRisk } from './risk'
+import { centralRisk, claimRisk, classifyRisk } from './risk'
 
 export const normalize = (text: string) => text.toLowerCase().normalize('NFKC').replace(/\s+/g, ' ').trim()
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0
@@ -60,8 +61,7 @@ export function numbers(value: string) {
   return (value.match(/(?:[$€£]\s*)?\b\d+(?:[.,]\d+)*(?:\s*(?:million|billion|trillion|percent|%|thousand))?/gi) || []).map(n => normalize(n).replace(/,/g, '').replace(/\s+/g, ''))
 }
 export function numbersSupported(value: string, evidence: string) {
-  const supported = new Set(numbers(evidence))
-  return numbers(value).every(n => supported.has(n))
+  return quantitiesSupported(value, evidence)
 }
 export function checkQuotes(value: string) {
   // v1 deliberately publishes paraphrases only: no reconstructed or model-authored direct quotes.
@@ -85,9 +85,17 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
   const eventSource = sources.find(s => s.id === facts.eventSourceId)
   if (!eventSource || !normalize(eventSource.text + ' ' + eventSource.publishedAt).includes(normalize(facts.eventDateEvidence))) throw new Rejection('INVALID_DATE', 'EVENT_DATE_EVIDENCE_NOT_FOUND')
   const high = forceHighRisk || highRisk(candidate, facts)
+  const retained: FactSheet['confirmedFacts'] = []
+  const coreFacts = facts.confirmedFacts.filter(f => f.core)
+  const coreEvidence = normalize(coreFacts.flatMap(f => f.supportedBy.map(c => c.excerpt)).join(' '))
+  const standaloneCore = coreFacts.length > 0 && coreFacts.every(f => !/\b(?:this|these|those|it|its|they|their|them|such|that|both|former|latter|above|below|respectively)\b/i.test(f.claim))
+    && facts.event.entities.every(entity => coreEvidence.includes(normalize(entity)))
+    && (!facts.event.product || coreEvidence.includes(normalize(facts.event.product)))
+    && coreFacts.some(f => f.supportedBy.some(c => c.sourceId === facts.eventSourceId && normalize(c.excerpt + ' ' + eventSource.publishedAt).includes(normalize(facts.eventDateEvidence))))
   for (let factIndex = 0; factIndex < facts.confirmedFacts.length; factIndex++) {
     const fact = facts.confirmedFacts[factIndex]
     if (fact.confidence < QUALITY.minFactConfidence) throw new Rejection('INSUFFICIENT_EVIDENCE')
+    let numericFailure = -1
     const support = fact.supportedBy.map((citation, citationIndex) => {
       const source = sources.find(s => s.id === citation.sourceId)
       const reject = (detail: 'SOURCE_ID_NOT_FOUND' | 'EXCERPT_NOT_IN_SOURCE' | 'CLAIM_NUMBER_NOT_IN_EXCERPT'): never => {
@@ -97,7 +105,7 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
       }
       if (!source) return reject('SOURCE_ID_NOT_FOUND')
       if (!normalize(source.text).includes(normalize(citation.excerpt))) reject('EXCERPT_NOT_IN_SOURCE')
-      if (!numbersSupported(fact.claim, citation.excerpt)) reject('CLAIM_NUMBER_NOT_IN_EXCERPT')
+      if (!numbersSupported(fact.claim, citation.excerpt) && numericFailure < 0) numericFailure = citationIndex
       return source
     })
     // Every fact, not just the headline, needs qualifying support.
@@ -107,9 +115,21 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
     }
     for (const source of support) if (!Number.isFinite(date(source.publishedAt)) || date(source.publishedAt) > now.getTime()) throw new Rejection('INVALID_DATE', `SOURCE_PUBLICATION_DATE_INVALID:${source.id}`)
     if (fact.core && !support.some(source => now.getTime() - date(source.publishedAt) <= QUALITY.freshnessHours * 3600000)) throw new Rejection('STALE_STORY')
+    if (numericFailure >= 0) {
+      // Drop only a standalone optional low-risk numerical detail. Never recover
+      // fabricated citations, confidence/source/date failures or high-risk facts.
+      const drop = !fact.core && !high && facts.riskLevel === 'low' && !facts.riskAssessments.length
+        && !claimRisk(fact, facts) && classifyRisk(fact.claim).level === 'low' && standaloneCore
+        && !/\b(?:not|no|only|unless|except|because|therefore|after|before|until|instead|although|despite|if|when|requires?|must|without|however|but|less|more|fewer|than|limit\w*|depend\w*)\b/i.test(fact.claim)
+      log(`[AIBeat Facts Validation] Result: ${drop ? 'DROP' : 'FAIL'} | Failure: UNSUPPORTED_CLAIM | Facts extracted: ${facts.confirmedFacts.length} | Fact index: ${factIndex + 1} | Core: ${fact.core ? 'YES' : 'NO'} | Citation count: ${fact.supportedBy.length} | Citation index: ${numericFailure + 1} | Evidence source matched: YES | Failure detail: CLAIM_NUMBER_NOT_IN_EXCERPT`)
+      if (!drop) throw new Rejection('UNSUPPORTED_CLAIM', 'CLAIM_NUMBER_NOT_IN_EXCERPT')
+      continue
+    }
+    retained.push(fact)
   }
-  const evidence = normalize(facts.confirmedFacts.flatMap(f => f.supportedBy.map(s => s.excerpt)).join(' '))
+  const evidence = normalize(retained.flatMap(f => f.supportedBy.map(s => s.excerpt)).join(' '))
   if (!facts.event.entities.every(entity => evidence.includes(normalize(entity))) || (facts.event.product && !evidence.includes(normalize(facts.event.product)))) throw new Rejection('UNVERIFIED_ENTITY')
+  return { ...facts, confirmedFacts: retained }
 }
 export function cleanDraft(draft: Draft, facts: FactSheet) {
   const allClaims = facts.confirmedFacts.map(f => f.claim).join(' ')

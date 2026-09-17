@@ -15,7 +15,7 @@ export async function evaluateCandidate(candidate: Candidate, sources: Source[],
   sourcePolicy(sources, initialHigh, trustedId)
   const evidenceMode = trustedId ? 'TRUSTED_SINGLE_SOURCE' : 'ENHANCED_VERIFICATION'
   const evidence = sources.map(({ links, imageUrl, ...source }) => source)
-  const facts = parseFacts(await model('facts', { candidate, evidenceMode, trustedEditorialSourceId: trustedId, sources: evidence, now: now.toISOString() }))
+  let facts = parseFacts(await model('facts', { candidate, evidenceMode, trustedEditorialSourceId: trustedId, sources: evidence, now: now.toISOString() }))
   const factTrigger = centralRisk(candidate, facts)
   log(`[AIBeat Quality Gate] Risk: ${initialHigh || factTrigger ? 'HIGH' : facts.riskLevel.toUpperCase()} | Risk trigger: ${factTrigger || (forceHighRisk ? 'PRIOR_HIGH_RISK_ASSESSMENT' : initialRisk.trigger)} | Stage: facts`)
   if (factTrigger && facts.riskLevel !== 'high') log(`[AIBeat Quality Gate] Risk escalated: ${facts.riskLevel.toUpperCase()} → HIGH | Trigger: ${factTrigger}`)
@@ -23,7 +23,7 @@ export async function evaluateCandidate(candidate: Candidate, sources: Source[],
     const trigger = claimRisk(fact, facts)
     if (trigger) log(`[AIBeat Quality Gate] Claim risk: HIGH | Trigger: ${trigger} | Scope: NON_CORE_CLAIM`)
   }
-  checkFacts(candidate, facts, sources, now, trustedId, initialHigh, log)
+  facts = checkFacts(candidate, facts, sources, now, trustedId, initialHigh, log)
   if (duplicateEvent(facts.event, candidate.title, history)) throw new Rejection('DUPLICATE_STORY')
   const cleaned = cleanDraft(parseDraft(await model('draft', { confirmedFacts: facts.confirmedFacts, event: facts.event })), facts)
   const words = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/)
