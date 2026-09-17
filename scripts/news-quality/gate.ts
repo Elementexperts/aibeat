@@ -1,3 +1,4 @@
+import { numericDiagnostic } from './numeric-diagnostics'
 import { quantitiesSupported } from './quantities'
 import { HIGH_RISK_RULES, QUALITY, TRUSTED_EDITORIAL_SOURCE_POINTS } from './config'
 import { Rejection, type FactSheet, type Source, type Draft, type Review, type HistoricalStory, type NewsEvent, type Candidate } from './types'
@@ -116,6 +117,8 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
     for (const source of support) if (!Number.isFinite(date(source.publishedAt)) || date(source.publishedAt) > now.getTime()) throw new Rejection('INVALID_DATE', `SOURCE_PUBLICATION_DATE_INVALID:${source.id}`)
     if (fact.core && !support.some(source => now.getTime() - date(source.publishedAt) <= QUALITY.freshnessHours * 3600000)) throw new Rejection('STALE_STORY')
     if (numericFailure >= 0) {
+      const citation = fact.supportedBy[numericFailure]
+      log('[AIBeat Numeric Evidence] ' + JSON.stringify(numericDiagnostic({ factIndex: factIndex + 1, core: fact.core, claim: fact.claim, sourceId: citation.sourceId, excerpt: citation.excerpt })))
       // Drop only a standalone optional low-risk numerical detail. Never recover
       // fabricated citations, confidence/source/date failures or high-risk facts.
       const drop = !fact.core && !high && facts.riskLevel === 'low' && !facts.riskAssessments.length

@@ -1,5 +1,5 @@
 // Exact decimal arithmetic as strings: no floating-point rounding or currency conversion.
-type Quantity = { value: string; unit: string; monetary: boolean }
+type Quantity = { value: string; unit: string; monetary: boolean; raw: string; magnitude: string; scale: number; invalidReason: string }
 const currency: Record<string, string> = {
   '$': 'USD', 'us$': 'USD', usd: 'USD', dollar: 'USD', dollars: 'USD', 'us dollars': 'USD', 'u.s. dollars': 'USD',
   '€': 'EUR', eur: 'EUR', euro: 'EUR', euros: 'EUR', '£': 'GBP', gbp: 'GBP', pound: 'GBP', pounds: 'GBP',
@@ -27,7 +27,7 @@ function quantities(text: string): Quantity[] {
     const monetary = /\b(?:raised|raises|funding of|costs?|priced? at|price of|revenue of|valuation of|paid)\s*$/i.test(text.slice(0, m.index)) && /^(?:\s*$|[.,;]|\s+(?:in|for|from|during)\b)/i.test(text.slice((m.index || 0) + m[0].length))
     const ambiguousScale = /^[kmb]$/i.test(m[3] || '') && !first && !last && !monetary
     const scale = ({ trillion: 12, billion: 9, bn: 9, b: 9, million: 6, m: 6, thousand: 3, k: 3 } as Record<string, number>)[m[3]?.toLowerCase()] || 0
-    return { value: ambiguousScale ? 'INVALID' : decimal(amount, scale), monetary, unit: first && last && first !== last ? 'INVALID' : first || last }
+    return { raw: m[0], magnitude: m[3]?.toLowerCase() || 'none', scale, invalidReason: ambiguousScale ? 'AMBIGUOUS_MAGNITUDE' : decimal(amount, scale) === 'INVALID' ? 'INVALID_DECIMAL' : '', value: ambiguousScale ? 'INVALID' : decimal(amount, scale), monetary, unit: first && last && first !== last ? 'INVALID' : first || last }
   })
 }
 export function quantitiesSupported(claim: string, evidence: string): boolean {
@@ -40,4 +40,26 @@ export function quantitiesSupported(claim: string, evidence: string): boolean {
     const currencies = new Set(supplied.filter(n => n.value === q.value && n.unit && n.unit !== 'percent').map(n => n.unit))
     return currencies.size === 1
   }))
+}
+
+// Observer only. quantitiesSupported above remains the acceptance decision.
+export function explainQuantities(claim: string, evidence: string) {
+  const claimTokens = quantities(claim), excerptTokens = quantities(evidence)
+  const reason = (q: Quantity, s: Quantity) => {
+    if (q.value === 'INVALID') return q.invalidReason || 'CLAIM_VALUE_INVALID'
+    if (q.unit === 'INVALID') return 'CLAIM_UNIT_INVALID'
+    if (s.value !== q.value) return s.value === 'INVALID' ? s.invalidReason || 'EXCERPT_VALUE_INVALID' : 'VALUE_MISMATCH'
+    if (s.unit === 'INVALID') return 'EXCERPT_UNIT_INVALID'
+    if (s.unit === q.unit) return 'EQUIVALENT'
+    if (q.unit) return 'UNIT_OR_CURRENCY_MISMATCH'
+    if (!s.unit) return 'EXCERPT_UNIT_MISSING'
+    if (s.unit === 'percent') return 'PERCENTAGE_CONTEXT_MISMATCH'
+    if (!q.monetary) return 'MONETARY_CONTEXT_NOT_ESTABLISHED'
+    const currencies = new Set(excerptTokens.filter(n => n.value === q.value && n.unit && n.unit !== 'percent').map(n => n.unit))
+    return currencies.size === 1 ? 'EQUIVALENT_SOURCE_CURRENCY' : 'AMBIGUOUS_SOURCE_CURRENCY'
+  }
+  const failures = claimTokens.map((q, index) => ({ index, token: q }))
+    .filter(f => !excerptTokens.some(s => reason(f.token, s).startsWith('EQUIVALENT')))
+    .map(f => ({ ...f, comparisons: excerptTokens.slice(0, 8).map((s, index) => ({ index, reason: reason(f.token, s) })) }))
+  return { claimTokens, excerptTokens, failures }
 }

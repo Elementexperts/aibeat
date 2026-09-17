@@ -1,3 +1,5 @@
+import { numericDiagnostic } from '../scripts/news-quality/numeric-diagnostics'
+import { explainQuantities } from '../scripts/news-quality/quantities'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFileSync } from 'node:fs'
@@ -751,7 +753,7 @@ test('ninth HTTP request receives 429 without retry or sleep', async () => {
   const m = createModel('key', 'fixture', (async () => ++calls < 9 ? completion(JSON.stringify(facts)) : new Response(null, { status: 429 })) as typeof fetch, line => logs.push(line), { ...noWait, sleep: async ms => { waits.push(ms) } })
   for (let i = 0; i < 8; i++) await m('facts', {})
   await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
-  assert.equal(calls, 9); assert.equal(waits.length, 0); assert.match(logs.at(-1)!, /Attempt: 1\/3.*MODEL_RATE_LIMITED/)
+  assert.equal(calls, 9); assert.equal(waits.length, 0); assert.ok(logs.some(line => /HTTP status: 429.*Attempt: 1\/3.*MODEL_RATE_LIMITED/.test(line)))
   assert.ok(!logs.some(line => line.includes('Retrying after:')))
 })
 
@@ -887,4 +889,72 @@ test('fractional percentages and negative currency preserve actual values', () =
   assert.equal(numbersSupported('5%', '.5%'), false)
   assert.equal(numbersSupported('-$10', '$10'), false)
   assert.equal(numbersSupported('-$10', '-10 dollars'), true)
+})
+
+test('4K ambiguity is diagnosed without changing rejection, including identical evidence', () => {
+  const text = 'Save $30 on a refurbished Apple TV 4K'
+  assert.equal(numbersSupported(text, text), false)
+  const d = numericDiagnostic({ factIndex: 1, core: true, claim: text, sourceId: 's1', excerpt: text })
+  assert.ok('failedClaimToken' in d)
+  if (!('failedClaimToken' in d)) return
+  assert.equal(d.failedClaimToken?.raw, '4K'); assert.equal(d.failedClaimToken?.normalizedValue, 'INVALID')
+  assert.equal(d.failedClaimToken?.magnitude, 'k'); assert.equal(d.failedClaimToken?.scale, 3)
+  assert.equal(d.failedClaimToken?.invalidReason, 'AMBIGUOUS_MAGNITUDE')
+  assert.ok(d.comparisons.every(c => c.reason === 'AMBIGUOUS_MAGNITUDE'))
+  assert.equal(d.claim, text); assert.equal(d.citationSourceId, 's1')
+})
+test('numeric observer agrees with unchanged acceptance across diagnostic conditions', () => {
+  for (const [claim, excerpt] of [['$10', '10 dollars'], ['$10', '€10'], ['10', '20'], ['Apple TV 4K', 'Apple TV 4K'], ['Saved 10', '$10'], ['Raised 10', '$10 and €10'], ['10', '10%'], ['10', 'no numbers'], ['10', 'C$10'], ['10', '4K'], ['Raised 10', '$10'], ['1,0', '10']]) {
+    const d = explainQuantities(claim, excerpt)
+    assert.equal(d.failures.length === 0, numbersSupported(claim, excerpt), claim + ' / ' + excerpt)
+  }
+  assert.equal(explainQuantities('$10', '€10').failures[0].comparisons[0].reason, 'UNIT_OR_CURRENCY_MISMATCH')
+  assert.equal(explainQuantities('10', '20').failures[0].comparisons[0].reason, 'VALUE_MISMATCH')
+})
+test('numeric diagnostics clip content/tokens and redact credentials including their digits', () => {
+  const input = { factIndex: 1, core: true, claim: '10 '.repeat(1000), sourceId: 's1', excerpt: '20 '.repeat(1000) }
+  const d = numericDiagnostic(input)
+  assert.ok(JSON.stringify(d).length < 6000)
+  assert.ok('diagnosticsClipped' in d && d.diagnosticsClipped)
+  for (const secret of ['gsk_secret987654321', 'GROQ_API_KEY=secret987654321', 'Bearer secret987654321', 'https://example.com/path?token=secret987654321']) {
+    const result = numericDiagnostic({ ...input, claim: secret, excerpt: secret })
+    assert.doesNotMatch(JSON.stringify(result), /secret987654321/)
+    assert.ok('numericDetails' in result && result.numericDetails === 'SUPPRESSED_REDACTED_INPUT')
+  }
+  assert.doesNotMatch(JSON.stringify(numericDiagnostic({ ...input, claim: 'line1\nFAKE LOG' })), /\nFAKE LOG/)
+})
+test('actual fact failure includes bounded numeric diagnostic without changing decision', () => {
+  const f = clone(facts); f.confirmedFacts[0].claim = 'Acme launched 999 Atlas editors.'
+  const logs: string[] = []
+  assert.throws(() => checkFacts(candidate, f, [primary], now, undefined, false, line => logs.push(line)), e => e instanceof Rejection && e.detail === 'CLAIM_NUMBER_NOT_IN_EXCERPT')
+  const line = logs.find(line => line.startsWith('[AIBeat Numeric Evidence] '))!
+  const diagnostic = JSON.parse(line.slice('[AIBeat Numeric Evidence] '.length))
+  assert.equal(diagnostic.factIndex, 1); assert.equal(diagnostic.core, true); assert.equal(diagnostic.citationSourceId, 's1')
+  assert.equal(diagnostic.failedClaimToken.normalizedValue, '999')
+})
+for (const value of [null, [], 'draft text', 123, true]) test(`draft expected_object reports safe parsed type: ${typeof value}/${Array.isArray(value)}`, async () => {
+  const logs: string[] = []
+  const m = createModel('key', 'fixture', (async () => completion(JSON.stringify(value))) as typeof fetch, line => logs.push(line), noWait)
+  await assert.rejects(m('draft', {}), e => e instanceof ModelFailure && e.category === 'MODEL_SCHEMA_INVALID')
+  const expected = value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value
+  assert.ok(logs.some(line => line.includes('Parsed JSON type: ' + expected) && line.includes('Problem: expected_object')))
+  assert.doesNotMatch(logs.join(' '), /draft text/)
+})
+test('production nine-call sequence explains repair cutoff and Xbox exhaustion', async () => {
+  const sequence = [facts, draft, facts, 429, [], 429, 429, facts, 429]
+  const logs: string[] = []; const waits: number[] = []; let calls = 0
+  const m = createModel('key', 'fixture', (async () => {
+    const value = sequence[calls++]
+    return value === 429 ? new Response(null, { status: 429, headers: { 'retry-after': calls === 4 ? '4' : '22' } }) : completion(JSON.stringify(value))
+  }) as typeof fetch, line => logs.push(line), { ...noWait, sleep: async ms => { waits.push(ms) } })
+  await m('facts', {}); await m('draft', {}); await m('facts', {})
+  await assert.rejects(m('draft', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
+  assert.equal(calls, 6)
+  await m('facts', {})
+  await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
+  for (let i = 0; i < 2; i++) await assert.rejects(m('facts', {}), rejected('BUDGET_EXHAUSTED'))
+  assert.equal(calls, 9); assert.deepEqual(waits, [4000, 22000])
+  assert.ok(logs.some(line => line.includes('Global call: 6/9 | Retry not attempted: REPAIR_ATTEMPT_LIMIT')))
+  assert.ok(logs.some(line => line.includes('Global call: 9/9 | Retry not attempted: GLOBAL_CALL_BUDGET_EXHAUSTED')))
+  assert.equal(logs.filter(line => line.includes('Request not sent: BUDGET_EXHAUSTED')).length, 2)
 })

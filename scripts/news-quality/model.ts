@@ -39,14 +39,17 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
     let attempt = 0, repairing = false
     let repairInstruction = ''
     while (true) {
-      if (calls >= QUALITY.maxModelCalls) throw new Rejection('BUDGET_EXHAUSTED')
+      if (calls >= QUALITY.maxModelCalls) {
+        log(`[AIBeat Model] Stage: ${stage} | Calls used: ${calls}/${QUALITY.maxModelCalls} | Request not sent: BUDGET_EXHAUSTED`)
+        throw new Rejection('BUDGET_EXHAUSTED')
+      }
       calls++; attempt++
       let delay = 0, repairAllowed = true
       let status: number | 'unavailable' = 'unavailable'
-      let finish = 'unavailable', chars = 0, json = 'NOT_RUN', schema = 'NOT_RUN'
+      let finish = 'unavailable', chars = 0, json = 'NOT_RUN', schema = 'NOT_RUN', jsonType = 'NOT_RUN'
       let usage = 'Prompt tokens: unavailable | Completion tokens: unavailable | Total tokens: unavailable'
       let issue: { field: string; problem: string } | undefined
-      const emit = (failure?: string) => log(`[AIBeat Model] Provider: Groq | Stage: ${stage} | Model: ${safeModelName(model, key)} | HTTP status: ${status} | Finish reason: ${finish} | Content chars: ${chars} | JSON parse: ${json} | Schema validation: ${schema} | Attempt: ${repairing ? '1/1' : attempt + '/3'}${repairing ? ' | Repair attempt: 1/1 | Repair JSON parse: ' + json + ' | Repair schema validation: ' + schema : ''} | ${usage} | Max output tokens: ${QUALITY.maxOutputTokens}${failure ? ' | Failure: ' + failure : ''}${issue ? ' | Field: ' + issue.field + ' | Problem: ' + issue.problem : ''}`)
+      const emit = (failure?: string) => log(`[AIBeat Model] Provider: Groq | Stage: ${stage} | Model: ${safeModelName(model, key)} | HTTP status: ${status} | Finish reason: ${finish} | Content chars: ${chars} | JSON parse: ${json} | Schema validation: ${schema} | Attempt: ${repairing ? '1/1' : attempt + '/3'}${repairing ? ' | Repair attempt: 1/1 | Repair JSON parse: ' + json + ' | Repair schema validation: ' + schema : ''} | ${usage} | Max output tokens: ${QUALITY.maxOutputTokens} | Global call: ${calls}/${QUALITY.maxModelCalls} | Parsed JSON type: ${jsonType}${failure ? ' | Failure: ' + failure : ''}${issue ? ' | Field: ' + issue.field + ' | Problem: ' + issue.problem : ''}`)
       try {
         const response = await fetcher('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST', signal: AbortSignal.timeout(QUALITY.timeoutMs),
@@ -76,7 +79,7 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
         if (finish !== 'stop') throw new ModelFailure('MODEL_INVALID_FINISH_REASON')
         if (typeof content !== 'string' || !content.trim()) throw new ModelFailure('MODEL_EMPTY_CONTENT')
         let value: unknown
-        try { value = JSON.parse(content); json = 'PASS' } catch {
+        try { value = JSON.parse(content); json = 'PASS'; jsonType = value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value } catch {
           json = 'FAIL'
           issue = { field: 'content', problem: 'json_syntax_error' }
           // Native JSON errors can contain source snippets. Do not log them.
@@ -115,6 +118,7 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
           log(`[AIBeat Model] Stage: ${stage} | Initial schema validation: FAIL | Repair attempt: 1/1`)
           continue
         }
+        if (failure.category === 'MODEL_RATE_LIMITED') log(`[AIBeat Model] Stage: ${stage} | Global call: ${calls}/${QUALITY.maxModelCalls} | Retry not attempted: ${repairing ? 'REPAIR_ATTEMPT_LIMIT' : calls >= QUALITY.maxModelCalls ? 'GLOBAL_CALL_BUDGET_EXHAUSTED' : 'STAGE_ATTEMPT_LIMIT'}`)
         throw failure
       }
     }
