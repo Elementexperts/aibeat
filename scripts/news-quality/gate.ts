@@ -77,7 +77,7 @@ export function sourcePolicy(sources: Source[], high: boolean, trustedId?: strin
   if (high && !primary.some(p => reputable.some(r => r.group !== p.group))) throw new Rejection('UNVERIFIED_HIGH_RISK_CLAIM')
   if (!high && !sources.some(s => s.id === trustedId && trustedEditorial(s)) && !primary.length && new Set(reputable.map(s => s.group)).size < 2) throw new Rejection('INSUFFICIENT_EVIDENCE')
 }
-export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Source[], now: Date, trustedId?: string, forceHighRisk = false) {
+export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Source[], now: Date, trustedId?: string, forceHighRisk = false, log: (message: string) => void = () => {}) {
   checkFresh(candidate.publishedAt, now, 'RSS_PUBLICATION_DATE')
   checkFresh(facts.event.eventDate, now, 'EVENT_DATE')
   if (facts.conflictingClaims.length) throw new Rejection('CONFLICTING_SOURCES')
@@ -85,12 +85,19 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
   const eventSource = sources.find(s => s.id === facts.eventSourceId)
   if (!eventSource || !normalize(eventSource.text + ' ' + eventSource.publishedAt).includes(normalize(facts.eventDateEvidence))) throw new Rejection('INVALID_DATE', 'EVENT_DATE_EVIDENCE_NOT_FOUND')
   const high = forceHighRisk || highRisk(candidate, facts)
-  for (const fact of facts.confirmedFacts) {
+  for (let factIndex = 0; factIndex < facts.confirmedFacts.length; factIndex++) {
+    const fact = facts.confirmedFacts[factIndex]
     if (fact.confidence < QUALITY.minFactConfidence) throw new Rejection('INSUFFICIENT_EVIDENCE')
-    const support = fact.supportedBy.map(citation => {
+    const support = fact.supportedBy.map((citation, citationIndex) => {
       const source = sources.find(s => s.id === citation.sourceId)
-      if (!source || !normalize(source.text).includes(normalize(citation.excerpt))) throw new Rejection('UNSUPPORTED_CLAIM')
-      if (!numbersSupported(fact.claim, citation.excerpt)) throw new Rejection('UNSUPPORTED_CLAIM')
+      const reject = (detail: 'SOURCE_ID_NOT_FOUND' | 'EXCERPT_NOT_IN_SOURCE' | 'CLAIM_NUMBER_NOT_IN_EXCERPT'): never => {
+        // Fixed labels and counts only; never emit model IDs, claims or excerpts.
+        log(`[AIBeat Facts Validation] Result: FAIL | Failure: UNSUPPORTED_CLAIM | Facts extracted: ${facts.confirmedFacts.length} | Fact index: ${factIndex + 1} | Core: ${fact.core ? 'YES' : 'NO'} | Citation count: ${fact.supportedBy.length} | Citation index: ${citationIndex + 1} | Evidence source matched: ${source ? 'YES' : 'NO'} | Failure detail: ${detail}`)
+        throw new Rejection('UNSUPPORTED_CLAIM', detail)
+      }
+      if (!source) return reject('SOURCE_ID_NOT_FOUND')
+      if (!normalize(source.text).includes(normalize(citation.excerpt))) reject('EXCERPT_NOT_IN_SOURCE')
+      if (!numbersSupported(fact.claim, citation.excerpt)) reject('CLAIM_NUMBER_NOT_IN_EXCERPT')
       return source
     })
     // Every fact, not just the headline, needs qualifying support.

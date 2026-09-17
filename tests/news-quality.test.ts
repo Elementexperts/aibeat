@@ -3,7 +3,7 @@ import test from 'node:test'
 import { readFileSync } from 'node:fs'
 import matter from 'gray-matter'
 import { QUALITY, classifySource } from '../scripts/news-quality/config'
-import { checkFresh, cleanDraft, duplicateEvent, renderDraft, renderApproved } from '../scripts/news-quality/gate'
+import { checkFacts, checkFresh, cleanDraft, duplicateEvent, renderDraft, renderApproved } from '../scripts/news-quality/gate'
 import { classifyEditorial } from '../scripts/news-quality/trust'
 import { classifyRisk, storyRisk } from '../scripts/news-quality/risk'
 import { ordinaryTrustedCandidate } from '../scripts/news-quality/trust'
@@ -719,4 +719,38 @@ test('explicit empty facts abstention is never repaired into new claims', async 
   const m = createModel('key', 'fixture', (async () => { calls++; return completion(JSON.stringify({ ...facts, confirmedFacts: [] })) }) as typeof fetch, () => {}, noWait)
   await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_SCHEMA_INVALID')
   assert.equal(calls, 1)
+})
+
+for (const detail of ['SOURCE_ID_NOT_FOUND', 'EXCERPT_NOT_IN_SOURCE', 'CLAIM_NUMBER_NOT_IN_EXCERPT']) test(`facts diagnostics: ${detail} stays fail-closed`, async () => {
+  const f = clone(facts), bad = clone(facts.confirmedFacts[0]); bad.id = 'secret-fact-id'; bad.core = false
+  if (detail === 'SOURCE_ID_NOT_FOUND') bad.supportedBy[0].sourceId = 'secret-source-id'
+  if (detail === 'EXCERPT_NOT_IN_SOURCE') bad.supportedBy[0].excerpt = 'secret unsupported excerpt of sufficient length'
+  if (detail === 'CLAIM_NUMBER_NOT_IN_EXCERPT') bad.claim = 'Acme has 987654 secret users.'
+  f.confirmedFacts.push(bad)
+  let calls = 0, writes = 0; const logs: string[] = []
+  assert.equal(await processCandidate(candidate, { collect: async () => [primary], model: async () => { calls++; return f }, history: [], now, log: line => logs.push(line), publish: async () => { writes++ } }), false)
+  assert.equal(calls, 1); assert.equal(writes, 0)
+  const diagnostic = logs.find(line => line.startsWith('[AIBeat Facts Validation]'))!
+  assert.match(diagnostic, /Facts extracted: 2.*Fact index: 2.*Core: NO.*Citation count: 1.*Citation index: 1/)
+  assert.ok(diagnostic.includes(`Evidence source matched: ${detail === 'SOURCE_ID_NOT_FOUND' ? 'NO' : 'YES'}`))
+  assert.ok(diagnostic.includes(`Failure detail: ${detail}`)); assert.doesNotMatch(diagnostic, /secret|987654|Acme/)
+  assert.ok(logs.some(line => line.includes(`Stage: facts_validation | Reason: UNSUPPORTED_CLAIM: ${detail}`)))
+})
+test('facts diagnostics preserve paraphrases and normalized verbatim excerpts', () => {
+  const f = clone(facts); f.confirmedFacts[0].claim = 'Acme introduced its Atlas editor.'
+  f.confirmedFacts[0].supportedBy[0].excerpt = excerpt.toUpperCase().replaceAll(' ', '  ')
+  const logs: string[] = []; checkFacts(candidate, f, [primary], now, undefined, false, line => logs.push(line)); assert.equal(logs.length, 0)
+})
+test('equivalent numeric representations stay rejected with specific diagnostics', () => {
+  const f = clone(facts), s = { ...primary, text: primary.text + ' The release costs 10 dollars.' }
+  f.confirmedFacts[0].claim = 'The release costs $10.'; f.confirmedFacts[0].supportedBy[0].excerpt = 'The release costs 10 dollars.'
+  assert.throws(() => checkFacts(candidate, f, [s], now), e => e instanceof Rejection && e.reason === 'UNSUPPORTED_CLAIM' && e.detail === 'CLAIM_NUMBER_NOT_IN_EXCERPT')
+})
+test('ninth HTTP request receives 429 without retry or sleep', async () => {
+  let calls = 0; const logs: string[] = []; const waits: number[] = []
+  const m = createModel('key', 'fixture', (async () => ++calls < 9 ? completion(JSON.stringify(facts)) : new Response(null, { status: 429 })) as typeof fetch, line => logs.push(line), { ...noWait, sleep: async ms => { waits.push(ms) } })
+  for (let i = 0; i < 8; i++) await m('facts', {})
+  await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
+  assert.equal(calls, 9); assert.equal(waits.length, 0); assert.match(logs.at(-1)!, /Attempt: 1\/3.*MODEL_RATE_LIMITED/)
+  assert.ok(!logs.some(line => line.includes('Retrying after:')))
 })

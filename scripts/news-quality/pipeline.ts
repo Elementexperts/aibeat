@@ -23,7 +23,7 @@ export async function evaluateCandidate(candidate: Candidate, sources: Source[],
     const trigger = claimRisk(fact, facts)
     if (trigger) log(`[AIBeat Quality Gate] Claim risk: HIGH | Trigger: ${trigger} | Scope: NON_CORE_CLAIM`)
   }
-  checkFacts(candidate, facts, sources, now, trustedId, initialHigh)
+  checkFacts(candidate, facts, sources, now, trustedId, initialHigh, log)
   if (duplicateEvent(facts.event, candidate.title, history)) throw new Rejection('DUPLICATE_STORY')
   const cleaned = cleanDraft(parseDraft(await model('draft', { confirmedFacts: facts.confirmedFacts, event: facts.event })), facts)
   const words = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/)
