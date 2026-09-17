@@ -15,69 +15,108 @@ Include at most ${QUALITY.maxFacts} facts. If evidence is insufficient return th
 { "supportedFactIds": ["f1"], "unsupportedClaims": [], "conflictingClaims": [], "unverifiedEntities": [], "derivativeGroups": [["s2", "s3"]], "authoritativePrimaryIds": ["s1"], "trustedEditorialSourceIds": [], "eventDateVerified": true, "independentReporting": false, "analysisGrounded": true, "originalValue": true, "clearWriting": true, "riskLevel": "low|medium|high", "riskAssessments": [] }
 Set originalValue false for superficial sentence-by-sentence rewriting or generic filler. No direct quotes are permitted in this v1 writer. Empty arrays are valid; missing fields are not.`,
 }
-export function createModel(key: string, model: string, fetcher: typeof fetch = fetch, log: (message: string) => void = console.log): Model {
+export function retryDelay(headers: Headers, attempt: number, now = Date.now(), random = Math.random()): number {
+  const retry = headers.get('retry-after')?.trim()
+  let delay = retry && /^\d+(?:\.\d+)?$/.test(retry) ? Number(retry) * 1000 : retry && /^[A-Za-z]{3}, /.test(retry) ? Date.parse(retry) - now : NaN
+  if (!Number.isFinite(delay) || delay < 0) {
+    // Groq reset headers use durations such as 1m2.5s. Never log header text.
+    const resets = ['x-ratelimit-reset-requests', 'x-ratelimit-reset-tokens'].map(name => {
+      const value = headers.get(name) || ''
+      if (!/^(?:\d+(?:\.\d+)?(?:ms|s|m|h))+$/.test(value)) return NaN
+      return Array.from(value.matchAll(/(\d+(?:\.\d+)?)(ms|s|m|h)/g)).reduce((sum, m) => sum + Number(m[1]) * ({ ms: 1, s: 1000, m: 60000, h: 3600000 }[m[2]]!), 0)
+    }).filter(Number.isFinite)
+    delay = resets.length ? Math.max(...resets) : 5000 * 2 ** (attempt - 1) + Math.max(0, Math.min(1, random)) * 1000
+  }
+  return Math.max(1000, Math.min(30000, delay))
+}
+
+type Timing = { sleep: (ms: number) => Promise<void>; now: () => number; random: () => number }
+const timing: Timing = { sleep: ms => new Promise(resolve => setTimeout(resolve, ms)), now: Date.now, random: Math.random }
+
+export function createModel(key: string, model: string, fetcher: typeof fetch = fetch, log: (message: string) => void = console.log, clock: Timing = timing): Model {
   let calls = 0
   return async (stage, input) => {
-    if (calls >= QUALITY.maxModelCalls) throw new Rejection('BUDGET_EXHAUSTED')
-    calls++
-    let status: number | 'unavailable' = 'unavailable'
-    let finish = 'unavailable', chars = 0, json = 'NOT_RUN', schema = 'NOT_RUN'
-    let usage = 'Prompt tokens: unavailable | Completion tokens: unavailable | Total tokens: unavailable'
-    let issue: { field: string; problem: string } | undefined
-    const emit = (failure?: string) => log(`[AIBeat Model] Provider: Groq | Stage: ${stage} | Model: ${safeModelName(model, key)} | HTTP status: ${status} | Finish reason: ${finish} | Content chars: ${chars} | JSON parse: ${json} | Schema validation: ${schema} | Attempt: 1/1 | ${usage} | Max output tokens: ${QUALITY.maxOutputTokens}${failure ? ' | Failure: ' + failure : ''}${issue ? ' | Field: ' + issue.field + ' | Problem: ' + issue.problem : ''}`)
-    try {
-      const response = await fetcher('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST', signal: AbortSignal.timeout(QUALITY.timeoutMs),
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-        body: JSON.stringify({ model, temperature: 0.1, max_tokens: QUALITY.maxOutputTokens, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: common + '\n' + (stage === 'draft' ? '' : riskPolicy + '\n') + prompts[stage] }, { role: 'user', content: JSON.stringify(input) }] }),
-      })
-      status = response.status
-      if (!response.ok) {
-        // Never parse/log error bodies: providers can echo prompts or generations.
-        await response.body?.cancel().catch(() => {})
-        throw new ModelFailure(status === 429 ? 'MODEL_RATE_LIMITED' : status >= 500 && status < 600 ? 'MODEL_SERVER_ERROR' : 'MODEL_HTTP_ERROR')
-      }
-      let data
-      try { data = await response.json() } catch (error) {
-        if (error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name)) throw error
-        issue = { field: 'response_envelope', problem: 'invalid_response_envelope' }
-        throw new ModelFailure('MODEL_UNEXPECTED_ERROR')
-      }
-      const count = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : 'unavailable'
-      usage = `Prompt tokens: ${count(data?.usage?.prompt_tokens)} | Completion tokens: ${count(data?.usage?.completion_tokens)} | Total tokens: ${count(data?.usage?.total_tokens)}`
-      const choice = data?.choices?.[0]
-      finish = ['stop', 'length', 'content_filter', 'tool_calls', 'function_call'].includes(choice?.finish_reason) ? choice.finish_reason : 'unknown'
-      const content = choice?.message?.content
-      chars = typeof content === 'string' ? content.length : 0
-      if (finish === 'length') throw new ModelFailure('MODEL_TRUNCATED')
-      if (finish !== 'stop') throw new ModelFailure('MODEL_INVALID_FINISH_REASON')
-      if (typeof content !== 'string' || !content.trim()) throw new ModelFailure('MODEL_EMPTY_CONTENT')
-      let value: unknown
-      try { value = JSON.parse(content); json = 'PASS' } catch {
-        json = 'FAIL'
-        issue = { field: 'content', problem: 'json_syntax_error' }
-        // Native JSON errors can contain source snippets. Do not log them.
-        throw new ModelFailure('MODEL_INVALID_JSON')
-      }
+    let attempt = 0, repairing = false
+    let repairInstruction = ''
+    while (true) {
+      if (calls >= QUALITY.maxModelCalls) throw new Rejection('BUDGET_EXHAUSTED')
+      calls++; attempt++
+      let delay = 0, repairAllowed = true
+      let status: number | 'unavailable' = 'unavailable'
+      let finish = 'unavailable', chars = 0, json = 'NOT_RUN', schema = 'NOT_RUN'
+      let usage = 'Prompt tokens: unavailable | Completion tokens: unavailable | Total tokens: unavailable'
+      let issue: { field: string; problem: string } | undefined
+      const emit = (failure?: string) => log(`[AIBeat Model] Provider: Groq | Stage: ${stage} | Model: ${safeModelName(model, key)} | HTTP status: ${status} | Finish reason: ${finish} | Content chars: ${chars} | JSON parse: ${json} | Schema validation: ${schema} | Attempt: ${repairing ? '1/1' : attempt + '/3'}${repairing ? ' | Repair attempt: 1/1 | Repair JSON parse: ' + json + ' | Repair schema validation: ' + schema : ''} | ${usage} | Max output tokens: ${QUALITY.maxOutputTokens}${failure ? ' | Failure: ' + failure : ''}${issue ? ' | Field: ' + issue.field + ' | Problem: ' + issue.problem : ''}`)
       try {
-        // Reuse the exact existing validators; pipeline validation remains intact.
-        // Checking here associates schema outcomes with this API call's metadata.
-        if (stage === 'facts') parseFacts(value)
-        else if (stage === 'draft') parseDraft(value)
-        else parseReview(value)
-        schema = 'PASS'
+        const response = await fetcher('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST', signal: AbortSignal.timeout(QUALITY.timeoutMs),
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+          body: JSON.stringify({ model, temperature: 0.1, max_tokens: QUALITY.maxOutputTokens, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: common + '\n' + (stage === 'draft' ? '' : riskPolicy + '\n') + prompts[stage] + repairInstruction }, { role: 'user', content: JSON.stringify(input) }] }),
+        })
+        status = response.status
+        if (response.status === 429) delay = retryDelay(response.headers, attempt, clock.now(), clock.random())
+        if (!response.ok) {
+          // Never parse/log error bodies: providers can echo prompts or generations.
+          await response.body?.cancel().catch(() => {})
+          throw new ModelFailure(status === 429 ? 'MODEL_RATE_LIMITED' : status >= 500 && status < 600 ? 'MODEL_SERVER_ERROR' : 'MODEL_HTTP_ERROR')
+        }
+        let data
+        try { data = await response.json() } catch (error) {
+          if (error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name)) throw error
+          issue = { field: 'response_envelope', problem: 'invalid_response_envelope' }
+          throw new ModelFailure('MODEL_UNEXPECTED_ERROR')
+        }
+        const count = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : 'unavailable'
+        usage = `Prompt tokens: ${count(data?.usage?.prompt_tokens)} | Completion tokens: ${count(data?.usage?.completion_tokens)} | Total tokens: ${count(data?.usage?.total_tokens)}`
+        const choice = data?.choices?.[0]
+        finish = ['stop', 'length', 'content_filter', 'tool_calls', 'function_call'].includes(choice?.finish_reason) ? choice.finish_reason : 'unknown'
+        const content = choice?.message?.content
+        chars = typeof content === 'string' ? content.length : 0
+        if (finish === 'length') throw new ModelFailure('MODEL_TRUNCATED')
+        if (finish !== 'stop') throw new ModelFailure('MODEL_INVALID_FINISH_REASON')
+        if (typeof content !== 'string' || !content.trim()) throw new ModelFailure('MODEL_EMPTY_CONTENT')
+        let value: unknown
+        try { value = JSON.parse(content); json = 'PASS' } catch {
+          json = 'FAIL'
+          issue = { field: 'content', problem: 'json_syntax_error' }
+          // Native JSON errors can contain source snippets. Do not log them.
+          throw new ModelFailure('MODEL_INVALID_JSON')
+        }
+        try {
+          // Reuse the exact existing validators; pipeline validation remains intact.
+          // Checking here associates schema outcomes with this API call's metadata.
+          if (stage === 'facts') parseFacts(value)
+          else if (stage === 'draft') parseDraft(value)
+          else parseReview(value)
+          schema = 'PASS'
+        } catch (error) {
+          if (!(error instanceof TypeError) && !(error instanceof Rejection && error.reason === 'MALFORMED_MODEL_OUTPUT')) throw error
+          schema = 'FAIL'
+          // An explicit empty fact set is evidence abstention, not a repair opportunity.
+          if (stage === 'facts' && value && typeof value === 'object' && 'confirmedFacts' in value && Array.isArray(value.confirmedFacts) && value.confirmedFacts.length === 0) repairAllowed = false
+          issue = schemaIssue(stage, value)
+          throw new ModelFailure('MODEL_SCHEMA_INVALID')
+        }
+        emit()
+        return value
       } catch (error) {
-        if (!(error instanceof TypeError) && !(error instanceof Rejection && error.reason === 'MALFORMED_MODEL_OUTPUT')) throw error
-        schema = 'FAIL'
-        issue = schemaIssue(stage, value)
-        throw new ModelFailure('MODEL_SCHEMA_INVALID')
+        const failure = error instanceof ModelFailure ? error : new ModelFailure(error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name) ? 'MODEL_TIMEOUT' : 'MODEL_UNEXPECTED_ERROR')
+        emit(failure.category)
+        if (failure.category === 'MODEL_RATE_LIMITED' && !repairing && attempt < 3 && calls < QUALITY.maxModelCalls) {
+          log(`[AIBeat Model] Stage: ${stage} | Failure: MODEL_RATE_LIMITED | Attempt: ${attempt}/3 | Retrying after: ${delay / 1000} seconds`)
+          await clock.sleep(delay)
+          continue
+        }
+        if (failure.category === 'MODEL_SCHEMA_INVALID' && repairAllowed && !repairing && calls < QUALITY.maxModelCalls) {
+          repairing = true
+          // Only fixed structural labels are added; no failed completion is replayed.
+          // The original evidence input and all existing editorial instructions remain.
+          repairInstruction = `\nThe previous JSON failed local structure validation: field ${issue?.field}, problem ${issue?.problem}. Return corrected JSON matching the required schema, using only the SAME supplied evidence/fact context. Do not invent facts, raise confidence, suppress risk, erase conflicts or change editorial judgments to pass validation. If the evidence cannot support the schema, abstain.`
+          log(`[AIBeat Model] Stage: ${stage} | Initial schema validation: FAIL | Repair attempt: 1/1`)
+          continue
+        }
+        throw failure
       }
-      emit()
-      return value
-    } catch (error) {
-      const failure = error instanceof ModelFailure ? error : new ModelFailure(error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name) ? 'MODEL_TIMEOUT' : 'MODEL_UNEXPECTED_ERROR')
-      emit(failure.category)
-      throw failure
     }
   }
 }

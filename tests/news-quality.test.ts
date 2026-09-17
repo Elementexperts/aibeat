@@ -12,7 +12,7 @@ import { SourceFetcher, extractSource, canonicalSource, collectSources, mergeSou
 import { documentLinks, publicationDate } from '../scripts/news-quality/documents'
 import { discoverFeed } from '../scripts/news-quality/feeds'
 import { diagnosticUrl } from '../scripts/news-quality/diagnostics'
-import { createModel } from '../scripts/news-quality/model'
+import { createModel, retryDelay } from '../scripts/news-quality/model'
 import { ModelFailure } from '../scripts/news-quality/model-diagnostics'
 import { auditStories } from '../scripts/news-quality/audit'
 import { Rejection, type Candidate, type FactSheet, type Draft, type Review, type Source, type Model } from '../scripts/news-quality/types'
@@ -606,10 +606,10 @@ for (const [label, response, category] of [
   ['invalid envelope', () => new Response('secret non-JSON envelope'), 'MODEL_UNEXPECTED_ERROR'],
 ] as [string, () => Response, string][]) test(`model diagnostics: ${label} maps safely to ${category}`, async () => {
   const logs: string[] = []; let calls = 0
-  const m = createModel('secret-api-key', 'openai/gpt-oss-120b', (async () => { calls++; return response() }) as typeof fetch, line => logs.push(line))
+  const m = createModel('secret-api-key', 'openai/gpt-oss-120b', (async () => { calls++; return response() }) as typeof fetch, line => logs.push(line), { sleep: async () => {}, now: () => 0, random: () => 0 })
   await assert.rejects(m('facts', { evidence: 'secret source document' }), (e: unknown) => e instanceof ModelFailure && e.category === category && e.reason === 'MALFORMED_MODEL_OUTPUT')
-  assert.equal(calls, 1); assert.equal(logs.length, 1)
-  assert.match(logs[0], new RegExp(`Failure: ${category}`)); assert.match(logs[0], /Attempt: 1\/1/)
+  assert.equal(calls, category === 'MODEL_RATE_LIMITED' ? 3 : category === 'MODEL_SCHEMA_INVALID' ? 2 : 1)
+  assert.match(logs[0], new RegExp(`Failure: ${category}`)); assert.match(logs[0], /Attempt: 1\/3/)
   assert.doesNotMatch(logs[0], /secret/)
   if (label === 'length') assert.match(logs[0], /Finish reason: length.*Prompt tokens: 1000.*Completion tokens: 3000.*Total tokens: 4000/)
   if (label === 'invalid JSON') assert.match(logs[0], /JSON parse: FAIL.*Problem: json_syntax_error/)
@@ -660,4 +660,63 @@ test('malformed, unsupported, low-confidence outputs still skip without retry or
     assert.equal(await processCandidate(candidate, { collect: async () => [primary], model: m, history: [], now, log: () => {}, publish: async () => { writes++ } }), false)
     assert.equal(calls, 1); assert.equal(writes, 0)
   }
+})
+
+const noWait = { sleep: async (_ms: number) => {}, now: () => 0, random: () => 0 }
+for (const failures of [1, 2, 3]) test(`429 bounded recovery: ${failures} rate limits`, async () => {
+  let calls = 0; const waits: number[] = []
+  const m = createModel('key', 'fixture', (async () => ++calls <= failures ? new Response(null, { status: 429 }) : completion(JSON.stringify(facts))) as typeof fetch, () => {}, { ...noWait, sleep: async ms => { waits.push(ms) } })
+  if (failures === 3) await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
+  else assert.deepEqual(await m('facts', {}), facts)
+  assert.equal(calls, Math.min(failures + 1, 3)); assert.deepEqual(waits, failures === 1 ? [5000] : [5000, 10000])
+})
+test('retry headers, invalid values, jitter and maximum delays are bounded', () => {
+  const delay = (headers: Record<string, string>, attempt = 1) => retryDelay(new Headers(headers), attempt, Date.parse('2026-09-17T00:00:00Z'), 0.5)
+  assert.equal(delay({ 'retry-after': '12' }), 12000)
+  assert.equal(delay({ 'retry-after': 'Thu, 17 Sep 2026 00:00:20 GMT' }), 20000)
+  assert.equal(delay({ 'retry-after': '999999' }), 30000)
+  assert.equal(delay({ 'retry-after': '0' }), 1000)
+  assert.equal(delay({ 'retry-after': '-1' }), 5500)
+  assert.equal(delay({ 'retry-after': 'garbage' }, 2), 10500)
+  assert.equal(delay({ 'x-ratelimit-reset-tokens': '1m2.5s' }), 30000)
+  assert.equal(delay({ 'x-ratelimit-reset-tokens': '2.5s', 'x-ratelimit-reset-requests': '4s' }), 4000)
+  assert.equal(delay({ 'x-ratelimit-reset-tokens': 'secret' }), 5500)
+})
+for (const outcome of ['success', 'schema', 'json', '429'] as const) test(`one schema repair: ${outcome}`, async () => {
+  let calls = 0; const bodies: { messages: { content: string }[] }[] = []; const logs: string[] = []
+  const input = { evidence: 'same evidence fixture' }
+  const m = createModel('key', 'fixture', (async (_url, options) => {
+    bodies.push(JSON.parse(options!.body as string)); calls++
+    if (calls === 1 || outcome === 'schema') return completion('{}')
+    if (outcome === '429') return new Response(null, { status: 429 })
+    return completion(outcome === 'json' ? '{bad' : JSON.stringify(facts))
+  }) as typeof fetch, line => logs.push(line), noWait)
+  if (outcome === 'success') assert.deepEqual(await m('facts', input), facts)
+  else await assert.rejects(m('facts', input), e => e instanceof ModelFailure && e.category === ({ schema: 'MODEL_SCHEMA_INVALID', json: 'MODEL_INVALID_JSON', '429': 'MODEL_RATE_LIMITED' }[outcome]))
+  assert.equal(calls, 2)
+  assert.equal(bodies[0].messages[1].content, bodies[1].messages[1].content)
+  assert.match(bodies[1].messages[0].content, /previous JSON failed local structure validation/)
+  assert.match(logs.join(' '), /Initial schema validation: FAIL/)
+  assert.match(logs.join(' '), /Repair JSON parse:/)
+  assert.doesNotMatch(logs.join(' '), /same evidence fixture/)
+})
+test('retry and repair requests consume the unchanged global call budget', async () => {
+  let calls = 0
+  const m = createModel('key', 'fixture', (async () => { calls++; return new Response(null, { status: 429 }) }) as typeof fetch, () => {}, noWait)
+  for (let i = 0; i < 3; i++) await assert.rejects(m('facts', {}), e => e instanceof ModelFailure)
+  await assert.rejects(m('facts', {}), rejected('BUDGET_EXHAUSTED'))
+  assert.equal(calls, QUALITY.maxModelCalls)
+})
+test('missing primary evidence never invokes a model repair', async () => {
+  let calls = 0
+  const m = createModel('key', 'fixture', (async () => { calls++; return completion(JSON.stringify(facts)) }) as typeof fetch, () => {}, noWait)
+  await assert.rejects(evaluateCandidate({ ...candidate, title: 'Acme raises $18 million in funding round' }, [reporting], [], m, now), rejected('NO_PRIMARY_SOURCE'))
+  assert.equal(calls, 0)
+})
+
+test('explicit empty facts abstention is never repaired into new claims', async () => {
+  let calls = 0
+  const m = createModel('key', 'fixture', (async () => { calls++; return completion(JSON.stringify({ ...facts, confirmedFacts: [] })) }) as typeof fetch, () => {}, noWait)
+  await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_SCHEMA_INVALID')
+  assert.equal(calls, 1)
 })
