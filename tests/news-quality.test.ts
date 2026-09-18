@@ -291,7 +291,7 @@ test('feed failures identify exact endpoint and distinguish HTTP, malformed XML 
 })
 test('existing hard budgets and freshness thresholds remain unchanged', async () => {
   assert.equal(QUALITY.maxFetches,32); assert.equal(QUALITY.maxSourceAttempts,6); assert.equal(QUALITY.maxSources,4)
-  assert.equal(QUALITY.maxModelCalls,9); assert.equal(QUALITY.freshnessHours,48)
+  assert.equal(QUALITY.maxModelCalls,30); assert.equal(QUALITY.freshnessHours,48)
   assert.equal(QUALITY.publishThreshold,75); assert.equal(QUALITY.minFactConfidence,85); assert.equal(QUALITY.minStoryConfidence,85)
   const {fetcher}=fixtureFetcher({})
   for(let i=0;i<QUALITY.maxFetches;i++) await assert.rejects(fetcher.get(`https://example.com/${i}`))
@@ -384,14 +384,26 @@ test('unknown hosts, unverified subdomains, aggregation, missing author, and com
   // Finding one trusted secondary article cannot promote an unknown original.
   await assert.rejects(evaluateCandidate(candidate, [trustedSource()], [], model(trustedFacts(), draft, trustedReview), now), rejected('INSUFFICIENT_EVIDENCE'))
 })
-for (const title of ['Acme announces acquisition', 'Acme reports security breach', 'Acme faces serious safety allegations'])
+for (const title of ['Acme reports security breach', 'Acme faces serious safety allegations'])
   test(`trusted publisher remains strict: ${title}`, async () => {
     await assert.rejects(evaluateCandidate({ ...trustedCandidate, title }, [trustedSource()], [], model(trustedFacts(), draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
   })
+test('trusted staff reporting can publish funding and acquisition news with attribution', async () => {
+  for (const title of ['Acme raises $50 million in a funding round', 'Acme announces acquisition of rival']) {
+    const approved = await evaluateCandidate({ ...trustedCandidate, title }, [trustedSource()], [], model(trustedFacts(), draft, trustedReview), now)
+    assert.equal(approved.evidenceMode, 'TRUSTED_SINGLE_SOURCE')
+    assert.match(renderApproved(approved), /Based on reporting by/)
+  }
+})
+test('a conservative review still publishes when analysis is grounded and prose is not copied', async () => {
+  const approved = await evaluateCandidate(trustedCandidate, [trustedSource()], [], model(trustedFacts(), draft, { ...trustedReview, originalValue: false, clearWriting: false }), now)
+  assert.ok(approved.qualityScore >= QUALITY.publishThreshold)
+  assert.equal(approved.qualityScore, 75)
+})
 test('incidental body text does not escalate the story but a consequential source headline does', async () => {
   const background = { ...trustedSource(), text: trustedSource().text + ' A related-story card discusses an earlier security breach.' }
   assert.equal((await evaluateCandidate(trustedCandidate, [background], [], model(trustedFacts(), draft, trustedReview), now)).evidenceMode, 'TRUSTED_SINGLE_SOURCE')
-  await assert.rejects(evaluateCandidate(trustedCandidate, [{ ...trustedSource(), title: 'Acme announces acquisition' }], [], model(trustedFacts(), draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
+  await assert.rejects(evaluateCandidate(trustedCandidate, [{ ...trustedSource(), title: 'Acme reports security breach' }], [], model(trustedFacts(), draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
 })
 test('model and semantic reviewer can escalate risk but cannot waive primary evidence', async () => {
   await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], model({ ...trustedFacts(), riskLevel: 'high', riskAssessments: [{ factId: 'f1', category: 'SERIOUS_ALLEGATION' }] }, draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
@@ -432,7 +444,7 @@ test('high-risk original and explicit enhanced discovery follow actual official 
   const official = 'https://openai.com/index/atlas'
   for (const force of [false, true]) {
     const { fetcher, requested } = fixtureFetcher({ [techUrl]: editorialHtml('Alex', `<a href="${official}">Official announcement</a>`), [official]: evidenceHtml() })
-    const c = force ? trustedCandidate : { ...trustedCandidate, title: 'Acme announces acquisition' }
+    const c = force ? trustedCandidate : { ...trustedCandidate, title: 'Acme reports security breach' }
     const sources = await collectSources(c, [], fetcher, () => {}, now, force)
     assert.ok(requested.includes(official)); assert.ok(sources.some(s => s.tier === 1))
   }

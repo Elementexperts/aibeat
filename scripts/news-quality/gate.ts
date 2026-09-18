@@ -4,7 +4,7 @@ import { HIGH_RISK_RULES, QUALITY, TRUSTED_EDITORIAL_SOURCE_POINTS } from './con
 import { Rejection, type FactSheet, type Source, type Draft, type Review, type HistoricalStory, type NewsEvent, type Candidate } from './types'
 
 import { trustedEditorial } from './trust'
-import { centralRisk, claimRisk, classifyRisk } from './risk'
+import { centralRisk, claimRisk, classifyRisk, sensitiveHighRisk, trustedEditorialHighRisk } from './risk'
 
 export const normalize = (text: string) => text.toLowerCase().normalize('NFKC').replace(/\s+/g, ' ').trim()
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0
@@ -71,12 +71,13 @@ export function checkQuotes(value: string) {
 export function highRisk(candidate: Candidate, facts: FactSheet) {
   return !!centralRisk(candidate, facts)
 }
-export function sourcePolicy(sources: Source[], high: boolean, trustedId?: string) {
+export function sourcePolicy(sources: Source[], high: boolean, trustedId?: string, trigger?: string) {
   const primary = sources.filter(s => s.tier === 1)
   const reputable = sources.filter(s => s.tier === 2)
-  if (high && !primary.length) throw new Rejection('NO_PRIMARY_SOURCE')
-  if (high && !primary.some(p => reputable.some(r => r.group !== p.group))) throw new Rejection('UNVERIFIED_HIGH_RISK_CLAIM')
-  if (!high && !sources.some(s => s.id === trustedId && trustedEditorial(s)) && !primary.length && new Set(reputable.map(s => s.group)).size < 2) throw new Rejection('INSUFFICIENT_EVIDENCE')
+  const strict = high && !(trustedId && trustedEditorialHighRisk(trigger))
+  if (strict && !primary.length) throw new Rejection('NO_PRIMARY_SOURCE')
+  if (strict && !primary.some(p => reputable.some(r => r.group !== p.group))) throw new Rejection('UNVERIFIED_HIGH_RISK_CLAIM')
+  if (!strict && !sources.some(s => s.id === trustedId && trustedEditorial(s)) && !primary.length && new Set(reputable.map(s => s.group)).size < 2) throw new Rejection('INSUFFICIENT_EVIDENCE')
 }
 export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Source[], now: Date, trustedId?: string, forceHighRisk = false, log: (message: string) => void = () => {}) {
   checkFresh(candidate.publishedAt, now, 'RSS_PUBLICATION_DATE')
@@ -119,8 +120,9 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
     const failedGroup = Array.from(groups.values()).find(group => !quantitiesSupported(fact.claim, group.excerpts))
     const numericFailure = failedGroup?.indices[0] ?? -1
     // Every fact, not just the headline, needs qualifying support.
-    try { sourcePolicy(support, high || !!claimRisk(fact, facts), trustedId) } catch (error) {
-      if (!high && claimRisk(fact, facts) && error instanceof Rejection) error.detail = `CLAIM_ONLY:${claimRisk(fact, facts)}`
+    const factTrigger = claimRisk(fact, facts)
+    try { sourcePolicy(support, high || !!factTrigger, trustedId, factTrigger || centralRisk(candidate, facts)) } catch (error) {
+      if (!high && factTrigger && error instanceof Rejection) error.detail = `CLAIM_ONLY:${factTrigger}`
       throw error
     }
     for (const source of support) if (!Number.isFinite(date(source.publishedAt)) || date(source.publishedAt) > now.getTime()) throw new Rejection('INVALID_DATE', `SOURCE_PUBLICATION_DATE_INVALID:${source.id}`)
@@ -170,7 +172,7 @@ export function publicationScore(facts: FactSheet, sources: Source[], review: Re
   if (review.unverifiedEntities.length) throw new Rejection('UNVERIFIED_ENTITY')
   if (!review.eventDateVerified) throw new Rejection('INVALID_DATE', 'REVIEW_EVENT_DATE_NOT_VERIFIED')
   if (review.unsupportedClaims.length || facts.confirmedFacts.some(f => !review.supportedFactIds.includes(f.id))) throw new Rejection('UNSUPPORTED_CLAIM')
-  if (!review.analysisGrounded || !review.originalValue || !review.clearWriting) throw new Rejection('LOW_INFORMATION_VALUE')
+  if (!review.analysisGrounded) throw new Rejection('LOW_INFORMATION_VALUE')
   const adjusted = sources.map(s => ({ ...s }))
   // A reviewer may collapse independence or reject authority, never create it.
   for (const group of review.derivativeGroups) {
@@ -179,22 +181,26 @@ export function publicationScore(facts: FactSheet, sources: Source[], review: Re
     for (const source of adjusted) if (existing.has(source.group)) source.group = merged
   }
   for (const source of adjusted) if (source.tier === 1 && !review.authoritativePrimaryIds.includes(source.id)) source.tier = 3
-  const high = forceHighRisk || !!centralRisk(candidate, facts, review)
-  const single = !high && review.trustedEditorialSourceIds.includes(trustedId || '') && !review.derivativeGroups.some(g => g.includes(trustedId || '')) && adjusted.some(s => s.id === trustedId && trustedEditorial(s))
+  const trigger = centralRisk(candidate, facts, review)
+  const high = forceHighRisk || !!trigger
+  const single = !sensitiveHighRisk(trigger) && review.trustedEditorialSourceIds.includes(trustedId || '') && !review.derivativeGroups.some(g => g.includes(trustedId || '')) && adjusted.some(s => s.id === trustedId && trustedEditorial(s))
   for (const fact of facts.confirmedFacts) {
-    const consequential = high || !!claimRisk(fact, facts, review)
+    const factTrigger = claimRisk(fact, facts, review)
+    const consequential = high || !!factTrigger
     try {
-      sourcePolicy(adjusted.filter(s => fact.supportedBy.some(c => c.sourceId === s.id)), consequential, single ? trustedId : undefined)
-      if (consequential && !review.independentReporting) throw new Rejection('UNVERIFIED_HIGH_RISK_CLAIM')
+      sourcePolicy(adjusted.filter(s => fact.supportedBy.some(c => c.sourceId === s.id)), consequential, single ? trustedId : undefined, factTrigger || trigger)
+      if (consequential && !single && !review.independentReporting) throw new Rejection('UNVERIFIED_HIGH_RISK_CLAIM')
     } catch (error) {
-      if (!high && error instanceof Rejection) error.detail = `CLAIM_ONLY:${claimRisk(fact, facts, review)}`
+      if (!high && error instanceof Rejection) error.detail = `CLAIM_ONLY:${factTrigger}`
       throw error
     }
   }
   const primary = adjusted.some(s => s.tier === 1)
   if (!primary && !single && !review.independentReporting) throw new Rejection('INSUFFICIENT_EVIDENCE')
-  if (high && !review.independentReporting) throw new Rejection('UNVERIFIED_HIGH_RISK_CLAIM')
-  const score = (primary ? 25 : single ? TRUSTED_EDITORIAL_SOURCE_POINTS : 20) + 25 + (review.independentReporting ? 15 : 5) + 15 + 10 + 10
+  if (high && !single && !review.independentReporting) throw new Rejection('UNVERIFIED_HIGH_RISK_CLAIM')
+  const originality = review.originalValue ? 15 : 8
+  const writing = review.clearWriting ? 10 : 5
+  const score = (primary ? 25 : single ? TRUSTED_EDITORIAL_SOURCE_POINTS : 20) + 25 + (review.independentReporting ? 15 : 5) + originality + 10 + writing
   if (score < QUALITY.publishThreshold) throw new Rejection('LOW_INFORMATION_VALUE')
   return score
 }

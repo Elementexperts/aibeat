@@ -1,7 +1,7 @@
 export const QUALITY = {
   publishThreshold: 75, minFactConfidence: 85, minStoryConfidence: 85,
   maxCandidates: 6, maxSources: 4, maxSourceAttempts: 6, maxFetches: 32,
-  maxModelCalls: 9, maxArticles: 3, maxFacts: 12, maxSourceChars: 6500,
+  maxModelCalls: 30, maxArticles: 3, maxFacts: 12, maxSourceChars: 6500,
   maxSourceBytes: 1_000_000, timeoutMs: 12000, maxOutputTokens: 3000,
   freshnessHours: 48, duplicateDays: 14, minSourceChars: 300,
 } as const

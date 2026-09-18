@@ -3,6 +3,16 @@ import type { Candidate, Fact, FactSheet, Review, Source } from './types'
 
 export type HighRiskCategory = typeof HIGH_RISK_RULES[number]['category']
 export type ClaimRisk = { factId: string; category: HighRiskCategory }
+// Business-event reporting from a trusted staff article may publish with attribution.
+// Legal, safety and enforcement claims still need a primary source plus independent reporting.
+export const TRUSTED_ELIGIBLE_HIGH_RISK = new Set<HighRiskCategory>(['FUNDING', 'ACQUISITION', 'EMPLOYMENT_REDUCTION'])
+export const SENSITIVE_HIGH_RISK = new Set<HighRiskCategory>(HIGH_RISK_RULES.map(rule => rule.category).filter(category => !TRUSTED_ELIGIBLE_HIGH_RISK.has(category)))
+export function trustedEditorialHighRisk(trigger?: string) {
+  return !!trigger && TRUSTED_ELIGIBLE_HIGH_RISK.has(trigger as HighRiskCategory)
+}
+export function sensitiveHighRisk(trigger?: string) {
+  return !!trigger && SENSITIVE_HIGH_RISK.has(trigger as HighRiskCategory)
+}
 export const routineTechnology = /\b(launch\w*|releas\w*|updat\w*|announc\w*|introduc\w*|unveil\w*|feature\w*|available|availability|rollout|rolls? out|software|hardware|developer|api|model|editor|device|camera|stylus|redesign|smart glasses|product|surface|windows)\b/i
 const medium = /\b(benchmark\w*|competitive|strateg\w*|partnership\w*|controvers\w*)\b/i
 

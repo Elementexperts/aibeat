@@ -4,7 +4,7 @@ import type { Candidate, EditorialClassification, Source } from './types'
 
 const plain = (value: string) => decode(value.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim()
 export { routineTechnology as ordinaryTechnology } from './risk'
-import { storyRisk } from './risk'
+import { storyRisk, trustedEditorialHighRisk } from './risk'
 export function classifyEditorial(url: string, html: string): EditorialClassification {
   const rule = classifySource(url)
   const host = new URL(url).hostname.toLowerCase().replace(/^www\./, '')
@@ -52,5 +52,7 @@ export function originalEditorial(candidate: Candidate, sources: Source[]) {
   return sources.find(source => (source.url === candidate.url || source.requestedUrl === candidate.url) && trustedEditorial(source))
 }
 export function ordinaryTrustedCandidate(candidate: Candidate, source: Source) {
-  return originalEditorial(candidate, [source]) && storyRisk(candidate, source).level !== 'high'
+  if (!originalEditorial(candidate, [source])) return false
+  const risk = storyRisk(candidate, source)
+  return risk.level !== 'high' || trustedEditorialHighRisk(risk.trigger)
 }

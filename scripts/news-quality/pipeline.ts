@@ -1,5 +1,5 @@
 import { originalEditorial, ordinaryTrustedCandidate } from './trust'
-import { storyRisk, centralRisk, claimRisk } from './risk'
+import { storyRisk, centralRisk, claimRisk, sensitiveHighRisk } from './risk'
 import { failureDetail, safeLabel } from './diagnostics'
 import { checkFresh, checkFacts, cleanDraft, duplicateEvent, highRisk, parseFacts, parseDraft, parseReview, publicationScore, sourcePolicy } from './gate'
 import { Rejection, type Approved, type Candidate, type HistoricalStory, type Model, type Source } from './types'
@@ -10,9 +10,9 @@ export async function evaluateCandidate(candidate: Candidate, sources: Source[],
   const retrievedOriginal = sources.find(s => s.url === candidate.url || s.requestedUrl === candidate.url)
   const initialRisk = storyRisk(candidate, retrievedOriginal)
   const initialHigh = forceHighRisk || initialRisk.level === 'high'
-  const trustedId = !initialHigh && original && ordinaryTrustedCandidate(candidate, original) ? original.id : undefined
+  const trustedId = original && ordinaryTrustedCandidate(candidate, original) ? original.id : undefined
   if (trustedId) checkFresh(original!.publishedAt, now, 'ORIGINAL_PUBLICATION_DATE')
-  sourcePolicy(sources, initialHigh, trustedId)
+  sourcePolicy(sources, initialHigh, trustedId, initialRisk.trigger)
   const evidenceMode = trustedId ? 'TRUSTED_SINGLE_SOURCE' : 'ENHANCED_VERIFICATION'
   const evidence = sources.map(({ links, imageUrl, ...source }) => source)
   let facts = parseFacts(await model('facts', { candidate, evidenceMode, trustedEditorialSourceId: trustedId, sources: evidence, now: now.toISOString() }))
@@ -42,7 +42,8 @@ export async function evaluateCandidate(candidate: Candidate, sources: Source[],
   else if (review.riskLevel === 'medium') facts.riskLevel = 'medium'
   const used = new Set(facts.confirmedFacts.flatMap(f => f.supportedBy.map(s => s.sourceId)))
   const hasConsequentialClaim = facts.confirmedFacts.some(f => claimRisk(f, facts, review))
-  return { ...cleaned, facts, sources: sources.filter(s => used.has(s.id)), qualityScore, evidenceMode: facts.riskLevel === 'high' || hasConsequentialClaim ? 'ENHANCED_VERIFICATION' : evidenceMode }
+  const sensitiveClaim = sensitiveHighRisk(reviewTrigger || factTrigger) || facts.confirmedFacts.some(f => sensitiveHighRisk(claimRisk(f, facts, review)))
+  return { ...cleaned, facts, sources: sources.filter(s => used.has(s.id)), qualityScore, evidenceMode: sensitiveClaim ? 'ENHANCED_VERIFICATION' : trustedId ? 'TRUSTED_SINGLE_SOURCE' : (facts.riskLevel === 'high' || hasConsequentialClaim ? 'ENHANCED_VERIFICATION' : evidenceMode) }
 }
 
 // The only side-effect boundary. Rejections cannot reach final image/MDX creation.
