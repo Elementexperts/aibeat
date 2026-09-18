@@ -12,7 +12,7 @@ import { ordinaryTrustedCandidate } from '../scripts/news-quality/trust'
 import { evaluateCandidate, processCandidate } from '../scripts/news-quality/pipeline'
 import { SourceFetcher, extractSource, canonicalSource, collectSources, mergeSourceOrigins } from '../scripts/news-quality/sources'
 import { documentLinks, publicationDate } from '../scripts/news-quality/documents'
-import { discoverFeed } from '../scripts/news-quality/feeds'
+import { discoverFeed, selectCandidates } from '../scripts/news-quality/feeds'
 import { diagnosticUrl } from '../scripts/news-quality/diagnostics'
 import { createModel, retryDelay } from '../scripts/news-quality/model'
 import { ModelFailure } from '../scripts/news-quality/model-diagnostics'
@@ -891,18 +891,19 @@ test('fractional percentages and negative currency preserve actual values', () =
   assert.equal(numbersSupported('-$10', '-10 dollars'), true)
 })
 
-test('4K ambiguity is diagnosed without changing rejection, including identical evidence', () => {
+test('Apple TV 4K keeps explicit resolution evidence without interpreting it as money', () => {
   const text = 'Save $30 on a refurbished Apple TV 4K'
-  assert.equal(numbersSupported(text, text), false)
-  const d = numericDiagnostic({ factIndex: 1, core: true, claim: text, sourceId: 's1', excerpt: text })
+  assert.equal(numbersSupported(text, text), true)
+  assert.equal(numbersSupported(text, text.replace('4K', '8K')), false)
+  assert.equal(numbersSupported('Apple TV 4K', 'Apple TV 4000'), false)
+  assert.equal(numbersSupported('4K display', 'Display costs $4,000'), false)
+  assert.equal(numbersSupported('A 4K prize', 'A 4K prize'), false)
+  assert.equal(numbersSupported('Raised $4K', 'Raised 4000 dollars'), true)
+  const d = numericDiagnostic({ factIndex: 1, core: true, claim: text, sourceId: 's1', excerpt: text.replace('4K', '8K') })
   assert.ok('failedClaimToken' in d)
-  if (!('failedClaimToken' in d)) return
-  assert.equal(d.failedClaimToken?.raw, '4K'); assert.equal(d.failedClaimToken?.normalizedValue, 'INVALID')
-  assert.equal(d.failedClaimToken?.magnitude, 'k'); assert.equal(d.failedClaimToken?.scale, 3)
-  assert.equal(d.failedClaimToken?.invalidReason, 'AMBIGUOUS_MAGNITUDE')
-  assert.ok(d.comparisons.every(c => c.reason === 'AMBIGUOUS_MAGNITUDE'))
-  assert.equal(d.claim, text); assert.equal(d.citationSourceId, 's1')
+  if ('failedClaimToken' in d) { assert.equal(d.failedClaimToken?.unit, 'resolution_k'); assert.equal(d.failedClaimToken?.normalizedValue, '4') }
 })
+
 test('numeric observer agrees with unchanged acceptance across diagnostic conditions', () => {
   for (const [claim, excerpt] of [['$10', '10 dollars'], ['$10', '€10'], ['10', '20'], ['Apple TV 4K', 'Apple TV 4K'], ['Saved 10', '$10'], ['Raised 10', '$10 and €10'], ['10', '10%'], ['10', 'no numbers'], ['10', 'C$10'], ['10', '4K'], ['Raised 10', '$10'], ['1,0', '10']]) {
     const d = explainQuantities(claim, excerpt)
@@ -953,8 +954,43 @@ test('production nine-call sequence explains repair cutoff and Xbox exhaustion',
   await m('facts', {})
   await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
   for (let i = 0; i < 2; i++) await assert.rejects(m('facts', {}), rejected('BUDGET_EXHAUSTED'))
-  assert.equal(calls, 9); assert.deepEqual(waits, [4000, 22000])
+  assert.equal(calls, 9); assert.deepEqual(waits, [4000, 22000, 22000])
   assert.ok(logs.some(line => line.includes('Global call: 6/9 | Retry not attempted: REPAIR_ATTEMPT_LIMIT')))
   assert.ok(logs.some(line => line.includes('Global call: 9/9 | Retry not attempted: GLOBAL_CALL_BUDGET_EXHAUSTED')))
   assert.equal(logs.filter(line => line.includes('Request not sent: BUDGET_EXHAUSTED')).length, 2)
+})
+
+test('terminal repair 429 cools down the next candidate without an extra retry or budget increase', async () => {
+  let elapsed = 0, calls = 0, readyAt = 0; const waits: number[] = []
+  const m = createModel('key', 'fixture', (async () => {
+    calls++
+    if (calls === 1) return completion('[]')
+    if (calls === 2) { readyAt = elapsed + 22000; return new Response(null, { status: 429, headers: { 'retry-after': '22' } }) }
+    assert.ok(elapsed >= readyAt, 'next candidate must respect provider cooldown')
+    return completion(JSON.stringify(facts))
+  }) as typeof fetch, () => {}, { now: () => elapsed, random: () => 0, sleep: async ms => { waits.push(ms); elapsed += ms } })
+  await assert.rejects(m('draft', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
+  assert.equal(calls, 2); assert.deepEqual(waits, [])
+  assert.deepEqual(await m('facts', {}), facts)
+  assert.equal(calls, 3); assert.deepEqual(waits, [22000])
+})
+test('source discovery time reduces shared cooldown rather than adding a fresh full delay', async () => {
+  let elapsed = 0, calls = 0; const waits: number[] = []
+  const m = createModel('key', 'fixture', (async () => {
+    calls++
+    return calls <= 3 ? new Response(null, { status: 429, headers: { 'retry-after': '10' } }) : completion(JSON.stringify(facts))
+  }) as typeof fetch, () => {}, { now: () => elapsed, random: () => 0, sleep: async ms => { waits.push(ms); elapsed += ms } })
+  await assert.rejects(m('facts', {}), e => e instanceof ModelFailure)
+  elapsed += 7000
+  await m('facts', {})
+  assert.deepEqual(waits, [10000, 10000, 3000]); assert.equal(calls, 4)
+})
+test('published stories are removed before the six-slot selection; broad coverage remains', () => {
+  const old = Array.from({ length: 6 }, (_, i) => ({ ...candidate, url: `https://theverge.com/old-${i}`, publishedAt: '2026-09-16T11:00:00Z' }))
+  const pending = ['AI tool launches', 'New game announced', 'Camera release', 'Streaming service update', 'Laptop launch', 'Display update', 'Phone launch'].map((title, i) => ({ ...candidate, title, url: `https://theverge.com/new-${i}` }))
+  const history = old.map((c, i) => ({ slug: `old-${i}`, title: c.title, publishedAt: c.publishedAt, sources: [{ name: 'The Verge', url: c.url + '?utm_source=feed' }] }))
+  const selected = selectCandidates([...old, ...pending], history)
+  assert.equal(selected.length, 6); assert.ok(selected.every(c => c.url.includes('/new-')))
+  assert.ok(selected.some(c => c.title === 'New game announced')); assert.ok(selected.some(c => c.title === 'Camera release'))
+  assert.equal(QUALITY.maxCandidates, 6); assert.equal(QUALITY.maxModelCalls, 9)
 })

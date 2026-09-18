@@ -34,7 +34,7 @@ type Timing = { sleep: (ms: number) => Promise<void>; now: () => number; random:
 const timing: Timing = { sleep: ms => new Promise(resolve => setTimeout(resolve, ms)), now: Date.now, random: Math.random }
 
 export function createModel(key: string, model: string, fetcher: typeof fetch = fetch, log: (message: string) => void = console.log, clock: Timing = timing): Model {
-  let calls = 0
+  let calls = 0, nextRequestAt = 0
   return async (stage, input) => {
     let attempt = 0, repairing = false
     let repairInstruction = ''
@@ -43,6 +43,12 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
         log(`[AIBeat Model] Stage: ${stage} | Calls used: ${calls}/${QUALITY.maxModelCalls} | Request not sent: BUDGET_EXHAUSTED`)
         throw new Rejection('BUDGET_EXHAUSTED')
       }
+      const cooldown = Math.max(0, nextRequestAt - clock.now())
+      if (cooldown > 0) {
+        log(`[AIBeat Model] Stage: ${stage} | Provider cooldown: ${cooldown / 1000} seconds | Calls used: ${calls}/${QUALITY.maxModelCalls}`)
+        await clock.sleep(cooldown)
+      }
+      nextRequestAt = 0
       calls++; attempt++
       let delay = 0, repairAllowed = true
       let status: number | 'unavailable' = 'unavailable'
@@ -57,7 +63,10 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
           body: JSON.stringify({ model, temperature: 0.1, max_tokens: QUALITY.maxOutputTokens, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: common + '\n' + (stage === 'draft' ? '' : riskPolicy + '\n') + prompts[stage] + repairInstruction }, { role: 'user', content: JSON.stringify(input) }] }),
         })
         status = response.status
-        if (response.status === 429) delay = retryDelay(response.headers, attempt, clock.now(), clock.random())
+        if (response.status === 429) {
+          delay = retryDelay(response.headers, attempt, clock.now(), clock.random())
+          nextRequestAt = clock.now() + delay
+        }
         if (!response.ok) {
           // Never parse/log error bodies: providers can echo prompts or generations.
           await response.body?.cancel().catch(() => {})
@@ -107,7 +116,6 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
         emit(failure.category)
         if (failure.category === 'MODEL_RATE_LIMITED' && !repairing && attempt < 3 && calls < QUALITY.maxModelCalls) {
           log(`[AIBeat Model] Stage: ${stage} | Failure: MODEL_RATE_LIMITED | Attempt: ${attempt}/3 | Retrying after: ${delay / 1000} seconds`)
-          await clock.sleep(delay)
           continue
         }
         if (failure.category === 'MODEL_SCHEMA_INVALID' && repairAllowed && !repairing && calls < QUALITY.maxModelCalls) {

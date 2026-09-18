@@ -1,9 +1,10 @@
+import { classifySource, QUALITY } from './config'
 import Parser from 'rss-parser'
 import { checkFresh } from './gate'
 import { documentLinks } from './documents'
 import { diagnosticUrl, failureDetail } from './diagnostics'
 import { SourceFetcher, canonicalSource } from './sources'
-import { Rejection, type Candidate } from './types'
+import { Rejection, type Candidate, type HistoricalStory } from './types'
 
 export const RSS_FEEDS = [
   'https://techcrunch.com/category/artificial-intelligence/feed/',
@@ -33,4 +34,15 @@ export async function discoverFeed(feed: string, fetcher: SourceFetcher, log: (m
     log(`[AIBeat Discovery] Feed unavailable: ${diagnosticUrl(feed)} | ${failureDetail(error)} | Continuing`)
     return []
   }
+}
+
+// Broad technology coverage is retained. Already-published URLs must not consume
+// one of the six evidence/model candidate slots. Final event dedup stays intact.
+export function selectCandidates(candidates: Candidate[], history: HistoricalStory[]) {
+  const published = new Set(history.flatMap(article => (article.sources || []).flatMap(source => {
+    try { return [canonicalSource(source.url)] } catch { return [] }
+  })))
+  return candidates.filter(candidate => !published.has(candidate.url))
+    .sort((a, b) => classifySource(a.url).tier - classifySource(b.url).tier || Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+    .slice(0, QUALITY.maxCandidates)
 }

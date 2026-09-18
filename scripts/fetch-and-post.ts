@@ -2,10 +2,10 @@
 import { config } from 'dotenv'
 import { resolve, join } from 'node:path'
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { RSS_FEEDS, discoverFeed } from './news-quality/feeds'
+import { RSS_FEEDS, discoverFeed, selectCandidates } from './news-quality/feeds'
 import matter from 'gray-matter'
 import { prepareNewsImage } from './news-images'
-import { QUALITY, NEUTRAL_IMAGE_PROMPT, classifySource } from './news-quality/config'
+import { QUALITY, NEUTRAL_IMAGE_PROMPT } from './news-quality/config'
 import { SourceFetcher, canonicalSource, collectSources } from './news-quality/sources'
 import { createModel } from './news-quality/model'
 import { processCandidate } from './news-quality/pipeline'
@@ -156,7 +156,7 @@ async function main() {
       candidates.push(candidate)
     }
   }
-  const selected = candidates.sort((a, b) => classifySource(a.url).tier - classifySource(b.url).tier || Date.parse(b.publishedAt) - Date.parse(a.publishedAt)).slice(0, QUALITY.maxCandidates)
+  const selected = selectCandidates(candidates, history)
   let saved = 0
   for (const candidate of selected) {
     if (saved >= limit) break
