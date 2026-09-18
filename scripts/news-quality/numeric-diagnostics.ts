@@ -12,12 +12,13 @@ function redact(value: string) {
 function clip(value: string, chars: number, words = 25) {
   return value.split(/\s+/).slice(0, words).join(' ').slice(0, chars)
 }
-export function numericDiagnostic(input: { factIndex: number; core: boolean; claim: string; sourceId: string; excerpt: string }) {
+export function numericDiagnostic(input: { factIndex: number; core: boolean; claim: string; sourceId: string; excerpt: string; excerpts?: string[]; citationIndices?: number[] }) {
+  const passages = input.excerpts || [input.excerpt]
   const claim = redact(input.claim), excerpt = redact(input.excerpt), sourceId = redact(input.sourceId)
-  const base = { factIndex: input.factIndex, core: input.core, claim: clip(claim, 200), citationSourceId: clip(sourceId, 40), citationExcerpt: clip(excerpt, 240), textClipped: clip(claim, 200) !== claim || clip(excerpt, 240) !== excerpt }
+  const base = { evidenceScope: 'SAME_SOURCE_SAME_FACT', citationCount: passages.length, citationIndices: input.citationIndices?.slice(0, 8), factIndex: input.factIndex, core: input.core, claim: clip(claim, 200), citationSourceId: clip(sourceId, 40), citationExcerpt: clip(excerpt, 240), textClipped: clip(claim, 200) !== claim || clip(excerpt, 240) !== excerpt }
   // Avoid leaking credential digits through numeric token extraction as well.
-  if (claim !== input.claim || excerpt !== input.excerpt || sourceId !== input.sourceId) return { ...base, numericDetails: 'SUPPRESSED_REDACTED_INPUT' }
-  const details = explainQuantities(input.claim, input.excerpt)
+  if (claim !== input.claim || excerpt !== input.excerpt || sourceId !== input.sourceId || passages.some(passage => redact(passage) !== passage)) return { ...base, numericDetails: 'SUPPRESSED_REDACTED_INPUT' }
+  const details = explainQuantities(input.claim, passages)
   const token = (q: typeof details.claimTokens[number], index: number) => ({ index: index + 1, raw: clip(q.raw, 48), normalizedValue: clip(q.value, 48), unit: q.unit || 'unitless', currency: ['USD', 'EUR', 'GBP', 'CAD', 'AUD'].includes(q.unit) ? q.unit : 'none', magnitude: q.magnitude, scale: q.scale, percentage: q.unit === 'percent', monetaryContext: q.monetary, invalidReason: q.invalidReason || 'none' })
   const first = details.failures[0]
   return { ...base, claimTokenCount: details.claimTokens.length, excerptTokenCount: details.excerptTokens.length,

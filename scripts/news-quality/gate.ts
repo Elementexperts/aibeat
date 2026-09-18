@@ -96,7 +96,6 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
   for (let factIndex = 0; factIndex < facts.confirmedFacts.length; factIndex++) {
     const fact = facts.confirmedFacts[factIndex]
     if (fact.confidence < QUALITY.minFactConfidence) throw new Rejection('INSUFFICIENT_EVIDENCE')
-    let numericFailure = -1
     const support = fact.supportedBy.map((citation, citationIndex) => {
       const source = sources.find(s => s.id === citation.sourceId)
       const reject = (detail: 'SOURCE_ID_NOT_FOUND' | 'EXCERPT_NOT_IN_SOURCE' | 'CLAIM_NUMBER_NOT_IN_EXCERPT'): never => {
@@ -106,9 +105,19 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
       }
       if (!source) return reject('SOURCE_ID_NOT_FOUND')
       if (!normalize(source.text).includes(normalize(citation.excerpt))) reject('EXCERPT_NOT_IN_SOURCE')
-      if (!numbersSupported(fact.claim, citation.excerpt) && numericFailure < 0) numericFailure = citationIndex
       return source
     })
+    // Each source must independently cover the numbers in this fact. Verify all
+    // passages above before pooling their tokens; never pool across source IDs.
+    const groups = new Map<string, { indices: number[]; excerpts: string[] }>()
+    fact.supportedBy.forEach((citation, index) => {
+      const group = groups.get(citation.sourceId) || { indices: [], excerpts: [] }
+      group.indices.push(index)
+      group.excerpts.push(citation.excerpt)
+      groups.set(citation.sourceId, group)
+    })
+    const failedGroup = Array.from(groups.values()).find(group => !quantitiesSupported(fact.claim, group.excerpts))
+    const numericFailure = failedGroup?.indices[0] ?? -1
     // Every fact, not just the headline, needs qualifying support.
     try { sourcePolicy(support, high || !!claimRisk(fact, facts), trustedId) } catch (error) {
       if (!high && claimRisk(fact, facts) && error instanceof Rejection) error.detail = `CLAIM_ONLY:${claimRisk(fact, facts)}`
@@ -118,7 +127,7 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
     if (fact.core && !support.some(source => now.getTime() - date(source.publishedAt) <= QUALITY.freshnessHours * 3600000)) throw new Rejection('STALE_STORY')
     if (numericFailure >= 0) {
       const citation = fact.supportedBy[numericFailure]
-      log('[AIBeat Numeric Evidence] ' + JSON.stringify(numericDiagnostic({ factIndex: factIndex + 1, core: fact.core, claim: fact.claim, sourceId: citation.sourceId, excerpt: citation.excerpt })))
+      log('[AIBeat Numeric Evidence] ' + JSON.stringify(numericDiagnostic({ factIndex: factIndex + 1, core: fact.core, claim: fact.claim, sourceId: citation.sourceId, excerpt: citation.excerpt, excerpts: failedGroup!.excerpts, citationIndices: failedGroup!.indices.map(index => index + 1) })))
       // Drop only a standalone optional low-risk numerical detail. Never recover
       // fabricated citations, confidence/source/date failures or high-risk facts.
       const drop = !fact.core && !high && facts.riskLevel === 'low' && !facts.riskAssessments.length

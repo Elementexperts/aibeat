@@ -36,8 +36,12 @@ function quantities(text: string): Quantity[] {
     return { raw: m[0], magnitude: resolution ? 'resolution' : m[3]?.toLowerCase() || 'none', scale, invalidReason: ambiguousScale ? 'AMBIGUOUS_MAGNITUDE' : decimal(amount, scale) === 'INVALID' ? 'INVALID_DECIMAL' : '', value: ambiguousScale ? 'INVALID' : decimal(amount, scale), monetary, unit: resolution ? 'resolution_k' : first && last && first !== last ? 'INVALID' : first || last }
   })
 }
-export function quantitiesSupported(claim: string, evidence: string): boolean {
-  const wanted = quantities(claim), supplied = quantities(evidence)
+// Parse passages separately: excerpt boundaries must never synthesize a unit or magnitude.
+function evidenceQuantities(evidence: string | readonly string[]) {
+  return typeof evidence === 'string' ? quantities(evidence) : evidence.flatMap(quantities)
+}
+export function quantitiesSupported(claim: string, evidence: string | readonly string[]): boolean {
+  const wanted = quantities(claim), supplied = evidenceQuantities(evidence)
   // Only an explicitly monetary claim may omit a source's currency, never invent it.
   return wanted.every(q => q.value !== 'INVALID' && q.unit !== 'INVALID' && supplied.some(s => {
     if (s.value !== q.value || s.unit === 'INVALID') return false
@@ -49,8 +53,8 @@ export function quantitiesSupported(claim: string, evidence: string): boolean {
 }
 
 // Observer only. quantitiesSupported above remains the acceptance decision.
-export function explainQuantities(claim: string, evidence: string) {
-  const claimTokens = quantities(claim), excerptTokens = quantities(evidence)
+export function explainQuantities(claim: string, evidence: string | readonly string[]) {
+  const claimTokens = quantities(claim), excerptTokens = evidenceQuantities(evidence)
   const reason = (q: Quantity, s: Quantity) => {
     if (q.value === 'INVALID') return q.invalidReason || 'CLAIM_VALUE_INVALID'
     if (q.unit === 'INVALID') return 'CLAIM_UNIT_INVALID'

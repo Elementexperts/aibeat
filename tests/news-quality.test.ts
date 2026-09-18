@@ -1,5 +1,5 @@
 import { numericDiagnostic } from '../scripts/news-quality/numeric-diagnostics'
-import { explainQuantities } from '../scripts/news-quality/quantities'
+import { explainQuantities, quantitiesSupported } from '../scripts/news-quality/quantities'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFileSync } from 'node:fs'
@@ -852,7 +852,7 @@ test('facts prompt specifies supplied IDs and minimal verbatim numerical evidenc
   const m = createModel('key', 'fixture', (async (_url, init) => {
     const prompt = JSON.parse(init!.body as string).messages[0].content
     assert.match(prompt, /exact supplied source IDs/); assert.match(prompt, /Claims may be paraphrased; evidence excerpts may not/)
-    assert.match(prompt, /minimal contiguous excerpts/); assert.match(prompt, /each cited excerpt/)
+    assert.match(prompt, /minimal contiguous excerpts/); assert.match(prompt, /each cited source/)
     return completion(JSON.stringify(facts))
   }) as typeof fetch, () => {}, noWait)
   await m('facts', {})
@@ -993,4 +993,79 @@ test('published stories are removed before the six-slot selection; broad coverag
   assert.equal(selected.length, 6); assert.ok(selected.every(c => c.url.includes('/new-')))
   assert.ok(selected.some(c => c.title === 'New game announced')); assert.ok(selected.some(c => c.title === 'Camera release'))
   assert.equal(QUALITY.maxCandidates, 6); assert.equal(QUALITY.maxModelCalls, 9)
+})
+
+
+function splitEvidenceFixture() {
+  const price = 'Acme Atlas is available for $875 with an editing workspace.'
+  const duration = 'Acme Atlas includes updates for 12 years with that purchase.'
+  const f = clone(facts)
+  f.confirmedFacts[0].claim = 'Acme Atlas costs $875 and includes 12 years of updates.'
+  f.confirmedFacts[0].supportedBy = [price, duration].map(excerpt => ({ sourceId: 's1', excerpt }))
+  return { f, source: { ...primary, text: primary.text + ' ' + price + ' ' + duration } }
+}
+
+test('verified passages from one source jointly support an original factual brief', async () => {
+  const { f, source } = splitEvidenceFixture()
+  const d = clone(draft)
+  d.sections[0].paragraphs[0].text = 'For $875, buyers get Acme Atlas with updates included for 12 years.'
+  const result = await evaluateCandidate(candidate, [source], [], model(f, d), now)
+  assert.equal(result.facts.confirmedFacts.length, 1)
+  assert.equal(result.draft.sections[0].paragraphs[0].text, d.sections[0].paragraphs[0].text)
+})
+
+test('grouped citations cannot supply a missing number or borrow from a different source', () => {
+  const { f, source } = splitEvidenceFixture()
+  f.confirmedFacts[0].supportedBy.pop()
+  assert.throws(() => checkFacts(candidate, f, [source], now), rejected('UNSUPPORTED_CLAIM'))
+  const other = splitEvidenceFixture()
+  other.f.confirmedFacts[0].supportedBy[1].sourceId = 's2'
+  assert.throws(() => checkFacts(candidate, other.f, [other.source, { ...reporting, text: other.source.text }], now), rejected('UNSUPPORTED_CLAIM'))
+})
+
+test('grouped evidence still validates every excerpt and source ID', () => {
+  for (const mode of ['excerpt', 'sourceId'] as const) {
+    const { f, source } = splitEvidenceFixture()
+    f.confirmedFacts[0].supportedBy[1][mode] = 'fabricated evidence not in the retrieved document'
+    assert.throws(() => checkFacts(candidate, f, [source], now), rejected('UNSUPPORTED_CLAIM'))
+  }
+})
+
+test('numeric support cannot cross fact boundaries', () => {
+  const { f, source } = splitEvidenceFixture()
+  const duration = f.confirmedFacts[0].supportedBy.pop()!
+  f.confirmedFacts.push({ ...clone(f.confirmedFacts[0]), id: 'f2', claim: 'Acme Atlas includes 12 years of updates.', supportedBy: [duration] })
+  assert.throws(() => checkFacts(candidate, f, [source], now), rejected('UNSUPPORTED_CLAIM'))
+})
+
+test('separate excerpts cannot synthesize a currency or magnitude at their boundary', () => {
+  assert.equal(quantitiesSupported('18 million users', ['The count is 18', 'million people elsewhere']), false)
+  assert.equal(quantitiesSupported('$18', ['The currency symbol is $', '18 users joined']), false)
+  assert.equal(quantitiesSupported('$18 million over 12 years', ['The price is $18 million.', 'The duration is 12 years.']), true)
+})
+
+test('multiple passages never replace independent high-risk corroboration', () => {
+  const { f, source } = splitEvidenceFixture()
+  assert.throws(() => checkFacts(candidate, f, [source], now, undefined, true), rejected('UNVERIFIED_HIGH_RISK_CLAIM'))
+  f.confirmedFacts[0].supportedBy.push(...f.confirmedFacts[0].supportedBy.map(c => ({ ...c, sourceId: 's2' })))
+  assert.doesNotThrow(() => checkFacts(candidate, f, [source, { ...reporting, text: source.text }], now, undefined, true))
+  f.confirmedFacts[0].supportedBy.pop()
+  assert.throws(() => checkFacts(candidate, f, [source, { ...reporting, text: source.text }], now, undefined, true), rejected('UNSUPPORTED_CLAIM'))
+})
+
+test('final review can reject misleading combinations even when numbers are present', async () => {
+  const { f, source } = splitEvidenceFixture()
+  await assert.rejects(evaluateCandidate(candidate, [source], [], model(f, draft, { ...review, supportedFactIds: [], unsupportedClaims: ['The duration concerns a different product.'] }), now), rejected('UNSUPPORTED_CLAIM'))
+})
+
+test('grouped numeric diagnostics use all passages and suppress secrets in any passage', () => {
+  const input = { factIndex: 1, core: true, claim: '$875 over 13 years', sourceId: 's1', excerpt: 'It costs $875.', excerpts: ['It costs $875.', 'It lasts 12 years.'], citationIndices: [1, 2] }
+  const result = numericDiagnostic(input)
+  assert.equal(result.citationCount, 2)
+  assert.deepEqual(result.citationIndices, [1, 2])
+  assert.ok('excerptTokenCount' in result && result.excerptTokenCount === 2)
+  assert.ok('failedClaimToken' in result && result.failedClaimToken?.normalizedValue === '13')
+  const redacted = numericDiagnostic({ ...input, excerpts: [...input.excerpts, 'gsk_secret123456'] })
+  assert.ok('numericDetails' in redacted && redacted.numericDetails === 'SUPPRESSED_REDACTED_INPUT')
+  assert.doesNotMatch(JSON.stringify(redacted), /secret123456/)
 })
