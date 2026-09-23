@@ -34,6 +34,7 @@ export async function evaluateCandidate(candidate: Candidate, sources: Source[],
   }
   if (duplicateEvent(facts.event, cleaned.draft.title, history)) throw new Rejection('DUPLICATE_STORY')
   const review = parseReview(await model('review', { candidate, evidenceMode, trustedEditorialSourceId: trustedId, facts, draft: cleaned.draft, sources: evidence, now: now.toISOString() }))
+  log(`[AIBeat Review] Analysis grounded: ${review.analysisGrounded ? 'PASS' : 'FAIL'} | Original value: ${review.originalValue ? 'PASS' : 'FAIL'} | Clear writing: ${review.clearWriting ? 'PASS' : 'FAIL'} | Unsupported claims: ${review.unsupportedClaims.length} | Unverified entities: ${review.unverifiedEntities.length} | Event date verified: ${review.eventDateVerified ? 'PASS' : 'FAIL'}`)
   const reviewTrigger = centralRisk(candidate, facts, review)
   log(`[AIBeat Quality Gate] Risk: ${initialHigh || reviewTrigger ? 'HIGH' : review.riskLevel.toUpperCase()} | Risk trigger: ${reviewTrigger || (forceHighRisk ? 'PRIOR_HIGH_RISK_ASSESSMENT' : initialRisk.trigger)} | Stage: review`)
   if (reviewTrigger && review.riskLevel !== 'high') log(`[AIBeat Quality Gate] Risk escalated: ${review.riskLevel.toUpperCase()} → HIGH | Trigger: ${reviewTrigger}`)
@@ -42,7 +43,7 @@ export async function evaluateCandidate(candidate: Candidate, sources: Source[],
   else if (review.riskLevel === 'medium') facts.riskLevel = 'medium'
   const used = new Set(facts.confirmedFacts.flatMap(f => f.supportedBy.map(s => s.sourceId)))
   const hasConsequentialClaim = facts.confirmedFacts.some(f => claimRisk(f, facts, review))
-  const sensitiveClaim = sensitiveHighRisk(reviewTrigger || factTrigger) || facts.confirmedFacts.some(f => sensitiveHighRisk(claimRisk(f, facts, review)))
+  const sensitiveClaim = forceHighRisk || sensitiveHighRisk(reviewTrigger || factTrigger) || facts.confirmedFacts.some(f => sensitiveHighRisk(claimRisk(f, facts, review)))
   return { ...cleaned, facts, sources: sources.filter(s => used.has(s.id)), qualityScore, evidenceMode: sensitiveClaim ? 'ENHANCED_VERIFICATION' : trustedId ? 'TRUSTED_SINGLE_SOURCE' : (facts.riskLevel === 'high' || hasConsequentialClaim ? 'ENHANCED_VERIFICATION' : evidenceMode) }
 }
 

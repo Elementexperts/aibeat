@@ -55,9 +55,9 @@ export const TRUSTED_EDITORIAL_SOURCE_POINTS = 22
 export const OFFICIAL_DISCOVERY = [
   { mentions: /\b(microsoft|windows|surface|copilot)\b/i, urls: ['https://blogs.windows.com/', 'https://blogs.microsoft.com/feed/'] },
   { mentions: /\b(nvidia|jensen huang)\b/i, urls: ['https://blogs.nvidia.com/feed/'] },
-  { mentions: /\b(openai|chatgpt|gpt)\b/i, urls: ['https://openai.com/news/'] },
+  { mentions: /\b(openai|chatgpt|gpt)\b/i, urls: ['https://openai.com/news/rss.xml'] },
   { mentions: /\b(anthropic|claude)\b/i, urls: ['https://www.anthropic.com/news'] },
-  { mentions: /\b(google|deepmind|gemini)\b/i, urls: ['https://blog.google/'] },
+  { mentions: /\b(google|deepmind|gemini)\b/i, urls: ['https://blog.google/rss/'] },
   { mentions: /\b(meta|facebook|llama)\b/i, urls: ['https://about.fb.com/news/'] },
   { mentions: /\b(adobe|firefly|photoshop)\b/i, urls: ['https://blog.adobe.com/'] },
 ] as const

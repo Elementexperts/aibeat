@@ -48,7 +48,8 @@ export function articleMetadata(article: Article): Metadata {
   const url = canonicalUrl(`/news/${article.slug}`)
   const image = articleImage(article)
   return {
-    title: article.title, description: article.deck, alternates: { canonical: url },
+    // Keep the complete factual headline without the inherited brand suffix.
+    title: { absolute: article.title }, description: article.deck, alternates: { canonical: url },
     authors: article.author ? [{ name: article.author, ...(article.author.startsWith('AIBeat') ? { url: `${SITE_URL}/about` } : {}) }] : undefined,
     keywords: article.tags?.length ? article.tags : undefined,
     robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large' } },

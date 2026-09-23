@@ -23,12 +23,12 @@ export function ToolLogo({ tool, className = 'w-9 h-9 rounded-md text-sm', image
     <div
       className={`flex items-center justify-center font-bold text-white shrink-0 overflow-hidden ${showImage ? 'bg-white border border-border' : ''} ${className}`}
       style={showImage ? undefined : { background: tool.logo }}
-      aria-label={`${tool.name} logo`}
+      aria-label={showImage ? undefined : `${tool.name} logo`}
     >
       {showImage ? (
         <img
           src={tool.logoUrl}
-          alt=""
+          alt={`${tool.name} logo`}
           className={`w-full h-full object-contain ${imageClassName}`}
           loading="lazy"
           decoding="async"

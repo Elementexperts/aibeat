@@ -12,7 +12,7 @@ import { ordinaryTrustedCandidate } from '../scripts/news-quality/trust'
 import { evaluateCandidate, processCandidate } from '../scripts/news-quality/pipeline'
 import { SourceFetcher, extractSource, canonicalSource, collectSources, mergeSourceOrigins } from '../scripts/news-quality/sources'
 import { documentLinks, publicationDate } from '../scripts/news-quality/documents'
-import { discoverFeed, selectCandidates } from '../scripts/news-quality/feeds'
+import { discoverFeed, selectCandidates, RSS_FEEDS } from '../scripts/news-quality/feeds'
 import { diagnosticUrl } from '../scripts/news-quality/diagnostics'
 import { createModel, retryDelay } from '../scripts/news-quality/model'
 import { ModelFailure } from '../scripts/news-quality/model-diagnostics'
@@ -682,19 +682,19 @@ for (const failures of [1, 2, 3]) test(`429 bounded recovery: ${failures} rate l
   const m = createModel('key', 'fixture', (async () => ++calls <= failures ? new Response(null, { status: 429 }) : completion(JSON.stringify(facts))) as typeof fetch, () => {}, { ...noWait, sleep: async ms => { waits.push(ms) } })
   if (failures === 3) await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
   else assert.deepEqual(await m('facts', {}), facts)
-  assert.equal(calls, Math.min(failures + 1, 3)); assert.deepEqual(waits, failures === 1 ? [5000] : [5000, 10000])
+  assert.equal(calls, Math.min(failures + 1, 3)); assert.deepEqual(waits, failures === 1 ? [6000] : [6000, 11000])
 })
 test('retry headers, invalid values, jitter and maximum delays are bounded', () => {
   const delay = (headers: Record<string, string>, attempt = 1) => retryDelay(new Headers(headers), attempt, Date.parse('2026-09-17T00:00:00Z'), 0.5)
-  assert.equal(delay({ 'retry-after': '12' }), 12000)
-  assert.equal(delay({ 'retry-after': 'Thu, 17 Sep 2026 00:00:20 GMT' }), 20000)
-  assert.equal(delay({ 'retry-after': '999999' }), 30000)
-  assert.equal(delay({ 'retry-after': '0' }), 1000)
-  assert.equal(delay({ 'retry-after': '-1' }), 5500)
-  assert.equal(delay({ 'retry-after': 'garbage' }, 2), 10500)
-  assert.equal(delay({ 'x-ratelimit-reset-tokens': '1m2.5s' }), 30000)
-  assert.equal(delay({ 'x-ratelimit-reset-tokens': '2.5s', 'x-ratelimit-reset-requests': '4s' }), 4000)
-  assert.equal(delay({ 'x-ratelimit-reset-tokens': 'secret' }), 5500)
+  assert.equal(delay({ 'retry-after': '12' }), 13000)
+  assert.equal(delay({ 'retry-after': 'Thu, 17 Sep 2026 00:00:20 GMT' }), 21000)
+  assert.equal(delay({ 'retry-after': '999999' }), 1000000000)
+  assert.equal(delay({ 'retry-after': '0' }), 2000)
+  assert.equal(delay({ 'retry-after': '-1' }), 6500)
+  assert.equal(delay({ 'retry-after': 'garbage' }, 2), 11500)
+  assert.equal(delay({ 'x-ratelimit-reset-tokens': '1m2.5s' }), 63500)
+  assert.equal(delay({ 'x-ratelimit-reset-tokens': '2.5s', 'x-ratelimit-reset-requests': '4s' }), 5000)
+  assert.equal(delay({ 'x-ratelimit-reset-tokens': 'secret' }), 6500)
 })
 for (const outcome of ['success', 'schema', 'json', '429'] as const) test(`one schema repair: ${outcome}`, async () => {
   let calls = 0; const bodies: { messages: { content: string }[] }[] = []; const logs: string[] = []
@@ -717,7 +717,7 @@ for (const outcome of ['success', 'schema', 'json', '429'] as const) test(`one s
 test('retry and repair requests consume the unchanged global call budget', async () => {
   let calls = 0
   const m = createModel('key', 'fixture', (async () => { calls++; return new Response(null, { status: 429 }) }) as typeof fetch, () => {}, noWait)
-  for (let i = 0; i < 3; i++) await assert.rejects(m('facts', {}), e => e instanceof ModelFailure)
+  for (let i = 0; i < Math.ceil(QUALITY.maxModelCalls / 3); i++) await assert.rejects(m('facts', {}), e => e instanceof ModelFailure)
   await assert.rejects(m('facts', {}), rejected('BUDGET_EXHAUSTED'))
   assert.equal(calls, QUALITY.maxModelCalls)
 })
@@ -760,12 +760,12 @@ test('equivalent numeric representations pass without changing citation provenan
   f.confirmedFacts[0].claim = 'The release costs $10.'; f.confirmedFacts[0].supportedBy[0].excerpt = excerpt + ' The release costs 10 dollars.'
   assert.equal(checkFacts(candidate, f, [s], now).confirmedFacts.length, 1)
 })
-test('ninth HTTP request receives 429 without retry or sleep', async () => {
+test('last budgeted HTTP request receives 429 without retry or sleep', async () => {
   let calls = 0; const logs: string[] = []; const waits: number[] = []
-  const m = createModel('key', 'fixture', (async () => ++calls < 9 ? completion(JSON.stringify(facts)) : new Response(null, { status: 429 })) as typeof fetch, line => logs.push(line), { ...noWait, sleep: async ms => { waits.push(ms) } })
-  for (let i = 0; i < 8; i++) await m('facts', {})
+  const m = createModel('key', 'fixture', (async () => ++calls < QUALITY.maxModelCalls ? completion(JSON.stringify(facts)) : new Response(null, { status: 429 })) as typeof fetch, line => logs.push(line), { ...noWait, sleep: async ms => { waits.push(ms) } })
+  for (let i = 0; i < QUALITY.maxModelCalls - 1; i++) await m('facts', {})
   await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
-  assert.equal(calls, 9); assert.equal(waits.length, 0); assert.ok(logs.some(line => /HTTP status: 429.*Attempt: 1\/3.*MODEL_RATE_LIMITED/.test(line)))
+  assert.equal(calls, QUALITY.maxModelCalls); assert.equal(waits.length, 0); assert.ok(logs.some(line => /HTTP status: 429.*Attempt: 1\/3.*MODEL_RATE_LIMITED/.test(line)))
   assert.ok(!logs.some(line => line.includes('Retrying after:')))
 })
 
@@ -953,8 +953,8 @@ for (const value of [null, [], 'draft text', 123, true]) test(`draft expected_ob
   assert.ok(logs.some(line => line.includes('Parsed JSON type: ' + expected) && line.includes('Problem: expected_object')))
   assert.doesNotMatch(logs.join(' '), /draft text/)
 })
-test('production nine-call sequence explains repair cutoff and Xbox exhaustion', async () => {
-  const sequence = [facts, draft, facts, 429, [], 429, 429, facts, 429]
+test('production retry and repair sequence exhausts the configured budget at its final request', async () => {
+  const sequence = [facts, draft, facts, 429, [], 429, 429, facts, ...Array.from({ length: QUALITY.maxModelCalls - 9 }, () => facts), 429]
   const logs: string[] = []; const waits: number[] = []; let calls = 0
   const m = createModel('key', 'fixture', (async () => {
     const value = sequence[calls++]
@@ -964,11 +964,12 @@ test('production nine-call sequence explains repair cutoff and Xbox exhaustion',
   await assert.rejects(m('draft', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
   assert.equal(calls, 6)
   await m('facts', {})
+  for (let i = 0; i < QUALITY.maxModelCalls - 9; i++) await m('facts', {})
   await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
   for (let i = 0; i < 2; i++) await assert.rejects(m('facts', {}), rejected('BUDGET_EXHAUSTED'))
-  assert.equal(calls, 9); assert.deepEqual(waits, [4000, 22000, 22000])
-  assert.ok(logs.some(line => line.includes('Global call: 6/9 | Retry not attempted: REPAIR_ATTEMPT_LIMIT')))
-  assert.ok(logs.some(line => line.includes('Global call: 9/9 | Retry not attempted: GLOBAL_CALL_BUDGET_EXHAUSTED')))
+  assert.equal(calls, QUALITY.maxModelCalls); assert.deepEqual(waits, [5000, 23000, 23000])
+  assert.ok(logs.some(line => line.includes(`Global call: 6/${QUALITY.maxModelCalls} | Retry not attempted: REPAIR_ATTEMPT_LIMIT`)))
+  assert.ok(logs.some(line => line.includes(`Global call: ${QUALITY.maxModelCalls}/${QUALITY.maxModelCalls} | Retry not attempted: GLOBAL_CALL_BUDGET_EXHAUSTED`)))
   assert.equal(logs.filter(line => line.includes('Request not sent: BUDGET_EXHAUSTED')).length, 2)
 })
 
@@ -984,7 +985,7 @@ test('terminal repair 429 cools down the next candidate without an extra retry o
   await assert.rejects(m('draft', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
   assert.equal(calls, 2); assert.deepEqual(waits, [])
   assert.deepEqual(await m('facts', {}), facts)
-  assert.equal(calls, 3); assert.deepEqual(waits, [22000])
+  assert.equal(calls, 3); assert.deepEqual(waits, [23000])
 })
 test('source discovery time reduces shared cooldown rather than adding a fresh full delay', async () => {
   let elapsed = 0, calls = 0; const waits: number[] = []
@@ -995,7 +996,7 @@ test('source discovery time reduces shared cooldown rather than adding a fresh f
   await assert.rejects(m('facts', {}), e => e instanceof ModelFailure)
   elapsed += 7000
   await m('facts', {})
-  assert.deepEqual(waits, [10000, 10000, 3000]); assert.equal(calls, 4)
+  assert.deepEqual(waits, [11000, 11000, 4000]); assert.equal(calls, 4)
 })
 test('published stories are removed before the six-slot selection; broad coverage remains', () => {
   const old = Array.from({ length: 6 }, (_, i) => ({ ...candidate, url: `https://theverge.com/old-${i}`, publishedAt: '2026-09-16T11:00:00Z' }))
@@ -1004,7 +1005,7 @@ test('published stories are removed before the six-slot selection; broad coverag
   const selected = selectCandidates([...old, ...pending], history)
   assert.equal(selected.length, 6); assert.ok(selected.every(c => c.url.includes('/new-')))
   assert.ok(selected.some(c => c.title === 'New game announced')); assert.ok(selected.some(c => c.title === 'Camera release'))
-  assert.equal(QUALITY.maxCandidates, 6); assert.equal(QUALITY.maxModelCalls, 9)
+  assert.equal(QUALITY.maxCandidates, 6); assert.equal(QUALITY.maxModelCalls, 30)
 })
 
 
@@ -1080,4 +1081,42 @@ test('grouped numeric diagnostics use all passages and suppress secrets in any p
   const redacted = numericDiagnostic({ ...input, excerpts: [...input.excerpts, 'gsk_secret123456'] })
   assert.ok('numericDetails' in redacted && redacted.numericDetails === 'SUPPRESSED_REDACTED_INPUT')
   assert.doesNotMatch(JSON.stringify(redacted), /secret123456/)
+})
+
+
+test('review diagnostics identify quality flags without logging review content', async () => {
+  for (const field of ['analysisGrounded', 'originalValue', 'clearWriting'] as const) {
+    const logs: string[] = []
+    const evaluation = evaluateCandidate(candidate, [primary], [], model(facts, draft, { ...review, [field]: false }), now, false, line => logs.push(line))
+    if (field === 'analysisGrounded') await assert.rejects(evaluation, rejected('LOW_INFORMATION_VALUE'))
+    else assert.ok((await evaluation).qualityScore >= QUALITY.publishThreshold)
+    const label = { analysisGrounded: 'Analysis grounded', originalValue: 'Original value', clearWriting: 'Clear writing' }[field]
+    assert.ok(logs.some(line => line.startsWith('[AIBeat Review]') && line.includes(label + ': FAIL')))
+    assert.doesNotMatch(logs.join(' '), /Acme launched/)
+  }
+})
+
+test('long provider cooldown defers requests without spending more model calls', async () => {
+  let elapsed = 0, calls = 0; const logs: string[] = []
+  const m = createModel('key', 'fixture', (async () => {
+    calls++
+    return calls === 1 ? new Response(null, { status: 429, headers: { 'retry-after': '120' } }) : completion(JSON.stringify(facts))
+  }) as typeof fetch, line => logs.push(line), { now: () => elapsed, random: () => 0, sleep: async ms => { elapsed += ms } })
+  await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
+  await assert.rejects(m('draft', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
+  assert.equal(calls, 1); assert.equal(elapsed, 0)
+  assert.ok(logs.some(line => line.includes('PROVIDER_COOLDOWN_EXCEEDS_WAIT_WINDOW')))
+  elapsed = 121000
+  await m('facts', {})
+  assert.equal(calls, 2)
+})
+
+test('official feed discovery retains exact host authority and the existing budgets', () => {
+  for (const url of ['https://openai.com/news/rss.xml', 'https://blog.google/rss/', 'https://blogs.nvidia.com/feed/']) {
+    assert.ok(RSS_FEEDS.includes(url))
+    assert.equal(classifySource(url).tier, 1)
+  }
+  assert.equal(classifySource('https://openai.com.example.org/news/').tier, 3)
+  assert.equal(QUALITY.maxFetches, 32); assert.equal(QUALITY.maxModelCalls, 30)
+  assert.ok(RSS_FEEDS.includes('https://www.theverge.com/rss/index.xml'))
 })

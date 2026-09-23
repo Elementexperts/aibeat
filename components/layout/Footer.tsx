@@ -175,7 +175,7 @@ export function Footer() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={badge.src}
-                    alt={index < FEATURED_BADGES.length ? badge.label : ''}
+                    alt={badge.label}
                     width={badge.width}
                     height={badge.height}
                     loading="lazy"

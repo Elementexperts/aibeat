@@ -86,3 +86,9 @@ test('tool schema does not reinterpret editorial scores or pricing prose as rati
   assert.equal(articleMentionsTool({ ...story, relatedTools: [TOOLS[0].slug] }, TOOLS[0]), true)
   assert.equal(articleMentionsTool(story, TOOLS[0]), false)
 })
+
+
+test('news search titles retain the factual headline without an inherited brand suffix', () => {
+  assert.deepEqual(articleMetadata(story).title, { absolute: story.title })
+  assert.equal(articleSchema(story).headline, story.title)
+})
