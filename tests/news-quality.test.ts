@@ -409,9 +409,8 @@ test('model and semantic reviewer can escalate risk but cannot waive primary evi
   await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], model({ ...trustedFacts(), riskLevel: 'high', riskAssessments: [{ factId: 'f1', category: 'SERIOUS_ALLEGATION' }] }, draft, trustedReview), now), rejected('NO_PRIMARY_SOURCE'))
   await assert.rejects(evaluateCandidate(trustedCandidate, [trustedSource()], [], model(trustedFacts(), draft, { ...trustedReview, riskLevel: 'high', riskAssessments: [{ factId: 'f1', category: 'SERIOUS_ALLEGATION' }] }), now), rejected('NO_PRIMARY_SOURCE'))
 })
-test('semantic reviewer can reject original editorial status, contradictions, or unsupported claims', async () => {
+test('semantic reviewer can reject derivative reporting, contradictions, or unsupported claims', async () => {
   for (const [r, reason] of [
-    [{ ...trustedReview, trustedEditorialSourceIds: [] }, 'INSUFFICIENT_EVIDENCE'],
     [{ ...trustedReview, derivativeGroups: [['s1']] }, 'INSUFFICIENT_EVIDENCE'],
     [{ ...trustedReview, conflictingClaims: ['Material disagreement'] }, 'CONFLICTING_SOURCES'],
     [{ ...trustedReview, unsupportedClaims: ['Unsupported claim'] }, 'UNSUPPORTED_CLAIM'],
@@ -1119,4 +1118,44 @@ test('official feed discovery retains exact host authority and the existing budg
   assert.equal(classifySource('https://openai.com.example.org/news/').tier, 3)
   assert.equal(QUALITY.maxFetches, 32); assert.equal(QUALITY.maxModelCalls, 30)
   assert.ok(RSS_FEEDS.includes('https://www.theverge.com/rss/index.xml'))
+})
+
+
+test('editorial candidates keep priority when official feeds contain many recent announcements', () => {
+  const editorial = Array.from({ length: 7 }, (_, i) => ({ ...candidate, url: `https://techcrunch.com/2026/09/15/story-${i}`, publishedAt: '2026-09-15T09:00:00Z' }))
+  const official = Array.from({ length: 10 }, (_, i) => ({ ...candidate, url: `https://openai.com/index/story-${i}`, publishedAt: '2026-09-16T09:00:00Z' }))
+  const selected = selectCandidates([...official, ...editorial], [])
+  assert.equal(selected.length, 6)
+  assert.ok(selected.slice(0, 4).every(c => classifySource(c.url).tier === 2))
+  assert.equal(selected.filter(c => classifySource(c.url).tier === 1).length, 2)
+  assert.equal(selectCandidates(editorial, []).length, 6)
+  assert.equal(selectCandidates(official, []).length, 6)
+})
+
+test('verified staff reporting does not require a second model endorsement of its publisher', async () => {
+  for (const [url, author] of [[techUrl, 'Alex Reporter'], ['https://www.forbes.com/sites/alex/2026/09/15/acme-atlas/', 'Alex Reporter, Forbes Staff']]) {
+    const source = extractSource(url, editorialHtml(author), 's1')
+    const approved = await evaluateCandidate({ ...candidate, url }, [source], [], model(trustedFacts(), draft, { ...trustedReview, trustedEditorialSourceIds: [] }), now)
+    assert.equal(approved.evidenceMode, 'TRUSTED_SINGLE_SOURCE')
+    assert.equal(approved.sources.length, 1)
+  }
+})
+
+test('explicit calendar day ranges normalize separators without changing negative quantities', () => {
+  for (const separator of ['-', '‐', '‑', '–']) {
+    assert.equal(numbersSupported('Sept 22 to 23', `Sept. 22${separator}23`), true)
+    assert.equal(numbersSupported(`Sept 22${separator}23`, 'Sept. 22 to 23'), true)
+  }
+  assert.equal(numbersSupported('Sept 22 to 23 2026', 'Sept. 22-23'), false)
+  assert.equal(numbersSupported('23 degrees', '-23 degrees'), false)
+  assert.equal(numbersSupported('$23', '-$23'), false)
+  assert.equal(numbersSupported('23', '−23'), false)
+})
+
+test('draft diagnostics show retained coverage and removed paragraphs without emitting text', async () => {
+  const logs: string[] = []
+  await evaluateCandidate(candidate, [primary], [], model(), now, false, line => logs.push(line))
+  const line = logs.find(line => line.startsWith('[AIBeat Draft]'))!
+  assert.match(line, /Verified facts: 1.*Paragraphs retained: 2.*Paragraphs removed: 0.*Body words: \d+/)
+  assert.doesNotMatch(line, /Acme|developers/)
 })

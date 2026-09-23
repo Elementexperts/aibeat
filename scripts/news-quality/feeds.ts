@@ -47,7 +47,18 @@ export function selectCandidates(candidates: Candidate[], history: HistoricalSto
   const published = new Set(history.flatMap(article => (article.sources || []).flatMap(source => {
     try { return [canonicalSource(source.url)] } catch { return [] }
   })))
-  return candidates.filter(candidate => !published.has(candidate.url))
-    .sort((a, b) => classifySource(a.url).tier - classifySource(b.url).tier || Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
-    .slice(0, QUALITY.maxCandidates)
+  const pending = candidates.filter(candidate => !published.has(candidate.url))
+    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+  const editorial = pending.filter(candidate => classifySource(candidate.url).tier === 2)
+  const official = pending.filter(candidate => classifySource(candidate.url).tier === 1)
+  // Prioritize independent reporting. Reserve up to two remaining slots for
+  // official announcements, then backfill without reducing the six-slot limit.
+  // Host eligibility here never bypasses article-level trust validation.
+  const selected = [...editorial.slice(0, 4), ...official.slice(0, 2)]
+  const seen = new Set(selected.map(candidate => candidate.url))
+  for (const candidate of [...editorial.slice(4), ...official.slice(2), ...pending]) {
+    if (selected.length >= QUALITY.maxCandidates) break
+    if (!seen.has(candidate.url)) { selected.push(candidate); seen.add(candidate.url) }
+  }
+  return selected.slice(0, QUALITY.maxCandidates)
 }

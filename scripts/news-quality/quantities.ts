@@ -17,6 +17,10 @@ function decimal(value: string, scale: number): string {
 }
 function quantities(text: string): Quantity[] {
   text = text.normalize('NFKC').replace(/−/g, '-')
+  // A hyphen in an explicit calendar range separates positive day numbers.
+  // Do not rewrite minus signs in prices, measurements or standalone numbers.
+  text = text.replace(/\b((?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+)(\d{1,2})\s*[-‐‑‒–]\s*(\d{1,2})(?!\d)/gi,
+    (range, month: string, first: string, last: string) => Number(first) >= 1 && Number(first) <= Number(last) && Number(last) <= 31 ? `${month}${first} to ${last}` : range)
   const pattern = /(?:(US\$|USD|EUR|GBP|CAD|AUD|[$€£])\s*)?([+-]?(?:\d(?:[\d,]*\d)?(?:\.\d+)?|\.\d+))(?:\s*(trillion|billion|million|thousand|bn|[kmb])\b)?(?:\s*(U\.S\. dollars|US dollars|Canadian dollars|Australian dollars|dollars?|euros?|pounds?|USD|EUR|GBP|CAD|AUD|percent\b|%))?/gi
   return Array.from(text.matchAll(pattern)).map(m => {
     const prefix = m[1]?.toLowerCase(), suffix = m[4]?.toLowerCase()

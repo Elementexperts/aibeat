@@ -183,7 +183,9 @@ export function publicationScore(facts: FactSheet, sources: Source[], review: Re
   for (const source of adjusted) if (source.tier === 1 && !review.authoritativePrimaryIds.includes(source.id)) source.tier = 3
   const trigger = centralRisk(candidate, facts, review)
   const high = forceHighRisk || !!trigger
-  const single = !sensitiveHighRisk(trigger) && review.trustedEditorialSourceIds.includes(trustedId || '') && !review.derivativeGroups.some(g => g.includes(trustedId || '')) && adjusted.some(s => s.id === trustedId && trustedEditorial(s))
+  // Publisher eligibility comes from the verified registry and article metadata.
+  // The reviewer still rejects derivation, factual errors and sensitive claims.
+  const single = !sensitiveHighRisk(trigger) && !review.derivativeGroups.some(g => g.includes(trustedId || '')) && adjusted.some(s => s.id === trustedId && trustedEditorial(s))
   for (const fact of facts.confirmedFacts) {
     const factTrigger = claimRisk(fact, facts, review)
     const consequential = high || !!factTrigger

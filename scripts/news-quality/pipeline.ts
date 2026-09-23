@@ -26,6 +26,7 @@ export async function evaluateCandidate(candidate: Candidate, sources: Source[],
   facts = checkFacts(candidate, facts, sources, now, trustedId, initialHigh, log)
   if (duplicateEvent(facts.event, candidate.title, history)) throw new Rejection('DUPLICATE_STORY')
   const cleaned = cleanDraft(parseDraft(await model('draft', { confirmedFacts: facts.confirmedFacts, event: facts.event })), facts)
+  log(`[AIBeat Draft] Verified facts: ${facts.confirmedFacts.length} | Paragraphs retained: ${cleaned.draft.sections.reduce((count, section) => count + section.paragraphs.length, 0)} | Paragraphs removed: ${cleaned.removedParagraphs} | Body words: ${cleaned.draft.sections.flatMap(section => section.paragraphs).map(p => p.text).join(' ').trim().split(/\s+/).length}`)
   const words = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/)
   const sourceText = sources.map(s => ' ' + words(s.text).join(' ') + ' ')
   for (const paragraph of cleaned.draft.sections.flatMap(s => s.paragraphs)) {
