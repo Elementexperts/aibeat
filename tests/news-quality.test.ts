@@ -1,3 +1,5 @@
+import { MODEL_SCHEMAS, responseFormat } from '../scripts/news-quality/model-schema'
+import { schemaIssue } from '../scripts/news-quality/model-diagnostics'
 import { sourcePassages, passageSources, resolveFactPassages, PassageReferenceError } from '../scripts/news-quality/passages'
 import { numericDiagnostic } from '../scripts/news-quality/numeric-diagnostics'
 import { explainQuantities, quantitiesSupported } from '../scripts/news-quality/quantities'
@@ -629,13 +631,13 @@ for (const [label, response, category] of [
   if (label === 'invalid JSON') assert.match(logs[0], /JSON parse: FAIL.*Problem: json_syntax_error/)
   if (label === 'invalid schema') assert.match(logs[0], /JSON parse: PASS.*Schema validation: FAIL.*Field: story \| Problem: missing_required_field/)
 })
-test('facts/draft/review success logs reuse existing schemas without changing request settings', async () => {
+test('facts/draft/review use strict Groq schemas and preserve provider model and token settings', async () => {
   const outputs = { facts, draft, review }; const logs: string[] = []; let calls = 0
   for (const stage of ['facts', 'draft', 'review'] as const) {
     const m = createModel('fixture-key', 'openai/gpt-oss-120b', (async (url, options) => {
       calls++; assert.equal(url, 'https://api.groq.com/openai/v1/chat/completions')
       const body = JSON.parse(options!.body as string)
-      assert.deepEqual(body.response_format, { type: 'json_object' }); assert.equal(body.max_tokens, QUALITY.maxOutputTokens)
+      assert.deepEqual(body.response_format, responseFormat('openai/gpt-oss-120b', stage)); assert.equal(body.max_tokens, QUALITY.maxOutputTokens)
       assert.equal(body.temperature, 0.1); assert.equal(body.model, 'openai/gpt-oss-120b')
       return completion(JSON.stringify(outputs[stage]))
     }) as typeof fetch, line => logs.push(line))
@@ -707,7 +709,7 @@ for (const outcome of ['success', 'schema', 'json', '429'] as const) test(`one s
   }) as typeof fetch, line => logs.push(line), noWait)
   if (outcome === 'success') assert.deepEqual(await m('facts', input), facts)
   else await assert.rejects(m('facts', input), e => e instanceof ModelFailure && e.category === ({ schema: 'MODEL_SCHEMA_INVALID', json: 'MODEL_INVALID_JSON', '429': 'MODEL_RATE_LIMITED' }[outcome]))
-  assert.equal(calls, 2)
+  assert.equal(calls, outcome === '429' ? 4 : 2)
   assert.equal(bodies[0].messages[1].content, bodies[1].messages[1].content)
   assert.match(bodies[1].messages[0].content, /previous JSON failed local structure validation/)
   assert.match(logs.join(' '), /Initial schema validation: FAIL/)
@@ -953,40 +955,38 @@ for (const value of [null, [], 'draft text', 123, true]) test(`draft expected_ob
   assert.ok(logs.some(line => line.includes('Parsed JSON type: ' + expected) && line.includes('Problem: expected_object')))
   assert.doesNotMatch(logs.join(' '), /draft text/)
 })
-test('production retry and repair sequence exhausts the configured budget at its final request', async () => {
-  const sequence = [facts, draft, facts, 429, [], 429, 429, facts, ...Array.from({ length: QUALITY.maxModelCalls - 9 }, () => facts), 429]
-  const logs: string[] = []; const waits: number[] = []; let calls = 0
-  const m = createModel('key', 'fixture', (async () => {
+test('repair retries respect cooldown and global accounting before publication', async () => {
+  let elapsed = 0, calls = 0, writes = 0; const waits: number[] = []; const logs: string[] = []
+  const sequence = [passageFacts(), [], 429, 429, draft, review]
+  const m = createModel('key', 'openai/gpt-oss-120b', (async (_url, options) => {
+    const request = JSON.parse(options!.body as string)
+    assert.equal(request.response_format.type, 'json_schema')
+    assert.equal(request.response_format.json_schema.strict, true)
     const value = sequence[calls++]
-    return value === 429 ? new Response(null, { status: 429, headers: { 'retry-after': calls === 4 ? '4' : '22' } }) : completion(JSON.stringify(value))
-  }) as typeof fetch, line => logs.push(line), { ...noWait, sleep: async ms => { waits.push(ms) } })
-  await m('facts', {}); await m('draft', {}); await m('facts', {})
-  await assert.rejects(m('draft', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
-  assert.equal(calls, 6)
-  await m('facts', {})
-  for (let i = 0; i < QUALITY.maxModelCalls - 9; i++) await m('facts', {})
-  await assert.rejects(m('facts', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
-  for (let i = 0; i < 2; i++) await assert.rejects(m('facts', {}), rejected('BUDGET_EXHAUSTED'))
-  assert.equal(calls, QUALITY.maxModelCalls); assert.deepEqual(waits, [5000, 23000, 23000])
-  assert.ok(logs.some(line => line.includes(`Global call: 6/${QUALITY.maxModelCalls} | Retry not attempted: REPAIR_ATTEMPT_LIMIT`)))
-  assert.ok(logs.some(line => line.includes(`Global call: ${QUALITY.maxModelCalls}/${QUALITY.maxModelCalls} | Retry not attempted: GLOBAL_CALL_BUDGET_EXHAUSTED`)))
-  assert.equal(logs.filter(line => line.includes('Request not sent: BUDGET_EXHAUSTED')).length, 2)
+    if (value === 429) return new Response(null, { status: 429, headers: { 'retry-after': '22' } })
+    return completion(JSON.stringify(value))
+  }) as typeof fetch, line => logs.push(line), { now: () => elapsed, random: () => 0, sleep: async ms => { waits.push(ms); elapsed += ms } })
+  assert.equal(await processCandidate(candidate, { collect: async () => [primary], model: m, history: [], now, log: line => logs.push(line), publish: async approved => {
+    writes++; assert.match(renderApproved(approved), /Acme/)
+  } }), true)
+  assert.equal(calls, 6); assert.equal(writes, 1); assert.deepEqual(waits, [23000, 23000])
+  assert.ok(logs.some(line => line.includes('Global call: 6/30')))
 })
 
-test('terminal repair 429 cools down the next candidate without an extra retry or budget increase', async () => {
-  let elapsed = 0, calls = 0, readyAt = 0; const waits: number[] = []
+test('repair cannot exceed remaining global budget or initiate a second repair', async () => {
+  let calls = 0
   const m = createModel('key', 'fixture', (async () => {
     calls++
-    if (calls === 1) return completion('[]')
-    if (calls === 2) { readyAt = elapsed + 22000; return new Response(null, { status: 429, headers: { 'retry-after': '22' } }) }
-    assert.ok(elapsed >= readyAt, 'next candidate must respect provider cooldown')
+    if (calls === QUALITY.maxModelCalls - 1) return completion('[]')
+    if (calls === QUALITY.maxModelCalls) return new Response(null, { status: 429 })
     return completion(JSON.stringify(facts))
-  }) as typeof fetch, () => {}, { now: () => elapsed, random: () => 0, sleep: async ms => { waits.push(ms); elapsed += ms } })
+  }) as typeof fetch, () => {}, noWait)
+  for (let i = 0; i < QUALITY.maxModelCalls - 2; i++) await m('facts', {})
   await assert.rejects(m('draft', {}), e => e instanceof ModelFailure && e.category === 'MODEL_RATE_LIMITED')
-  assert.equal(calls, 2); assert.deepEqual(waits, [])
-  assert.deepEqual(await m('facts', {}), facts)
-  assert.equal(calls, 3); assert.deepEqual(waits, [23000])
+  await assert.rejects(m('facts', {}), rejected('BUDGET_EXHAUSTED'))
+  assert.equal(calls, QUALITY.maxModelCalls)
 })
+
 test('source discovery time reduces shared cooldown rather than adding a fresh full delay', async () => {
   let elapsed = 0, calls = 0; const waits: number[] = []
   const m = createModel('key', 'fixture', (async () => {
@@ -1163,7 +1163,8 @@ test('draft diagnostics show retained coverage and removed paragraphs without em
 
 
 function passageFacts() {
-  return { ...clone(facts), eventDatePassageId: 'publication_timestamp', confirmedFacts: facts.confirmedFacts.map(f => ({ ...f, supportedBy: [{ sourceId: 's1', passageId: 's1:p1' }] })) }
+  const { eventDateEvidence: _evidence, ...wireFacts } = clone(facts)
+  return { ...wireFacts, eventDatePassageId: 'publication_timestamp', confirmedFacts: facts.confirmedFacts.map(f => ({ ...f, supportedBy: [{ sourceId: 's1', passageId: 's1:p1' }] })) }
 }
 
 test('passage IDs are deterministic exact contiguous slices with no text loss or duplication', () => {
@@ -1265,4 +1266,81 @@ test('draft diagnostics identify unsupported title, deck, heading and unknown fa
   d.sections[1].paragraphs.push({ text: 'There are 999 users.', factIds: ['f1'] })
   assert.equal(cleanDraft(d, facts, line => logs.push(line)).removedParagraphs, 1)
   assert.match(logs.join(' '), /Result: DROP.*sections\[1\].paragraphs\[1\].*NUMBER_NOT_IN_REFERENCED_FACTS/)
+})
+
+for (const value of ['5K micro OLED display', '5K OLED display', '6K monitor']) test(`resolution evidence: ${value}`, () => {
+  assert.equal(quantitiesSupported(value, value), true)
+  assert.equal(quantitiesSupported(value, '4K micro OLED display'), false)
+  assert.equal(quantitiesSupported(value, '$5000'), false)
+})
+test('ambiguous 5K quantities remain rejected', () => {
+  assert.equal(quantitiesSupported('5K users', '5K users'), false)
+})
+
+test('all strict transport schemas require every field and prohibit extra keys recursively', () => {
+  const visit = (schema: { type: string; properties?: Record<string, unknown>; required?: string[]; additionalProperties?: boolean; items?: unknown }) => {
+    if (schema.type === 'object') {
+      assert.equal(schema.additionalProperties, false)
+      assert.deepEqual(schema.required, Object.keys(schema.properties!))
+      Object.values(schema.properties!).forEach(child => visit(child as typeof schema))
+    }
+    if (schema.items) visit(schema.items as typeof schema)
+  }
+  Object.values(MODEL_SCHEMAS).forEach(visit)
+  assert.deepEqual(responseFormat('custom-model', 'facts'), { type: 'json_object' })
+  assert.equal(MODEL_SCHEMAS.facts.properties!.eventDatePassageId.type, 'string')
+  assert.equal(MODEL_SCHEMAS.facts.properties!.eventDateEvidence, undefined)
+})
+test('draft repair identifies exact constraint without printing content', () => {
+  const bad = clone(draft); bad.sections[0].paragraphs[0].text = 'secret'.repeat(300)
+  assert.deepEqual(schemaIssue('draft', bad), { field: 'sections[0].paragraphs[0].text', problem: 'expected_nonempty_string_max_1500' })
+})
+test('successful response with exhausted headers paces next call before a 429', async () => {
+  let calls = 0; const waits: number[] = []
+  const m = createModel('key', 'fixture', (async () => {
+    calls++
+    const response = completion(JSON.stringify(facts))
+    if (calls === 1) {
+      response.headers.set('x-ratelimit-remaining-tokens', '200')
+      response.headers.set('x-ratelimit-reset-tokens', '20s')
+    }
+    return response
+  }) as typeof fetch, () => {}, { ...noWait, sleep: async ms => { waits.push(ms) } })
+  await m('facts', {}); await m('facts', {})
+  assert.deepEqual(waits, [21000]); assert.equal(calls, 2)
+})
+test('recovered transport still cannot publish an unsupported final review', async () => {
+  let calls = 0, writes = 0
+  const sequence = [passageFacts(), 429, draft, { ...review, unsupportedClaims: ['unsupported claim'] }]
+  const m = createModel('key', 'openai/gpt-oss-120b', (async () => {
+    const value = sequence[calls++]
+    return value === 429 ? new Response(null, { status: 429 }) : completion(JSON.stringify(value))
+  }) as typeof fetch, () => {}, noWait)
+  assert.equal(await processCandidate(candidate, { collect: async () => [primary], model: m, history: [], now, log: () => {}, publish: async () => { writes++ } }), false)
+  assert.equal(writes, 0); assert.equal(calls, 4)
+})
+
+test('production Infinite Display dimensions match without losing resolution units', () => {
+  const claim = 'The glasses feature a 5K micro OLED Infinite Display with 2412 × 2288 pixels per eye and up to 120 Hz refresh rate'
+  const source = 'The 5K micro OLED “Infinite Display” has 2412 x 2288 pixels per eye, with a refresh rate of up to 120Hz.'
+  assert.equal(quantitiesSupported(claim, source), true)
+  assert.equal(quantitiesSupported(claim.replace('5K', '4K'), source), false)
+})
+
+test('wire fixtures match the strict schemas including passage evidence fields', () => {
+  type Schema = typeof MODEL_SCHEMAS.facts
+  const check = (schema: Schema, value: unknown) => {
+    if (schema.type === 'object') {
+      assert.ok(value && typeof value === 'object' && !Array.isArray(value))
+      const record = value as Record<string, unknown>
+      assert.deepEqual(Object.keys(record).sort(), [...schema.required!].sort())
+      for (const [key, child] of Object.entries(schema.properties!)) check(child, record[key])
+    } else if (schema.type === 'array') {
+      assert.ok(Array.isArray(value)); value.forEach(item => check(schema.items!, item))
+    } else assert.equal(typeof value, schema.type)
+    if (schema.enum) assert.ok(schema.enum.includes(value as string))
+  }
+  check(MODEL_SCHEMAS.facts, passageFacts())
+  check(MODEL_SCHEMAS.draft, draft)
+  check(MODEL_SCHEMAS.review, review)
 })

@@ -21,6 +21,27 @@ export function schemaIssue(stage: Stage, value: unknown): { field: string; prob
   if (stage !== 'draft' && !['low', 'medium', 'high'].includes(value.riskLevel as string)) return issue('riskLevel', 'invalid_enum')
   const arrays = stage === 'facts' ? ['confirmedFacts', 'uncertainClaims', 'conflictingClaims', 'riskAssessments'] : stage === 'draft' ? ['sections'] : ['supportedFactIds', 'unsupportedClaims', 'conflictingClaims', 'unverifiedEntities', 'derivativeGroups', 'authoritativePrimaryIds', 'trustedEditorialSourceIds', 'riskAssessments']
   for (const key of arrays) if (!Array.isArray(value[key])) return issue(key, 'expected_array')
+  if (stage === 'draft') {
+    const boundedText = (v: unknown, limit: number) => typeof v === 'string' && v.trim().length > 0 && v.length <= limit
+    if (!boundedText(value.title, 120)) return issue('title', 'expected_nonempty_string_max_120')
+    if (!boundedText(value.deck, 600)) return issue('deck', 'expected_nonempty_string_max_600')
+    const sections = value.sections as unknown[]
+    if (sections.length < 1 || sections.length > 6) return issue('sections', 'expected_1_to_6_items')
+    for (const [i, section] of Array.from(sections.entries())) {
+      const path = `sections[${i}]`
+      if (!object(section)) return issue(path, 'expected_object')
+      if (!boundedText(section.heading, Infinity)) return issue(`${path}.heading`, 'expected_nonempty_string')
+      if (!['facts', 'analysis'].includes(section.kind as string)) return issue(`${path}.kind`, 'invalid_enum')
+      if (!Array.isArray(section.paragraphs) || section.paragraphs.length < 1 || section.paragraphs.length > 6) return issue(`${path}.paragraphs`, 'expected_1_to_6_items')
+      for (const [j, paragraph] of Array.from(section.paragraphs.entries())) {
+        const field = `${path}.paragraphs[${j}]`
+        if (!object(paragraph)) return issue(field, 'expected_object')
+        if (!boundedText(paragraph.text, 1500)) return issue(`${field}.text`, 'expected_nonempty_string_max_1500')
+        if (!Array.isArray(paragraph.factIds) || !paragraph.factIds.length || !paragraph.factIds.every(id => boundedText(id, Infinity))) return issue(`${field}.factIds`, 'expected_nonempty_string_array')
+      }
+    }
+    if (!sections.some(section => object(section) && section.kind === 'facts')) return issue('sections', 'missing_facts_section')
+  }
   if (stage === 'facts') {
     if (typeof value.confidence !== 'number') return issue('confidence', 'expected_number')
     if (!object(value.event)) return issue('event', 'expected_object')

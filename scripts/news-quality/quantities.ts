@@ -31,10 +31,10 @@ function quantities(text: string): Quantity[] {
     const monetary = /\b(?:raised|raises|funding of|costs?|priced? at|price of|revenue of|valuation of|paid)\s*$/i.test(text.slice(0, m.index)) && /^(?:\s*$|[.,;]|\s+(?:in|for|from|during)\b)/i.test(text.slice((m.index || 0) + m[0].length))
     // Product/display resolution is not a financial magnitude. Require nearby
     // hardware wording and the same explicit resolution unit in the evidence.
-    const resolution = !first && !last && !monetary && /^(?:2|4|8|16)$/.test(amount)
+    const resolution = !first && !last && !monetary && /^(?:2|4|5|6|8|12|16)$/.test(amount)
       && m[3]?.toLowerCase() === 'k' && /^\d+k$/i.test(m[0])
       && (/(?:tv|television|display|monitor|screen|video|resolution)\s*$/i.test(text.slice(0, m.index))
-        || /^\s*(?:tv|television|display|monitor|screen|video|resolution)\b/i.test(text.slice((m.index || 0) + m[0].length)))
+        || /^\s*(?:(?:micro\s+)?(?:OLED|LED|LCD)|tv|television|display|monitor|screen|video|resolution)\b/i.test(text.slice((m.index || 0) + m[0].length)))
     const ambiguousScale = /^[kmb]$/i.test(m[3] || '') && !first && !last && !monetary && !resolution
     const scale = resolution ? 0 : ({ trillion: 12, billion: 9, bn: 9, b: 9, million: 6, m: 6, thousand: 3, k: 3 } as Record<string, number>)[m[3]?.toLowerCase()] || 0
     return { raw: m[0], magnitude: resolution ? 'resolution' : m[3]?.toLowerCase() || 'none', scale, invalidReason: ambiguousScale ? 'AMBIGUOUS_MAGNITUDE' : decimal(amount, scale) === 'INVALID' ? 'INVALID_DECIMAL' : '', value: ambiguousScale ? 'INVALID' : decimal(amount, scale), monetary, unit: resolution ? 'resolution_k' : first && last && first !== last ? 'INVALID' : first || last }

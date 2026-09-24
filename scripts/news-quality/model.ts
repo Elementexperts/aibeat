@@ -1,3 +1,4 @@
+import { responseFormat } from './model-schema'
 import { resolveFactPassages, PassageReferenceError } from './passages'
 import { QUALITY } from './config'
 import { Rejection, type Model } from './types'
@@ -10,7 +11,7 @@ const prompts = {
   facts: `Extract only facts supported by retrieved documents. Use only the exact supplied source IDs in citations, never URLs or invented IDs. Claims may be paraphrased. Cite the supplied passageId and sourceId for every fact; do not copy or generate excerpt text. Code will attach the exact original passage. Every numerical value in a claim must be explicitly supported by each cited source: several passage IDs from the same source may jointly support one fact. Use separate supportedBy entries for separate passages. Never combine unrelated entities, events or numerical relationships. Preserve explicit currency and units. Only cite passage IDs actually supplied for that exact source. Record uncertainty separately and any disagreement; never average figures. Each core fact is essential to the reported event. A source's updated feed timestamp is not an event date. eventDatePassageId must identify a supplied passage from eventSourceId supporting eventDate; use the literal publication_timestamp ONLY when the event is the announcement itself and the source publication timestamp establishes its date. Identify an actual new development, not a retrospective. Product must include its exact version where known. Return:
 { "story": "factual description", "event": { "entities": ["exact names"], "action": "launch|funding|acquisition|lawsuit|security|policy|departure|update|research", "product": "exact product/version or empty string", "eventDate": "YYYY-MM-DD" }, "eventSourceId": "s1", "eventDatePassageId": "publication_timestamp", "confirmedFacts": [{ "id": "f1", "claim": "paraphrased fact", "core": true, "confidence": 90, "supportedBy": [{ "sourceId": "s1", "passageId": "s1:p1" }] }], "uncertainClaims": [], "conflictingClaims": [], "riskLevel": "low|medium|high", "riskAssessments": [], "confidence": 90 }
 Extract the material details needed for a useful article: what changed, who did what, how it works, dates, availability, impact and limitations when actually stated. Preserve who performed each action; passive wording does not establish the actor. Do not infer a year from the publication timestamp for a claim unless its cited passages support it. Include at most ${QUALITY.maxFacts} facts. If evidence is insufficient return the same structure with empty confirmedFacts. In TRUSTED_SINGLE_SOURCE mode, ordinary low/medium-risk facts and business-event facts (funding, acquisitions, employment reductions) may be supported by the designated original trustedEditorialSourceId alone. Otherwise every fact requires an authoritative primary source or two independent reputable reports. Legal, safety, enforcement, breach and serious-allegation facts ALWAYS require both authoritative primary evidence and independent reputable reporting, even in trusted mode; classify risk honestly and never lower it to fit available evidence. Do not assign certainty to predictions or allegations. For a new announcement of a scheduled future event, eventDate is the evidenced date of the announcement, not the future event date. Keep the future schedule explicitly labeled as scheduled; never claim the event already happened. If the announcement date itself cannot be established, abstain.`,
-  draft: `Return exactly one top-level JSON object with title (string), deck (string), and sections (array). Do not return null, an array, a JSON-encoded string, a wrapper named draft, or Markdown fences. Each section is an object with heading, kind and paragraphs; each paragraph is an object with text and factIds. Write an original, informative news article from confirmedFacts only. When enough distinct verified facts are available, aim for roughly 250-450 words with several substantive paragraphs covering the development, relevant details, availability or impact, and grounded analysis. This is a writing target, not a minimum: use a shorter article when evidence is limited. Do not compress a well-supported story into one factual sentence. Do not use uncertainClaims. Headline: entity + action + verified detail. Aim for 60 characters or fewer without removing essential context; the existing 120-character limit still applies. Factual deck, max 600 characters. No direct quotes or quotation marks. Never add a numeric detail not present in referenced confirmedFacts. No HTML, FAQ, sensationalism, keyword stuffing or word-count target. Each paragraph cites all fact IDs it relies upon internally. Explain a grounded implication in an analysis section using conditional language (could, suggests, one implication); add no new facts, competitors, prices or predictions stated as facts. Make the analysis useful by connecting a specific confirmed fact to its practical significance for the affected reader. Explain a limitation or unresolved question only when supported by the confirmed facts; do not invent missing details or imply that unmentioned information is unknown. Avoid generic claims that this changes everything or offers another option. Useful short coverage is preferable to padding. Return:
+  draft: `Return exactly one top-level JSON object with title (string), deck (string), and sections (array). Do not return null, an array, a JSON-encoded string, a wrapper named draft, or Markdown fences. Each section is an object with heading, kind and paragraphs; each paragraph is an object with text and factIds. Write an original, informative news article from confirmedFacts only. When enough distinct verified facts are available, aim for roughly 250-450 words with several substantive paragraphs covering the development, relevant details, availability or impact, and grounded analysis. This is a writing target, not a minimum: use a shorter article when evidence is limited. Do not compress a well-supported story into one factual sentence. Do not use uncertainClaims. Headline: entity + action + verified detail. Aim for 60 characters or fewer without removing essential context; the existing 120-character limit still applies. Factual deck, max 600 characters. No direct quotes or quotation marks. Never add a numeric detail not present in referenced confirmedFacts. No HTML, FAQ, sensationalism, keyword stuffing or word-count target. Use 1-6 sections with 1-6 paragraphs per section; each paragraph text must be at most 1500 characters. Include at least one facts section. Each paragraph cites all fact IDs it relies upon internally. Explain a grounded implication in an analysis section using conditional language (could, suggests, one implication); add no new facts, competitors, prices or predictions stated as facts. Make the analysis useful by connecting a specific confirmed fact to its practical significance for the affected reader. Explain a limitation or unresolved question only when supported by the confirmed facts; do not invent missing details or imply that unmentioned information is unknown. Avoid generic claims that this changes everything or offers another option. Useful short coverage is preferable to padding. Return:
 { "title": "...", "deck": "...", "sections": [{ "heading": "What happened", "kind": "facts", "paragraphs": [{ "text": "...", "factIds": ["f1"] }] }, { "heading": "Why it matters", "kind": "analysis", "paragraphs": [{ "text": "This could ...", "factIds": ["f1"] }] }] }`,
   review: `Independently critique the entire candidate article (headline, deck, headings, all factual and analysis paragraphs) against the retrieved evidence and fact citations. Check actual entailment, not merely matching words. Evaluate the verified excerpts for each fact together within each cited source; original phrasing is allowed when meaning is preserved. Matching numbers alone is insufficient: reject combinations that attach a price, duration or other detail to a different entity, event or relationship, or introduce an unsupported conclusion. List unsupported claims, uncertain details presented as fact, unverified names/roles, conflicting dates/numbers and copied prose. Check every fact ID individually. Authority is claim-specific: a company's own announcement can support its product claims, not unrelated claims about third parties; a preprint is not an official company statement or proof of benchmark superiority. authoritativePrimaryIds includes only genuinely authoritative documents for this event. Independent reporting must add independent verification, not merely repeat a press release/wire; collapse sources that repeat the same original account in derivativeGroups. eventDateVerified must confirm a genuinely recent development, not an old event with a new feed timestamp. Do not approve a factual headline that overstates a report. trustedEditorialSourceIds must contain only the designated original article when it is classified STAFF_REPORTING and actually contains original editorial reporting, not aggregation, contributor, opinion, sponsored, syndicated press release or community content. Reject ambiguity; the model cannot promote untrusted documents. The designated trusted editorial source has already passed exact-host and article/byline checks. Ordinary single-source coverage needs no extra primary source or independentReporting. Still identify derivative reporting and enforce all semantic/factual checks, including which entity performed each action. Return:
 { "supportedFactIds": ["f1"], "unsupportedClaims": [], "conflictingClaims": [], "unverifiedEntities": [], "derivativeGroups": [["s2", "s3"]], "authoritativePrimaryIds": ["s1"], "trustedEditorialSourceIds": [], "eventDateVerified": true, "independentReporting": false, "analysisGrounded": true, "originalValue": true, "clearWriting": true, "riskLevel": "low|medium|high", "riskAssessments": [] }
@@ -38,7 +39,7 @@ const timing: Timing = { sleep: ms => new Promise(resolve => setTimeout(resolve,
 export function createModel(key: string, model: string, fetcher: typeof fetch = fetch, log: (message: string) => void = console.log, clock: Timing = timing): Model {
   let calls = 0, nextRequestAt = 0
   return async (stage, input) => {
-    let attempt = 0, repairing = false
+    let attempt = 0, repairRequests = 0, repairing = false
     let repairInstruction = ''
     while (true) {
       if (calls >= QUALITY.maxModelCalls) {
@@ -55,28 +56,42 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
         await clock.sleep(cooldown)
       }
       nextRequestAt = 0
-      calls++; attempt++
+      calls++; if (repairing) repairRequests++; else attempt++
       let delay = 0, repairAllowed = true
       let status: number | 'unavailable' = 'unavailable'
       let finish = 'unavailable', chars = 0, json = 'NOT_RUN', schema = 'NOT_RUN', jsonType = 'NOT_RUN'
       let usage = 'Prompt tokens: unavailable | Completion tokens: unavailable | Total tokens: unavailable'
       let issue: { field: string; problem: string } | undefined
-      const emit = (failure?: string) => log(`[AIBeat Model] Provider: Groq | Stage: ${stage} | Model: ${safeModelName(model, key)} | HTTP status: ${status} | Finish reason: ${finish} | Content chars: ${chars} | JSON parse: ${json} | Schema validation: ${schema} | Attempt: ${repairing ? '1/1' : attempt + '/3'}${repairing ? ' | Repair attempt: 1/1 | Repair JSON parse: ' + json + ' | Repair schema validation: ' + schema : ''} | ${usage} | Max output tokens: ${QUALITY.maxOutputTokens} | Global call: ${calls}/${QUALITY.maxModelCalls} | Parsed JSON type: ${jsonType}${failure ? ' | Failure: ' + failure : ''}${issue ? ' | Field: ' + issue.field + ' | Problem: ' + issue.problem : ''}`)
+      const emit = (failure?: string) => log(`[AIBeat Model] Provider: Groq | Stage: ${stage} | Model: ${safeModelName(model, key)} | HTTP status: ${status} | Finish reason: ${finish} | Content chars: ${chars} | JSON parse: ${json} | Schema validation: ${schema} | Attempt: ${repairing ? repairRequests + '/3' : attempt + '/3'}${repairing ? ' | Repair attempt: 1/1 | Repair JSON parse: ' + json + ' | Repair schema validation: ' + schema : ''} | ${usage} | Max output tokens: ${QUALITY.maxOutputTokens} | Global call: ${calls}/${QUALITY.maxModelCalls} | Response format: ${responseFormat(model, stage).type} | Parsed JSON type: ${jsonType}${failure ? ' | Failure: ' + failure : ''}${issue ? ' | Field: ' + issue.field + ' | Problem: ' + issue.problem : ''}`)
       try {
         const response = await fetcher('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST', signal: AbortSignal.timeout(QUALITY.timeoutMs),
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-          body: JSON.stringify({ model, temperature: 0.1, max_tokens: QUALITY.maxOutputTokens, response_format: { type: 'json_object' }, messages: [{ role: 'system', content: common + '\n' + (stage === 'draft' ? '' : riskPolicy + '\n') + prompts[stage] + repairInstruction }, { role: 'user', content: JSON.stringify(input) }] }),
+          body: JSON.stringify({ model, temperature: 0.1, max_tokens: QUALITY.maxOutputTokens, response_format: responseFormat(model, stage), messages: [{ role: 'system', content: common + '\n' + (stage === 'draft' ? '' : riskPolicy + '\n') + prompts[stage] + repairInstruction }, { role: 'user', content: JSON.stringify(input) }] }),
         })
         status = response.status
         if (response.status === 429) {
-          delay = retryDelay(response.headers, attempt, clock.now(), clock.random())
+          delay = retryDelay(response.headers, repairing ? repairRequests : attempt, clock.now(), clock.random())
           nextRequestAt = clock.now() + delay
         }
         if (!response.ok) {
           // Never parse/log error bodies: providers can echo prompts or generations.
           await response.body?.cancel().catch(() => {})
           throw new ModelFailure(status === 429 ? 'MODEL_RATE_LIMITED' : status >= 500 && status < 600 ? 'MODEL_SERVER_ERROR' : 'MODEL_HTTP_ERROR')
+        }
+        // Avoid an immediately predictable 429 after a successful response.
+        // Only numeric remaining headers plus an explicit reset can schedule pacing.
+        const exhausted = new Headers()
+        for (const resource of ['requests', 'tokens']) {
+          const remaining = response.headers.get(`x-ratelimit-remaining-${resource}`)
+          const reset = response.headers.get(`x-ratelimit-reset-${resource}`)
+          const reserve = resource === 'tokens' ? QUALITY.maxOutputTokens : 1
+          if (remaining !== null && /^\d+$/.test(remaining) && Number(remaining) < reserve && reset && /^(?:\d+(?:\.\d+)?(?:ms|s|m|h))+$/.test(reset)) exhausted.set(`x-ratelimit-reset-${resource}`, reset)
+        }
+        if (Array.from(exhausted.keys()).length) {
+          const wait = retryDelay(exhausted, 1, clock.now(), clock.random())
+          nextRequestAt = clock.now() + wait
+          log(`[AIBeat Model] Stage: ${stage} | Proactive provider cooldown seconds: ${wait / 1000}`)
         }
         let data
         try { data = await response.json() } catch (error) {
@@ -120,8 +135,8 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
       } catch (error) {
         const failure = error instanceof ModelFailure ? error : new ModelFailure(error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name) ? 'MODEL_TIMEOUT' : 'MODEL_UNEXPECTED_ERROR')
         emit(failure.category)
-        if (failure.category === 'MODEL_RATE_LIMITED' && !repairing && attempt < 3 && calls < QUALITY.maxModelCalls) {
-          log(`[AIBeat Model] Stage: ${stage} | Failure: MODEL_RATE_LIMITED | Attempt: ${attempt}/3 | Retrying after: ${delay / 1000} seconds`)
+        if (failure.category === 'MODEL_RATE_LIMITED' && (repairing ? repairRequests : attempt) < 3 && calls < QUALITY.maxModelCalls) {
+          log(`[AIBeat Model] Stage: ${stage} | Failure: MODEL_RATE_LIMITED | Attempt: ${repairing ? repairRequests : attempt}/3 | Retrying after: ${delay / 1000} seconds`)
           continue
         }
         if (failure.category === 'MODEL_SCHEMA_INVALID' && repairAllowed && !repairing && calls < QUALITY.maxModelCalls) {
@@ -132,7 +147,7 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
           log(`[AIBeat Model] Stage: ${stage} | Initial schema validation: FAIL | Repair attempt: 1/1`)
           continue
         }
-        if (failure.category === 'MODEL_RATE_LIMITED') log(`[AIBeat Model] Stage: ${stage} | Global call: ${calls}/${QUALITY.maxModelCalls} | Retry not attempted: ${repairing ? 'REPAIR_ATTEMPT_LIMIT' : calls >= QUALITY.maxModelCalls ? 'GLOBAL_CALL_BUDGET_EXHAUSTED' : 'STAGE_ATTEMPT_LIMIT'}`)
+        if (failure.category === 'MODEL_RATE_LIMITED') log(`[AIBeat Model] Stage: ${stage} | Global call: ${calls}/${QUALITY.maxModelCalls} | Retry not attempted: ${calls >= QUALITY.maxModelCalls ? 'GLOBAL_CALL_BUDGET_EXHAUSTED' : repairing ? 'REPAIR_ATTEMPT_LIMIT' : 'STAGE_ATTEMPT_LIMIT'}`)
         throw failure
       }
     }
