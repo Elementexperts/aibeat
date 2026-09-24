@@ -60,3 +60,11 @@ hello@aibeat.dev`
   const emailKey = Buffer.from(lead.email.toLowerCase()).toString('base64url').slice(0, 32)
   return { to: lead.email, subject, plainText, html, key: `aibeat-gmail-outreach-${isoWeek(now)}-${emailKey}` }
 }
+
+// Newly discovered leads must not sit permanently beyond Monday's row limit.
+// Undated manual rows preserve their existing relative order.
+export function selectOutreachLeads(leads: OutreachLead[], limit: number): OutreachLead[] {
+  const timestamp = (lead: OutreachLead) => lead.discovered_at && Number.isFinite(Date.parse(lead.discovered_at)) ? Date.parse(lead.discovered_at) : 0
+  return leads.filter(lead => lead.approved_for_outreach && lead.status !== 'suppressed')
+    .sort((a, b) => timestamp(b) - timestamp(a)).slice(0, limit)
+}

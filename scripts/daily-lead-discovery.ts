@@ -31,8 +31,9 @@ function numberArg(args: Args, key: string): number | undefined {
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const report = await runDailyLeadDiscovery({
-    dryRun: args['dry-run'] === true,
-    createDrafts: args['create-drafts'] !== 'false',
+    dryRun: args['dry-run'] === undefined ? undefined : args['dry-run'] === true || args['dry-run'] === 'true',
+    createDrafts: args['create-drafts'] === 'true',
+    manualLeadsPath: process.env.DAILY_MANUAL_LEADS_FILE || 'data/outreach/daily-manual-leads.csv',
     maxCandidates: numberArg(args, 'max-candidates'),
     maxLeads: numberArg(args, 'max-leads'),
     minScore: numberArg(args, 'min-score'),

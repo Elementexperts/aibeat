@@ -66,6 +66,10 @@ type ManualLeadRow = {
   category?: string
   personalized_opening?: string
   product_benefit?: string
+  public_contact_source_url?: string
+  discovery_run_id?: string
+  discovered_at?: string
+  contact_verified_at?: string
 }
 
 export type DailyManualLeadImport = {
@@ -74,7 +78,7 @@ export type DailyManualLeadImport = {
   errors: Array<{ row: number; errors: string[] }>
 }
 
-function splitCsvLine(line: string): string[] {
+export function splitCsvLine(line: string): string[] {
   const cells: string[] = []
   let current = ''
   let quoted = false
@@ -97,7 +101,7 @@ function splitCsvLine(line: string): string[] {
   return cells
 }
 
-function csvRows(csv: string): Record<string, string>[] {
+export function csvRows(csv: string): Record<string, string>[] {
   const lines = csv.split(/\r?\n/).filter((line) => line.trim())
   const header = splitCsvLine(lines[0] || '').map((item) => item.trim().toLowerCase())
   return lines.slice(1).map((line) => {
@@ -204,7 +208,7 @@ export function parseDailyManualLeads(csv: string, now = new Date()): DailyManua
       category: row.category?.trim() || 'AI startup',
       contact_type: contactType,
       source,
-      public_contact_source_url: sourceUrl(source, websiteUrl),
+      public_contact_source_url: normalizeWebsite(row.public_contact_source_url || '') || sourceUrl(source, websiteUrl),
       personalized_opening: openingFor(row, toolName, source),
       product_benefit: row.product_benefit?.trim() || undefined,
       status: blocked ? 'suppressed' : 'approved',
@@ -220,8 +224,9 @@ export function parseDailyManualLeads(csv: string, now = new Date()): DailyManua
       approved_for_outreach: !blocked,
       approved_at: blocked ? undefined : timestamp,
       approved_by: blocked ? undefined : 'daily_manual_review',
-      discovered_at: timestamp,
-      contact_verified_at: timestamp,
+      discovery_run_id: row.discovery_run_id || undefined,
+      discovered_at: row.discovered_at && Number.isFinite(Date.parse(row.discovered_at)) ? row.discovered_at : undefined,
+      contact_verified_at: row.contact_verified_at && Number.isFinite(Date.parse(row.contact_verified_at)) ? row.contact_verified_at : timestamp,
       contact_validation_notes: blocked ? 'Blocked contact type; no draft will be created.' : 'Manual daily lead file contact.',
       suppressed_at: blocked ? timestamp : undefined,
       suppression_reason: blocked ? 'Blocked contact type is not appropriate for promotional outreach.' : undefined,

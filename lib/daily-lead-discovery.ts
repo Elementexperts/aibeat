@@ -1,3 +1,5 @@
+import { appendDailyLeadCsv, leadHistoryPath, readLeadRows, toolIdentity } from './daily-lead-csv'
+import { publicUrl } from '../scripts/news-quality/sources'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import Parser from 'rss-parser'
@@ -55,6 +57,7 @@ export type DailyLeadDiscoveryReport = {
   contactsValidated: number
   qualifiedLeads: number
   leadsStored: number
+  csvLeadsAdded: number
   draftsCreated: Array<{ email: string; toolName: string; broadcastId: string; tagId?: string; reused: boolean }>
   candidateInspections: CandidateInspection[]
   skipped: Array<{ toolName?: string; reason: string }>
@@ -73,6 +76,7 @@ type DiscoveryOptions = {
   dryRun?: boolean
   storePath?: string
   reportDir?: string
+  manualLeadsPath?: string
   sources?: string[]
 }
 
@@ -117,6 +121,7 @@ const LOW_INTENT_RE = /\b(rss|feed|jobs?|careers?|privacy|terms|login|sign in|si
 type ExtractedLink = {
   url: string
   text: string
+  image: boolean
 }
 
 function stripHtml(value: string) {
@@ -136,11 +141,6 @@ function host(url: string | undefined) {
   }
 }
 
-function rootDomain(hostname: string | undefined) {
-  if (!hostname) return undefined
-  const parts = hostname.split('.')
-  return parts.length <= 2 ? hostname : parts.slice(-2).join('.')
-}
 
 export function inferContactType(email: string): OutreachContactType {
   const local = normalizeEmail(email).split('@')[0]
@@ -148,7 +148,8 @@ export function inferContactType(email: string): OutreachContactType {
 }
 
 export function extractEmailsFromHtml(html: string): string[] {
-  const matches = decodeBasicEntities(html).match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || []
+  const visible = html.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, '').replace(/<!--[\s\S]*?-->/g, '')
+  const matches = decodeBasicEntities(visible).match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || []
   const emails = matches.map((email) => normalizeEmail(email).replace(/[),.;:]+$/, ''))
   return Array.from(new Set(emails)).filter((email) => isValidEmail(email) && !isBlockedContact({ email, contact_type: inferContactType(email) }))
 }
@@ -159,10 +160,8 @@ export function isPublicBusinessEmail(email: string, websiteUrl?: string) {
   if (isBlockedContact({ email: normalized, contact_type: type })) return false
   const [local, domain] = normalized.split('@')
   if (!local || !domain || BLOCKED_EMAIL_DOMAINS.has(domain)) return false
-  const emailRoot = rootDomain(domain)
-  const websiteRoot = rootDomain(host(websiteUrl))
-  if (websiteRoot && emailRoot === websiteRoot) return true
-  return type !== 'unknown' && !BLOCKED_EMAIL_DOMAINS.has(domain)
+  const websiteHost = host(websiteUrl)
+  return !!websiteHost && (domain === websiteHost || domain.endsWith(`.${websiteHost}`))
 }
 
 function extractLinks(html: string, baseUrl: string) {
@@ -172,7 +171,7 @@ function extractLinks(html: string, baseUrl: string) {
 function extractLinkRecords(html: string, baseUrl: string): ExtractedLink[] {
   const links = Array.from(decodeBasicEntities(html).matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)).flatMap((match) => {
     try {
-      return [{ url: new URL(match[1], baseUrl).toString(), text: stripHtml(match[2] || '') }]
+      return [{ url: new URL(match[1], baseUrl).toString(), text: stripHtml(match[2] || '') + ' ' + (match[0].match(/(?:aria-label|title)=["']([^"']+)/i)?.[1] || ''), image: /<img\b/i.test(match[2]) }]
     } catch {
       return []
     }
@@ -202,6 +201,7 @@ function isBlockedWebsiteUrl(link: string, sourceUrl: string) {
 function websiteIntentScore(link: ExtractedLink) {
   let score = 0
   if (WEBSITE_INTENT_RE.test(link.text)) score += 20
+  if (link.image) score += 15
   if (/^https?:\/\/[^/?#]+\/?$/i.test(link.url)) score += 8
   if (/producthunt|betalist/i.test(link.text)) score -= 10
   if (LOW_INTENT_RE.test(link.text) || LOW_INTENT_RE.test(link.url)) score -= 10
@@ -209,7 +209,8 @@ function websiteIntentScore(link: ExtractedLink) {
 }
 
 function sameSite(link: string, websiteUrl: string) {
-  return rootDomain(host(link)) === rootDomain(host(websiteUrl))
+  const target = host(link), origin = host(websiteUrl)
+  return !!target && !!origin && (target === origin || target.endsWith(`.${origin}`))
 }
 
 function contactLinksFromHtml(html: string, pageUrl: string, websiteUrl: string) {
@@ -218,9 +219,9 @@ function contactLinksFromHtml(html: string, pageUrl: string, websiteUrl: string)
     .slice(0, 20)
 }
 
-function chooseExternalWebsite(productHuntHtml: string, productHuntUrl: string) {
+export function chooseExternalWebsite(productHuntHtml: string, productHuntUrl: string) {
   const candidates = extractLinkRecords(productHuntHtml, productHuntUrl)
-    .filter((link) => !isBlockedWebsiteUrl(link.url, productHuntUrl))
+    .filter((link) => !isBlockedWebsiteUrl(link.url, productHuntUrl) || (host(link.url) === host(productHuntUrl) && /\/(?:visit|out|redirect)(?:[/?]|$)/i.test(new URL(link.url).pathname)))
     .map((link, index) => ({ link, index, score: websiteIntentScore(link) }))
     .filter((item) => item.score >= 0 || WEBSITE_INTENT_RE.test(item.link.text))
     .sort((a, b) => b.score - a.score || a.index - b.index)
@@ -258,10 +259,50 @@ function contactPageUrls(websiteUrl: string) {
   return Array.from(new Set([websiteUrl, ...directPages]))
 }
 
-async function fetchText(url: string, fetchImpl: typeof fetch) {
-  const res = await fetchImpl(url, { headers: { 'User-Agent': 'AIBeatLeadDiscovery/1.0 (+https://www.aibeat.dev)' } })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  return res.text()
+async function fetchDocument(url: string, fetchImpl: typeof fetch, websiteScope?: string) {
+  const signal = AbortSignal.timeout(8000)
+  for (let redirects = 0; redirects <= 3; redirects++) {
+    const parsed = new URL(url)
+    if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) throw new Error('Invalid public URL')
+    if (websiteScope && !sameSite(url, websiteScope)) throw new Error('Unrelated website redirect')
+    // Tests inject an offline fetcher. Production checks every redirect target.
+    if (fetchImpl === fetch) await publicUrl(url.replace(/^http:/, 'https:'))
+    const res = await fetchImpl(url, { redirect: 'manual', signal, headers: { 'User-Agent': 'AIBeatLeadDiscovery/1.0 (+https://www.aibeat.dev)' } })
+    if ([301, 302, 303, 307, 308].includes(res.status)) {
+      const location = res.headers.get('location')
+      await res.body?.cancel()
+      if (!location) throw new Error('Redirect missing location')
+      url = new URL(location, url).href
+      continue
+    }
+    if (!res.ok) { await res.body?.cancel(); throw new Error(`HTTP ${res.status}`) }
+    if (!/html|xml|text\/plain/i.test(res.headers.get('content-type') || '')) { await res.body?.cancel(); throw new Error('Unsupported content type') }
+    const reader = res.body?.getReader()
+    if (!reader) throw new Error('Empty page')
+    const chunks: Uint8Array[] = []; let size = 0
+    while (true) {
+      const result = await reader.read()
+      if (result.done) break
+      size += result.value.length
+      if (size > 1_000_000) { await reader.cancel(); throw new Error('Page size limit') }
+      chunks.push(result.value)
+    }
+    const text = Buffer.concat(chunks).toString('utf8')
+    if (!text.trim() || /<title[^>]*>[^<]*(?:just a moment|access denied|verify you are human|domain for sale)/i.test(text)) throw new Error('Website inaccessible or parked')
+    return { text, url }
+  }
+  throw new Error('Too many redirects')
+}
+
+async function fetchText(url: string, fetchImpl: typeof fetch, websiteScope?: string) {
+  return (await fetchDocument(url, fetchImpl, websiteScope)).text
+}
+async function resolveWebsite(html: string, sourceUrl: string, fetchImpl: typeof fetch) {
+  const selected = chooseExternalWebsite(html, sourceUrl)
+  if (!selected) return undefined
+  if (host(selected) !== host(sourceUrl)) return sanitizeUrl(selected)
+  const destination = await fetchDocument(selected, fetchImpl)
+  return !isBlockedWebsiteUrl(destination.url, sourceUrl) ? sanitizeUrl(destination.url) : undefined
 }
 
 function isAiTool(candidate: LeadCandidate) {
@@ -339,7 +380,7 @@ async function fetchBetaListCandidates(options: { fetchImpl: typeof fetch; betaL
         toolName,
         description,
         betaListUrl: link,
-        websiteUrl: sanitizeUrl(chooseExternalWebsite(html, link)),
+        websiteUrl: await resolveWebsite(html, link, options.fetchImpl),
         launchDate: options.now.toISOString().slice(0, 10),
         category: 'AI tools',
         sourceName: 'BetaList',
@@ -362,20 +403,25 @@ async function fetchDiscoveryCandidates(input: {
   maxCandidates: number
   now: Date
   sources: string[]
+  onFailure: (source: string) => void
 }) {
   const candidates: LeadCandidate[] = []
   const normalizedSources = new Set(input.sources.map((source) => source.trim().toLowerCase()).filter(Boolean))
 
   if (normalizedSources.has('product_hunt') || normalizedSources.has('producthunt')) {
-    candidates.push(...await fetchProductHuntCandidates(input))
+    try { candidates.push(...await fetchProductHuntCandidates(input)) } catch { input.onFailure('Product Hunt') }
   }
 
   if (normalizedSources.has('betalist') || normalizedSources.has('beta_list')) {
-    candidates.push(...await fetchBetaListCandidates({ fetchImpl: input.fetchImpl, betaListUrl: input.betaListUrl, maxCandidates: input.maxCandidates, now: input.now }))
+    try { candidates.push(...await fetchBetaListCandidates({ fetchImpl: input.fetchImpl, betaListUrl: input.betaListUrl, maxCandidates: input.maxCandidates, now: input.now })) } catch { input.onFailure('BetaList') }
   }
 
   const seen = new Set<string>()
-  return candidates.filter((candidate) => {
+  // Alternate sources so a full Product Hunt feed cannot crowd out BetaList.
+  const pools = Array.from(new Set(candidates.map(candidate => candidate.sourceName))).map(source => candidates.filter(candidate => candidate.sourceName === source))
+  const balanced: LeadCandidate[] = []
+  while (pools.some(pool => pool.length)) for (const pool of pools) { const candidate = pool.shift(); if (candidate) balanced.push(candidate) }
+  return balanced.filter((candidate) => {
     const key = `${candidate.sourceName}:${candidate.toolName}`.toLowerCase()
     if (seen.has(key)) return false
     seen.add(key)
@@ -391,7 +437,7 @@ async function validateContact(candidate: LeadCandidate, fetchImpl: typeof fetch
 
   if (!websiteUrl && candidate.productHuntUrl) {
     try {
-      websiteUrl = sanitizeUrl(chooseExternalWebsite(await fetchText(candidate.productHuntUrl, fetchImpl), candidate.productHuntUrl))
+      websiteUrl = await resolveWebsite(await fetchText(candidate.productHuntUrl, fetchImpl), candidate.productHuntUrl, fetchImpl)
       candidate.websiteUrl = websiteUrl
     } catch {
       // Product Hunt pages can block automated reads; continue with feed-only context.
@@ -416,17 +462,22 @@ async function validateContact(candidate: LeadCandidate, fetchImpl: typeof fetch
     }
   }
 
-  const queued = contactPageUrls(websiteUrl)
+  let homepage: string
+  try { homepage = await fetchText(websiteUrl, fetchImpl, websiteUrl) } catch {
+    return { contacts: [], inspection: { toolName: candidate.toolName, sourceName: candidate.sourceName, websiteUrl, pagesChecked: [websiteUrl], contactLinksFound: [], emailsFound: [], validatedEmails: [], status: 'needs_manual_review', reason: 'Product website inaccessible, blocked, redirected off-site, or invalid; no lead exported.' } }
+  }
+  const deadline = Date.now() + 20000
+  const queued = Array.from(new Set([websiteUrl, ...contactLinksFromHtml(homepage, websiteUrl, websiteUrl), ...contactPageUrls(websiteUrl)]))
   const seenPages = new Set<string>()
   const contacts: ValidatedContact[] = []
 
-  for (let index = 0; index < queued.length && index < 30; index += 1) {
+  for (let index = 0; index < queued.length && index < 8 && Date.now() < deadline; index += 1) {
     const pageUrl = queued[index]
     if (seenPages.has(pageUrl)) continue
     seenPages.add(pageUrl)
     pagesChecked.push(pageUrl)
     try {
-      const html = await fetchText(pageUrl, fetchImpl)
+      const html = pageUrl === websiteUrl ? homepage : await fetchText(pageUrl, fetchImpl, websiteUrl)
       for (const link of contactLinksFromHtml(html, pageUrl, websiteUrl)) {
         contactLinksFound.add(link)
         if (!seenPages.has(link) && !queued.includes(link)) queued.push(link)
@@ -496,8 +547,8 @@ function leadFromScored(scored: ScoredLead, runId: string, now: Date): OutreachL
 function writeReport(report: DailyLeadDiscoveryReport, reportDir: string) {
   mkdirSync(reportDir, { recursive: true })
   const date = report.createdAt.slice(0, 10)
-  const jsonPath = resolve(reportDir, `${date}.json`)
-  const mdPath = resolve(reportDir, `${date}.md`)
+  const jsonPath = resolve(reportDir, `${report.runId}.json`)
+  const mdPath = resolve(reportDir, `${report.runId}.md`)
   writeFileSync(jsonPath, `${JSON.stringify(report, null, 2)}\n`)
   writeFileSync(mdPath, [
     `# AIBeat Daily Lead Discovery - ${date}`,
@@ -507,6 +558,7 @@ function writeReport(report: DailyLeadDiscoveryReport, reportDir: string) {
     `- Candidates found: ${report.candidatesFound}`,
     `- Contacts validated: ${report.contactsValidated}`,
     `- Qualified leads stored: ${report.leadsStored}`,
+    `- Monday CSV leads added: ${report.csvLeadsAdded}`,
     `- Kit draft broadcasts created: ${report.draftsCreated.length}`,
     '',
     '## Drafts',
@@ -533,24 +585,30 @@ function writeReport(report: DailyLeadDiscoveryReport, reportDir: string) {
 
 export async function runDailyLeadDiscovery(options: DiscoveryOptions = {}): Promise<DailyLeadDiscoveryReport> {
   const now = options.now || new Date()
-  const runId = `daily_${now.toISOString().slice(0, 10)}_${now.getTime()}`
+  const runId = `daily_${now.toISOString().slice(0, 10)}_${now.getTime()}_${(process.env.GITHUB_RUN_ID || 'local').replace(/[^a-zA-Z0-9_-]/g, '')}`
   const fetchImpl = options.fetchImpl || fetch
   const feedUrl = options.feedUrl || process.env.DAILY_LEAD_DISCOVERY_FEED_URL || DEFAULT_FEED_URL
   const betaListUrl = options.betaListUrl || process.env.DAILY_LEAD_DISCOVERY_BETALIST_URL || DEFAULT_BETALIST_URL
   const sources = options.sources || (process.env.DAILY_LEAD_DISCOVERY_SOURCES || 'product_hunt,betalist').split(',')
   const lookbackHours = options.lookbackHours || Number(process.env.DAILY_LEAD_DISCOVERY_LOOKBACK_HOURS || 48)
   const maxCandidates = options.maxCandidates || Number(process.env.DAILY_LEAD_DISCOVERY_MAX_CANDIDATES || 30)
-  const maxLeads = options.maxLeads || Number(process.env.DAILY_LEAD_DISCOVERY_MAX_LEADS || 5)
+  const maxLeads = options.maxLeads || Number(process.env.DAILY_LEAD_DISCOVERY_MAX_LEADS || 30)
   const minScore = options.minScore || Number(process.env.DAILY_LEAD_DISCOVERY_MIN_SCORE || 70)
   const dryRun = options.dryRun ?? process.env.DAILY_LEAD_DISCOVERY_DRY_RUN === 'true'
   const createDrafts = options.createDrafts ?? process.env.DAILY_LEAD_DISCOVERY_CREATE_DRAFTS !== 'false'
   const reportDir = resolve(process.cwd(), options.reportDir || process.env.DAILY_LEAD_DISCOVERY_REPORT_DIR || 'data/outreach/reports')
   const storePath = options.storePath || undefined
   const store: OutreachStore = readOutreachStore(storePath)
+  const csvPath = options.manualLeadsPath || process.env.DAILY_MANUAL_LEADS_FILE
+  const knownRows = csvPath ? [...readLeadRows(csvPath), ...readLeadRows(leadHistoryPath(csvPath))] : []
+  const existingEmails = new Set(knownRows.map(row => normalizeEmail(row.email || '')))
+  const existingTools = new Set(knownRows.map(row => toolIdentity(row.website)).filter(Boolean))
+  const existingNames = new Set(knownRows.map(row => (row.tool_name || '').trim().toLowerCase()).filter(Boolean))
+  for (const lead of store.leads) if (['suppressed', 'unsubscribed', 'bounced', 'declined', 'contacted', 'replied', 'draft_created', 'scheduled'].includes(lead.status)) existingEmails.add(normalizeEmail(lead.email))
   const skipped: DailyLeadDiscoveryReport['skipped'] = []
   const candidateInspections: CandidateInspection[] = []
 
-  const candidates = await fetchDiscoveryCandidates({ fetchImpl, feedUrl, betaListUrl, lookbackHours, maxCandidates, now, sources })
+  const candidates = await fetchDiscoveryCandidates({ fetchImpl, feedUrl, betaListUrl, lookbackHours, maxCandidates, now, sources, onFailure: source => skipped.push({ reason: `${source} discovery unavailable; other sources continued.` }) })
   const scored: ScoredLead[] = []
 
   for (const candidate of candidates) {
@@ -560,14 +618,21 @@ export async function runDailyLeadDiscovery(options: DiscoveryOptions = {}): Pro
       skipped.push({ toolName: candidate.toolName, reason: validation.inspection.reason })
       continue
     }
+    if (existingTools.has(toolIdentity(candidate.websiteUrl)) || existingNames.has(candidate.toolName.trim().toLowerCase())) {
+      skipped.push({ toolName: candidate.toolName, reason: 'Tool already queued or archived.' }); continue
+    }
     for (const contact of validation.contacts) {
+      if (existingEmails.has(normalizeEmail(contact.email))) continue
       const score = scoreLead(candidate, contact, now)
       if (score.score < minScore) {
         skipped.push({ toolName: candidate.toolName, reason: `Score ${score.score} below threshold ${minScore} for ${contact.email}.` })
         continue
       }
       scored.push({ candidate, contact, ...score })
-      if (scored.length >= maxLeads) break
+      existingEmails.add(normalizeEmail(contact.email))
+      existingTools.add(toolIdentity(candidate.websiteUrl))
+      existingNames.add(candidate.toolName.trim().toLowerCase())
+      break
     }
     if (scored.length >= maxLeads) break
   }
@@ -603,6 +668,7 @@ export async function runDailyLeadDiscovery(options: DiscoveryOptions = {}): Pro
     }
   }
 
+  const csvLeadsAdded = !dryRun && csvPath ? appendDailyLeadCsv(resolve(csvPath), leads) : 0
   if (!dryRun) writeOutreachStore(store, storePath)
 
   const report: DailyLeadDiscoveryReport = {
@@ -613,6 +679,7 @@ export async function runDailyLeadDiscovery(options: DiscoveryOptions = {}): Pro
     contactsValidated: scored.length,
     qualifiedLeads: leads.length,
     leadsStored: dryRun ? 0 : leads.length,
+    csvLeadsAdded,
     draftsCreated,
     candidateInspections,
     skipped,

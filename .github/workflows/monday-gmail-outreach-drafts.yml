@@ -6,13 +6,20 @@ on:
     - cron: '0 16 * * 1'
   workflow_dispatch:
 
+concurrency:
+  group: outreach-lead-queue
+  cancel-in-progress: false
+
 jobs:
   create-drafts:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -21,7 +28,8 @@ jobs:
       - name: Create individual unsent outreach drafts
         env:
           GMAIL_OUTREACH_DRAFTS_ENABLED: ${{ vars.GMAIL_OUTREACH_DRAFTS_ENABLED || 'false' }}
-          GMAIL_OUTREACH_INPUT_PATH: ${{ vars.GMAIL_OUTREACH_INPUT_PATH || 'data/outreach/daily-manual-leads.csv' }}
+          GMAIL_OUTREACH_INPUT_PATH: data/outreach/daily-manual-leads.csv
+          GMAIL_OUTREACH_ROTATE_QUEUE: 'true'
           GMAIL_OUTREACH_DRAFT_LIMIT: ${{ vars.GMAIL_OUTREACH_DRAFT_LIMIT || '120' }}
           GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
           GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
@@ -30,3 +38,20 @@ jobs:
           GMAIL_FROM_NAME: ${{ vars.GMAIL_FROM_NAME || 'AIBeat' }}
           GMAIL_FROM_EMAIL: ${{ vars.GMAIL_FROM_EMAIL }}
         run: npm run outreach:gmail-drafts
+
+      - name: Persist outreach queue and history
+        if: success() && vars.GMAIL_OUTREACH_DRAFTS_ENABLED == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- data/outreach/daily-manual-leads.csv
+          if [ -f data/outreach/daily-manual-leads.history.csv ]; then
+            git add -- data/outreach/daily-manual-leads.history.csv
+          fi
+          if git diff --cached --quiet; then
+            echo "No outreach queue changes."
+            exit 0
+          fi
+          git commit -m "chore(outreach): sync weekly lead queue"
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
