@@ -1,3 +1,4 @@
+import { passageSources } from './passages'
 import { originalEditorial, ordinaryTrustedCandidate } from './trust'
 import { storyRisk, centralRisk, claimRisk, sensitiveHighRisk } from './risk'
 import { failureDetail, safeLabel } from './diagnostics'
@@ -15,7 +16,7 @@ export async function evaluateCandidate(candidate: Candidate, sources: Source[],
   sourcePolicy(sources, initialHigh, trustedId, initialRisk.trigger)
   const evidenceMode = trustedId ? 'TRUSTED_SINGLE_SOURCE' : 'ENHANCED_VERIFICATION'
   const evidence = sources.map(({ links, imageUrl, ...source }) => source)
-  let facts = parseFacts(await model('facts', { candidate, evidenceMode, trustedEditorialSourceId: trustedId, sources: evidence, now: now.toISOString() }))
+  let facts = parseFacts(await model('facts', { candidate, evidenceMode, trustedEditorialSourceId: trustedId, sources: passageSources(evidence), now: now.toISOString() }))
   const factTrigger = centralRisk(candidate, facts)
   log(`[AIBeat Quality Gate] Risk: ${initialHigh || factTrigger ? 'HIGH' : facts.riskLevel.toUpperCase()} | Risk trigger: ${factTrigger || (forceHighRisk ? 'PRIOR_HIGH_RISK_ASSESSMENT' : initialRisk.trigger)} | Stage: facts`)
   if (factTrigger && facts.riskLevel !== 'high') log(`[AIBeat Quality Gate] Risk escalated: ${facts.riskLevel.toUpperCase()} → HIGH | Trigger: ${factTrigger}`)
@@ -25,7 +26,7 @@ export async function evaluateCandidate(candidate: Candidate, sources: Source[],
   }
   facts = checkFacts(candidate, facts, sources, now, trustedId, initialHigh, log)
   if (duplicateEvent(facts.event, candidate.title, history)) throw new Rejection('DUPLICATE_STORY')
-  const cleaned = cleanDraft(parseDraft(await model('draft', { confirmedFacts: facts.confirmedFacts, event: facts.event })), facts)
+  const cleaned = cleanDraft(parseDraft(await model('draft', { confirmedFacts: facts.confirmedFacts.map(({ id, claim, core }) => ({ id, claim, core })), event: facts.event })), facts, log)
   log(`[AIBeat Draft] Verified facts: ${facts.confirmedFacts.length} | Paragraphs retained: ${cleaned.draft.sections.reduce((count, section) => count + section.paragraphs.length, 0)} | Paragraphs removed: ${cleaned.removedParagraphs} | Body words: ${cleaned.draft.sections.flatMap(section => section.paragraphs).map(p => p.text).join(' ').trim().split(/\s+/).length}`)
   const words = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/)
   const sourceText = sources.map(s => ' ' + words(s.text).join(' ') + ' ')

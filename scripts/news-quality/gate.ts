@@ -141,29 +141,56 @@ export function checkFacts(candidate: Candidate, facts: FactSheet, sources: Sour
     }
     retained.push(fact)
   }
-  const evidence = normalize(retained.flatMap(f => f.supportedBy.map(s => s.excerpt)).join(' '))
-  if (!facts.event.entities.every(entity => evidence.includes(normalize(entity))) || (facts.event.product && !evidence.includes(normalize(facts.event.product)))) throw new Rejection('UNVERIFIED_ENTITY')
+  // Verify names in the complete retrieved text of sources actually cited by
+  // retained facts, not only in their selected passages. Review still checks roles.
+  const used = new Set(retained.flatMap(f => f.supportedBy.map(c => c.sourceId)))
+  const evidence = sources.filter(s => used.has(s.id)).map(s => normalize(s.text))
+  const containsName = (name: string) => {
+    const escaped = normalize(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return evidence.some(text => new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`, 'u').test(text))
+  }
+  const missingEntity = facts.event.entities.findIndex(entity => !containsName(entity))
+  const missingProduct = !!facts.event.product && !containsName(facts.event.product)
+  if (missingEntity >= 0 || missingProduct) {
+    const field = missingEntity >= 0 ? `event.entities[${missingEntity}]` : 'event.product'
+    log(`[AIBeat Entity Validation] Field: ${field} | Problem: NAME_NOT_IN_CITED_SOURCE | Cited sources: ${used.size}`)
+    throw new Rejection('UNVERIFIED_ENTITY', `${field}:NAME_NOT_IN_CITED_SOURCE`)
+  }
   return { ...facts, confirmedFacts: retained }
 }
-export function cleanDraft(draft: Draft, facts: FactSheet) {
+export function cleanDraft(draft: Draft, facts: FactSheet, log: (message: string) => void = () => {}) {
+  const diagnostic = (field: string, problem: string, result = 'FAIL') => log(`[AIBeat Draft Validation] Result: ${result} | Field: ${field} | Problem: ${problem}`)
+  const reject = (field: string, problem: string): never => {
+    diagnostic(field, problem)
+    throw new Rejection('UNSUPPORTED_CLAIM', `${field}:${problem}`)
+  }
   const allClaims = facts.confirmedFacts.map(f => f.claim).join(' ')
   checkQuotes(draft.title + ' ' + draft.deck)
-  if (!numbersSupported(draft.title + ' ' + draft.deck, allClaims)) throw new Rejection('UNSUPPORTED_CLAIM')
+  if (!numbersSupported(draft.title + ' ' + draft.deck, allClaims)) {
+    const field = (['title', 'deck'] as const).find(field => !numbersSupported(draft[field], allClaims)) || 'title_and_deck'
+    reject(field, 'NUMBER_NOT_IN_CONFIRMED_FACTS')
+  }
   if (/shocks? the industry|changes? AI forever|destroys? competitors|revolutionary breakthrough/i.test(draft.title)) throw new Rejection('LOW_INFORMATION_VALUE')
   let removedParagraphs = 0
-  const sections = draft.sections.map(section => {
+  const sections = draft.sections.map((section, sectionIndex) => {
     checkQuotes(section.heading)
-    if (!numbersSupported(section.heading, allClaims)) throw new Rejection('UNSUPPORTED_CLAIM')
-    return { ...section, paragraphs: section.paragraphs.filter(p => {
+    if (!numbersSupported(section.heading, allClaims)) reject(`sections[${sectionIndex}].heading`, 'NUMBER_NOT_IN_CONFIRMED_FACTS')
+    return { ...section, paragraphs: section.paragraphs.filter((p, paragraphIndex) => {
       checkQuotes(p.text)
       const referenced = facts.confirmedFacts.filter(f => p.factIds.includes(f.id))
-      if (referenced.length !== new Set(p.factIds).size) throw new Rejection('UNSUPPORTED_CLAIM')
-      if (!numbersSupported(p.text, referenced.map(f => f.claim).join(' '))) { removedParagraphs++; return false }
+      if (referenced.length !== new Set(p.factIds).size) {
+        const idIndex = p.factIds.findIndex(id => !facts.confirmedFacts.some(f => f.id === id))
+        reject(`sections[${sectionIndex}].paragraphs[${paragraphIndex}].factIds[${idIndex}]`, 'UNKNOWN_FACT_REFERENCE')
+      }
+      if (!numbersSupported(p.text, referenced.map(f => f.claim).join(' '))) { diagnostic(`sections[${sectionIndex}].paragraphs[${paragraphIndex}]`, 'NUMBER_NOT_IN_REFERENCED_FACTS', 'DROP'); removedParagraphs++; return false }
       return true
     }) }
   }).filter(s => s.paragraphs.length)
   const covered = new Set(sections.filter(s => s.kind === 'facts').flatMap(s => s.paragraphs.flatMap(p => p.factIds)))
-  if (!sections.length || facts.confirmedFacts.some(f => f.core && !covered.has(f.id))) throw new Rejection('LOW_INFORMATION_VALUE')
+  if (!sections.length || facts.confirmedFacts.some(f => f.core && !covered.has(f.id))) {
+    diagnostic('sections', 'CORE_FACT_NOT_COVERED')
+    throw new Rejection('LOW_INFORMATION_VALUE', 'sections:CORE_FACT_NOT_COVERED')
+  }
   return { draft: { ...draft, sections }, removedParagraphs }
 }
 export function publicationScore(facts: FactSheet, sources: Source[], review: Review, candidate: Candidate, trustedId?: string, forceHighRisk = false) {

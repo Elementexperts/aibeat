@@ -1,3 +1,4 @@
+import { sourcePassages, passageSources, resolveFactPassages, PassageReferenceError } from '../scripts/news-quality/passages'
 import { numericDiagnostic } from '../scripts/news-quality/numeric-diagnostics'
 import { explainQuantities, quantitiesSupported } from '../scripts/news-quality/quantities'
 import assert from 'node:assert/strict'
@@ -667,7 +668,7 @@ test('diagnostic model names cannot expose the credential or inject log fields',
   }
 })
 test('malformed, unsupported, low-confidence outputs still skip without retry or side effects', async () => {
-  for (const content of ['{bad', JSON.stringify({ ...facts, confidence: 20 }), JSON.stringify({ ...facts, confirmedFacts: [{ ...facts.confirmedFacts[0], claim: 'Acme has 900 users.' }] })]) {
+  for (const content of ['{bad', JSON.stringify({ ...passageFacts(), confidence: 20 }), JSON.stringify({ ...passageFacts(), confirmedFacts: [{ ...passageFacts().confirmedFacts[0], claim: 'Acme has 900 users.' }] })]) {
     let calls = 0, writes = 0
     const m = createModel('key', 'fixture', (async () => { calls++; return completion(content) }) as typeof fetch, () => {})
     assert.equal(await processCandidate(candidate, { collect: async () => [primary], model: m, history: [], now, log: () => {}, publish: async () => { writes++ } }), false)
@@ -862,8 +863,8 @@ test('draft object schema remains strict and prompt explicitly describes its sha
 test('facts prompt specifies supplied IDs and minimal verbatim numerical evidence', async () => {
   const m = createModel('key', 'fixture', (async (_url, init) => {
     const prompt = JSON.parse(init!.body as string).messages[0].content
-    assert.match(prompt, /exact supplied source IDs/); assert.match(prompt, /Claims may be paraphrased; evidence excerpts may not/)
-    assert.match(prompt, /minimal contiguous excerpts/); assert.match(prompt, /each cited source/)
+    assert.match(prompt, /exact supplied source IDs/); assert.match(prompt, /Claims may be paraphrased/)
+    assert.match(prompt, /do not copy or generate excerpt text/); assert.match(prompt, /each cited source/)
     return completion(JSON.stringify(facts))
   }) as typeof fetch, () => {}, noWait)
   await m('facts', {})
@@ -1158,4 +1159,110 @@ test('draft diagnostics show retained coverage and removed paragraphs without em
   const line = logs.find(line => line.startsWith('[AIBeat Draft]'))!
   assert.match(line, /Verified facts: 1.*Paragraphs retained: 2.*Paragraphs removed: 0.*Body words: \d+/)
   assert.doesNotMatch(line, /Acme|developers/)
+})
+
+
+function passageFacts() {
+  return { ...clone(facts), eventDatePassageId: 'publication_timestamp', confirmedFacts: facts.confirmedFacts.map(f => ({ ...f, supportedBy: [{ sourceId: 's1', passageId: 's1:p1' }] })) }
+}
+
+test('passage IDs are deterministic exact contiguous slices with no text loss or duplication', () => {
+  const text = ('Acme Atlas release has carefully verified details. '.repeat(35)) + 'Final supported sentence.'
+  const passages = sourcePassages('s1', text)
+  assert.deepEqual(sourcePassages('s1', text), passages)
+  assert.equal(passages.map(p => p.text).join(''), text)
+  assert.ok(passages.every(p => p.text.length >= 20 && p.text.length < 620 && text.includes(p.text)))
+  assert.equal(new Set(passages.map(p => p.id)).size, passages.length)
+  const prepared = passageSources([{ ...primary, text }])[0]
+  assert.equal('text' in prepared, false)
+  assert.equal(prepared.passages.length, passages.length)
+})
+
+test('passage resolver attaches source text, ignores invented excerpts and resolves event evidence', () => {
+  const input = { sources: passageSources([primary]) }
+  const value = passageFacts()
+  const resolved = resolveFactPassages({ ...value, confirmedFacts: value.confirmedFacts.map(f => ({ ...f, supportedBy: [{ ...f.supportedBy[0], excerpt: 'Invented quote' }] })) }, input) as FactSheet
+  assert.equal(resolved.confirmedFacts[0].supportedBy[0].excerpt, primary.text)
+  assert.equal(resolved.eventDateEvidence, primary.publishedAt)
+  const dated = resolveFactPassages({ ...value, eventDatePassageId: 's1:p1' }, input) as FactSheet
+  assert.equal(dated.eventDateEvidence, primary.text)
+  assert.doesNotThrow(() => checkFacts(candidate, resolved, [primary], now))
+})
+
+for (const citation of [{ sourceId: 'missing', passageId: 's1:p1' }, { sourceId: 's1', passageId: 's2:p1' }, { sourceId: 's1', passageId: 's1:p999' }, { sourceId: 's1', excerpt: primary.text }]) test(`invalid passage reference cannot supply evidence: ${JSON.stringify(citation)}`, () => {
+  const value = passageFacts()
+  assert.throws(() => resolveFactPassages({ ...value, confirmedFacts: [{ ...value.confirmedFacts[0], supportedBy: [citation] }] }, { sources: passageSources([primary, reporting]) }), e => e instanceof PassageReferenceError)
+})
+
+test('passage facts complete the real model adapter and pipeline without extra requests', async () => {
+  let calls = 0
+  const m = createModel('key', 'fixture', (async (_url, options) => {
+    const request = JSON.parse(options!.body as string)
+    const input = JSON.parse(request.messages[1].content)
+    calls++
+    if (calls === 1) {
+      assert.equal(input.sources[0].text, undefined)
+      assert.equal(input.sources[0].passages[0].text, primary.text)
+      return completion(JSON.stringify(passageFacts()))
+    }
+    if (calls === 2) {
+      assert.equal(input.confirmedFacts[0].supportedBy, undefined)
+      assert.equal(input.confirmedFacts[0].claim, facts.confirmedFacts[0].claim)
+      return completion(JSON.stringify(draft))
+    }
+    assert.equal(input.sources[0].text, primary.text)
+    return completion(JSON.stringify(review))
+  }) as typeof fetch, () => {}, noWait)
+  const approved = await evaluateCandidate(candidate, [primary], [], m, now)
+  assert.equal(approved.facts.confirmedFacts[0].supportedBy[0].excerpt, primary.text)
+  assert.equal(calls, 3)
+})
+
+test('unknown passage repair emits safe field diagnostics and cannot invent evidence', async () => {
+  const logs: string[] = []; let calls = 0
+  const value = passageFacts(); value.confirmedFacts[0].supportedBy[0].passageId = 'gsk_secret_dont_log'
+  const m = createModel('key', 'fixture', (async () => { calls++; return completion(JSON.stringify(value)) }) as typeof fetch, line => logs.push(line), noWait)
+  await assert.rejects(m('facts', { sources: passageSources([primary]) }), e => e instanceof ModelFailure && e.category === 'MODEL_SCHEMA_INVALID')
+  assert.equal(calls, 2)
+  assert.match(logs.join(' '), /Field: confirmedFacts.item.supportedBy.item.passageId.*Problem: unknown_passage_id/)
+  assert.doesNotMatch(logs.join(' '), /gsk_secret_dont_log|Acme launched/)
+})
+
+test('entity names elsewhere in a cited document pass, while uncited or partial names fail', () => {
+  const f = clone(facts); f.event.entities.push('Qualcomm')
+  const source = { ...primary, text: primary.text + ' Qualcomm supplies the processor.' }
+  assert.doesNotThrow(() => checkFacts(candidate, f, [source], now))
+  assert.throws(() => checkFacts(candidate, f, [primary, { ...reporting, text: source.text }], now), rejected('UNVERIFIED_ENTITY'))
+  f.event.entities = ['Qual']
+  assert.throws(() => checkFacts(candidate, f, [source], now), rejected('UNVERIFIED_ENTITY'))
+  f.event.entities = ['Acme']; f.event.product = 'Atlas Pro'
+  assert.throws(() => checkFacts(candidate, f, [source], now), rejected('UNVERIFIED_ENTITY'))
+})
+
+test('whole-document entity presence does not bypass semantic review of roles', async () => {
+  const f = clone(facts); f.event.entities.push('Qualcomm')
+  await assert.rejects(evaluateCandidate(candidate, [{ ...primary, text: primary.text + ' Qualcomm supplies the processor.' }], [], model(f, draft, { ...review, unverifiedEntities: ['Qualcomm role unsupported'] }), now), rejected('UNVERIFIED_ENTITY'))
+})
+
+test('entity diagnostic identifies the field without logging supplied names', () => {
+  const logs: string[] = []; const f = clone(facts); f.event.entities.push('secret_entity')
+  assert.throws(() => checkFacts(candidate, f, [primary], now, undefined, false, line => logs.push(line)), e => e instanceof Rejection && e.detail === 'event.entities[1]:NAME_NOT_IN_CITED_SOURCE')
+  assert.match(logs.join(' '), /event.entities\[1\].*NAME_NOT_IN_CITED_SOURCE/)
+  assert.doesNotMatch(logs.join(' '), /secret_entity/)
+})
+
+test('draft diagnostics identify unsupported title, deck, heading and unknown fact reference', () => {
+  for (const field of ['title', 'deck', 'heading', 'reference']) {
+    const d = clone(draft); const logs: string[] = []
+    if (field === 'title' || field === 'deck') d[field] += ' 999 users'
+    if (field === 'heading') d.sections[0].heading += ' 999 users'
+    if (field === 'reference') d.sections[0].paragraphs[0].factIds = ['secret_fake_id']
+    assert.throws(() => cleanDraft(d, facts, line => logs.push(line)), rejected('UNSUPPORTED_CLAIM'))
+    assert.match(logs.join(' '), field === 'reference' ? /factIds\[0\].*UNKNOWN_FACT_REFERENCE/ : /NUMBER_NOT_IN_CONFIRMED_FACTS/)
+    assert.doesNotMatch(logs.join(' '), /secret_fake_id|999|Acme/)
+  }
+  const d = clone(draft); const logs: string[] = []
+  d.sections[1].paragraphs.push({ text: 'There are 999 users.', factIds: ['f1'] })
+  assert.equal(cleanDraft(d, facts, line => logs.push(line)).removedParagraphs, 1)
+  assert.match(logs.join(' '), /Result: DROP.*sections\[1\].paragraphs\[1\].*NUMBER_NOT_IN_REFERENCED_FACTS/)
 })
