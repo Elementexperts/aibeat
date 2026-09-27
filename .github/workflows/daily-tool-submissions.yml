@@ -1,0 +1,117 @@
+name: Daily Tool Submissions
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/daily-tool-submissions.yml'
+      - 'lib/submission-automation.ts'
+      - 'lib/automated-tool-catalog.ts'
+      - 'lib/data.ts'
+      - 'data/automated-tools.json'
+      - 'scripts/process-tool-submissions.ts'
+      - 'tests/submission-automation.test.ts'
+  schedule:
+    # 09:00 Asia/Tashkent; GitHub may queue scheduled runs.
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Review only, without changing listings, database state or Gmail
+        type: boolean
+        default: true
+      retry_held:
+        description: Re-review submissions previously held for manual attention
+        type: boolean
+        default: false
+
+concurrency:
+  group: aibeat-tool-submissions
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --import tsx --test tests/submission-automation.test.ts tests/submitted-tools.test.ts
+      - run: npm run typecheck
+      - run: npm run build
+  process:
+    if: github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    env:
+      SUBMISSIONS_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
+      SUBMISSIONS_RETRY_HELD: ${{ inputs.retry_held && 'true' || 'false' }}
+      SUBMISSIONS_MAX_REVIEWS: '5'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Validate worker and directory
+        run: |
+          node --import tsx --test tests/submission-automation.test.ts tests/submitted-tools.test.ts
+          npm run typecheck
+      - name: Review stored submissions
+        id: prepare
+        continue-on-error: true
+        env:
+          SUBMISSIONS_SUPABASE_URL: ${{ vars.SUBMISSIONS_SUPABASE_URL }}
+          SUBMISSIONS_SUPABASE_KEY: ${{ secrets.SUBMISSIONS_SUPABASE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUBMISSIONS_REVIEW_MODEL: ${{ vars.SUBMISSIONS_REVIEW_MODEL || 'gemini-3.8-flash' }}
+        run: npx tsx scripts/process-tool-submissions.ts prepare
+      - name: Test generated listings
+        run: |
+          node --import tsx --test tests/submission-automation.test.ts tests/submitted-tools.test.ts
+          npm run typecheck
+          npm run build
+      - name: Publish listing changes to main
+        if: env.SUBMISSIONS_DRY_RUN != 'true'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- data/automated-tools.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat(directory): publish reviewed tool submissions'
+            git pull --rebase origin main
+            # Revalidate if concurrent work changed main before pushing.
+            node --import tsx --test tests/submission-automation.test.ts tests/submitted-tools.test.ts
+            npm run typecheck
+            npm run build
+            git push origin HEAD:main
+          fi
+      - name: Verify production and create unsent confirmations
+        if: env.SUBMISSIONS_DRY_RUN != 'true'
+        env:
+          SUBMISSIONS_SUPABASE_URL: ${{ vars.SUBMISSIONS_SUPABASE_URL }}
+          SUBMISSIONS_SUPABASE_KEY: ${{ secrets.SUBMISSIONS_SUPABASE_KEY }}
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          GMAIL_FROM_NAME: AIBeat
+          GMAIL_FROM_EMAIL: hello@aibeat.dev
+        run: npx tsx scripts/process-tool-submissions.ts drafts
+      - name: Report retryable review failures
+        if: always() && steps.prepare.outcome == 'failure'
+        run: |
+          echo 'Some submissions could not be reviewed. Successful items were processed; failed items remain pending for retry.'
+          exit 1
