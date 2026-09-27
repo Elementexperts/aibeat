@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { groupSubmissions, ensureDraft, isPublished, validateTool, type State, type Submission, reviewSubmission } from '../lib/submission-automation'
+import { groupSubmissions, ensureDraft, isPublished, validateTool, type State, type Submission, reviewSubmission, fetchReviewWithRetry } from '../lib/submission-automation'
 import { mergeToolCatalog, productIdentity } from '../lib/automated-tool-catalog'
 import { TOOLS, type Tool } from '../lib/data'
 
@@ -72,4 +72,20 @@ test('review request contains public page evidence only, never private form fiel
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ approved: false, reason: 'Insufficient pricing evidence' }) }] } }] }))
   }) as typeof fetch
   assert.equal((await reviewSubmission(submitted, [{ url: 'https://example.com/', text: 'Example public website' }], 'test', fake)).tool, null)
+})
+
+test('temporary reviewer outages retry within a bound; authentication errors do not', async () => {
+  const calls: number[] = []
+  const responses = [503, 429, 200]
+  const fetcher = (async () => { const status = responses[calls.length]; calls.push(status); return new Response('{}', { status }) }) as typeof fetch
+  assert.equal((await fetchReviewWithRetry('https://example.com', {}, fetcher, async () => {})).status, 200)
+  assert.deepEqual(calls, [503, 429, 200])
+  let attempts = 0
+  const permanent = (async () => { attempts++; return new Response('{}', { status: 403 }) }) as typeof fetch
+  assert.equal((await fetchReviewWithRetry('https://example.com', {}, permanent, async () => {})).status, 403)
+  assert.equal(attempts, 1)
+  attempts = 0
+  const outage = (async () => { attempts++; return new Response('{}', { status: 503 }) }) as typeof fetch
+  assert.equal((await fetchReviewWithRetry('https://example.com', {}, outage, async () => {})).status, 503)
+  assert.equal(attempts, 3)
 })
