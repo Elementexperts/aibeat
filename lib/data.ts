@@ -1,4 +1,6 @@
 import { SUBMITTED_TOOLS } from '@/data/submitted-tools'
+import AUTOMATED_TOOLS from '@/data/automated-tools.json'
+import { mergeToolCatalog } from './automated-tool-catalog'
 
 // ============================================================
 // AIBeat.dev — Central Data Store
@@ -267,7 +269,7 @@ export const ARTICLES: Article[] = [
 // ============================================================
 // TOOLS
 // ============================================================
-export const TOOLS: Tool[] = [
+const CURATED_TOOLS: Tool[] = [
   ...SUBMITTED_TOOLS,
   // — Newly reviewed submissions (18 Sep 2026) —
   {
@@ -2104,6 +2106,8 @@ export const TOOLS: Tool[] = [
 // ============================================================
 // COMPARISONS
 // ============================================================
+export const TOOLS: Tool[] = mergeToolCatalog(CURATED_TOOLS, AUTOMATED_TOOLS as Tool[])
+
 export const COMPARISONS: Comparison[] = [
   {
     slug: 'jasper-vs-copy-ai',
