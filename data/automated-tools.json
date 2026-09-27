@@ -1,1 +1,51 @@
-[]
+[
+  {
+    "slug": "marketowl",
+    "name": "MarketOwl",
+    "tagline": "AI marketer that creates strategies and executes multi-channel marketing campaigns.",
+    "description": "MarketOwl serves as an AI marketer designed for founders and marketing professionals. It analyzes business funnels to develop tailored ICP strategies and automates campaign execution across channels such as Reddit, X, LinkedIn, SEO, email, and paid advertising. Users can run prebuilt playbooks, connect thousands of external tools via API, monitor sprints, and retain approval control over all generated content and outreach initiatives.",
+    "category": "Marketing",
+    "pricing": "Free trial with $50 in starting credits; credit top-ups and subscription options available after trial.",
+    "pricingType": "freemium",
+    "pros": [
+      "Comes with $50 in free trial credits to test strategy and initial execution sprints",
+      "Integrates with over 8,000 marketing platforms and tools via API",
+      "Offers preconfigured marketing playbooks across multiple organic and paid channels"
+    ],
+    "cons": [
+      "Specific monthly subscription pricing tiers are not detailed on the homepage"
+    ],
+    "websiteUrl": "https://www.marketowl.ai/",
+    "affiliateUrl": "https://www.marketowl.ai/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "M",
+    "alternatives": []
+  },
+  {
+    "slug": "bpm-finder",
+    "name": "BPM Finder",
+    "tagline": "Analyze tempo and structure from reference audio to create original music briefs",
+    "description": "BPM Finder analyzes uploaded audio directly in the browser to calculate tempo, musical key, meter, energy, waveform, and beat positions. It integrates audio recognition and an AI music agent that translates analyzed technical musical signals into structured, editable briefs for original music generation.",
+    "category": "AI Audio",
+    "pricing": "Free plan includes 20 starter credits; paid plans start at $10/month (billed annually) or $12/month for 3,600 credits.",
+    "pricingType": "freemium",
+    "pros": [
+      "Performs tempo, key, meter, and beat detection locally in your browser",
+      "Translates reference audio analysis into editable music generation briefs",
+      "Provides a free tier with 20 starter credits without upfront payment"
+    ],
+    "cons": [
+      "Music generation requires credit consumption",
+      "Song identification depends on short audio samples and third-party catalog coverage"
+    ],
+    "websiteUrl": "https://bpmfinder.io/",
+    "affiliateUrl": "https://bpmfinder.io/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "BF",
+    "alternatives": []
+  }
+]
