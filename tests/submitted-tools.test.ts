@@ -3,13 +3,13 @@ import assert from 'node:assert/strict'
 import { TOOLS, getFeaturedTools, getPopularTools, getToolRatingLabel, getToolPopularityScore } from '../lib/data'
 import { SUBMITTED_TOOLS } from '../data/submitted-tools'
 
-test('reviewed submissions are unique featured listings with valid internal alternatives', () => {
-  assert.equal(SUBMITTED_TOOLS.length, 17)
+test('reviewed submissions are unique listings with valid internal alternatives', () => {
+  assert.equal(SUBMITTED_TOOLS.length, 20)
   assert.equal(new Set(TOOLS.map(t => t.slug)).size, TOOLS.length)
   for (const tool of SUBMITTED_TOOLS) {
     assert.equal(TOOLS.filter(t => t.slug === tool.slug).length, 1)
     assert.equal(TOOLS.filter(t => new URL(t.websiteUrl).hostname.replace(/^www\./, '') === new URL(tool.websiteUrl).hostname.replace(/^www\./, '')).length, 1)
-    assert.ok(getFeaturedTools().some(t => t.slug === tool.slug))
+    assert.equal(getFeaturedTools().some(t => t.slug === tool.slug), tool.featured)
     assert.equal(tool.affiliateUrl, tool.websiteUrl)
     assert.equal(new URL(tool.websiteUrl).protocol, 'https:')
     for (const slug of tool.alternatives) assert.ok(TOOLS.some(t => t.slug === slug), slug)
