@@ -80,15 +80,76 @@ for (const [name, handler, payload] of [
 ] as const) {
   test(`${name} route sends through the shared notification path`, async () => {
     let sent = false
+    let stored = false
     globalThis.fetch = async (url, init) => {
       if (String(url).includes('oauth2.googleapis.com')) return Response.json({ access_token: 'token' })
-      if (!String(url).includes('gmail.googleapis.com')) return Response.json('id')
+      if (String(url).endsWith('/rpc/record_public_form_submission')) {
+        stored = true
+        if (name === 'submit') {
+          const body = JSON.parse(String(init?.body))
+          assert.equal(body.submission_kind, 'tool_submission')
+          assert.equal(body.submission_payload.verificationStatus, 'Manual review requested - submitted without badge verification')
+        }
+        return Response.json('id')
+      }
+      assert.equal(String(url), 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send')
       sent = true
       assert.match(Buffer.from(JSON.parse(String(init?.body)).raw, 'base64url').toString(), /To: hello@aibeat.dev/)
       return Response.json({ id: 'email' })
     }
     const response = await handler(new NextRequest(`http://localhost/api/${name}`, { method: 'POST', body: JSON.stringify(payload) }))
     assert.equal(response.status, 200)
+    assert.deepEqual(await response.json(), { success: true, submissionId: 'id' })
+    assert.ok(stored)
     assert.ok(sent)
   })
 }
+
+test('submit returns success and the stored ID when Gmail notification fails', async (t) => {
+  const submissionId = 'b9d84eca-2f49-4e68-a1bb-5dc0d88fc862'
+  const calls: string[] = []
+  const errors = t.mock.method(console, 'error', () => {})
+  globalThis.fetch = async (url) => {
+    calls.push(String(url))
+    if (String(url).endsWith('/rpc/record_public_form_submission')) return Response.json(submissionId)
+    if (String(url) === 'https://oauth2.googleapis.com/token') return Response.json({ access_token: 'test-token' })
+    assert.equal(String(url), 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send')
+    return Response.json({}, { status: 503 })
+  }
+
+  const response = await submit(new NextRequest('http://localhost/api/submit', {
+    method: 'POST',
+    body: JSON.stringify({ type: 'free', name: 'Tool', url: 'https://example.com', category: 'AI', description: 'Useful tool', email: 'founder@example.com', submitWithoutVerification: true }),
+  }))
+
+  assert.equal(response.status, 200)
+  assert.deepEqual(await response.json(), { success: true, submissionId })
+  assert.deepEqual(calls, [
+    'https://project.supabase.co/rest/v1/rpc/record_public_form_submission',
+    'https://oauth2.googleapis.com/token',
+    'https://gmail.googleapis.com/gmail/v1/users/me/messages/send',
+  ])
+  assert.equal(errors.mock.callCount(), 1)
+  assert.deepEqual(errors.mock.calls[0].arguments, [
+    'Stored public form notification failed:',
+    { submissionId, message: 'Public form notification failed (503).' },
+  ])
+})
+
+test('submit preserves the 502 failure response when Supabase storage fails', async (t) => {
+  t.mock.method(console, 'error', () => {})
+  const calls: string[] = []
+  globalThis.fetch = async (url) => {
+    calls.push(String(url))
+    return new Response('', { status: 500 })
+  }
+
+  const response = await submit(new NextRequest('http://localhost/api/submit', {
+    method: 'POST',
+    body: JSON.stringify({ type: 'free', name: 'Tool', url: 'https://example.com', category: 'AI', description: 'Useful tool', submitWithoutVerification: true }),
+  }))
+
+  assert.equal(response.status, 502)
+  assert.deepEqual(await response.json(), { error: 'Could not submit right now' })
+  assert.deepEqual(calls, ['https://project.supabase.co/rest/v1/rpc/record_public_form_submission'])
+})

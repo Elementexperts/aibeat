@@ -89,6 +89,7 @@ export async function POST(req: NextRequest) {
   try {
     const submissionId = await recordPublicFormSubmission({
       kind: 'tool_submission', email,
+      notificationFailure: 'log',
       payload: { type, name, url, category, description, email, selectedPlan, verificationPageUrl, verificationMethod, verificationStatus },
     })
     return NextResponse.json({ success: true, submissionId })
