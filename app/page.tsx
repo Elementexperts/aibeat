@@ -7,6 +7,7 @@ import { getArticles } from '@/lib/articles'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
 import { PremiumToolCard } from '@/components/ui/PremiumToolCard'
 import { ToolLogo } from '@/components/ui/ToolLogo'
+import { MarketingHomepageTeaser } from '@/components/marketing/MarketingHomepageTeaser'
 import { BusinessHomepageTeaser } from '@/components/business/BusinessHomepageTeaser'
 import { PUBLIC_ANALYTICS_EVENTS } from '@/lib/analytics'
 
@@ -387,6 +388,7 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <MarketingHomepageTeaser />
       <BusinessHomepageTeaser />
     </div>
   )

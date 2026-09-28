@@ -7,7 +7,7 @@ import { canonicalUrl } from '@/lib/site-seo'
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const paths = ['', '/news', '/tools', '/compare', '/directory', '/categories', '/ai-score',
     '/launches', '/for-founders', '/launch', '/spotlight', '/free-tools', '/free-tools/roi-calculator',
-    '/business', '/business/demo', '/business/pricing', '/business/ai-spend-calculator',
+    '/marketing', '/business', '/business/demo', '/business/pricing', '/business/ai-spend-calculator',
     '/newsletter', '/submit', '/advertise', '/partners', '/claim', '/affiliate-disclosure', '/about', '/privacy']
   const pages: MetadataRoute.Sitemap = paths.map(path => ({ url: canonicalUrl(path) }))
   for (const article of getArticles()) pages.push({ url: canonicalUrl(`/news/${article.slug}`), lastModified: modifiedDate(article) })

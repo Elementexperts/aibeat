@@ -11,6 +11,7 @@ const FOOTER_GROUPS = [
       { label: 'AIBeat Score', href: '/ai-score' },
       { label: 'Launches', href: '/launches' },
       { label: 'Free Tools', href: '/free-tools' },
+      { label: 'AIBeat Marketing', href: '/marketing' },
       { label: 'AIBeat Business', href: '/business/dashboard' },
       { label: 'AI Spend Calculator', href: '/business/ai-spend-calculator' },
     ],
