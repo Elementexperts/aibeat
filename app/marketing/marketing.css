@@ -385,6 +385,10 @@
 .marketing-page .plan.featured .plan-renewal { color: #dbeafe; }
 .marketing-page .cta-dark .section-label, .marketing-page .cta-dark p { color: #cbd5e1; }
 .marketing-page .cta-dark .cta-note { color: #94a3b8; }
+.marketing-page .booking-heading { color: #fff; font-size: 24px; margin-bottom: 12px; }
+.marketing-page .booking-calendar { display: block; width: 100%; height: 600px; border: 0; border-radius: 12px; background: #fff; }
+.marketing-page .booking-alternatives { margin-top: 20px; }
+.marketing-page .booking-alternatives a { color: #bfdbfe; text-decoration: underline; text-underline-offset: 4px; }
 @media (min-width: 721px) and (max-width: 1024px) {
   .marketing-page .plan-grid { grid-template-columns: 1fr; max-width: 640px; margin-inline: auto; }
 }

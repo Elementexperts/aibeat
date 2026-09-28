@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import './marketing.css'
 
+const bookingUrl = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ3pezThFRh0VNGG7GBs95PyibIR33HHzNmeN-j0imjpkbFU2d3yTPcZvKfk1k3YhvreuZu5cg8V?gv=true'
+
 export const metadata: Metadata = {
   title: 'AIBeat Marketing — Done-For-You Growth',
   description: 'Marketing for AI startups: discovery listings, social content, go-to-market strategy, and outreach. Explore Basic, Pro, and Growth plans.',
@@ -286,7 +288,21 @@ export default function MarketingPage() {
           <span className="section-label">Ready to grow</span>
           <h2>Stop building in silence.<br />Start getting found.</h2>
           <p>Your first 100 customers are out there. Let us put your product in front of them.</p>
-          <a href="mailto:hello@aibeat.dev?subject=Done-For-You%20Marketing%20Inquiry" className="btn-primary">Request a Free Strategy Call</a>
+          <h3 className="booking-heading">Book a free strategy call</h3>
+          <p>Choose an available time below for your 30-minute call with AIBeat.</p>
+          <iframe
+            src={bookingUrl}
+            title="Book a 30-minute strategy call with AIBeat"
+            className="booking-calendar"
+            width="100%"
+            height="600"
+            loading="lazy"
+          />
+          <p className="booking-alternatives">
+            <a href={bookingUrl} target="_blank" rel="noopener noreferrer">Open booking calendar in a new tab</a>
+            <br />
+            Prefer email? <a href="mailto:marketing@aibeat.dev?subject=Done-For-You%20Marketing%20Inquiry">marketing@aibeat.dev</a>
+          </p>
           <p className="cta-note">No commitment. 30 minutes. We will tell you exactly which plan makes sense for where you are.</p>
         </div>
       </div>
