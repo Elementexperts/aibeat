@@ -5,6 +5,17 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
   {
+    slug: 'manhwa-translator', name: 'MangaTranslate',
+    tagline: 'Translate manga images with OCR, typesetting, and editable dialogue',
+    description: 'MangaTranslate is a browser-based manga image translator with OCR, automatic text replacement, and an editor for correcting dialogue and layout. Users select source and target languages, upload pages, and download translated images. It supports batch uploads and offers an API. The Russian and Arabic AI manga translator pages are localized entry points to the same product. Limited daily free credits are available, with paid subscriptions and pay-per-use options for additional capacity.',
+    category: 'Productivity', logo: '#2563eb', logoInitials: 'MT', rating: null,
+    pricing: 'Limited daily free credits · Paid subscriptions and pay-per-use credits', pricingType: 'freemium',
+    websiteUrl: 'https://www.mangatranslate.com/', affiliateUrl: 'https://www.mangatranslate.com/', featured: true,
+    pros: ['OCR and automatic text replacement in manga images', 'Editor for dialogue, fonts, and layout corrections', 'Batch uploads and API access'],
+    cons: ['Free usage is limited by credits', 'Credit usage varies by translation model', 'Translations and page layout require human review'],
+    alternatives: [],
+  },
+  {
     slug: 'nextlerai', name: 'NextlerAI',
     tagline: 'Add AI publishing, translation, and customer support to WordPress',
     description: 'NextlerAI offers separate WordPress plugins for content publishing, website translation, and customer support. Publisher researches and schedules articles with approval controls. Translator works with supported multilingual plugins, while Assistant connects WordPress knowledge and WooCommerce products to customer conversations. Users connect their own supported AI providers. Licences vary by product, site count, and duration; AI provider costs are separate.',
