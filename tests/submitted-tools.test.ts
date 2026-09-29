@@ -4,7 +4,7 @@ import { TOOLS, getFeaturedTools, getPopularTools, getToolRatingLabel, getToolPo
 import { SUBMITTED_TOOLS } from '../data/submitted-tools'
 
 test('reviewed submissions are unique listings with valid internal alternatives', () => {
-  assert.equal(SUBMITTED_TOOLS.length, 21)
+  assert.equal(SUBMITTED_TOOLS.length, 24)
   assert.equal(new Set(TOOLS.map(t => t.slug)).size, TOOLS.length)
   for (const tool of SUBMITTED_TOOLS) {
     assert.equal(TOOLS.filter(t => t.slug === tool.slug).length, 1)
@@ -32,3 +32,17 @@ test('unscored listings display no invented score and keep ranking finite', () =
   assert.equal(getToolRatingLabel({ rating: 4.5 }), 'AIBeat Score 4.5')
   assert.equal(getPopularTools().length, TOOLS.length)
 })
+
+test('requested featured listings and PawCinema identity are correct', () => {
+  for (const slug of ['openfate', 'pregnancy-ai']) assert.ok(getFeaturedTools().some(t => t.slug === slug));
+  assert.equal(TOOLS.find(t => t.slug === 'pawcinema')?.name, 'PawCinema');
+  assert.ok(!TOOLS.some(t => t.slug === 'support-pawcinema-com'));
+});
+
+test('Currawong Web remains a standard unscored listing', () => {
+  const tool = TOOLS.find(t => t.slug === 'currawong-web');
+  assert.ok(tool);
+  assert.equal(tool.featured, false);
+  assert.equal(tool.rating, null);
+  assert.equal(tool.name, 'Currawong Web');
+});

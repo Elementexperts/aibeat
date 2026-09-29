@@ -49,8 +49,8 @@
     "alternatives": []
   },
   {
-    "slug": "support-pawcinema-com",
-    "name": "support@pawcinema.com",
+    "slug": "pawcinema",
+    "name": "PawCinema",
     "tagline": "Turn pet photos into stylized AI portraits across dozens of art styles.",
     "description": "PawCinema generates custom digital pet portraits from single cat or dog photos. Users can choose from 36 distinct art directions, such as watercolor, oil painting, cel animation, embroidery, and pop art. First-time users can create one portrait for free with web preview access, while full-resolution downloads and additional generations are available through pay-as-you-go credit top-ups without a subscription.",
     "category": "AI Image",
@@ -70,7 +70,7 @@
     "rating": null,
     "featured": false,
     "logo": "#2563eb",
-    "logoInitials": "S",
+    "logoInitials": "PC",
     "alternatives": []
   }
 ]

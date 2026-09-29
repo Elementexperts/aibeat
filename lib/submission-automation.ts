@@ -98,6 +98,7 @@ export async function collectProductEvidence(url: string): Promise<EvidencePage[
 export async function reviewSubmission(row: Submission, pages: EvidencePage[], apiKey: string, fetchImpl: typeof fetch = fetch): Promise<{ tool: Tool | null; reason: string }> {
   const name = String(row.payload.name || '').trim()
   if (name.length < 2 || name.length > 100 || /[<>\x00-\x1f]/.test(name)) throw new Error('Invalid product name')
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(name)) return { tool: null, reason: 'Product name is an email address; manual correction required' }
   validateWeeklyReviewRecipient(row.email)
   if (row.payload.type !== 'free') return { tool: null, reason: 'Paid placement requires manual review' }
   const normalizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '')

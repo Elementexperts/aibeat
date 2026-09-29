@@ -6,6 +6,9 @@ const nextConfig = {
     imageSizes: [240],
     domains: ['images.unsplash.com', 'logo.clearbit.com'],
   },
+  async redirects() {
+    return [{ source: '/tools/support-pawcinema-com', destination: '/tools/pawcinema', permanent: true }]
+  },
   async headers() {
     return [
       {

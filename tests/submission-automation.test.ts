@@ -89,3 +89,11 @@ test('temporary reviewer outages retry within a bound; authentication errors do 
   assert.equal((await fetchReviewWithRetry('https://example.com', {}, outage, async () => {})).status, 503)
   assert.equal(attempts, 3)
 })
+
+ test('email addresses cannot be published as product names', async () => {
+  const submission = row('1', 'https://example.com/');
+  submission.payload.name = 'support@example.com';
+  const result = await reviewSubmission(submission, [{url: 'https://example.com/', text: 'Contact support@example.com for our software.'}], 'unused', async () => { throw new Error('Reviewer must not run'); });
+  assert.equal(result.tool, null);
+  assert.match(result.reason, /email address/);
+});
