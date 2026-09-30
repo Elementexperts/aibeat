@@ -76,6 +76,7 @@ export function SubscribeForm({
       <div className="flex gap-0">
         <input
           type="email"
+          aria-label="Email address"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}

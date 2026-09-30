@@ -4,6 +4,32 @@ import type { Tool } from '@/lib/data'
 // See docs/submission-review-2026-09-07.md and docs/submission-review-2026-09-09.md.
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
+{
+  "slug": "shopchief",
+  "name": "ShopChief",
+  "tagline": "Coordinate ecommerce research, store content, SEO, and marketing with AI agents",
+  "description": "ShopChief is an AI workspace for ecommerce teams that combines product research, listing copy, visual assets, store improvements, SEO, and marketing tasks. Users connect supported services, provide product context, and review results and execution records. Actions depend on connector permissions. New workspaces receive 1,500 signup credits; paid subscriptions add shared team credits and unlimited members.",
+  "category": "AI Agents",
+  "logo": "#0f766e",
+  "logoInitials": "SC",
+  "rating": null,
+  "pricing": "1,500 free signup credits · Paid plans from $19/month",
+  "pricingType": "freemium",
+  "websiteUrl": "https://shopchief.ai/",
+  "affiliateUrl": "https://shopchief.ai/",
+  "featured": false,
+  "pros": [
+    "Reusable product and store context",
+    "Supported commerce and marketing connectors",
+    "Scheduled tasks and execution records"
+  ],
+  "cons": [
+    "External actions require connector authorization",
+    "Usage is limited by credits",
+    "Generated content and recommendations need human review"
+  ],
+  "alternatives": []
+},
   {
     "slug": "openfate",
     "name": "OpenFate",

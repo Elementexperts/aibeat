@@ -1,0 +1,42 @@
+name: Newsletter Google Contacts Sync
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Count eligible and suppressed requests without updating contacts
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: newsletter-google-contacts
+  cancel-in-progress: false
+jobs:
+  sync:
+    if: vars.GOOGLE_CONTACTS_SYNC_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --import tsx --test tests/newsletter-contacts.test.ts tests/newsletter-request.test.ts
+      - name: Sync saved newsletter requests and suppressions
+        env:
+          SUBMISSIONS_SUPABASE_URL: ${{ vars.SUBMISSIONS_SUPABASE_URL }}
+          SUBMISSIONS_SUPABASE_KEY: ${{ secrets.SUBMISSIONS_SUPABASE_KEY }}
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GOOGLE_CONTACTS_REFRESH_TOKEN: ${{ secrets.GOOGLE_CONTACTS_REFRESH_TOKEN }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
+        run: |
+          if [ "$DRY_RUN" = true ]; then
+            npx tsx scripts/sync-newsletter-contacts.ts --dry-run
+          else
+            npx tsx scripts/sync-newsletter-contacts.ts
+          fi

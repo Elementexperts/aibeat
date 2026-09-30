@@ -37,11 +37,10 @@ export function SubscribePopup() {
           Enjoying AIBeat?
         </div>
         <h3 className="font-serif text-xl font-bold text-ink mb-2">
-          Get the daily brief.
+          Get the AIBeat newsletter.
         </h3>
         <p className="text-xs text-ink-3 mb-4 leading-relaxed">
-          Join 8,400+ founders and freelancers getting AI news + top tool
-          picks every morning. Free.
+          Get AI news and useful tool picks for founders and freelancers. Free.
         </p>
         <SubscribeForm
           buttonLabel="Get brief ->"

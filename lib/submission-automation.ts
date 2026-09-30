@@ -193,3 +193,12 @@ export async function ensureDraft(state: State, to: string, tool: Tool, drafts: 
   await save(done)
   return done
 }
+
+// Existing curated entries are complete only when their actual production page is live.
+export async function reconcileExistingListing(store: Pick<SubmissionStore, 'save' | 'complete'>, state: State, tool: Tool, fetchImpl: typeof fetch = fetch) {
+  const response = await fetchImpl('https://www.aibeat.dev/tools/' + tool.slug, { signal: AbortSignal.timeout(20000), redirect: 'error' })
+  if (!isPublished(tool, response.status, await response.text())) return false
+  await store.save({ ...state, phase: 'existing', tool, reason: 'Existing curated listing verified live; preserve previous correspondence' })
+  await store.complete(state.submission_ids)
+  return true
+}
