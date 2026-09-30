@@ -7,7 +7,7 @@ import { SubscribeForm } from '@/components/subscribe/SubscribeForm'
 export const metadata: Metadata = {
   alternates: { canonical: '/free-tools' },
   title: 'Free AI Tools — AIBeat.dev',
-  description: 'The best free and freemium AI tools for founders and freelancers. No credit card required.',
+  description: 'Explore free and freemium AI tools by category. Compare product descriptions and available plans to find options for writing, design, coding, and business tasks.',
 }
 
 export default function FreeToolsPage() {

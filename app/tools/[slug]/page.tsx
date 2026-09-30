@@ -1,5 +1,5 @@
 import { breadcrumbs, canonicalUrl, jsonLd } from '@/lib/site-seo'
-import { toolSchema, articleMentionsTool } from '@/lib/tool-seo'
+import { toolSchema, articleMentionsTool, toolMetadata } from '@/lib/tool-seo'
 import { getArticles } from '@/lib/articles'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
@@ -17,13 +17,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const tool = getToolBySlug(params.slug)
   if (!tool) return {}
-  return {
-    alternates: { canonical: canonicalUrl(`/tools/${tool.slug}`) },
-    openGraph: { type: 'website', url: canonicalUrl(`/tools/${tool.slug}`), title: tool.name, description: tool.description },
-    twitter: { card: 'summary_large_image', title: tool.name, description: tool.description },
-    title: tool.rating === null ? `${tool.name} — Features, Pricing & Alternatives` : `${tool.name} Review (2026) — Is It Worth It?`,
-    description: tool.rating === null ? tool.description : `Honest ${tool.name} review. Pricing, pros, cons, and best alternatives. Updated for 2026.`,
-  }
+  return toolMetadata(tool)
 }
 
 export default function ToolPage({ params }: { params: { slug: string } }) {

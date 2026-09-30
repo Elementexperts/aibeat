@@ -5,7 +5,7 @@ import { TOOLS } from '@/lib/data'
 export const metadata: Metadata = {
   alternates: { canonical: '/categories' },
   title: 'AI Tool Categories',
-  description: 'Browse AI tools by workflow, category, pricing, and use case on AIBeat.',
+  description: 'Explore AI tools organized by workflow and category, from writing and design to coding and business. Open a category to browse relevant products in the directory.',
 }
 
 export default function CategoriesPage() {

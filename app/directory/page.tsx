@@ -6,7 +6,7 @@ export function generateMetadata({ searchParams }: { searchParams?: { category?:
   robots: searchParams?.category || searchParams?.q ? { index: false, follow: true } : { index: true, follow: true },
   alternates: { canonical: '/directory' },
   title: 'AI Tool Directory — AIBeat.dev',
-  description: 'Browse 500+ AI tools for founders and freelancers. Filter by category, pricing, and rating.',
+  description: 'Browse AIBeat’s AI tool directory by category, pricing, and rating. Explore product descriptions, features, and alternatives for your next workflow.',
 } }
 
 export default function DirectoryPage({ searchParams }: { searchParams?: { category?: string } }) {
