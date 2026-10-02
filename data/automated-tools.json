@@ -72,5 +72,81 @@
     "logo": "#2563eb",
     "logoInitials": "PC",
     "alternatives": []
+  },
+  {
+    "slug": "pikkai",
+    "name": "Pikkai",
+    "tagline": "Discover AI products through a searchable directory and submit your own launch",
+    "description": "Pikkai is an independent product directory with category browsing, search, and recent launches. Makers can submit a product for review through a free route that requires a public Pikkai badge or a paid expedited route. Paid submission covers review eligibility and does not guarantee acceptance, placement, traffic, or a publication date.",
+    "category": "Productivity",
+    "pricing": "Free browsing; free maker submission requires a verified badge. Expedited submission: $5 one time.",
+    "pricingType": "freemium",
+    "websiteUrl": "https://pikkai.com/",
+    "logoInitials": "P",
+    "pros": [
+      "Browse products by category and search",
+      "Recent launch listings",
+      "Free and paid maker submission routes"
+    ],
+    "cons": [
+      "Free submissions require a public Pikkai badge",
+      "Paid submission does not guarantee publication or traffic"
+    ],
+    "affiliateUrl": "https://pikkai.com/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "alternatives": []
+  },
+  {
+    "slug": "removemate",
+    "name": "RemoveMate",
+    "tagline": "Remove photo backgrounds and clean up images with AI tools",
+    "description": "RemoveMate is a browser-based image toolkit for removing backgrounds from product photos, portraits, pets, and everyday objects. Users upload a JPG, PNG, or WebP image, inspect the resulting cutout, and download it. Additional tools remove text and watermarks or reduce image blur. Fine edges and important details should be checked before using an edited image.",
+    "category": "AI Image",
+    "pricing": "10 free credits every 24 hours without signup; one-time packs: $9 for 100 credits or $19 for 250. Purchased credits do not expire.",
+    "pricingType": "freemium",
+    "websiteUrl": "https://removemate.com/",
+    "logoInitials": "RM",
+    "pros": [
+      "Background removal without writing a prompt",
+      "Free daily credits without signup",
+      "One-time credit packs without a subscription"
+    ],
+    "cons": [
+      "Processing is limited by available credits",
+      "Fine edges and image details require visual review"
+    ],
+    "affiliateUrl": "https://removemate.com/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "alternatives": []
+  },
+  {
+    "slug": "verimails",
+    "name": "VeriMails",
+    "tagline": "Find professional email addresses and verify contact lists through CSV or API",
+    "description": "VeriMails provides email verification with SMTP checks, catch-all detection, bulk CSV processing, and a REST API. Its Email Finder searches for a professional address using a name and company domain. Teams can download verification results and receive webhook notifications when bulk jobs finish. Verification results flag uncertain or catch-all addresses for review rather than guaranteeing delivery.",
+    "category": "Marketing",
+    "pricing": "100 free signup credits; prepaid packs from $19 for 10,000 checks. Starter: $15/month or $150/year. Email Finder uses 20 credits per verified result.",
+    "pricingType": "freemium",
+    "websiteUrl": "https://verimails.com/",
+    "logoInitials": "VM",
+    "pros": [
+      "Single and bulk CSV verification",
+      "REST API and bulk completion webhooks",
+      "Prepaid credits do not expire"
+    ],
+    "cons": [
+      "Subscription allowances do not roll over",
+      "Email Finder uses more credits than verification",
+      "Some mailbox results remain uncertain"
+    ],
+    "affiliateUrl": "https://verimails.com/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "alternatives": []
   }
 ]
