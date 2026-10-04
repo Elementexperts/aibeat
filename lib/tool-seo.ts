@@ -1,6 +1,61 @@
+import type { Metadata } from 'next'
 import type { Tool } from './data'
 import type { Article } from './articles'
 import { canonicalUrl, safeHttpUrl } from './site-seo'
+
+
+const DESCRIPTION_MIN = 120
+const DESCRIPTION_MAX = 160
+const TITLE_MAX = 65
+const TITLE_SUFFIX = ' | AIBeat.dev'
+
+function cleanText(value: string) {
+  return value.replace(/\s+/g, ' ').trim()
+}
+
+function sentence(value: string) {
+  return /[.!?]$/.test(value) ? value : value + '.'
+}
+
+export function toolDescription(tool: Tool): string {
+  const name = cleanText(tool.name)
+  let description = cleanText(tool.description) || cleanText(tool.tagline)
+  if (!description.toLowerCase().includes(name.toLowerCase())) {
+    description = name + ': ' + description
+  }
+  description = sentence(description)
+  // Submission/placement labels are not product pricing information.
+  const pricing = cleanText(tool.pricing)
+  if (description.length < DESCRIPTION_MIN && pricing && !/listing|featured|submitted/i.test(pricing)) {
+    description += ' ' + sentence(pricing)
+  }
+  if (description.length < DESCRIPTION_MIN && tool.category) {
+    description += ' Listed in AIBeat’s ' + cleanText(tool.category) + ' directory.'
+  }
+  if (description.length <= DESCRIPTION_MAX) return description
+  // Prefer complete sentences, otherwise end at a word boundary, never mid-word.
+  const prefix = description.slice(0, DESCRIPTION_MAX - 1)
+  const sentences = Array.from(prefix.matchAll(/[.!?](?=\s|$)/g))
+  const last = sentences.at(-1)?.index
+  if (last !== undefined && last + 1 >= DESCRIPTION_MIN) return prefix.slice(0, last + 1)
+  return prefix.slice(0, prefix.lastIndexOf(' ')).replace(/[,;:]$/, '') + '…'
+}
+
+export function toolMetadata(tool: Tool): Metadata {
+  const description = toolDescription(tool)
+  let title = tool.rating === null
+    ? tool.name + ' — Features, Pricing & Alternatives'
+    : tool.name + ' Review (2026) — Is It Worth It?'
+  if ((title + TITLE_SUFFIX).length > TITLE_MAX) title = tool.name + ' — Features & Pricing'
+  const url = canonicalUrl('/tools/' + tool.slug)
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { type: 'website', url, title: tool.name, description },
+    twitter: { card: 'summary_large_image', title: tool.name, description },
+  }
+}
 
 export function toolSchema(tool: Tool) {
   return {

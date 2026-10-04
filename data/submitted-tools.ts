@@ -4,6 +4,95 @@ import type { Tool } from '@/lib/data'
 // See docs/submission-review-2026-09-07.md and docs/submission-review-2026-09-09.md.
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
+{
+  "slug": "shopchief",
+  "name": "ShopChief",
+  "tagline": "Coordinate ecommerce research, store content, SEO, and marketing with AI agents",
+  "description": "ShopChief is an AI workspace for ecommerce teams that combines product research, listing copy, visual assets, store improvements, SEO, and marketing tasks. Users connect supported services, provide product context, and review results and execution records. Actions depend on connector permissions. New workspaces receive 1,500 signup credits; paid subscriptions add shared team credits and unlimited members.",
+  "category": "AI Agents",
+  "logo": "#0f766e",
+  "logoInitials": "SC",
+  "rating": null,
+  "pricing": "1,500 free signup credits · Paid plans from $19/month",
+  "pricingType": "freemium",
+  "websiteUrl": "https://shopchief.ai/",
+  "affiliateUrl": "https://shopchief.ai/",
+  "featured": false,
+  "pros": [
+    "Reusable product and store context",
+    "Supported commerce and marketing connectors",
+    "Scheduled tasks and execution records"
+  ],
+  "cons": [
+    "External actions require connector authorization",
+    "Usage is limited by credits",
+    "Generated content and recommendations need human review"
+  ],
+  "alternatives": []
+},
+  {
+    "slug": "openfate",
+    "name": "OpenFate",
+    "tagline": "Explore astrology charts and AI-assisted symbolic interpretations",
+    "description": "OpenFate combines chart calculators with AI-assisted interpretations across Bazi, Western and Vedic astrology, Ziwei, Human Design, and Sukuyo. It also offers compatibility tools, oracles, and saved follow-up guidance. Free chart tools are available alongside credit-based features. The interpretations are for entertainment and personal reflection, rather than scientifically established predictions.",
+    "category": "Lifestyle",
+    "logo": "#7c3aed",
+    "logoInitials": "OF",
+    "rating": null,
+    "pricing": "Free chart tools · Credit-based features; check the site for current paid options",
+    "pricingType": "freemium",
+    "websiteUrl": "https://openfate.ai/en",
+    "affiliateUrl": "https://openfate.ai/en",
+    "featured": true,
+    "pros": [
+      "Multiple chart and compatibility systems",
+      "AI explanations alongside calculated charts",
+      "Free chart tools"
+    ],
+    "cons": [
+      "Interpretations are not scientifically validated predictions",
+      "Some features use credits",
+      "Personalized charts require birth details"
+    ],
+    "alternatives": []
+  },
+  {
+    "slug": "pregnancy-ai",
+    "name": "Pregnancy AI",
+    "tagline": "Create AI maternity portraits from prompts or uploaded photos",
+    "description": "Pregnancy AI generates maternity-style images from text prompts or edits uploaded photos into themed portraits. It offers studio, outdoor, fashion, and seasonal styles, plus image-to-video features. Free daily check-in credits and paid credit plans are available. Its baby-face images are creative visualizations, not predictions of a real child or medical assessments.",
+    "category": "AI Image",
+    "logo": "#db2777",
+    "logoInitials": "PA",
+    "rating": null,
+    "pricing": "Free daily check-in credits · Paid subscriptions and one-time credit options",
+    "pricingType": "freemium",
+    "websiteUrl": "https://pregnancyai.ai/",
+    "affiliateUrl": "https://pregnancyai.ai/",
+    "featured": true,
+    "pros": [
+      "Prompt-based generation and photo editing",
+      "Multiple maternity portrait styles",
+      "Image and video generation options"
+    ],
+    "cons": [
+      "Generation uses credits",
+      "Generated likenesses and anatomy may need correction",
+      "Uploaded photos are processed by the service"
+    ],
+    "alternatives": []
+  },
+  {
+    slug: 'manhwa-translator', name: 'MangaTranslate',
+    tagline: 'Translate manga images with OCR, typesetting, and editable dialogue',
+    description: 'MangaTranslate is a browser-based manga image translator with OCR, automatic text replacement, and an editor for correcting dialogue and layout. Users select source and target languages, upload pages, and download translated images. It supports batch uploads and offers an API. The Russian and Arabic AI manga translator pages are localized entry points to the same product. Limited daily free credits are available, with paid subscriptions and pay-per-use options for additional capacity.',
+    category: 'Productivity', logo: '#2563eb', logoInitials: 'MT', rating: null,
+    pricing: 'Limited daily free credits · Paid subscriptions and pay-per-use credits', pricingType: 'freemium',
+    websiteUrl: 'https://www.mangatranslate.com/', affiliateUrl: 'https://www.mangatranslate.com/', featured: true,
+    pros: ['OCR and automatic text replacement in manga images', 'Editor for dialogue, fonts, and layout corrections', 'Batch uploads and API access'],
+    cons: ['Free usage is limited by credits', 'Credit usage varies by translation model', 'Translations and page layout require human review'],
+    alternatives: [],
+  },
   {
     slug: 'nextlerai', name: 'NextlerAI',
     tagline: 'Add AI publishing, translation, and customer support to WordPress',
@@ -223,5 +312,32 @@ export const SUBMITTED_TOOLS: Tool[] = [
     pros: ['Style, placement and ink controls', 'Downloadable visual references', 'Free daily generation allowance'],
     cons: ['Sign-in required for generation', 'Shared daily capacity can limit availability', 'A tattoo artist must refine the concept for actual use'],
     alternatives: ['leonardo-ai', 'midjourney'],
+  },
+  {
+    "slug": "currawong-web",
+    "name": "Currawong Web",
+    "tagline": "Check Chinese suppliers with sourced and dated company records",
+    "description": "Currawong Web helps importers and ecommerce buyers research Chinese suppliers before placing orders or making payments. Users search by company name, shop link, or company code, compare candidate matches with a business licence, and select a paid report. Reports summarize returned company records, source dates, gaps, and follow-up questions. Automated checks use a licensed business-information platform; additional human verification is available by arrangement. A search match alone does not confirm supplier identity or reliability.",
+    "category": "Business",
+    "logo": "#166534",
+    "logoInitials": "CW",
+    "logoUrl": "https://currawongweb.com/assets/currawong-logo.png",
+    "rating": null,
+    "pricing": "Free supplier search · Reports from US$26.55 · Optional checks from US$4.90",
+    "pricingType": "freemium",
+    "websiteUrl": "https://currawongweb.com/",
+    "affiliateUrl": "https://currawongweb.com/",
+    "featured": false,
+    "pros": [
+      "Free search by company name, shop link, or company code",
+      "Reports include sources, dates, and gaps",
+      "Optional human verification"
+    ],
+    "cons": [
+      "Detailed reports and additional checks cost extra",
+      "Record availability and source delays affect results",
+      "Search matches do not guarantee supplier reliability"
+    ],
+    "alternatives": []
   },
 ]

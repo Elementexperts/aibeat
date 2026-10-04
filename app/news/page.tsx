@@ -23,7 +23,7 @@ export function generateMetadata({ searchParams }: { searchParams?: { category?:
   const page = Math.min(Math.max(1, Math.floor(Number.isFinite(requested) ? requested : 1)), Math.max(1, Math.ceil(Math.max(0, total - 1) / ARTICLES_PER_PAGE)))
   return {
     title: `${category ? CATEGORY_LABELS[category] + ' — ' : ''}AI News${page > 1 ? ` — Page ${page}` : ''}`,
-    description: 'Breaking AI news, tool launches, and analysis for founders and freelancers. Updated daily.',
+    description: 'Read AI news, product launches, and analysis for founders and freelancers. Browse recent stories by category and explore related tools in the AIBeat directory.',
     alternates: { canonical: `https://www.aibeat.dev${pageHref(page)}` },
     robots: category ? { index: false, follow: true } : { index: true, follow: true },
   }

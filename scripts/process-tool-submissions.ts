@@ -2,7 +2,7 @@ import dotenv from 'dotenv'
 import { readFileSync, writeFileSync, appendFileSync } from 'node:fs'
 import { TOOLS, type Tool } from '../lib/data'
 import { productIdentity } from '../lib/automated-tool-catalog'
-import { collectProductEvidence, ensureDraft, groupSubmissions, isPublished, reviewSubmission, SubmissionDrafts, SubmissionStore, validateTool, type State } from '../lib/submission-automation'
+import { collectProductEvidence, reconcileExistingListing, ensureDraft, groupSubmissions, isPublished, reviewSubmission, SubmissionDrafts, SubmissionStore, validateTool, type State } from '../lib/submission-automation'
 import { getGmailDraftConfig } from '../lib/gmail-newsletter-draft'
 
 dotenv.config({ path: '.env.local', quiet: true })
@@ -28,7 +28,7 @@ async function main() {
       const previous = byKey.get(group.key)
       const ids = Array.from(new Set([...(previous?.submission_ids || []), ...group.rows.map(r => r.id)]))
       const base = { product_key: group.key, submission_ids: ids, fingerprint: group.fingerprint, tool: null, reason: null }
-      if (previous?.phase === 'complete' || previous?.phase === 'existing') {
+      if (previous?.phase === 'complete') {
         if (!dryRun) {
           await store.save({ ...previous, submission_ids: ids, fingerprint: group.fingerprint })
           if (previous.phase === 'complete') await store.complete(ids)
@@ -45,8 +45,14 @@ async function main() {
       let existing: Tool | undefined
       try { existing = TOOLS.find(t => productIdentity(t.websiteUrl) === productIdentity(String(row.payload.url))) } catch { /* Invalid URL is held below. */ }
       if (existing && !catalog.some(t => t.slug === existing!.slug)) {
-        if (!dryRun) await store.save({ ...base, phase: 'existing', tool: existing, reason: 'Existing curated listing; preserve previous correspondence' })
-        log(`${existing.name}: existing curated listing, no duplicate draft`)
+        try {
+          const verified = dryRun || await reconcileExistingListing(store, { ...base, phase: 'existing', tool: existing }, existing)
+          log(existing.name + (verified ? ': existing curated listing; ' + (dryRun ? 'would reconcile after live verification' : 'verified live and marked complete') : ': production not verified; remains pending'))
+          if (!verified) failures++
+        } catch (error) {
+          log(existing.name + ': existing listing verification failed; remains pending')
+          failures++
+        }
         continue
       }
       if (previous?.phase === 'held' && previous.fingerprint === group.fingerprint && process.env.SUBMISSIONS_RETRY_HELD !== 'true') { log(`Submission ${row.id}: held for review (${previous.reason || 'see ledger'})`); continue }

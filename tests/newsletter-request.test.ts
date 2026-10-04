@@ -61,3 +61,30 @@ test('rejects invalid subscriber email without sending', async () => {
   assert.equal(response.status, 400)
   assert.equal(called, false)
 })
+
+test('newsletter storage success survives Gmail failure and returns the stored ID', async () => {
+  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://project.supabase.co'
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'publishable_key'
+  process.env.GMAIL_CLIENT_ID = 'client'
+  process.env.GMAIL_CLIENT_SECRET = 'secret'
+  process.env.GMAIL_REFRESH_TOKEN = 'refresh'
+  let saves = 0
+  globalThis.fetch = async input => {
+    if (String(input).includes('/rpc/')) { saves++; return Response.json('saved-newsletter') }
+    return new Response('', { status: 503 })
+  }
+  const response = await POST(request({ email: 'reader@example.com' }))
+  assert.equal(response.status, 200)
+  assert.deepEqual(await response.json(), { success: true, submissionId: 'saved-newsletter', notificationStatus: 'failed' })
+  assert.equal(saves, 1)
+})
+
+test('newsletter database failure does not claim success or notify Gmail', async () => {
+  process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://project.supabase.co'
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'publishable_key'
+  let calls = 0
+  globalThis.fetch = async input => { calls++; assert.match(String(input), /\/rpc\//); return new Response('', { status: 503 }) }
+  const response = await POST(request({ email: 'reader@example.com' }))
+  assert.equal(response.status, 502)
+  assert.equal(calls, 1)
+})

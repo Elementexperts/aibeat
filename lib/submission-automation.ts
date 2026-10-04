@@ -98,6 +98,7 @@ export async function collectProductEvidence(url: string): Promise<EvidencePage[
 export async function reviewSubmission(row: Submission, pages: EvidencePage[], apiKey: string, fetchImpl: typeof fetch = fetch): Promise<{ tool: Tool | null; reason: string }> {
   const name = String(row.payload.name || '').trim()
   if (name.length < 2 || name.length > 100 || /[<>\x00-\x1f]/.test(name)) throw new Error('Invalid product name')
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(name)) return { tool: null, reason: 'Product name is an email address; manual correction required' }
   validateWeeklyReviewRecipient(row.email)
   if (row.payload.type !== 'free') return { tool: null, reason: 'Paid placement requires manual review' }
   const normalizedName = name.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -191,4 +192,13 @@ export async function ensureDraft(state: State, to: string, tool: Tool, drafts: 
   const done: State = { ...state, phase: 'complete', gmail_draft_id: id }
   await save(done)
   return done
+}
+
+// Existing curated entries are complete only when their actual production page is live.
+export async function reconcileExistingListing(store: Pick<SubmissionStore, 'save' | 'complete'>, state: State, tool: Tool, fetchImpl: typeof fetch = fetch) {
+  const response = await fetchImpl('https://www.aibeat.dev/tools/' + tool.slug, { signal: AbortSignal.timeout(20000), redirect: 'error' })
+  if (!isPublished(tool, response.status, await response.text())) return false
+  await store.save({ ...state, phase: 'existing', tool, reason: 'Existing curated listing verified live; preserve previous correspondence' })
+  await store.complete(state.submission_ids)
+  return true
 }

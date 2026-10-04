@@ -89,3 +89,34 @@ test('temporary reviewer outages retry within a bound; authentication errors do 
   assert.equal((await fetchReviewWithRetry('https://example.com', {}, outage, async () => {})).status, 503)
   assert.equal(attempts, 3)
 })
+
+ test('email addresses cannot be published as product names', async () => {
+  const submission = row('1', 'https://example.com/');
+  submission.payload.name = 'support@example.com';
+  const result = await reviewSubmission(submission, [{url: 'https://example.com/', text: 'Contact support@example.com for our software.'}], 'unused', async () => { throw new Error('Reviewer must not run'); });
+  assert.equal(result.tool, null);
+  assert.match(result.reason, /email address/);
+});
+
+test('reviewed MangaTranslate language URLs share one identity without collapsing other products', () => {
+  const paths = ['/', '/ai-manga-translator/', '/ko/ai-manga-translator/', '/ru/ai-manga-translator/', '/ar/ai-manga-translator/']
+  for (const path of paths) assert.equal(productIdentity('https://www.mangatranslate.com' + path), 'mangatranslate.com')
+  assert.notEqual(productIdentity('https://www.mangatranslate.com/another-product'), 'mangatranslate.com')
+  assert.notEqual(productIdentity('https://example.com/ko/product'), productIdentity('https://example.com/product'))
+})
+
+test('existing listing reconciliation requires production identity before completing requests', async () => {
+  const { reconcileExistingListing } = await import('../lib/submission-automation')
+  const events: string[] = []
+  const store = { save: async () => { events.push('saved') }, complete: async (ids: string[]) => { assert.deepEqual(ids, state.submission_ids); events.push('completed') } }
+  const fake = (html: string) => (async () => new Response(html)) as typeof fetch
+  assert.equal(await reconcileExistingListing(store, state, tool, fake('<title>Not found</title>')), false)
+  assert.deepEqual(events, [])
+  assert.equal(await reconcileExistingListing(store, state, tool, fake('<title>Example</title><a href="https://example.com/">Visit</a><link href="https://www.aibeat.dev/tools/example">')), true)
+  assert.deepEqual(events, ['saved', 'completed'])
+})
+
+test('Toolsvio homepage and tools index match its already featured listing', () => {
+  assert.equal(productIdentity('https://www.toolsvio.online/'), productIdentity('https://www.toolsvio.online/tools'))
+  assert.notEqual(productIdentity('https://www.toolsvio.online/tools/word-counter'), productIdentity('https://www.toolsvio.online/'))
+})

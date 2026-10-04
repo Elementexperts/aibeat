@@ -1,0 +1,745 @@
+[
+  {
+    "url": "https://www.aibeat.dev/categories",
+    "finalUrl": "https://www.aibeat.dev/categories",
+    "status": 200,
+    "title": "AI Tool Categories | AIBeat.dev",
+    "titleLength": 31,
+    "description": "Browse AI tools by workflow, category, pricing, and use case on AIBeat.",
+    "descriptionLength": 71,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 14
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/pictory",
+    "finalUrl": "https://www.aibeat.dev/tools/pictory",
+    "status": 200,
+    "title": "Pictory Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 52,
+    "description": "Honest Pictory review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 84,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/directory",
+    "finalUrl": "https://www.aibeat.dev/directory",
+    "status": 200,
+    "title": "AI Tool Directory — AIBeat.dev | AIBeat.dev",
+    "titleLength": 43,
+    "description": "Browse 500+ AI tools for founders and freelancers. Filter by category, pricing, and rating.",
+    "descriptionLength": 91,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>"
+    ],
+    "missingAlt": [],
+    "images": 106
+  },
+  {
+    "url": "https://www.aibeat.dev/news",
+    "finalUrl": "https://www.aibeat.dev/news",
+    "status": 200,
+    "title": "AI News | AIBeat.dev",
+    "titleLength": 20,
+    "description": "Breaking AI news, tool launches, and analysis for founders and freelancers. Updated daily.",
+    "descriptionLength": 90,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>"
+    ],
+    "missingAlt": [],
+    "images": 25
+  },
+  {
+    "url": "https://www.aibeat.dev/tools",
+    "finalUrl": "https://www.aibeat.dev/tools",
+    "status": 200,
+    "title": "AI Tool Reviews — AIBeat.dev | AIBeat.dev",
+    "titleLength": 41,
+    "description": "Honest, hands-on reviews of the best AI tools for founders and freelancers. Updated monthly.",
+    "descriptionLength": 92,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 106
+  },
+  {
+    "url": "https://www.aibeat.dev/compare",
+    "finalUrl": "https://www.aibeat.dev/compare",
+    "status": 200,
+    "title": "AI Tool Comparisons — AIBeat.dev | AIBeat.dev",
+    "titleLength": 45,
+    "description": "Head-to-head AI tool comparisons. We test both so you don&amp;apos;t have to.",
+    "descriptionLength": 77,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 14
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/openai-api",
+    "finalUrl": "https://www.aibeat.dev/tools/openai-api",
+    "status": 200,
+    "title": "OpenAI API Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 55,
+    "description": "Honest OpenAI API review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 87,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/dzyn-space",
+    "finalUrl": "https://www.aibeat.dev/tools/dzyn-space",
+    "status": 200,
+    "title": "Dzyn Space Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 55,
+    "description": "Honest Dzyn Space review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 87,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/aio-geo",
+    "finalUrl": "https://www.aibeat.dev/tools/aio-geo",
+    "status": 200,
+    "title": "AIO.GEO Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 52,
+    "description": "Honest AIO.GEO review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 84,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/free-tools",
+    "finalUrl": "https://www.aibeat.dev/free-tools",
+    "status": 200,
+    "title": "Free AI Tools — AIBeat.dev | AIBeat.dev",
+    "titleLength": 39,
+    "description": "The best free and freemium AI tools for founders and freelancers. No credit card required.",
+    "descriptionLength": 90,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 91
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/meta-ai-studio",
+    "finalUrl": "https://www.aibeat.dev/tools/meta-ai-studio",
+    "status": 200,
+    "title": "Meta AI Studio Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 59,
+    "description": "Honest Meta AI Studio review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 91,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/claude",
+    "finalUrl": "https://www.aibeat.dev/tools/claude",
+    "status": 200,
+    "title": "Claude Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 51,
+    "description": "Honest Claude review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 83,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/jasper",
+    "finalUrl": "https://www.aibeat.dev/tools/jasper",
+    "status": 200,
+    "title": "Jasper AI Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 54,
+    "description": "Honest Jasper AI review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 86,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/github-copilot",
+    "finalUrl": "https://www.aibeat.dev/tools/github-copilot",
+    "status": 200,
+    "title": "GitHub Copilot Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 59,
+    "description": "Honest GitHub Copilot review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 91,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 16
+  },
+  {
+    "url": "https://www.aibeat.dev/launches",
+    "finalUrl": "https://www.aibeat.dev/launches",
+    "status": 200,
+    "title": "AI Startup Launches | AIBeat.dev",
+    "titleLength": 32,
+    "description": "Explore AI products and startup launches curated by AIBeat.",
+    "descriptionLength": 59,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 27
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/jpg2excel",
+    "finalUrl": "https://www.aibeat.dev/tools/jpg2excel",
+    "status": 200,
+    "title": "JPG2Excel Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 54,
+    "description": "Honest JPG2Excel review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 86,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/meta-ai",
+    "finalUrl": "https://www.aibeat.dev/tools/meta-ai",
+    "status": 200,
+    "title": "Meta AI Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 52,
+    "description": "Honest Meta AI review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 84,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/notion",
+    "finalUrl": "https://www.aibeat.dev/tools/notion",
+    "status": 200,
+    "title": "Notion Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 51,
+    "description": "Honest Notion review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 83,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 17
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/chatgpt",
+    "finalUrl": "https://www.aibeat.dev/tools/chatgpt",
+    "status": 200,
+    "title": "ChatGPT Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 52,
+    "description": "Honest ChatGPT review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 84,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/reverse-image-location",
+    "finalUrl": "https://www.aibeat.dev/tools/reverse-image-location",
+    "status": 200,
+    "title": "Reverse Image Location Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 67,
+    "description": "Honest Reverse Image Location review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 99,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 16
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/gemini",
+    "finalUrl": "https://www.aibeat.dev/tools/gemini",
+    "status": 200,
+    "title": "Gemini Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 51,
+    "description": "Honest Gemini review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 83,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/monday",
+    "finalUrl": "https://www.aibeat.dev/tools/monday",
+    "status": 200,
+    "title": "Monday.com Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 55,
+    "description": "Honest Monday.com review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 87,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 16
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/meta-llama",
+    "finalUrl": "https://www.aibeat.dev/tools/meta-llama",
+    "status": 200,
+    "title": "Meta Llama Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 55,
+    "description": "Honest Meta Llama review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 87,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/vedic-astrology-chart",
+    "finalUrl": "https://www.aibeat.dev/tools/vedic-astrology-chart",
+    "status": 200,
+    "title": "Vedic Astrology Chart Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 66,
+    "description": "Honest Vedic Astrology Chart review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 98,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 15
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/replit",
+    "finalUrl": "https://www.aibeat.dev/tools/replit",
+    "status": 200,
+    "title": "Replit Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 51,
+    "description": "Honest Replit review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 83,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/gumloop",
+    "finalUrl": "https://www.aibeat.dev/tools/gumloop",
+    "status": 200,
+    "title": "Gumloop Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 52,
+    "description": "Honest Gumloop review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 84,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/video-upscaler",
+    "finalUrl": "https://www.aibeat.dev/tools/video-upscaler",
+    "status": 200,
+    "title": "Video Upscaler Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 59,
+    "description": "Honest Video Upscaler review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 91,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 15
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/audiocraft",
+    "finalUrl": "https://www.aibeat.dev/tools/audiocraft",
+    "status": 200,
+    "title": "AudioCraft Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 55,
+    "description": "Honest AudioCraft review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 87,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/elevenlabs",
+    "finalUrl": "https://www.aibeat.dev/tools/elevenlabs",
+    "status": 200,
+    "title": "ElevenLabs Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 55,
+    "description": "Honest ElevenLabs review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 87,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/business/dashboard",
+    "finalUrl": "https://www.aibeat.dev/business/sign-in?next=%2Fbusiness%2Fdashboard",
+    "status": 200,
+    "title": "Sign In | AIBeat Business | AIBeat.dev",
+    "titleLength": 38,
+    "description": "Sign in to AIBeat Business with your Supabase account.",
+    "descriptionLength": 54,
+    "robots": [
+      "<meta name=\"robots\" content=\"noindex, follow\"/>"
+    ],
+    "missingAlt": [],
+    "images": 14
+  },
+  {
+    "url": "https://www.aibeat.dev/business/sign-up",
+    "finalUrl": "https://www.aibeat.dev/business/sign-up",
+    "status": 200,
+    "title": "Start Early Access | AIBeat Business | AIBeat.dev",
+    "titleLength": 49,
+    "description": "Create an AIBeat Business account and continue to organization onboarding.",
+    "descriptionLength": 74,
+    "robots": [
+      "<meta name=\"robots\" content=\"noindex, follow\"/>"
+    ],
+    "missingAlt": [],
+    "images": 14
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/hugging-face",
+    "finalUrl": "https://www.aibeat.dev/tools/hugging-face",
+    "status": 200,
+    "title": "Hugging Face Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 57,
+    "description": "Honest Hugging Face review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 89,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/news/gta-vi-goes-digital",
+    "finalUrl": "https://www.aibeat.dev/news/gta-vi-goes-digital",
+    "status": 200,
+    "title": "GTA VI Goes Digital",
+    "titleLength": 19,
+    "description": "The end of physical discs looms, what does this mean for game developers and the industry?",
+    "descriptionLength": 90,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-image-preview:large\"/>"
+    ],
+    "missingAlt": [],
+    "images": 15
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/synthesia",
+    "finalUrl": "https://www.aibeat.dev/tools/synthesia",
+    "status": 200,
+    "title": "Synthesia Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 54,
+    "description": "Honest Synthesia review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 86,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/quickbooks",
+    "finalUrl": "https://www.aibeat.dev/tools/quickbooks",
+    "status": 200,
+    "title": "QuickBooks Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 55,
+    "description": "Honest QuickBooks review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 87,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 17
+  },
+  {
+    "url": "https://www.aibeat.dev/business/sign-in",
+    "finalUrl": "https://www.aibeat.dev/business/sign-in",
+    "status": 200,
+    "title": "Sign In | AIBeat Business | AIBeat.dev",
+    "titleLength": 38,
+    "description": "Sign in to AIBeat Business with your Supabase account.",
+    "descriptionLength": 54,
+    "robots": [
+      "<meta name=\"robots\" content=\"noindex, follow\"/>"
+    ],
+    "missingAlt": [],
+    "images": 14
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/rizz-invites",
+    "finalUrl": "https://www.aibeat.dev/tools/rizz-invites",
+    "status": 200,
+    "title": "Rizz Invites Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 57,
+    "description": "Honest Rizz Invites review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 89,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/lindy",
+    "finalUrl": "https://www.aibeat.dev/tools/lindy",
+    "status": 200,
+    "title": "Lindy Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 50,
+    "description": "Honest Lindy review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 82,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/stable-diffusion",
+    "finalUrl": "https://www.aibeat.dev/tools/stable-diffusion",
+    "status": 200,
+    "title": "Stable Diffusion Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 61,
+    "description": "Honest Stable Diffusion review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 93,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/cursor",
+    "finalUrl": "https://www.aibeat.dev/tools/cursor",
+    "status": 200,
+    "title": "Cursor Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 51,
+    "description": "Honest Cursor review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 83,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 16
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/obsidian",
+    "finalUrl": "https://www.aibeat.dev/tools/obsidian",
+    "status": 200,
+    "title": "Obsidian Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 53,
+    "description": "Honest Obsidian review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 85,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 16
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/vidsyndicate",
+    "finalUrl": "https://www.aibeat.dev/tools/vidsyndicate",
+    "status": 200,
+    "title": "VidSyndicate Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 57,
+    "description": "Honest VidSyndicate review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 89,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/alchemy-leads",
+    "finalUrl": "https://www.aibeat.dev/tools/alchemy-leads",
+    "status": 200,
+    "title": "Alchemy Leads Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 58,
+    "description": "Honest Alchemy Leads review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 90,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/supabase",
+    "finalUrl": "https://www.aibeat.dev/tools/supabase",
+    "status": 200,
+    "title": "Supabase Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 53,
+    "description": "Honest Supabase review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 85,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/vidirelay",
+    "finalUrl": "https://www.aibeat.dev/tools/vidirelay",
+    "status": 200,
+    "title": "VidiRelay Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 54,
+    "description": "Honest VidiRelay review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 86,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 15
+  },
+  {
+    "url": "https://www.aibeat.dev/business/context",
+    "finalUrl": "https://www.aibeat.dev/business/sign-in?next=%2Fbusiness%2Fcontext",
+    "status": 200,
+    "title": "Sign In | AIBeat Business | AIBeat.dev",
+    "titleLength": 38,
+    "description": "Sign in to AIBeat Business with your Supabase account.",
+    "descriptionLength": 54,
+    "robots": [
+      "<meta name=\"robots\" content=\"noindex, follow\"/>"
+    ],
+    "missingAlt": [],
+    "images": 14
+  },
+  {
+    "url": "https://www.aibeat.dev/directory?category=AI Video",
+    "finalUrl": "https://www.aibeat.dev/directory?category=AI%20Video",
+    "status": 200,
+    "title": "AI Tool Directory — AIBeat.dev | AIBeat.dev",
+    "titleLength": 43,
+    "description": "Browse 500+ AI tools for founders and freelancers. Filter by category, pricing, and rating.",
+    "descriptionLength": 91,
+    "robots": [
+      "<meta name=\"robots\" content=\"noindex, follow\"/>"
+    ],
+    "missingAlt": [],
+    "images": 21
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/v0",
+    "finalUrl": "https://www.aibeat.dev/tools/v0",
+    "status": 200,
+    "title": "v0 Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 47,
+    "description": "Honest v0 review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 79,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/synabot-ai",
+    "finalUrl": "https://www.aibeat.dev/tools/synabot-ai",
+    "status": 200,
+    "title": "SynaBot AI Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 55,
+    "description": "Honest SynaBot AI review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 87,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 18
+  },
+  {
+    "url": "https://www.aibeat.dev/tools/ahrefs",
+    "finalUrl": "https://www.aibeat.dev/tools/ahrefs",
+    "status": 200,
+    "title": "Ahrefs Review (2026) — Is It Worth It? | AIBeat.dev",
+    "titleLength": 51,
+    "description": "Honest Ahrefs review. Pricing, pros, cons, and best alternatives. Updated for 2026.",
+    "descriptionLength": 83,
+    "robots": [
+      "<meta name=\"robots\" content=\"index, follow\"/>",
+      "<meta name=\"googlebot\" content=\"index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1\"/>"
+    ],
+    "missingAlt": [],
+    "images": 16
+  }
+]

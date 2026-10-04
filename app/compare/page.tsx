@@ -7,7 +7,7 @@ import { SubscribeForm } from '@/components/subscribe/SubscribeForm'
 export const metadata: Metadata = {
   alternates: { canonical: '/compare' },
   title: 'AI Tool Comparisons — AIBeat.dev',
-  description: "Head-to-head AI tool comparisons. We test both so you don&apos;t have to.",
+  description: "Compare AI tools side by side with feature breakdowns, pricing tables, strengths, and limitations. Find alternatives that fit your workflow and budget.",
 }
 
 export default function ComparePage() {

@@ -27,8 +27,13 @@ export async function POST(req: NextRequest) {
   const attribution = sanitizeNewsletterAttribution(body)
 
   try {
-    const submissionId = await recordPublicFormSubmission({ kind: 'newsletter', email, payload: { email, ...attribution } })
-    return NextResponse.json({ success: true, submissionId })
+    let notificationStatus: 'sent' | 'failed' = 'failed'
+    const submissionId = await recordPublicFormSubmission({
+      kind: 'newsletter', email, payload: { email, ...attribution },
+      notificationFailure: 'log',
+      onNotificationResult: status => { notificationStatus = status },
+    })
+    return NextResponse.json({ success: true, submissionId, notificationStatus })
   } catch (error) {
     console.error('Newsletter storage error:', error instanceof Error ? error.message : 'Unknown error')
     return NextResponse.json({ error: 'Could not send your request right now' }, { status: 502 })
