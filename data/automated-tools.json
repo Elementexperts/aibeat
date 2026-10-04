@@ -148,5 +148,30 @@
     "featured": false,
     "logo": "#2563eb",
     "alternatives": []
+  },
+  {
+    "slug": "photogenerai",
+    "name": "PhotoGenerAI",
+    "tagline": "Generate and edit AI photos directly in your browser from text prompts or uploaded images.",
+    "description": "PhotoGenerAI is an online AI image generation and editing tool. It supports text-to-image creation, sketch-to-photo rendering, multi-image compositing, product staging, and photo restyling. Users can select aspect ratios, upload up to ten reference images to guide compositions, and modify photos using natural language prompts without mandatory account creation.",
+    "category": "AI Image",
+    "pricing": "10 free credits per week for GPT Image 2 Low; Pro settings require purchased credits (1 to 5 credits per image).",
+    "pricingType": "freemium",
+    "pros": [
+      "No account registration required to test or generate basic images",
+      "Provides 10 free credits refreshed weekly",
+      "Supports multi-image guidance, sketch-to-image, and targeted photo edits"
+    ],
+    "cons": [
+      "Unused free weekly credits do not roll over",
+      "Pro settings and advanced models require purchased credits"
+    ],
+    "websiteUrl": "https://photogenerai.com/",
+    "affiliateUrl": "https://photogenerai.com/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "P",
+    "alternatives": []
   }
 ]
