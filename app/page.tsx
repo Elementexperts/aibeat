@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { NewsImage } from '@/components/ui/NewsImage'
 import type { Metadata } from 'next'
-import { ArrowRight, Compass, Newspaper, Rocket, Search, ShieldCheck, Sparkles, Zap } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BriefcaseBusiness, Compass, Megaphone, Newspaper, Rocket, Search, ShieldCheck, Sparkles, Zap } from 'lucide-react'
 import { TOOLS, getFeaturedTools, getPopularTools } from '@/lib/data'
 import { getArticles } from '@/lib/articles'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
@@ -28,6 +28,14 @@ const SEARCH_SUGGESTIONS = [
 ]
 
 const DISCOVERY_ITEMS = ['New today', 'Trending', 'Editor picks', 'Open source', 'Free tools', 'Product Hunt launches', 'Founder launches', 'AIBeat Daily']
+
+const ORBIT_LINKS = [
+  { label: 'Business', href: '/business', description: 'Work smarter', icon: BriefcaseBusiness, accent: 'text-violet-300', position: 'left-[8%] top-[8%]' },
+  { label: 'News', href: '/news', description: 'Stay ahead', icon: Newspaper, accent: 'text-sky-300', position: 'right-0 top-[25%]' },
+  { label: 'Launches', href: '/launches', description: 'Find what’s next', icon: Rocket, accent: 'text-amber-300', position: 'left-0 top-[43%]' },
+  { label: 'Tools', href: '/directory', description: 'Discover your edge', icon: Compass, accent: 'text-cyan-300', position: 'right-0 top-[62%]' },
+  { label: 'Marketing', href: '/marketing', description: 'Grow your reach', icon: Megaphone, accent: 'text-rose-300', position: 'left-[8%] top-[81%]' },
+]
 
 const WHY_AIBEAT = [
   {
@@ -151,27 +159,32 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="relative hidden min-h-[560px] lg:block" aria-hidden="true">
-            <div className="absolute left-1/2 top-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-300/15 bg-cyan-300/[0.03]" />
-            <div className="hero-orbit absolute left-1/2 top-1/2 h-[22rem] w-[22rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-purple-300/15" />
-            <div className="hero-core absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-300 p-px shadow-[0_0_120px_rgba(34,211,238,0.28)]">
+          <nav className="relative hidden min-h-[560px] lg:block" aria-label="Explore AIBeat">
+            <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-300/15 bg-cyan-300/[0.03]" />
+            <div aria-hidden="true" className="pointer-events-none hero-orbit absolute left-1/2 top-1/2 h-[22rem] w-[22rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-purple-300/15" />
+            <div aria-hidden="true" className="pointer-events-none hero-core absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-300 p-px shadow-[0_0_120px_rgba(34,211,238,0.28)]">
               <div className="flex h-full w-full items-center justify-center rounded-full bg-[#080A10]">
                 <Zap className="h-16 w-16 text-cyan-200" />
               </div>
             </div>
-            {['Agents', 'News', 'Launches', 'Tools', 'Founders'].map((label, index) => (
-              <div
+            {ORBIT_LINKS.map(({ label, href, description, icon: Icon, accent, position }) => (
+              <Link
                 key={label}
-                className="absolute rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-slate-200 shadow-2xl backdrop-blur"
-                style={{
-                  left: `${18 + (index % 2) * 58}%`,
-                  top: `${10 + index * 17}%`,
-                }}
+                href={href}
+                aria-label={`Explore ${label}`}
+                className={`group absolute z-10 flex items-center gap-3 rounded-2xl border border-white/[0.14] bg-gradient-to-br from-[#1b2732]/95 to-[#0b111b]/95 p-3 shadow-[0_12px_32px_rgba(0,0,0,0.3)] backdrop-blur-xl transition duration-200 hover:border-cyan-200/40 hover:shadow-[0_12px_40px_rgba(34,211,238,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200 focus-visible:ring-offset-4 focus-visible:ring-offset-[#080A10] motion-safe:hover:-translate-y-1 ${position}`}
               >
-                {label}
-              </div>
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] ${accent}`}>
+                  <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={1.7} />
+                </span>
+                <span>
+                  <span className="block text-sm font-semibold tracking-wide text-white">{label}</span>
+                  <span className="mt-0.5 block text-[11px] text-slate-400">{description}</span>
+                </span>
+                <ArrowUpRight aria-hidden="true" className="ml-1 h-3.5 w-3.5 text-slate-500 transition-colors group-hover:text-cyan-200 group-focus-visible:text-cyan-200" />
+              </Link>
             ))}
-          </div>
+          </nav>
         </div>
       </section>
 
