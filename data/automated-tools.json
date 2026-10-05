@@ -173,5 +173,29 @@
     "logo": "#2563eb",
     "logoInitials": "P",
     "alternatives": []
+  },
+  {
+    "slug": "build-or-skip",
+    "name": "Build or Skip",
+    "tagline": "Product opportunity research platform tracking public payment signals, tipping trends, and site intelligence for builders.",
+    "description": "Build or Skip is a product opportunity research tool designed for independent developers and startup teams. It monitors public payment signals, Buy Me a Coffee tipping data, domain metrics, and backlink resources to help creators evaluate commercial momentum, discover growing software categories, and validate product ideas before building.",
+    "category": "Business",
+    "pricing": "Free preview available. Pro Monthly is $19/month, and Pro Yearly is $15.83/month ($190 billed annually).",
+    "pricingType": "freemium",
+    "pros": [
+      "Tracks public payment signals, tipping data, and domain metrics to surface viable software opportunities",
+      "Provides MCP protocol support and an API for dataset discovery and domain intelligence"
+    ],
+    "cons": [
+      "Payment signals represent research estimates rather than verified customer counts or financial revenue",
+      "Full access to rankings, backlink databases, and advanced filtering requires a paid Pro plan"
+    ],
+    "websiteUrl": "https://buildorskip.dev/",
+    "affiliateUrl": "https://buildorskip.dev/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "BO",
+    "alternatives": []
   }
 ]
