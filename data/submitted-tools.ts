@@ -5,6 +5,110 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "fiscus-ai",
+  "name": "FISCUS AI",
+  "tagline": "Manage Turkish SME finance workflows with human-reviewed AI suggestions",
+  "description": "FISCUS AI combines pre-accounting, e-document preparation and status tracking, bank reconciliation, collections, and cash-flow visibility for Turkish SMEs. AI matching and classification suggestions require human review and do not themselves create official accounting records or tax filings. Live document transmission and bank synchronization depend on the plan, permissions, and provider readiness.",
+  "category": "Business",
+  "logo": "#0f766e",
+  "logoInitials": "FA",
+  "pricing": "14-day free trial · Launch pricing from ₺1,999/month; standard entry price ₺3,998/month",
+  "pricingType": "paid",
+  "websiteUrl": "https://fiscusai.org/",
+  "pros": [
+    "Shared invoice, collection, and bank workflows",
+    "Human approval for AI suggestions",
+    "Auditable transaction history"
+  ],
+  "cons": [
+    "Focused on Turkish business workflows",
+    "Bank connections and live document transmission are conditional",
+    "Paid subscription after trial"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://fiscusai.org/",
+  "alternatives": []
+},
+{
+  "slug": "ai-fruit-video",
+  "name": "AI Fruit Video",
+  "tagline": "Turn story prompts and character references into talking-fruit video clips",
+  "description": "AI Fruit Video creates short clips from story prompts, prepared fruit characters, and optional scene or character reference images. It includes story planning, image generation, and a browser-based MP4 merger. Available audio, resolution, and duration depend on the selected model. Signup includes 20 gift credits; subscriptions and one-time packs provide additional generation capacity.",
+  "category": "AI Video",
+  "logo": "#ea580c",
+  "logoInitials": "FV",
+  "pricing": "20 signup gift credits · Credit packs from $10/200 credits · Paid subscriptions available",
+  "pricingType": "freemium",
+  "websiteUrl": "https://aifruitvideo.com/",
+  "pros": [
+    "Prepared characters and scene references",
+    "Story planning and clip generation",
+    "Local browser MP4 merging"
+  ],
+  "cons": [
+    "Character consistency can vary between clips",
+    "Free visitor generations depend on availability and are watermarked",
+    "Credit usage varies by model and settings"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://aifruitvideo.com/",
+  "alternatives": []
+},
+{
+  "slug": "arvow",
+  "name": "Arvow",
+  "tagline": "Research, write, and publish SEO content with AI-assisted site workflows",
+  "description": "Arvow provides AI article writing, content editing, scheduled publishing, and technical SEO workflows for marketers and agencies. It also offers backlink exchange, AI-search visibility tracking, and Google Business Profile automation on eligible plans. Content and site changes need editorial oversight; search rankings and AI citations are not guaranteed. Subscription tiers vary by credits, websites, and included features.",
+  "category": "Marketing",
+  "logo": "#4f46e5",
+  "logoInitials": "AR",
+  "pricing": "Paid Solo, Business, and Ultimate subscriptions · Check current billing terms and promotional rates",
+  "pricingType": "paid",
+  "websiteUrl": "https://arvow.com/",
+  "pros": [
+    "Content research, writing, and publishing workflows",
+    "Technical SEO and internal-linking tools",
+    "Agency reporting and visibility features on eligible plans"
+  ],
+  "cons": [
+    "Features and usage depend on subscription tier",
+    "Generated content and automatic changes require review",
+    "No guaranteed rankings or AI-search citations"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://arvow.com/",
+  "alternatives": []
+},
+{
+  "slug": "photogenerai",
+  "name": "PhotoGenerAI",
+  "tagline": "Generate and edit images using text prompts and reference photos",
+  "description": "PhotoGenerAI is a browser-based image generator and editor for product scenes, portraits, illustrations, and visual concepts. Users can start from text or supply photos and reference images. It offers 10 free credits per week for its GPT Image 2 Low setting without requiring signup; advanced settings use purchased credits. Generated images are kept for 30 days, so users should download results they want to retain.",
+  "category": "AI Image",
+  "logo": "#7c3aed",
+  "logoInitials": "PG",
+  "pricing": "10 free credits per week for GPT Image 2 Low · Advanced settings use purchased credits",
+  "pricingType": "freemium",
+  "websiteUrl": "https://photogenerai.com/",
+  "pros": [
+    "Text generation and reference-guided photo edits",
+    "Free allowance without account creation",
+    "Multiple reference images supported"
+  ],
+  "cons": [
+    "Free credits do not roll over",
+    "Edits may change details that should remain unchanged",
+    "Generated image history expires after 30 days"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://photogenerai.com/",
+  "alternatives": []
+},
+{
   "slug": "shopchief",
   "name": "ShopChief",
   "tagline": "Coordinate ecommerce research, store content, SEO, and marketing with AI agents",
