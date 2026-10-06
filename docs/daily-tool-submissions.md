@@ -22,6 +22,8 @@ Start with Actions → Daily Tool Submissions → Run workflow → dry_run=true.
 
 ## Operation
 
+The Gemini reviewer makes at most three attempts for HTTP 429, 500, 502, 503, or 504, waiting 10 seconds before the second attempt and 30 seconds before the third. Each attempt retains its 90-second timeout. Other HTTP errors are returned immediately. Persistent failures remain pending for a later run; longer waits do not guarantee recovery from a provider outage.
+
 Review per-run summaries for approved tools, held IDs and failures. Contact data stays in Supabase/Gmail, not Git or uploaded artifacts. `held` records include a review reason. A `drafting` record with no matching draft needs manual reconciliation: inspect Gmail, then either record its draft ID and phase `complete`, or reset to `prepared` only after confirming no draft was sent or created. Completed records prevent re-creation even if a user sends or deletes the draft.
 
 To stop new daily processing, disable the workflow in GitHub Actions. Existing published listings and drafts are retained.

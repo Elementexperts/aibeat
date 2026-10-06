@@ -76,18 +76,24 @@ test('review request contains public page evidence only, never private form fiel
 
 test('temporary reviewer outages retry within a bound; authentication errors do not', async () => {
   const calls: number[] = []
+  const delays: number[] = []
+  const wait = async (ms: number) => { delays.push(ms) }
   const responses = [503, 429, 200]
   const fetcher = (async () => { const status = responses[calls.length]; calls.push(status); return new Response('{}', { status }) }) as typeof fetch
-  assert.equal((await fetchReviewWithRetry('https://example.com', {}, fetcher, async () => {})).status, 200)
+  assert.equal((await fetchReviewWithRetry('https://example.com', {}, fetcher, wait)).status, 200)
   assert.deepEqual(calls, [503, 429, 200])
+  assert.deepEqual(delays, [10000, 30000])
+  delays.length = 0
   let attempts = 0
   const permanent = (async () => { attempts++; return new Response('{}', { status: 403 }) }) as typeof fetch
-  assert.equal((await fetchReviewWithRetry('https://example.com', {}, permanent, async () => {})).status, 403)
+  assert.equal((await fetchReviewWithRetry('https://example.com', {}, permanent, wait)).status, 403)
   assert.equal(attempts, 1)
+  assert.deepEqual(delays, [])
   attempts = 0
   const outage = (async () => { attempts++; return new Response('{}', { status: 503 }) }) as typeof fetch
-  assert.equal((await fetchReviewWithRetry('https://example.com', {}, outage, async () => {})).status, 503)
+  assert.equal((await fetchReviewWithRetry('https://example.com', {}, outage, wait)).status, 503)
   assert.equal(attempts, 3)
+  assert.deepEqual(delays, [10000, 30000])
 })
 
  test('email addresses cannot be published as product names', async () => {

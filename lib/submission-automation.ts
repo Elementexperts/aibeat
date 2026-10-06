@@ -76,7 +76,8 @@ export async function fetchReviewWithRetry(url: string, init: RequestInit, fetch
     const response = await fetchImpl(url, { ...init, signal: AbortSignal.timeout(90000) })
     if (attempt >= 2 || ![429, 500, 502, 503, 504].includes(response.status)) return response
     await response.body?.cancel()
-    await wait(2000 * (attempt + 1))
+    // Give transient capacity failures time to recover: 10s, then 30s.
+    await wait(10000 * (3 ** attempt))
   }
 }
 export async function collectProductEvidence(url: string): Promise<EvidencePage[]> {
