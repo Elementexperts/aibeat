@@ -5,6 +5,58 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "tecadrise-bot",
+  "name": "TecAdRise Bot",
+  "tagline": "Run configurable AI agents in a local Windows desktop workspace",
+  "description": "TecAdRise Bot is an open-source Windows desktop application built on the Cursor SDK. It supports multiple agents with separate workspaces, shared memory, MCP connections, inter-agent messages, and scheduled routines. The software is MIT licensed and free to install, while Cursor API usage is billed separately. Setup requires Node.js, npm, and a Cursor API key.",
+  "category": "AI Agents",
+  "logo": "#2563eb",
+  "logoInitials": "TB",
+  "pricing": "Free MIT-licensed software; Cursor API usage billed separately",
+  "pricingType": "free",
+  "websiteUrl": "https://tecadrise.ai/products/tecadrisebot",
+  "pros": [
+    "Configurable agents and local workspaces",
+    "Shared memory and scheduled routines",
+    "Open-source MIT license"
+  ],
+  "cons": [
+    "Windows 10/11 required",
+    "Technical setup and a Cursor API key required",
+    "Model usage incurs separate API charges"
+  ],
+  "rating": null,
+  "featured": true,
+  "affiliateUrl": "https://tecadrise.ai/products/tecadrisebot",
+  "alternatives": []
+},
+{
+  "slug": "softsync-ai",
+  "name": "SoftSync AI",
+  "tagline": "Connect customer records, email, meeting notes, and AI-assisted sales workflows",
+  "description": "SoftSync AI combines customizable CRM records, email campaigns, scheduling, reports, and meeting notes. Its AI Assistant, Autopilot workflows, API, and MCP access connect automation to customer data. A Mac and Windows desktop recorder captures meetings without a bot joining the call. Paid plans share core features, with different workspace and usage limits; review current trial terms at checkout.",
+  "category": "Business",
+  "logo": "#7c3aed",
+  "logoInitials": "SA",
+  "pricing": "Pro: $29/seat/month billed yearly or $39 monthly; trial terms shown at checkout",
+  "pricingType": "paid",
+  "websiteUrl": "https://softsync.ai/",
+  "pros": [
+    "Customer records and communication in one workspace",
+    "Desktop meeting capture without a joining bot",
+    "AI Assistant, Autopilot, API, and MCP access"
+  ],
+  "cons": [
+    "Per-seat subscription pricing",
+    "Usage and workspace limits vary by plan",
+    "Meeting capture requires the desktop app"
+  ],
+  "rating": null,
+  "featured": true,
+  "affiliateUrl": "https://softsync.ai/",
+  "alternatives": []
+},
+{
   "slug": "fiscus-ai",
   "name": "FISCUS AI",
   "tagline": "Manage Turkish SME finance workflows with human-reviewed AI suggestions",
