@@ -1,3 +1,4 @@
+import { appendFileSync } from 'node:fs'
 import { config as loadEnv } from 'dotenv'
 import { runDailyLeadDiscovery } from '../lib/daily-lead-discovery'
 
@@ -40,6 +41,7 @@ async function main() {
   })
 
   console.log(JSON.stringify(report, null, 2))
+  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Discovery: ${report.candidatesFound} candidates, ${report.qualifiedLeads} qualified, ${report.csvLeadsAdded} added to queue; dry-run=${report.dryRun}.\n\n`)
 }
 
 main().catch((err) => {

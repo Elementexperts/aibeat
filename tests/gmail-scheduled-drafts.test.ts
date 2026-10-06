@@ -65,7 +65,7 @@ test('outreach draft uses approved spreadsheet facts, qualified metrics, and no 
   assert.match(draft.plainText, /around 10–15 tools each week/)
   assert.match(draft.plainText, /14 days/)
   assert.match(draft.plainText, /not guaranteed/)
-  assert.match(draft.key, /2026-W37/)
+  assert.match(draft.key, /^aibeat-outreach-spotlight-v1-/)
   assert.doesNotMatch(buildGenericMimeMessage(draft, { fromName: 'AIBeat', fromEmail: 'hello@aibeat.dev' }), /drafts\/send/)
 })
 
@@ -80,15 +80,14 @@ test('spreadsheet import rejects malformed addresses before any Gmail draft can 
   assert.deepEqual(imported.errors.map((item) => item.row), [2, 3])
 })
 
-test('scheduled Gmail outreach supports a batch of 120 individual drafts', () => {
+test('daily Gmail outreach has no fixed draft cap and Monday schedule is retired', () => {
   const script = readFileSync('scripts/create-gmail-outreach-drafts.ts', 'utf8')
-  const workflow = readFileSync('.github/workflows/monday-gmail-outreach-drafts.yml', 'utf8')
-
-  assert.match(script, /Math\.min\(120,/)
-  assert.match(script, /GMAIL_OUTREACH_DRAFT_LIMIT \|\| '120'/)
-  assert.match(workflow, /GMAIL_OUTREACH_DRAFT_LIMIT:.*'120'/)
+  const daily = readFileSync('.github/workflows/daily-lead-discovery.yml', 'utf8')
+  const monday = readFileSync('.github/workflows/monday-gmail-outreach-drafts.yml', 'utf8')
+  assert.match(script, /Number.POSITIVE_INFINITY/)
+  assert.match(daily, /npm run outreach:gmail-drafts/)
+  assert.doesNotMatch(monday, /schedule:|outreach:gmail-drafts/)
 })
-
 
 test('weekly selection includes newly prepended featured tools and excludes nonfeatured entries', () => {
   const tools = [tool(99), { ...tool(98), featured: false }, ...Array.from({ length: 9 }, (_, i) => tool(i + 1))]

@@ -29,14 +29,16 @@ export async function createGmailNewsletterDraft(input: { newsletter: LatestNews
   })
 }
 
-export async function createGmailDraft(input: { message: GmailDraftMessage; config: GmailDraftConfig; fetchImpl?: typeof fetch; updateExisting?: boolean }) {
+export async function createGmailDraft(input: { message: GmailDraftMessage; config: GmailDraftConfig; fetchImpl?: typeof fetch; updateExisting?: boolean; lookupOnly?: boolean; beforeCreate?: () => Promise<void> }) {
   const fetchImpl = input.fetchImpl ?? fetch
   const accessToken = await refreshGmailAccessToken(input.config, fetchImpl)
-  const existingDraftId = await findExistingDraft(accessToken, input.message.key, fetchImpl, input.updateExisting)
+  const existingDraftId = await findExistingDraft(accessToken, input.message.key, fetchImpl, input.updateExisting, input.message.to)
   if (existingDraftId && !input.updateExisting) return { created: false as const, draftId: existingDraftId, duplicate: true as const }
+  if (input.lookupOnly) throw new Error('Previous draft outcome is uncertain; manual reconciliation required.')
 
   const raw = buildGenericMimeMessage(input.message, input.config)
   const draftUrl = 'https://gmail.googleapis.com/gmail/v1/users/me/drafts'
+  await input.beforeCreate?.()
   const response = await fetchImpl(existingDraftId ? `${draftUrl}/${encodeURIComponent(existingDraftId)}` : draftUrl, {
     method: existingDraftId ? 'PUT' : 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
@@ -107,7 +109,7 @@ async function refreshGmailAccessToken(config: GmailDraftConfig, fetchImpl: type
   return result.access_token
 }
 
-async function findExistingDraft(accessToken: string, newsletterKey: string, fetchImpl: typeof fetch, matchLegacySuffix = false) {
+async function findExistingDraft(accessToken: string, newsletterKey: string, fetchImpl: typeof fetch, matchLegacySuffix = false, recipient = '') {
   let pageToken: string | undefined
   do {
     const query = new URLSearchParams({ maxResults: '50' })
@@ -117,12 +119,17 @@ async function findExistingDraft(accessToken: string, newsletterKey: string, fet
     const listed = await list.json() as { drafts?: Array<{ id?: string }>; nextPageToken?: string }
     for (const draft of listed.drafts ?? []) {
       if (!draft.id) continue
-      const response = await fetchImpl(`https://gmail.googleapis.com/gmail/v1/users/me/drafts/${encodeURIComponent(draft.id)}?format=metadata&metadataHeaders=X-AIBeat-Newsletter-Key`, { headers: { Authorization: `Bearer ${accessToken}` } })
+      const response = await fetchImpl(`https://gmail.googleapis.com/gmail/v1/users/me/drafts/${encodeURIComponent(draft.id)}?format=metadata&metadataHeaders=X-AIBeat-Newsletter-Key&metadataHeaders=To`, { headers: { Authorization: `Bearer ${accessToken}` } })
       if (response.status === 404) continue // A draft can be deleted while scanning.
       if (!response.ok) throw new Error(`Gmail draft inspection failed (${response.status}).`)
       const detail = await response.json() as { message?: { payload?: { headers?: Array<{ name?: string; value?: string }> } } }
       const match = detail.message?.payload?.headers?.some((header) => header.name?.toLowerCase() === 'x-aibeat-newsletter-key' && (header.value === newsletterKey || (matchLegacySuffix && header.value?.startsWith(`${newsletterKey}-`))))
       if (match) return draft.id
+      // Migrate earlier weekly outreach drafts without creating another message.
+      const headers = detail.message?.payload?.headers || []
+      const oldKey = headers.find(h => h.name?.toLowerCase() === 'x-aibeat-newsletter-key')?.value || ''
+      const to = headers.find(h => h.name?.toLowerCase() === 'to')?.value?.trim().toLowerCase()
+      if (newsletterKey.startsWith('aibeat-outreach-spotlight-v1-') && /^aibeat-gmail-outreach-\d{4}-W\d{2}-/.test(oldKey) && to === recipient.trim().toLowerCase()) return draft.id
     }
     pageToken = listed.nextPageToken
   } while (pageToken)

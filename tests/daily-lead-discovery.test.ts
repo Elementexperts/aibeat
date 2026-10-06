@@ -315,3 +315,14 @@ test('archived tools are not rediscovered under a different email the next week'
   assert.ok(report.skipped.some(row => row.reason === 'Tool already queued or archived.'))
   assert.equal(readLeadRows(path).length, 0)
 })
+
+test('archiving a successful draft preserves malformed rows verbatim', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'aibeat-invalid-'))
+  const path = join(dir, 'leads.csv')
+  const header = 'website,email,source,tool_name'
+  const invalid = 'not a website,hello@one.test,Daily,Broken'
+  writeFileSync(path, `${header}\none.test,hello@one.test,Daily,One\n${invalid}\n`)
+  const lead = parseDailyManualLeads(`${header}\none.test,hello@one.test,Daily,One`).leads[0]
+  completeLeadBatch(path, [lead])
+  assert.equal(readFileSync(path, 'utf8'), `${header}\n${invalid}\n`)
+})

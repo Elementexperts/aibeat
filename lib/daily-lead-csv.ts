@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, mkdirSync, writeFileSync, renameSync } from 'node:fs'
 import { dirname } from 'node:path'
-import { csvRows, splitCsvLine } from './daily-manual-outreach-leads'
+import { csvRows, splitCsvLine, parseDailyManualLeads } from './daily-manual-outreach-leads'
 import type { OutreachLead } from './outreach-types'
 
 const columns = ['website', 'email', 'source', 'tool_name', 'category', 'personalized_opening', 'product_benefit', 'public_contact_source_url', 'discovered_at', 'contact_verified_at', 'discovery_run_id', 'outreach_drafted_at']
@@ -37,7 +37,7 @@ export function toolIdentity(website: string | undefined): string {
   try { return new URL(website?.includes('://') ? website : `https://${website}`).hostname.toLowerCase().replace(/^www\./, '') } catch { return '' }
 }
 // Archive first; a crash before queue replacement is recoverable from history.
-// Call only after the entire selected Gmail batch succeeds (or deduplicates).
+// Called per successful draft; malformed rows must remain available for repair.
 export function completeLeadBatch(path: string, completed: OutreachLead[], now = new Date()) {
   const historyPath = leadHistoryPath(path)
   appendDailyLeadCsv(historyPath, completed, now.toISOString())
@@ -47,7 +47,10 @@ export function completeLeadBatch(path: string, completed: OutreachLead[], now =
   const lines = original.trimEnd().split(/\r?\n/)
   const emailIndex = splitCsvLine(lines[0]).map(key => key.toLowerCase()).indexOf('email')
   if (emailIndex < 0) throw new Error('Queue email column missing')
-  const remaining = lines.slice(1).filter(line => !archived.has((splitCsvLine(line)[emailIndex] || '').toLowerCase()))
+  const remaining = lines.slice(1).filter(line => {
+    if (parseDailyManualLeads(lines[0] + '\n' + line).errors.length) return true
+    return !archived.has((splitCsvLine(line)[emailIndex] || '').toLowerCase())
+  })
   if (remaining.length === lines.length - 1) return
   writeFileSync(path + '.tmp', [lines[0], ...remaining].join('\n') + '\n')
   renameSync(path + '.tmp', path)

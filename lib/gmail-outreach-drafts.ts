@@ -1,18 +1,10 @@
+import { createHash } from 'node:crypto'
 import type { OutreachLead } from './outreach-types'
 
 export type OutreachDraft = { to: string; subject: string; plainText: string; html: string; key: string }
 
 function escapeHtml(value: string) {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
-}
-
-function isoWeek(now: Date) {
-  const date = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-  const day = date.getUTCDay() || 7
-  date.setUTCDate(date.getUTCDate() + 4 - day)
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1))
-  const week = Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
-  return `${date.getUTCFullYear()}-W${String(week).padStart(2, '0')}`
 }
 
 export function buildOutreachDraft(lead: OutreachLead, now = new Date()): OutreachDraft {
@@ -57,11 +49,11 @@ https://www.aibeat.dev
 hello@aibeat.dev`
   const paragraphs = plainText.split('\n\n').map((paragraph) => `<p style="margin:0 0 16px;line-height:1.6">${escapeHtml(paragraph).replace(submitUrl, `<a href="${submitUrl}">Submit ${escapeHtml(toolName)} to AIBeat</a>`).replace(/\n/g, '<br>')}</p>`).join('')
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:640px">${paragraphs}</div>`
-  const emailKey = Buffer.from(lead.email.toLowerCase()).toString('base64url').slice(0, 32)
-  return { to: lead.email, subject, plainText, html, key: `aibeat-gmail-outreach-${isoWeek(now)}-${emailKey}` }
+  const emailKey = createHash('sha256').update(lead.email.trim().toLowerCase()).digest('hex')
+  return { to: lead.email, subject, plainText, html, key: `aibeat-outreach-spotlight-v1-${emailKey}` }
 }
 
-// Newly discovered leads must not sit permanently beyond Monday's row limit.
+// New discoveries are reviewed first; unfinished queue entries remain eligible.
 // Undated manual rows preserve their existing relative order.
 export function selectOutreachLeads(leads: OutreachLead[], limit: number): OutreachLead[] {
   const timestamp = (lead: OutreachLead) => lead.discovered_at && Number.isFinite(Date.parse(lead.discovered_at)) ? Date.parse(lead.discovered_at) : 0

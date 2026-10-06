@@ -1,57 +1,10 @@
-name: Monday Gmail Outreach Drafts
-
+name: Outreach Drafts — moved to daily discovery
 on:
-  schedule:
-    # 21:00 Asia/Tashkent (UTC+5).
-    - cron: '0 16 * * 1'
   workflow_dispatch:
-
-concurrency:
-  group: outreach-lead-queue
-  cancel-in-progress: false
-
+permissions:
+  contents: read
 jobs:
-  create-drafts:
+  moved:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-      - run: npm ci
-      - name: Create individual unsent outreach drafts
-        env:
-          GMAIL_OUTREACH_DRAFTS_ENABLED: ${{ vars.GMAIL_OUTREACH_DRAFTS_ENABLED || 'false' }}
-          GMAIL_OUTREACH_INPUT_PATH: data/outreach/daily-manual-leads.csv
-          GMAIL_OUTREACH_ROTATE_QUEUE: 'true'
-          GMAIL_OUTREACH_DRAFT_LIMIT: ${{ vars.GMAIL_OUTREACH_DRAFT_LIMIT || '120' }}
-          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
-          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
-          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
-          GMAIL_DRAFT_TO: ${{ vars.GMAIL_DRAFT_TO }}
-          GMAIL_FROM_NAME: ${{ vars.GMAIL_FROM_NAME || 'AIBeat' }}
-          GMAIL_FROM_EMAIL: ${{ vars.GMAIL_FROM_EMAIL }}
-        run: npm run outreach:gmail-drafts
-
-      - name: Persist outreach queue and history
-        if: success() && vars.GMAIL_OUTREACH_DRAFTS_ENABLED == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- data/outreach/daily-manual-leads.csv
-          if [ -f data/outreach/daily-manual-leads.history.csv ]; then
-            git add -- data/outreach/daily-manual-leads.history.csv
-          fi
-          if git diff --cached --quiet; then
-            echo "No outreach queue changes."
-            exit 0
-          fi
-          git commit -m "chore(outreach): sync weekly lead queue"
-          git pull --rebase --autostash origin main
-          git push origin HEAD:main
+      - run: echo 'Use AIBeat Daily Lead Discovery. It now owns discovery, drafts, and queue history.' >> "$GITHUB_STEP_SUMMARY"

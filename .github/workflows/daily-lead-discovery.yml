@@ -6,12 +6,12 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: Run discovery without writing leads to the Monday CSV
+        description: Run discovery without writing leads to the daily outreach queue
         required: true
         default: false
         type: boolean
       max_leads:
-        description: Maximum qualified leads to add to Monday CSV
+        description: Maximum qualified leads to add to daily outreach queue
         required: false
         default: '30'
 
@@ -22,7 +22,7 @@ concurrency:
 jobs:
   discover:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 90
     permissions:
       contents: write
 
@@ -45,7 +45,12 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      - name: Run outreach tests
+        run: node --import tsx --test tests/daily-outreach-drafts.test.ts tests/daily-lead-discovery.test.ts tests/gmail-scheduled-drafts.test.ts
+
       - name: Run daily lead discovery
+        id: discovery
+        continue-on-error: true
         env:
           KIT_API_KEY: ${{ secrets.KIT_API_KEY }}
           KIT_OUTREACH_TAG_ID: ${{ vars.KIT_OUTREACH_TAG_ID }}
@@ -67,12 +72,33 @@ jobs:
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://www.aibeat.dev' }}
         run: npm run leads:daily -- --max-leads "${DAILY_LEAD_DISCOVERY_MAX_LEADS}"
 
+      - name: Configure draft checkpoints
+        if: github.event_name == 'schedule' || inputs.dry_run != true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create daily individual Gmail drafts
+        id: drafts
+        if: github.event_name == 'schedule' || inputs.dry_run != true
+        continue-on-error: true
+        env:
+          GMAIL_OUTREACH_DRAFTS_ENABLED: ${{ vars.GMAIL_OUTREACH_DRAFTS_ENABLED || 'false' }}
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          GMAIL_FROM_NAME: AIBeat
+          GMAIL_FROM_EMAIL: ${{ vars.GMAIL_FROM_EMAIL || 'hello@aibeat.dev' }}
+          SUBMISSIONS_SUPABASE_URL: ${{ vars.SUBMISSIONS_SUPABASE_URL }}
+          SUBMISSIONS_SUPABASE_KEY: ${{ secrets.SUBMISSIONS_SUPABASE_KEY }}
+        run: npm run outreach:gmail-drafts
+
       - name: Persist outreach queue and history
         if: github.event_name == 'schedule' || inputs.dry_run != true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- data/outreach/daily-manual-leads.csv
+          git add -- data/outreach/daily-manual-leads.csv data/outreach/gmail-draft-ledger.json
           if [ -f data/outreach/daily-manual-leads.history.csv ]; then
             git add -- data/outreach/daily-manual-leads.history.csv
           fi
@@ -80,7 +106,7 @@ jobs:
             echo "No outreach queue changes."
             exit 0
           fi
-          git commit -m "chore(outreach): sync weekly lead queue"
+          git commit -m "chore(outreach): sync daily lead queue"
           git pull --rebase --autostash origin main
           git push origin HEAD:main
 
@@ -95,9 +121,11 @@ jobs:
             data/outreach/store.json
             data/outreach/daily-manual-leads.csv
             data/outreach/daily-manual-leads.history.csv
+            data/outreach/gmail-draft-ledger.json
           if-no-files-found: warn
 
       - name: Workflow summary
+        if: always()
         shell: bash
         run: |
           {
@@ -105,6 +133,10 @@ jobs:
             echo ""
             echo "- Schedule: daily at 04:00 UTC"
             echo "- Production sending: disabled"
-            echo "- CSV: verified leads committed for Monday; persistent tool/email history prevents repeats"
+            echo "- CSV: daily eligible leads and backlog prepared as individual unsent drafts; failures remain pending"
             echo "- Reports: uploaded as workflow artifacts"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report processing failures
+        if: always() && (steps.discovery.outcome == 'failure' || steps.drafts.outcome == 'failure')
+        run: exit 1
