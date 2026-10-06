@@ -197,5 +197,30 @@
     "logo": "#2563eb",
     "logoInitials": "BO",
     "alternatives": []
+  },
+  {
+    "slug": "refinely-human",
+    "name": "Refinely Human",
+    "tagline": "AI text humanizer designed to adapt AI-generated content across field-specific audience profiles.",
+    "description": "Refinely Human transforms AI-generated text into humanized writing across 25 field-specific audience profiles, ranging from standard to PhD academic tone levels. It includes writing modes, AI detection checking, paraphrasing, and readability analysis tools.",
+    "category": "AI Writing",
+    "pricing": "Free tier with 300 words upon sign up without a credit card; paid subscription options available.",
+    "pricingType": "freemium",
+    "pros": [
+      "Provides 25 field-specific audience profiles and multiple tone levels from Standard to PhD",
+      "Offers 300 free words to start without requiring a credit card",
+      "Includes supplementary tools such as an AI detector, paraphraser, and readability checker"
+    ],
+    "cons": [
+      "Initial free allowance is limited to 300 words",
+      "Specific paid tier pricing figures are not detailed on the homepage"
+    ],
+    "websiteUrl": "https://www.refinelyhuman.com/",
+    "affiliateUrl": "https://www.refinelyhuman.com/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "RH",
+    "alternatives": []
   }
 ]
