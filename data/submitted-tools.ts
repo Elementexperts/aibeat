@@ -5,6 +5,32 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "productshot-ai",
+  "name": "ProductShot AI",
+  "tagline": "Turn product uploads into ecommerce photos and campaign visuals",
+  "description": "ProductShot AI creates white-background, studio, lifestyle, and marketplace images from uploaded product photos. Reference images and controls for scenes, lighting, and aspect ratios guide results. Product Lock aims to preserve key details, but generated labels and product accuracy still need review. Free credits support trials, with paid subscriptions and credit packs for more generation.",
+  "category": "AI Image",
+  "logo": "#0d9488",
+  "logoInitials": "PS",
+  "pricing": "Free trial credits and utilities; paid subscriptions and one-time credit packs available",
+  "pricingType": "freemium",
+  "websiteUrl": "https://productshotai.app/",
+  "pros": [
+    "Product uploads and optional visual references",
+    "Studio, lifestyle, and marketplace image workflows",
+    "Free background removal, compression, and enhancement tools"
+  ],
+  "cons": [
+    "Generated product details need review",
+    "Generation volume depends on credits",
+    "Commercial use depends on plan and provider terms"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://productshotai.app/",
+  "alternatives": []
+},
+{
   "slug": "tecadrise-bot",
   "name": "TecAdRise Bot",
   "tagline": "Run configurable AI agents in a local Windows desktop workspace",
