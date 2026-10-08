@@ -5,6 +5,110 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "zombieai",
+  "name": "ZombieAI",
+  "tagline": "Explore zombie reunion story prompts and an early-stage video studio",
+  "description": "ZombieAI provides public video examples, copyable storyboard prompts, and guides for fictional reunion stories using two reference photos. Prompts cover couples, friends, family, and pets for use with external AI video services. The site previews an in-site generator, but currently states that generation and payments are not open. Examples are supplied clips rather than results from uploaded photos.",
+  "category": "AI Video",
+  "logo": "#64748b",
+  "logoInitials": "ZA",
+  "pricing": "Free examples and prompts; in-site generation and paid packs are not yet available",
+  "pricingType": "free",
+  "websiteUrl": "https://zombieai.video/",
+  "pros": [
+    "Copyable story prompts",
+    "Guides and public video examples",
+    "Person and pet story concepts"
+  ],
+  "cons": [
+    "In-site generation and payments are not open",
+    "Creating videos requires an external service",
+    "Model support and likeness vary"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://zombieai.video/",
+  "alternatives": []
+},
+{
+  "slug": "aicoursify",
+  "name": "Aicoursify",
+  "tagline": "Create editable course lessons, quizzes, assignments, and slides with AI",
+  "description": "Aicoursify helps educators, coaches, and training teams turn topics into course outlines, written lessons, quizzes, assignments, and presentations. It also offers AI audio lessons and export workflows. A limited free course preview lets users explore generated material before purchasing. Paid plans provide different generation allowances; educators should review accuracy and teaching quality before publication.",
+  "category": "Education",
+  "logo": "#6366f1",
+  "logoInitials": "AC",
+  "pricing": "Limited free preview; Standard $49/month for 2 course generations; Pro $249/month for 100",
+  "pricingType": "paid",
+  "websiteUrl": "https://www.aicoursify.com/",
+  "pros": [
+    "Editable lessons and assessments",
+    "Slides and AI audio workflows",
+    "Course export options"
+  ],
+  "cons": [
+    "Free access is a limited preview",
+    "Course generation limits depend on plan",
+    "Generated teaching material needs editorial review"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://www.aicoursify.com/",
+  "alternatives": []
+},
+{
+  "slug": "gender-swap-ai",
+  "name": "Gender Swap AI",
+  "tagline": "Explore feminine, masculine, and androgynous portrait or character variations",
+  "description": "Gender Swap AI creates alternative looks from selfies, portraits, and character artwork. Users can upload a reference, select a target presentation, choose an optional art style, or supply a text prompt. The browser tool offers 10 free credits per week without signup for its low-quality generation option. Paid subscriptions and one-time credit packs unlock additional capacity and model settings.",
+  "category": "AI Image",
+  "logo": "#db2777",
+  "logoInitials": "GS",
+  "pricing": "10 free credits/week; subscriptions from $7/month billed annually; credit packs from $9",
+  "pricingType": "freemium",
+  "websiteUrl": "https://genderswapai.com/",
+  "pros": [
+    "Reference images and optional prompts",
+    "Multiple presentation and art-style choices",
+    "Weekly free credits without signup"
+  ],
+  "cons": [
+    "Free generation uses limited quality settings",
+    "Credit costs vary with quality",
+    "Generated likeness and details can vary"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://genderswapai.com/",
+  "alternatives": []
+},
+{
+  "slug": "gemini-nano-banana",
+  "name": "Gemini Nano Banana",
+  "tagline": "Generate and edit images and videos in an independent multi-model workspace",
+  "description": "Gemini Nano Banana is an independent browser workspace for text-to-image, reference-image editing, text-to-video, and image-to-video workflows. It offers a choice of models and controls for resolution, aspect ratio, and visual style. Generation uses credits, with subscriptions and credit packs available. This third-party service is not an official Google product; model capabilities and credit costs vary.",
+  "category": "AI Image",
+  "logo": "#f59e0b",
+  "logoInitials": "GN",
+  "pricing": "Paid credit-based plans and packs; Basic advertised from $6.99/month billed annually",
+  "pricingType": "paid",
+  "websiteUrl": "https://www.gemininanobanana.net/",
+  "pros": [
+    "Image creation and editing workflows",
+    "Video generation from prompts or images",
+    "Multiple models in one interface"
+  ],
+  "cons": [
+    "Independent service, not an official Google product",
+    "Credit use varies by model and settings",
+    "Outputs require review before commercial use"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://www.gemininanobanana.net/",
+  "alternatives": []
+},
+{
   "slug": "productshot-ai",
   "name": "ProductShot AI",
   "tagline": "Turn product uploads into ecommerce photos and campaign visuals",
