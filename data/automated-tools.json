@@ -222,5 +222,30 @@
     "logo": "#2563eb",
     "logoInitials": "RH",
     "alternatives": []
+  },
+  {
+    "slug": "remove-person-from-photo",
+    "name": "remove person from photo",
+    "tagline": "Browser-based AI inpainting tool to remove people and unwanted objects from photos using brush masks.",
+    "description": "AI Image Cleaner provides a browser-based photo cleanup tool to erase photobombers, background figures, and unwanted objects. Users upload an image in JPG, PNG, or WebP format, brush over targeted regions including shadows, and run AI inpainting to reconstruct the background without watermarks on trial downloads.",
+    "category": "AI Image",
+    "pricing": "Free to browse and paint; 10 starter credits (~5 cleans at 2 credits per clean) upon Google sign-in. No recurring free top-ups.",
+    "pricingType": "freemium",
+    "pros": [
+      "Runs entirely in the browser with no software installation required",
+      "Brush-precise masking allows targeted removal of people and shadows",
+      "Trial image downloads are provided without watermarks"
+    ],
+    "cons": [
+      "Requires Google sign-in to generate cleanup results",
+      "Free allocation is limited to 10 one-time starter credits with no recurring free reloads"
+    ],
+    "websiteUrl": "https://ai-image-cleaner.com/tools/remove-person-from-photo-online-free/",
+    "affiliateUrl": "https://ai-image-cleaner.com/tools/remove-person-from-photo-online-free/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "RP",
+    "alternatives": []
   }
 ]
