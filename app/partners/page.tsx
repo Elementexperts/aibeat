@@ -77,6 +77,23 @@ export default function PartnersPage() {
             </a>
             <div className="flex flex-wrap gap-3 sm:justify-end">
               <a
+                href="https://www.truetier.app/upvote/aibeat-dev?via=badge"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex max-w-full items-center rounded-2xl border border-white/10 bg-[#0d0f14] p-3 transition hover:border-cyan-300/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300"
+              >
+                {/* Keep the provider-hosted badge current with TrueTier's daily checks. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://www.truetier.app/badge.php?s=aibeat-dev&style=bar&theme=dark"
+                  alt="Checked daily by TrueTier"
+                  width={306}
+                  height={52}
+                  loading="lazy"
+                  className="h-auto max-w-full"
+                />
+              </a>
+              <a
                 href="https://launchstag.com"
                 target="_blank"
                 rel="noopener"

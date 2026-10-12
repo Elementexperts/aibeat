@@ -48,6 +48,14 @@ const FOOTER_GROUPS = [
 
 const FEATURED_BADGES = [
   {
+    href: 'https://www.truetier.app/upvote/aibeat-dev?via=badge',
+    label: 'Checked daily by TrueTier',
+    src: 'https://www.truetier.app/badge.php?s=aibeat-dev&style=bar&theme=dark',
+    width: 306,
+    height: 52,
+    tone: 'dark',
+  },
+  {
     href: 'https://launchbuff.com/products/aibeat-dev-1fg0lx',
     label: 'Featured on LaunchBuff',
     src: 'https://launchbuff.com/badge-featured-dark.svg',
