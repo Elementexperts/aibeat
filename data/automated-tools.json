@@ -1,5 +1,83 @@
 [
   {
+    "slug": "ai-pigeon-meme",
+    "name": "AI Pigeon Meme",
+    "tagline": "Turn a short line into a vertical video starring a whispering blue pigeon",
+    "description": "AI Pigeon Meme creates eight-second vertical videos featuring a blue pigeon. Users write a short English line, choose an expression, action and whisper direction, and optionally add burned-in captions. The browser-based tool generates 720p clips for download and sharing in group chats or social posts. Google sign-in and paid credits are required; finished videos remain private in the account for 90 days.",
+    "category": "AI Video",
+    "pricing": "Paid only: packs start at $4.90 for 20 credits; each video uses 10 credits. Monthly plans start at $9.90 for 60 credits. No free trial or signup credits.",
+    "pricingType": "paid",
+    "pros": [
+      "Simple controls for dialogue, expression and movement",
+      "Optional burned-in captions for vertical clips",
+      "One-time credit packs and monthly plans available"
+    ],
+    "cons": [
+      "Limited to one character style and eight-second clips",
+      "Exact voice and motion are not guaranteed",
+      "No free generation; stored videos expire after 90 days"
+    ],
+    "websiteUrl": "https://aipigeonmeme.com/",
+    "logo": "#38bdf8",
+    "logoInitials": "AP",
+    "affiliateUrl": "https://aipigeonmeme.com/",
+    "rating": null,
+    "featured": false,
+    "alternatives": []
+  },
+  {
+    "slug": "hotel-lobby-ai",
+    "name": "Hotel Lobby AI",
+    "tagline": "Create an orange-studio duet video from two portrait photos",
+    "description": "Hotel Lobby AI turns two portrait photos into a template-based duet performance in an orange studio. Users set performer positions, add optional movement instructions, and choose portrait or landscape output at 480p, 720p or 1080p. The default template is approximately 15 seconds long and includes its soundtrack. Results can be reviewed and downloaded as MP4 files. Users must have permission to use both portraits, and exact facial identity or gestures are not guaranteed.",
+    "category": "AI Video",
+    "pricing": "Paid prepaid credit packs; no subscription or free video generation. The default template costs 60 credits at 480p, 135 at 720p or 240 at 1080p. Check pack prices before purchase.",
+    "pricingType": "paid",
+    "pros": [
+      "Combines two portraits in one duet scene",
+      "Portrait and landscape formats with three quality options",
+      "Downloadable MP4 results and optional gesture directions"
+    ],
+    "cons": [
+      "Template-based performance limits scene control",
+      "No free video generation",
+      "Faces, gestures and soundtrack permissions require review before sharing"
+    ],
+    "websiteUrl": "https://aihotellobby.dev/",
+    "logo": "#f97316",
+    "logoInitials": "HL",
+    "affiliateUrl": "https://aihotellobby.dev/",
+    "rating": null,
+    "featured": false,
+    "alternatives": []
+  },
+  {
+    "slug": "distribb",
+    "name": "Distribb",
+    "tagline": "Research keywords, publish SEO content and track AI search visibility",
+    "description": "Distribb combines keyword research, AI article creation and scheduled CMS publishing with backlink exchange and AI search visibility tracking. Businesses can review content before publishing or enable automatic publishing through integrations such as WordPress, Webflow and Shopify. An AI agent handles research and content tasks, while higher-tier plans add managed video and social distribution. Its dashboards track search performance and AI citations; results depend on the content, site and market.",
+    "category": "Marketing",
+    "pricing": "Paid subscription with a seven-day free trial. Pro costs $97/month, or $79/month billed yearly at $948. Higher-tier managed distribution is available.",
+    "pricingType": "paid",
+    "pros": [
+      "Connects keyword research with article creation and CMS publishing",
+      "Supports approval before publication",
+      "Tracks AI citations alongside search performance"
+    ],
+    "cons": [
+      "Requires a subscription after the trial",
+      "Managed distribution is limited to higher-tier plans",
+      "Generated content and backlink placements need editorial review"
+    ],
+    "websiteUrl": "https://distribb.io/",
+    "logo": "#6366f1",
+    "logoInitials": "D",
+    "affiliateUrl": "https://distribb.io/",
+    "rating": null,
+    "featured": false,
+    "alternatives": []
+  },
+  {
     "slug": "marketowl",
     "name": "MarketOwl",
     "tagline": "AI marketer that creates strategies and executes multi-channel marketing campaigns.",
