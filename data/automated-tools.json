@@ -1,5 +1,57 @@
 [
   {
+    "slug": "bulin-47-ai",
+    "name": "Bulin 47 AI",
+    "tagline": "Turn one portrait into a ten-second freestyle video with a fixed performance template",
+    "description": "Bulin 47 AI is an independent fan-made photo-to-video tool. Users upload a portrait of themselves or a consenting adult to create a ten-second version of a fixed freestyle performance with its soundtrack. No prompt or reference-video upload is needed. Generated MP4 videos and unused generations are accessible through an account. The service is not affiliated with Bulin 47, and generation can change facial details, clothing and surrounding objects.",
+    "category": "AI Video",
+    "pricing": "One-time purchases: $9.90 for one generation or $19.90 for three. Each video uses one generation. No subscription or free video generation.",
+    "pricingType": "paid",
+    "pros": [
+      "Prepared performance template requires no prompt or video upload",
+      "Downloadable MP4 videos with audio",
+      "Unused purchased generations remain available in the account"
+    ],
+    "cons": [
+      "Fixed performance template limits creative control",
+      "Exact likeness and unchanged backgrounds are not guaranteed",
+      "Requires a photo of yourself or a consenting adult; public figures and children are excluded"
+    ],
+    "websiteUrl": "https://bulin47videos.com/",
+    "logo": "#ec4899",
+    "logoInitials": "B4",
+    "affiliateUrl": "https://bulin47videos.com/",
+    "rating": null,
+    "featured": false,
+    "alternatives": []
+  },
+  {
+    "slug": "creatorvault-ai",
+    "name": "CreatorVault AI",
+    "tagline": "AI prompts, workbooks and workflow resources for creators and business teams",
+    "description": "CreatorVault AI offers digital resource packages for creator strategy, B2B lead generation and customer support workflows. Creator Blueprint Pro includes workbooks, planning resources and AI prompts for audience discovery, content strategy and creator business planning. Separate packages cover prospect research, outreach sequences and support-ticket processes. Products are sold through Gumroad as resources and implementation guidance; users build and configure their own workflows rather than receiving a hosted automation application.",
+    "category": "Marketing",
+    "pricing": "One-time digital purchases on Gumroad: Creator Blueprint Pro starts at $29; B2B lead generation and customer support packages start at $49 each.",
+    "pricingType": "paid",
+    "pros": [
+      "Combines AI prompts with structured planning and workflow resources",
+      "Separate packages for creator, sales and support use cases",
+      "One-time purchases rather than recurring product subscriptions"
+    ],
+    "cons": [
+      "Resource packages require user implementation",
+      "Not a hosted CRM, ticketing system or autonomous agent",
+      "External AI or automation tools may be needed to implement workflows"
+    ],
+    "websiteUrl": "https://creatorvaultai.my.canva.site/creatorvault-ai-website-v1-0",
+    "logo": "#8b5cf6",
+    "logoInitials": "CV",
+    "affiliateUrl": "https://creatorvaultai.my.canva.site/creatorvault-ai-website-v1-0",
+    "rating": null,
+    "featured": false,
+    "alternatives": []
+  },
+  {
     "slug": "ai-pigeon-meme",
     "name": "AI Pigeon Meme",
     "tagline": "Turn a short line into a vertical video starring a whispering blue pigeon",
