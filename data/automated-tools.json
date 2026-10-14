@@ -377,5 +377,30 @@
     "logo": "#2563eb",
     "logoInitials": "RP",
     "alternatives": []
+  },
+  {
+    "slug": "freyavideo",
+    "name": "FreyaVideo",
+    "tagline": "Transform still photos into animated videos with multi-model AI generation.",
+    "description": "FreyaVideo's photo animation tool converts still pictures—such as portraits, landscapes, vintage photos, and product shots—into short videos. Users can apply preset motion effects or custom text prompts to guide movement, with support for multiple generation models, duration options, and native audio generation.",
+    "category": "AI Video",
+    "pricing": "First animation free without a credit card; paid credit packs start from $9.00 on a pay-per-use basis.",
+    "pricingType": "freemium",
+    "pros": [
+      "First animation is free with no credit card required",
+      "Pay-per-use credit packs eliminate recurring monthly subscription requirements",
+      "Supports multiple image types including portraits, product shots, and landscapes"
+    ],
+    "cons": [
+      "Full model selection and custom duration controls require purchasing credit packs",
+      "Free tier is restricted to 5-second generations on the default H3 Turbo model"
+    ],
+    "websiteUrl": "https://freyavideo.com/animate-photo",
+    "affiliateUrl": "https://freyavideo.com/animate-photo",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "F",
+    "alternatives": []
   }
 ]
