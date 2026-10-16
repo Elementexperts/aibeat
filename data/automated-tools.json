@@ -402,5 +402,83 @@
     "logo": "#2563eb",
     "logoInitials": "F",
     "alternatives": []
+  },
+  {
+    "cons": [
+      "Korean-language interface",
+      "Agent CLIs and accounts require separate setup",
+      "Agents run with permission prompts disabled; review actions and changes"
+    ],
+    "logo": "#2563eb",
+    "name": "orke",
+    "pros": [
+      "Terminal, web preview, and Git review in one workspace",
+      "Persistent sessions while the app stays running",
+      "Optional remote access to ongoing sessions"
+    ],
+    "slug": "orke",
+    "rating": null,
+    "pricing": "Free Windows download through Microsoft Store; external AI services and optional integrations have their own terms and costs.",
+    "tagline": "Bring coding-agent terminals, web previews, and Git review into one desktop workspace",
+    "category": "Developer Tools",
+    "featured": false,
+    "websiteUrl": "https://orke.bomtobe.com/",
+    "description": "orke is a desktop workspace for coding agents such as Claude Code and Codex. It combines terminal sessions, a web view, and Git change review so developers can inspect results alongside ongoing tasks. Sessions remain available while orke is running, and optional remote access lets users continue from another device. Agent CLIs and service authentication are configured separately. The interface is in Korean, and agents run with permission prompts disabled.",
+    "pricingType": "free",
+    "affiliateUrl": "https://orke.bomtobe.com/",
+    "alternatives": [],
+    "logoInitials": "O"
+  },
+  {
+    "cons": [
+      "Invitation-only early access",
+      "Public demo is scripted, not live AI",
+      "Live AI, WhatsApp, and billing require further setup or activation"
+    ],
+    "logo": "#2563eb",
+    "name": "MCHILS APEX AI",
+    "pros": [
+      "Knowledge and human conversation workflows in one workspace",
+      "Guided evaluation before deployment",
+      "Lead capture and follow-up workflows"
+    ],
+    "slug": "mchils-apex-ai",
+    "rating": null,
+    "pricing": "Three-day evaluation after manual approval. Starter reference rate: $40 USD/month; scope and activation confirmed separately. No self-service paid checkout.",
+    "tagline": "Early-access customer knowledge, human handoff, and lead follow-up workspace",
+    "category": "Business",
+    "featured": false,
+    "websiteUrl": "https://apps.mchilsebx.tech/apex/",
+    "description": "MCHILS APEX AI is an invitation-only business workspace for approved website and document knowledge, customer conversations, human handoff, and lead follow-up. A three-day guided evaluation is available after manual approval. Public demonstrations use scripted scenarios rather than live AI. Model-generated replies require separate provider setup and activation; official WhatsApp integration and automated billing are not yet active. Scope and rollout terms must be confirmed before a paid order.",
+    "pricingType": "paid",
+    "affiliateUrl": "https://apps.mchilsebx.tech/apex/",
+    "alternatives": [],
+    "logoInitials": "MA"
+  },
+  {
+    "cons": [
+      "Works on YouTube watch pages in desktop Chrome",
+      "Detection depends on language support and readable subtitles",
+      "Free allowance is limited to 10 successfully handled videos"
+    ],
+    "logo": "#2563eb",
+    "name": "subtitle.im",
+    "pros": [
+      "Local frame and text recognition",
+      "Automatic caption handling with restore controls",
+      "Pro supports channel and individual-video rules"
+    ],
+    "slug": "subtitle-im",
+    "rating": null,
+    "pricing": "10 successfully handled videos free in total; Pro $17.99/year or $29.99 lifetime. The free allowance does not reset monthly.",
+    "tagline": "Automatically manage YouTube captions and reduce duplicate subtitles with local OCR",
+    "category": "Productivity",
+    "featured": false,
+    "websiteUrl": "https://subtitle.im/en/",
+    "description": "subtitle.im is a desktop Chrome extension that enables available YouTube captions and detects burned-in subtitles using local frame sampling and OCR. It can hide duplicate switchable captions or follow preferences for different languages, with controls to restore captions. Video frames and subtitle text used for detection are processed locally. It does not generate, translate, download, or alter burned-in subtitles. Pro adds ongoing handling and channel or video rules.",
+    "pricingType": "freemium",
+    "affiliateUrl": "https://subtitle.im/en/",
+    "alternatives": [],
+    "logoInitials": "SI"
   }
 ]
