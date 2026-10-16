@@ -505,6 +505,7 @@
     "rating": null,
     "featured": false,
     "logo": "#2563eb",
-    "alternatives": []
+    "alternatives": [],
+    "logoUrl": "/logos/webhub.webp"
   }
 ]
