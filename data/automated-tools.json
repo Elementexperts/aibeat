@@ -484,15 +484,15 @@
   {
     "slug": "webhub",
     "name": "Webhub",
-    "tagline": "Build websites and manage content, search visibility, and lead capture with AI",
-    "description": "Webhub combines an AI website builder with content publishing, SEO and AI-search visibility tools, and lead-capture features. Its growth copilot helps with keyword planning, content generation, website text edits, and analytics reports. Businesses can start with templates or a prompt and manage forms and customer inquiries alongside their site. The public pricing page offers a 14-day trial; advertised growth examples are illustrative rather than verified customer results.",
+    "tagline": "AI-powered marketing and website growth with content, SEO, and lead capture",
+    "description": "Webhub is an AI-powered marketing and website growth platform for founders, marketers, and businesses. It combines website creation, AI-assisted content publishing and CMS, built-in SEO and AI-search visibility (AIO/GEO), and lead capture in one workflow. Its growth copilot supports keyword planning, content generation, website text edits, and analytics reports. Businesses can build from templates or a prompt and manage forms and customer inquiries alongside their site.",
     "category": "Marketing",
     "pricing": "14-day free trial; Starter advertised at $49/month. Confirm billing terms and current plan details at checkout.",
     "pricingType": "paid",
     "websiteUrl": "https://www.getwebhub.com/",
     "logoInitials": "WH",
     "pros": [
-      "Website creation and content tools in one platform",
+      "Website creation, AI-assisted content, and CMS in one workflow",
       "SEO and AI-search visibility features",
       "Lead-capture forms and growth reporting"
     ],
