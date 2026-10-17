@@ -507,5 +507,30 @@
     "logo": "#2563eb",
     "alternatives": [],
     "logoUrl": "/logos/webhub.webp"
+  },
+  {
+    "slug": "zombie-couple-video",
+    "name": "Zombie Couple Video",
+    "tagline": "Turn photos of two people into a cinematic AI zombie love story video.",
+    "description": "Zombie Couple Video Generator creates a 27-second 1080p video from 1 to 3 uploaded photos of two people. One person is portrayed as a human survivor and the other as an infected partner, following a narrative sequence that transitions into a happy memory. The tool supports portrait and landscape formats and includes background music and captions.",
+    "category": "AI Video",
+    "pricing": "$9.90 one-time payment per generated video.",
+    "pricingType": "paid",
+    "pros": [
+      "Generates a 27-second 1080p video with background music and captions",
+      "Requires no account registration or recurring subscription",
+      "Provides export options in both 9:16 portrait and 16:9 landscape aspect ratios"
+    ],
+    "cons": [
+      "No free generation tier or trial option available",
+      "Generated videos are not refundable once completed"
+    ],
+    "websiteUrl": "https://zombie-couple-video.com/",
+    "affiliateUrl": "https://zombie-couple-video.com/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "ZC",
+    "alternatives": []
   }
 ]
