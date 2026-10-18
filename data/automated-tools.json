@@ -532,5 +532,54 @@
     "logo": "#2563eb",
     "logoInitials": "ZC",
     "alternatives": []
+  },
+  {
+    "slug": "a2o-lite-neon-ai-dance-generator",
+    "name": "A2O LITE NEON AI Dance Generator",
+    "tagline": "Turn two portrait photos into a synchronized 15-second AI dance video",
+    "description": "A2O LITE NEON AI Dance Generator creates 15-second synchronized dance videos in a 16:9 widescreen format from two still portraits. Users can choose backdrops such as a white stage, purple glow, or practice room, or upload a custom stage. Output resolution options include 480p and 720p, with credits refunded if a generation fails.",
+    "category": "AI Video",
+    "pricing": "Paid credit packs start at $4.99 for 20 credits (1 video at 720p or 2 at 480p) up to $21.99 for 120 credits.",
+    "pricingType": "paid",
+    "pros": [
+      "Failed generations do not consume credits",
+      "Works in mobile and desktop browsers with no subscription required",
+      "Supports custom stage uploads and multiple preset backdrops"
+    ],
+    "cons": [
+      "Resolution is currently limited to a maximum of 720p",
+      "No free trial or free tier available"
+    ],
+    "websiteUrl": "https://a2oliteneonaidance.com/",
+    "affiliateUrl": "https://a2oliteneonaidance.com/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "AL",
+    "alternatives": []
+  },
+  {
+    "slug": "enzo-fernandez-celebration-ai",
+    "name": "Enzo Fernandez Celebration AI",
+    "tagline": "Turn portraits into vertical football celebration reaction videos.",
+    "description": "Enzo Fernandez Celebration AI converts a single front-facing photo of a person or pet into an eight-second vertical (9:16) 720p celebration video based on the hands-behind-ears pose. The web tool operates on a one-time credit system without recurring subscriptions, automatically refunding credits if a generation fails.",
+    "category": "AI Video",
+    "pricing": "Paid one-time credit packs starting at $4.99 for 1 credit up to $39.99 for 12 credits.",
+    "pricingType": "paid",
+    "pros": [
+      "Generates 8-second vertical celebration clips from a single photo of a person or pet",
+      "Credits are automatically refunded if a video generation fails or is canceled"
+    ],
+    "cons": [
+      "Outputs are restricted to a single celebration style and gesture",
+      "Video resolution is limited to 720p"
+    ],
+    "websiteUrl": "https://enzo-fernandez-celebration-ai.video/",
+    "affiliateUrl": "https://enzo-fernandez-celebration-ai.video/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "EF",
+    "alternatives": []
   }
 ]
