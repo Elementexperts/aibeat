@@ -5,6 +5,88 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "how-i-become-a-millionaire-ai",
+  "name": "How I Become a Millionaire AI",
+  "tagline": "Turn a portrait or pet photo into a short comedy meme video",
+  "description": "How I Become a Millionaire AI creates personalized versions of a fixed 13-second comedy skit from a portrait or pet photo. Users choose from ten backgrounds and export vertical MP4 videos in 480p or 720p, with additional square and silent versions. The original dialogue and on-screen caption remain fixed. It is an independent meme tool, not affiliated with OpenAI or ChatGPT; users need permission for their input images and should expect variable likeness.",
+  "category": "AI Video",
+  "logo": "#f59e0b",
+  "logoInitials": "MA",
+  "logoUrl": "/tool-logos/millionaire-ai.png",
+  "pricing": "One-time packs: $8.99 for 10 credits, $14.99 for 20, or $29.99 for 50; 480p uses 10 credits and 720p uses 20",
+  "pricingType": "paid",
+  "websiteUrl": "https://howibecomeamillionaireai.com/",
+  "pros": [
+    "Portrait and pet-photo inputs",
+    "Ten backgrounds and two output resolutions",
+    "Square and silent exports included"
+  ],
+  "cons": [
+    "Fixed 13-second template, dialogue and caption",
+    "Personalized generation requires paid credits",
+    "Likeness and lip movements can vary"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://howibecomeamillionaireai.com/",
+  "alternatives": []
+},
+{
+  "slug": "flippie-labs",
+  "name": "Flippie Labs",
+  "listingType": "service",
+  "tagline": "Commission custom dashboards, AI reporting and business web applications",
+  "description": "Flippie Labs is a B2B data and software studio offering custom dashboards, Power BI reporting, Excel automation, AI-written reporting commentary and KPI alerts. It also builds websites, interfaces and client portals around business data. Projects are scoped to a client’s requirements and quoted individually rather than sold as self-serve software. Optional ongoing support is available; the site also offers free browser utilities and business templates.",
+  "category": "Business",
+  "logo": "#0d9488",
+  "logoInitials": "FL",
+  "logoUrl": "/tool-logos/flippie-labs.png",
+  "pricing": "Custom fixed project quotes; focused Power BI dashboards typically start around €300–€600; optional ongoing support quoted separately",
+  "pricingType": "paid",
+  "websiteUrl": "https://flippielabs.com/",
+  "pros": [
+    "Custom reporting and data integrations",
+    "Dashboards, automation and web development in one engagement",
+    "Fixed project quote before work begins"
+  ],
+  "cons": [
+    "Service engagement rather than self-serve software",
+    "Pricing and delivery depend on project scope",
+    "Ongoing support and platform licensing may add costs"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://flippielabs.com/",
+  "alternatives": []
+},
+{
+  "slug": "novastart",
+  "name": "Novastart",
+  "tagline": "Organize apps, files and AI agents on a shared infinite canvas",
+  "description": "Novastart provides an infinite-canvas workspace for arranging applications and files, saving separate workspaces and working alongside AI agents. Its Team plan adds shared canvases with independent participant cursors and keyboards. A limited free plan includes one folder, two canvases and four windows per canvas. Pro and Team remove canvas limits, while AI-agent usage is billed separately on every plan. Installation is required; advertised agent and collaboration capabilities have not been independently tested by AIBeat.",
+  "category": "Productivity",
+  "logo": "#6366f1",
+  "logoInitials": "NS",
+  "logoUrl": "/tool-logos/novastart.png",
+  "pricing": "Free limited plan; Pro $10/month; Team $20/month; AI agents $0.02 per use with credit purchases from $25 on every plan",
+  "pricingType": "freemium",
+  "websiteUrl": "https://novastart.com/",
+  "pros": [
+    "Persistent canvases for apps and files",
+    "AI agents alongside existing workflows",
+    "Shared workspaces on the Team plan"
+  ],
+  "cons": [
+    "AI-agent credits are separate from subscription pricing",
+    "Free plan limits folders, canvases and windows",
+    "Team collaboration requires the Team plan"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://novastart.com/",
+  "alternatives": []
+},
+{
   "slug": "zombieai",
   "name": "ZombieAI",
   "tagline": "Explore zombie reunion story prompts and an early-stage video studio",

@@ -4,7 +4,7 @@ import { TOOLS, getFeaturedTools, getPopularTools, getToolRatingLabel, getToolPo
 import { SUBMITTED_TOOLS } from '../data/submitted-tools'
 
 test('reviewed submissions are unique listings with valid internal alternatives', () => {
-  assert.equal(SUBMITTED_TOOLS.length, 36)
+  assert.equal(SUBMITTED_TOOLS.length, 39)
   assert.equal(new Set(TOOLS.map(t => t.slug)).size, TOOLS.length)
   for (const tool of SUBMITTED_TOOLS) {
     assert.equal(TOOLS.filter(t => t.slug === tool.slug).length, 1)
@@ -55,4 +55,16 @@ test('ShopChief has one standard listing with factual signup credits and no inve
   assert.equal(tool.rating, null)
   assert.match(tool.pricing, /1,500 free signup credits/)
   assert.equal(tool.websiteUrl, 'https://shopchief.ai/')
+})
+
+
+test('October 19 submissions preserve standard placement and service identity', () => {
+  for (const slug of ['how-i-become-a-millionaire-ai', 'flippie-labs', 'novastart']) {
+    const tool = TOOLS.find(t => t.slug === slug)
+    assert.ok(tool)
+    assert.equal(tool.rating, null)
+    assert.equal(tool.featured, false)
+  }
+  assert.equal(TOOLS.find(t => t.slug === 'flippie-labs')?.listingType, 'service')
+  assert.match(TOOLS.find(t => t.slug === 'novastart')!.pricing, /every plan/)
 })
