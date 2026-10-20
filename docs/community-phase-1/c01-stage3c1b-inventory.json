@@ -1,0 +1,107 @@
+{
+  "databaseExecutionAuthorized": false,
+  "cases": [
+    {
+      "id": "01",
+      "name": "Valid invitation acceptance",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "02",
+      "name": "Wrong recipient rejection",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "03",
+      "name": "Unconfirmed email rejection",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "04",
+      "name": "Expired invitation rejection",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "05",
+      "name": "Revoked invitation rejection",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "06",
+      "name": "Duplicate acceptance",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "07",
+      "name": "Concurrent acceptance: both blocking orders",
+      "file": "acceptance-concurrency.spec / acceptance-concurrency-reverse.spec",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "08",
+      "name": "Retry after suspension",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "09",
+      "name": "Retry after membership removal",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "10",
+      "name": "Membership/invitation identity immutability",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "11",
+      "name": "Cross-tenant isolation",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "12",
+      "name": "Atomic rollback on final audit failure",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "13",
+      "name": "Audit actor attribution",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "14",
+      "name": "Receipt immutability",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "15",
+      "name": "Last-owner protection",
+      "file": "acceptance.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "16",
+      "name": "Existing post-migration C01 RLS regression",
+      "file": "../business-isolation.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    },
+    {
+      "id": "F1",
+      "name": "Stale-inviter reissue corrected contract (database validation pending)",
+      "file": "stale-inviter-reissue.sql",
+      "status": "PREPARED_NOT_EXECUTED"
+    }
+  ]
+}
