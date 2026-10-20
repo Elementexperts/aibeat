@@ -374,5 +374,8 @@
   "aibeat-outreach-spotlight-v1-4b1b33ced5f227c8678bf50f75017ec72cff5e1056e0310932d0f976249491fc": {
     "status": "complete",
     "draftId": "r-6159149152978679583"
+  },
+  "aibeat-outreach-spotlight-v1-fbebdd0041b6e4e75df7c5f1f80522c449f37702670dfb6d9b662292c0085cb5": {
+    "status": "reserved"
   }
 }
