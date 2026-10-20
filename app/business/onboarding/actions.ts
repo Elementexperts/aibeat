@@ -1,7 +1,8 @@
 'use server'
 
+import { cookies } from 'next/headers'
+import { BUSINESS_ORG_COOKIE, loadBusinessSession } from '@/lib/business/session-state'
 import { createClient } from '@/lib/supabase/server'
-import { workflowTemplates } from '@/lib/business/demo-data'
 import { sanitizeBusinessNext } from '@/lib/business/routes'
 import type { IndustryProfile } from '@/lib/business/types'
 
@@ -26,125 +27,43 @@ export async function completeBusinessOnboarding(formData: FormData): Promise<On
   const firstWorkflow = String(formData.get('firstWorkflow') ?? '').trim()
   const next = sanitizeBusinessNext(String(formData.get('next') ?? ''), '/business/dashboard')
 
-  if (!companyName || !industries[industry] || !companySizes.has(companySize) || !objective || !firstWorkflow) {
+  if (!companyName || companyName.length > 200 || !industries[industry] || !companySizes.has(companySize)
+    || !objective || objective.length > 1000 || !firstWorkflow || firstWorkflow.length > 200
+    || !Number.isFinite(paidTools) || paidTools < 0 || !Number.isFinite(monthlySpend) || monthlySpend < 0) {
     return { ok: false, error: 'Please complete all onboarding fields.' }
   }
 
   const supabase = createClient()
-  const { data: userData, error: userError } = await supabase.auth.getUser()
-  if (userError || !userData.user) return { ok: false, error: 'Please sign in again to finish onboarding.' }
-
-  const { data: existingMembership } = await supabase
-    .from('organization_members')
-    .select('organization_id')
-    .eq('user_id', userData.user.id)
-    .eq('status', 'ACTIVE')
-    .limit(1)
-    .maybeSingle()
-
-  if (existingMembership?.organization_id) {
-    return { ok: true, redirectTo: next }
+  const cookieName = process.env.AIBEAT_BUSINESS_ORG_COOKIE || BUSINESS_ORG_COOKIE
+  let session
+  try { session = await loadBusinessSession(supabase, cookies().get(cookieName)?.value) }
+  catch { return { ok: false, error: 'Unable to verify workspace membership or setup. Please try again.' } }
+  if (!session.user) return { ok: false, error: 'Please sign in again to finish onboarding.' }
+  if (session.context && !session.needsOnboarding) return { ok: true, redirectTo: next }
+  // The existing RPC selects the creator's earliest organization. Reject ambiguous
+  // legacy multi-owner setups rather than silently provisioning a different tenant.
+  if (session.context) {
+    const { data: owned, error } = await supabase.from('organizations').select('id')
+      .eq('created_by', session.user.id).order('created_at', { ascending: true })
+    if (error || !owned || owned[0]?.id !== session.context.organizationId) {
+      return { ok: false, error: 'Workspace setup needs an administrator review before it can continue.' }
+    }
   }
-
-  const employeeCount = companySizeToCount(companySize)
-  const primaryProfile = industries[industry]
-
-  // The RPC was added directly in Supabase production. Cast rpc here so the
-  // application can use it even if local generated Supabase types have not
-  // been regenerated yet.
-  const { data: organizationId, error: organizationError } = await (supabase.rpc as any)(
-    'create_business_organization',
-    {
-      p_name: companyName,
-      p_employee_count: employeeCount,
-      p_primary_profile: primaryProfile,
-      p_secondary_profiles: [],
-    },
-  )
-
+  // Creator ownership, template seeding, context and completion marker are one
+  // transaction. A failed seed leaves no half-created workspace; retries are safe.
+  const { data: organizationId, error: organizationError } = await supabase.rpc('complete_business_onboarding', {
+    p_name: companyName,
+    p_employee_count: companySizeToCount(companySize),
+    p_primary_profile: industries[industry],
+    p_first_workflow: firstWorkflow,
+    p_context: `Industry: ${industry}. First objective: ${objective}. First workflow: ${firstWorkflow}. Approximate paid AI tools: ${paidTools}. Estimated monthly AI spend: ${monthlySpend}.`,
+  })
   if (organizationError || !organizationId) {
-    console.error('Business organization provisioning failed', {
-      code: organizationError?.code,
-      message: organizationError?.message,
-      details: organizationError?.details,
-      hint: organizationError?.hint,
-      userId: userData.user.id,
-    })
-
-    return {
-      ok: false,
-      error: 'Unable to create your workspace. Please try again.',
-    }
+    console.error('Business onboarding failed', { code: organizationError?.code })
+    return { ok: false, error: 'Unable to finish your workspace setup. Please try again.' }
   }
 
-  const { error: workflowError } = await supabase
-    .from('workflows')
-    .insert(
-      workflowTemplates.map((template) => ({
-        organization_id: organizationId,
-        template_id: template.id,
-        name: template.name,
-        description: template.description,
-        agent_type: template.agentType,
-        trigger: template.trigger,
-        schedule: template.schedule,
-        inputs: template.inputs,
-        steps: template.steps,
-        required_integrations: template.requiredIntegrations,
-        approval_policy: template.approvalPolicy,
-        output_definition: template.outputDefinition,
-        status: template.name === firstWorkflow ? 'ACTIVE' : 'DRAFT',
-        version: template.version,
-        created_by: userData.user.id,
-      })),
-    )
-
-  if (workflowError) {
-    console.error('Unable to seed workflows', {
-      code: workflowError.code,
-      message: workflowError.message,
-      details: workflowError.details,
-      hint: workflowError.hint,
-      organizationId,
-      userId: userData.user.id,
-    })
-
-    return {
-      ok: false,
-      error: 'Workspace created, but workflow setup failed.',
-    }
-  }
-
-  const { error: contextError } = await supabase
-    .from('business_context_items')
-    .insert({
-      organization_id: organizationId,
-      domain: 'COMPANY_KNOWLEDGE',
-      category: 'ONBOARDING',
-      title: 'Onboarding setup',
-      content: `Industry: ${industry}. First objective: ${objective}. First workflow: ${firstWorkflow}. Approximate paid AI tools: ${paidTools}. Estimated monthly AI spend: ${monthlySpend}.`,
-      source: 'Onboarding',
-      provenance: 'Entered by organization owner during onboarding',
-      human_verified: true,
-      created_by: userData.user.id,
-    })
-
-  if (contextError) {
-    console.error('Unable to save onboarding context', {
-      code: contextError.code,
-      message: contextError.message,
-      details: contextError.details,
-      hint: contextError.hint,
-      organizationId,
-      userId: userData.user.id,
-    })
-
-    return {
-      ok: false,
-      error: 'Workspace created, but company context setup failed.',
-    }
-  }
-
+  cookies().set(cookieName, organizationId, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/' })
   return { ok: true, redirectTo: next }
 }
 

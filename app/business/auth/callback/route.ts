@@ -1,3 +1,4 @@
+import { invitationNext } from '@/lib/business/invitations'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sanitizeBusinessNext } from '@/lib/business/routes'
@@ -23,12 +24,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/business/reset-password', request.url))
   }
 
-  const { data: memberships } = await supabase
+  const { data: memberships, error: membershipError } = await supabase
     .from('organization_members')
     .select('id')
     .eq('user_id', data.user.id)
     .eq('status', 'ACTIVE')
     .limit(1)
 
-  return NextResponse.redirect(new URL(memberships?.length ? next : '/business/onboarding', request.url))
+  if (membershipError) return new NextResponse('Unable to verify workspace membership. Please try again.', { status: 503 })
+  return NextResponse.redirect(new URL(invitationNext(next) ?? (memberships?.length ? next : '/business/onboarding'), request.url))
 }

@@ -1,7 +1,9 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useMemo, useState, useTransition, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { selectBusinessOrganizationAction } from '@/app/business/actions'
+import { businessCapabilities, canDecideApproval, type ApprovalRefresh } from '@/lib/business/compatibility'
 import {
   Activity,
   AlertTriangle,
@@ -105,7 +107,7 @@ export function BusinessWorkspace({
   workflowId?: string
   initialData?: BusinessWorkspaceData
   onRunWorkflow?: (workflowId: string, input?: Record<string, unknown>) => Promise<{ run: WorkflowRun; approval?: Approval; finding?: AgentFinding }>
-  onDecideApproval?: (approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) => Promise<Approval>
+  onDecideApproval?: (approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) => Promise<ApprovalRefresh>
   onUploadDocument?: (formData: FormData) => Promise<BusinessDocumentIngestionResult>
   onUpdateIntegration?: (integrationId: string, action: 'disconnect' | 'reconnect' | 'mark-expired') => Promise<IntegrationConnection>
   onInviteMember?: (formData: FormData) => Promise<OrganizationMember>
@@ -121,7 +123,17 @@ export function BusinessWorkspace({
     if (mode === 'demo') return getBusinessWorkspaceData()
     throw new Error('Authenticated workspace data is required.')
   }, [initialData, mode])
-  const data = fallbackData
+  const [authoritative, setAuthoritative] = useState<ApprovalRefresh | null>(null)
+  const data = authoritative ? { ...fallbackData, auditEvents: authoritative.auditEvents } : fallbackData
+  const capabilities = businessCapabilities(data.viewerRole)
+  const [tenantError, setTenantError] = useState<string | null>(null)
+  const [tenantPending, setTenantPending] = useState(false)
+  const [approvalError, setApprovalError] = useState<string | null>(null)
+  const [approvalBusy, setApprovalBusy] = useState(false)
+  const approvalInFlight = useRef(false)
+  const closeApproval = useCallback(() => {
+    if (!approvalInFlight.current) { setSelectedApprovalId(null); setApprovalError(null) }
+  }, [])
   const isDemo = mode === 'demo'
   const [, startTransition] = useTransition()
   const [selectedProfile, setSelectedProfile] = useState<IndustryProfile>(data.organization.primaryProfile)
@@ -149,6 +161,7 @@ export function BusinessWorkspace({
   }
 
   function runWorkflow(id: string, input: Record<string, unknown> = {}) {
+    if (!isDemo && (!capabilities.write || !onRunWorkflow)) { setWorkflowError('Only an owner or admin can run workflows.'); return }
     const workflow = data.workflows.find((candidate) => candidate.id === id || candidate.templateId === id) ?? data.templates.find((candidate) => candidate.id === id)
     if (!workflow) return
     if (workflow.inputs.some((item) => item.required) && !Object.keys(input).length) {
@@ -177,20 +190,23 @@ export function BusinessWorkspace({
   }
 
   function resolveApproval(approval: Approval, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) {
-    if (!isDemo && onDecideApproval) {
+    if (!isDemo) {
+      if (approvalInFlight.current) return
+      if (!onDecideApproval || !canDecideApproval(data.viewerRole, approval)) {
+        setApprovalError('Your role is not authorized to decide this approval.'); return
+      }
+      approvalInFlight.current = true
+      setApprovalBusy(true); setApprovalError(null)
       startTransition(async () => {
-        const next = await onDecideApproval(approval.id, decision, editedContent)
-        setApprovals((current) => current.map((item) => (item.id === approval.id ? next : item)))
-        setRuns((current) => current.map((run) => {
-          if (run.id !== next.workflowRunId) return run
-          return {
-            ...run,
-            status: decision === 'REJECTED' ? 'FAILED' : 'COMPLETED',
-            completedAt: new Date().toISOString(),
-            resultSummary: decision === 'REJECTED' ? 'Workflow stopped after rejection.' : 'Workflow completed after approval.',
-          }
-        }))
-        setSelectedApprovalId(null)
+        try {
+          const result = await onDecideApproval(approval.id, decision, editedContent)
+          setAuthoritative(result)
+          setApprovals(result.approvals)
+          setRuns(result.runs)
+          setSelectedApprovalId(null)
+        } catch (error) {
+          setApprovalError(error instanceof Error ? error.message : 'Unable to resolve approval. Refresh and try again.')
+        } finally { approvalInFlight.current = false; setApprovalBusy(false) }
       })
       return
     }
@@ -292,10 +308,23 @@ export function BusinessWorkspace({
 
         <section className="min-w-0">
           {isDemo && <DemoNotice />}
+          {!isDemo && data.organizations.length > 1 && <label className="mb-4 block text-sm">Workspace
+            <select aria-label="Workspace" value={data.organization.id} disabled={tenantPending} className="ml-3 rounded bg-slate-800 p-2"
+              onChange={async event => {
+                setTenantPending(true); setTenantError(null)
+                try { await selectBusinessOrganizationAction(event.target.value); window.location.reload() }
+                catch (error) { setTenantError(error instanceof Error ? error.message : 'Unable to select workspace.'); setTenantPending(false) }
+              }}>
+              {data.organizations.map(org => <option key={org.id} value={org.id}>{org.name}</option>)}
+            </select>
+          </label>}
+          {tenantError && <p role="alert" className="text-rose-200">{tenantError}</p>}
+
+          {workflowError && <p role="alert" className="mb-4 text-rose-200">{workflowError}</p>}
           {route === 'dashboard' && <Dashboard data={data} approvals={approvals} runs={runs} onRunWorkflow={runWorkflow} onAskAIBeat={onAskAIBeat} onReviewApproval={setSelectedApprovalId} mode={mode} />}
           {route === 'ask' && <AskAIBeat onAsk={onAskAIBeat} demo={isDemo} />}
           {route === 'workflows' && <Workflows data={data} runs={runs} findings={findings} approvals={approvals} onReviewApproval={setSelectedApprovalId} onRunWorkflow={runWorkflow} mode={mode} error={workflowError} runningWorkflowId={runningWorkflowId} initialWorkflowSuggestion={initialWorkflowSuggestion} />}
-          {route === 'workflow-detail' && activeWorkflow && <WorkflowDetail workflow={activeWorkflow} runs={runs.filter((run) => run.workflowId === activeWorkflow.id)} onRunWorkflow={runWorkflow} mode={mode} />}
+          {route === 'workflow-detail' && activeWorkflow && <WorkflowDetail viewerRole={data.viewerRole} workflow={activeWorkflow} runs={runs.filter((run) => run.workflowId === activeWorkflow.id)} onRunWorkflow={runWorkflow} mode={mode} />}
           {route === 'agents' && (
             <Agents
               selectedProfile={selectedProfile}
@@ -305,7 +334,7 @@ export function BusinessWorkspace({
               mode={mode}
             />
           )}
-          {route === 'context' && <ContextView data={memoryData} onUploadDocument={onUploadDocument ? async (formData) => {
+          {route === 'context' && <ContextView data={memoryData} onUploadDocument={capabilities.write && onUploadDocument ? async (formData) => {
             const result = await onUploadDocument(formData)
             setMemoryData((current) => ({
               ...current,
@@ -321,13 +350,13 @@ export function BusinessWorkspace({
           {route === 'ai-stack' && <AIStack data={data} onTestAIConnection={onTestAIConnection} />}
           {route === 'recommendations' && <Recommendations data={data} />}
           {route === 'approvals' && <Approvals approvals={approvals} onReview={setSelectedApprovalId} mode={mode} />}
-          {route === 'integrations' && <Integrations data={data} onUpdateIntegration={onUpdateIntegration} mode={mode} />}
-          {route === 'reports' && <Reports data={data} runs={runs} onRunEvaluations={onRunEvaluations} mode={mode} />}
+          {route === 'integrations' && <Integrations data={data} onUpdateIntegration={capabilities.write ? onUpdateIntegration : undefined} mode={mode} />}
+          {route === 'reports' && <Reports data={data} runs={runs} onRunEvaluations={capabilities.write ? onRunEvaluations : undefined} mode={mode} />}
           {route === 'audit' && <Audit data={data} />}
-          {route === 'settings' && <SettingsView data={data} selectedProfile={selectedProfile} setSelectedProfile={setSelectedProfile} onInviteMember={onInviteMember} onUpdateMemberRole={onUpdateMemberRole} mode={mode} />}
+          {route === 'settings' && <SettingsView data={data} selectedProfile={selectedProfile} setSelectedProfile={setSelectedProfile} onInviteMember={capabilities.manageMembers ? onInviteMember : undefined} onUpdateMemberRole={capabilities.manageMembers ? onUpdateMemberRole : undefined} mode={mode} />}
         </section>
       </div>
-      <ApprovalModal approval={approvals.find((approval) => approval.id === selectedApprovalId)} open={Boolean(selectedApprovalId)} simulated={isDemo || data.aiRuntime.mode === 'mock' || approvals.find((approval) => approval.id === selectedApprovalId)?.targetSystem.toLowerCase().includes('simulat') === true} onClose={() => setSelectedApprovalId(null)} onDecide={resolveApproval} />
+      <ApprovalModal approval={approvals.find((approval) => approval.id === selectedApprovalId)} open={Boolean(selectedApprovalId)} simulated={isDemo || data.aiRuntime.mode === 'mock' || approvals.find((approval) => approval.id === selectedApprovalId)?.targetSystem.toLowerCase().includes('simulat') === true} error={approvalError} busy={approvalBusy} canDecide={isDemo || canDecideApproval(data.viewerRole, approvals.find(item => item.id === selectedApprovalId))} onClose={closeApproval} onDecide={resolveApproval} />
     </div>
   )
 }
@@ -388,7 +417,7 @@ function Dashboard({ data, approvals, runs, onRunWorkflow, onAskAIBeat, onReview
                 </div>
                 <button
                   type="button"
-                  disabled={workflow.status !== 'ACTIVE'}
+                  disabled={(mode !== 'demo' && !businessCapabilities(data.viewerRole).write) || workflow.status !== 'ACTIVE'}
                   onClick={() => onRunWorkflow(workflow.id)}
                   className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-400 px-3 py-2 text-sm font-black text-slate-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
                 >
@@ -652,7 +681,7 @@ function Workflows({ data, runs, findings, approvals, onReviewApproval, onRunWor
           <label className="mt-4 block max-w-xl text-sm font-semibold text-slate-200">Prospect website<input aria-label="Prepared prospect website" value={preparedLeadUrl} onChange={(event) => { setPreparedLeadUrl(event.target.value); setPreparedError(null) }} className="mt-2 w-full rounded-md border border-white/10 bg-[#101820] px-3 py-2.5 text-sm text-white" /></label>
           {preparedError && <p className="mt-2 text-sm text-rose-200">{preparedError}</p>}
           <div className="mt-4"><p className="text-sm font-semibold text-white">AIBeat will:</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-300"><li>Research the prospect&apos;s public website</li><li>Compare it against Business Memory and your ICP</li><li>Calculate qualification and confidence</li><li>Identify evidence, likely needs, and risks</li><li>Prepare the recommended next action</li><li>Stop at the approval boundary before external action</li></ul></div>
-          <div className="mt-5 flex flex-wrap gap-2"><Link href="/business/ask" className="rounded-md border border-white/15 px-4 py-2 text-sm font-black text-white">Back to Ask AIBeat</Link><button type="button" disabled={runningWorkflowId === 'tpl-lead-research' || !preparedLeadUrl.trim()} onClick={runPreparedLeadResearch} className="inline-flex items-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400"><Play className="h-4 w-4" />{runningWorkflowId === 'tpl-lead-research' ? 'Running…' : 'Run Lead Research'}</button></div>
+          <div className="mt-5 flex flex-wrap gap-2"><Link href="/business/ask" className="rounded-md border border-white/15 px-4 py-2 text-sm font-black text-white">Back to Ask AIBeat</Link><button type="button" disabled={(mode !== 'demo' && !businessCapabilities(data.viewerRole).write) || runningWorkflowId === 'tpl-lead-research' || !preparedLeadUrl.trim()} onClick={runPreparedLeadResearch} className="inline-flex items-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400"><Play className="h-4 w-4" />{runningWorkflowId === 'tpl-lead-research' ? 'Running…' : 'Run Lead Research'}</button></div>
         </div>}
         <h3 className="pt-2 text-sm font-black uppercase tracking-[0.16em] text-slate-400">Workflow Catalog</h3>
         {catalog.map((workflow) => (
@@ -670,7 +699,7 @@ function Workflows({ data, runs, findings, approvals, onReviewApproval, onRunWor
               </div>
               <div className="w-full max-w-sm space-y-2">
               {workflow.inputs.map((input) => <label key={input.key} className="block text-xs font-semibold text-slate-300">{input.label}<input aria-label={input.label} value={workflowInputs[workflow.id]?.[input.key] ?? ''} onChange={(event) => setWorkflowInputs((current) => ({ ...current, [workflow.id]: { ...current[workflow.id], [input.key]: event.target.value } }))} placeholder={input.key === 'leadUrl' ? 'example.com' : input.label} className="mt-1 w-full rounded-md border border-white/10 bg-[#101820] px-3 py-2 text-sm text-white placeholder:text-slate-500" /></label>)}
-              <button type="button" disabled={workflow.status !== 'ACTIVE' || runningWorkflowId === workflow.id || workflow.inputs.some((input) => input.required && !(workflowInputs[workflow.id]?.[input.key] ?? '').trim())} onClick={() => onRunWorkflow(workflow.id, workflowInputs[workflow.id] ?? {})} className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
+              <button type="button" disabled={(mode !== 'demo' && !businessCapabilities(data.viewerRole).write) || workflow.status !== 'ACTIVE' || runningWorkflowId === workflow.id || workflow.inputs.some((input) => input.required && !(workflowInputs[workflow.id]?.[input.key] ?? '').trim())} onClick={() => onRunWorkflow(workflow.id, workflowInputs[workflow.id] ?? {})} className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
                 <Play className="h-4 w-4" />
                 {runningWorkflowId === workflow.id ? 'Running…' : mode === 'demo' ? 'Simulate Manual Run' : 'Manual Run'}
               </button>
@@ -725,7 +754,7 @@ function LeadQualification({ finding, run }: { finding: AgentFinding; run?: Work
   </div>
 }
 
-function WorkflowDetail({ workflow, runs, onRunWorkflow, mode }: { workflow: ReturnType<typeof getBusinessWorkspaceData>['workflows'][number]; runs: WorkflowRun[]; onRunWorkflow: (id: string, input?: Record<string, unknown>) => void; mode: WorkspaceMode }) {
+function WorkflowDetail({ workflow, runs, onRunWorkflow, mode, viewerRole }: { viewerRole?: Role; workflow: ReturnType<typeof getBusinessWorkspaceData>['workflows'][number]; runs: WorkflowRun[]; onRunWorkflow: (id: string, input?: Record<string, unknown>) => void; mode: WorkspaceMode }) {
   const [inputs, setInputs] = useState<Record<string, string>>({})
   return (
     <div className="space-y-6">
@@ -738,7 +767,7 @@ function WorkflowDetail({ workflow, runs, onRunWorkflow, mode }: { workflow: Ret
           <Metric label="Approval Boundary" value={workflow.approvalPolicy.requiredForRisks.join(', ')} />
         </div>
         <div className="mt-5 max-w-md space-y-3">{workflow.inputs.map((input) => <label key={input.key} className="block text-xs font-semibold text-slate-300">{input.label}<input value={inputs[input.key] ?? ''} onChange={(event) => setInputs((current) => ({ ...current, [input.key]: event.target.value }))} className="mt-1 w-full rounded-md border border-white/10 bg-[#101820] px-3 py-2 text-sm text-white" /></label>)}</div>
-        <button type="button" disabled={workflow.status !== 'ACTIVE' || workflow.inputs.some((input) => input.required && !(inputs[input.key] ?? '').trim())} onClick={() => onRunWorkflow(workflow.id, inputs)} className="mt-5 inline-flex items-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
+        <button type="button" disabled={(mode !== 'demo' && !businessCapabilities(viewerRole).write) || workflow.status !== 'ACTIVE' || workflow.inputs.some((input) => input.required && !(inputs[input.key] ?? '').trim())} onClick={() => onRunWorkflow(workflow.id, inputs)} className="mt-5 inline-flex items-center gap-2 rounded-md bg-emerald-400 px-4 py-2 text-sm font-black text-slate-950 disabled:bg-slate-700 disabled:text-slate-400">
           <Play className="h-4 w-4" />
           {mode === 'demo' ? 'Simulate Workflow' : 'Run Workflow'}
         </button>
@@ -958,19 +987,24 @@ function Approvals({ approvals, onReview, mode }: { approvals: Approval[]; onRev
 function Integrations({ data, onUpdateIntegration, mode }: { data: ReturnType<typeof getBusinessWorkspaceData>; onUpdateIntegration?: (integrationId: string, action: 'disconnect' | 'reconnect' | 'mark-expired') => Promise<IntegrationConnection>; mode: WorkspaceMode }) {
   const [connectors, setConnectors] = useState(data.connectors)
   const [, startIntegrationTransition] = useTransition()
+  const [integrationError, setIntegrationError] = useState<string | null>(null)
   const pilot = connectors.filter((connector) => connector.pilotPriority <= 3)
   const remaining = connectors.filter((connector) => connector.pilotPriority > 3)
 
   function updateIntegration(integrationId: string, action: 'disconnect' | 'reconnect' | 'mark-expired') {
     if (!onUpdateIntegration) return
     startIntegrationTransition(async () => {
-      const connection = await onUpdateIntegration(integrationId, action)
-      setConnectors((current) => current.map((connector) => connector.id === integrationId ? { ...connector, connection, status: connection.status as IntegrationConnectionStatus, reconnectUrl: connection.reconnectUrl ?? connector.reconnectUrl } : connector))
+      setIntegrationError(null)
+      try {
+        const connection = await onUpdateIntegration(integrationId, action)
+        setConnectors((current) => current.map((connector) => connector.id === integrationId ? { ...connector, connection, status: connection.status as IntegrationConnectionStatus, reconnectUrl: connection.reconnectUrl ?? connector.reconnectUrl } : connector))
+      } catch (error) { setIntegrationError(error instanceof Error ? error.message : 'Unable to update integration.') }
     })
   }
 
   return (
     <Panel title="Expandable Connector Architecture" icon={Plug}>
+      {integrationError && <p role="alert" className="mb-4 text-rose-200">{integrationError}</p>}
       <div className="mb-5 grid gap-4 md:grid-cols-3">
         {pilot.map((connector) => (
           <div key={connector.id} className="rounded-lg border border-white/10 bg-black/20 p-4">
@@ -1010,15 +1044,21 @@ function Integrations({ data, onUpdateIntegration, mode }: { data: ReturnType<ty
 function Reports({ data, runs, onRunEvaluations, mode }: { data: ReturnType<typeof getBusinessWorkspaceData>; runs: WorkflowRun[]; onRunEvaluations?: () => Promise<AgentEvaluationResult[]>; mode: WorkspaceMode }) {
   const [evaluations, setEvaluations] = useState(data.evaluations ?? [])
   const [, startEvaluationTransition] = useTransition()
+  const [evaluationError, setEvaluationError] = useState<string | null>(null)
   const avg = (key: keyof Pick<AgentEvaluationResult, 'factuality' | 'relevance' | 'duplicateRate' | 'editRate'>) => evaluations.length ? Math.round((evaluations.reduce((sum, item) => sum + Number(item[key]), 0) / evaluations.length) * 100) : 0
   const totalCost = evaluations.reduce((sum, item) => sum + item.estimatedCostUsd, 0)
   const avgLatency = evaluations.length ? Math.round(evaluations.reduce((sum, item) => sum + item.latencyMs, 0) / evaluations.length) : 0
   function runEvaluations() {
     if (!onRunEvaluations) return
-    startEvaluationTransition(async () => setEvaluations(await onRunEvaluations()))
+    startEvaluationTransition(async () => {
+      setEvaluationError(null)
+      try { setEvaluations(await onRunEvaluations()) }
+      catch (error) { setEvaluationError(error instanceof Error ? error.message : 'Unable to run evaluations.') }
+    })
   }
   return (
     <Panel title="ROI / Performance Dashboard" icon={FileText}>
+      {evaluationError && <p role="alert" className="mb-4 text-rose-200">{evaluationError}</p>}
       <div className="grid gap-3 md:grid-cols-4">
         <Metric label="AI Spend" value={`${money.format(data.roi.aiSpendMonthly)} / month`} />
         <Metric label="Potential Savings" value={`${money.format(data.roi.potentialSavingsMonthly)} / month`} />
@@ -1085,22 +1125,29 @@ function SettingsView({
   mode: WorkspaceMode
 }) {
   const [members, setMembers] = useState(data.members ?? [])
-  const [, startMemberTransition] = useTransition()
-  const disabled = mode === 'demo'
+  const [memberPending, startMemberTransition] = useTransition()
+  const [memberError, setMemberError] = useState<string | null>(null)
+  const disabled = mode === 'demo' || !businessCapabilities(data.viewerRole).manageMembers || memberPending
 
   function inviteMember(formData: FormData) {
     if (!onInviteMember || disabled) return
     startMemberTransition(async () => {
-      const member = await onInviteMember(formData)
-      setMembers((current) => [member, ...current.filter((item) => item.id !== member.id)])
+      setMemberError(null)
+      try {
+        const member = await onInviteMember(formData)
+        setMembers((current) => [member, ...current.filter((item) => item.id !== member.id)])
+      } catch (error) { setMemberError(error instanceof Error ? error.message : 'Unable to invite member.') }
     })
   }
 
   function updateMemberRole(memberId: string, role: Role) {
     if (!onUpdateMemberRole || disabled) return
     startMemberTransition(async () => {
-      const member = await onUpdateMemberRole(memberId, role)
-      setMembers((current) => current.map((item) => item.id === member.id ? member : item))
+      setMemberError(null)
+      try {
+        const member = await onUpdateMemberRole(memberId, role)
+        setMembers((current) => current.map((item) => item.id === member.id ? member : item))
+      } catch (error) { setMemberError(error instanceof Error ? error.message : 'Unable to update member.') }
     })
   }
 
@@ -1128,6 +1175,7 @@ function SettingsView({
           <h3 className="font-black">Workspace Members</h3>
           <StatusBadge status={`${members.length} seats`} tone="cyan" />
         </div>
+        {memberError && <p role="alert" className="text-rose-200">{memberError}</p>}
         <form action={inviteMember} className="mt-4 grid gap-3 md:grid-cols-[1fr_180px_auto]">
           <input name="email" type="email" required placeholder="teammate@company.com" disabled={disabled || !onInviteMember} className="rounded-md border border-white/10 bg-[#101820] px-3 py-2 text-sm text-white placeholder:text-slate-500 disabled:cursor-not-allowed disabled:opacity-60" />
           <select name="role" defaultValue="MEMBER" disabled={disabled || !onInviteMember} className="rounded-md border border-white/10 bg-[#101820] px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60">

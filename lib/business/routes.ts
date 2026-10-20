@@ -10,7 +10,7 @@ export const BUSINESS_PUBLIC_PATHS = new Set([
   '/business/auth/callback',
 ])
 
-export const BUSINESS_AUTHENTICATED_PATHS = new Set(['/business/onboarding'])
+export const BUSINESS_AUTHENTICATED_PATHS = new Set(['/business/onboarding', '/business/invitations/accept'])
 
 export const BUSINESS_PRIVATE_PREFIXES = [
   '/business/dashboard',

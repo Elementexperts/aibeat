@@ -1,6 +1,11 @@
 'use server'
 
+import { assertBusinessRole } from '@/lib/business/security'
+
 import { revalidatePath } from 'next/cache'
+import { cookies } from 'next/headers'
+import { extractTextFromDocument } from '@/lib/business/document-ingestion'
+import { BUSINESS_ORG_COOKIE, loadBusinessSession } from '@/lib/business/session-state'
 import { getAuthenticatedBusinessContext } from '@/lib/business/server-auth'
 import { SupabaseBusinessDataStore } from '@/lib/business/supabase-store'
 import { createClient } from '@/lib/supabase/server'
@@ -38,6 +43,8 @@ export async function testBusinessAIConnectionAction() {
 
 export async function runBusinessWorkflowAction(workflowId: string, input: Record<string, unknown> = {}) {
   const auth = await getAuthenticatedBusinessContext()
+  // Match persisted workflow write policies; do not start work that RLS will reject.
+  assertBusinessRole(auth.role, ['OWNER', 'ADMIN'])
   const store = new SupabaseBusinessDataStore(createClient())
   const actor = { organizationId: auth.organizationId, userId: auth.userId }
   const template = getWorkflowTemplates().find((candidate) => candidate.id === workflowId)
@@ -49,14 +56,26 @@ export async function runBusinessWorkflowAction(workflowId: string, input: Recor
 
 export async function decideBusinessApprovalAction(approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) {
   const auth = await getAuthenticatedBusinessContext()
+  assertBusinessRole(auth.role, ['OWNER', 'ADMIN', 'MANAGER'])
   const store = new SupabaseBusinessDataStore(createClient())
-  const approval = await store.decideApproval({ organizationId: auth.organizationId, userId: auth.userId }, approvalId, decision, editedContent)
+  const result = await store.decideApprovalAndReload({ organizationId: auth.organizationId, userId: auth.userId }, approvalId, decision, editedContent)
   revalidateBusinessPaths()
-  return approval
+  return result
+}
+
+export async function selectBusinessOrganizationAction(organizationId: string) {
+  if (!organizationId) throw new Error('Choose an organization')
+  const session = await loadBusinessSession(createClient(), organizationId, true)
+  if (!session.user || !session.context) throw new Error('Organization access denied')
+  cookies().set(process.env.AIBEAT_BUSINESS_ORG_COOKIE || BUSINESS_ORG_COOKIE, session.context.organizationId,
+    { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/' })
+  revalidateBusinessPaths()
+  return { organizationId: session.context.organizationId }
 }
 
 export async function uploadBusinessDocumentAction(formData: FormData) {
   const auth = await getAuthenticatedBusinessContext()
+  assertBusinessRole(auth.role, ['OWNER', 'ADMIN'])
   const supabase = createClient()
   const store = new SupabaseBusinessDataStore(supabase)
   const file = formData.get('file')
@@ -66,13 +85,14 @@ export async function uploadBusinessDocumentAction(formData: FormData) {
   const source = String(formData.get('source') || 'Upload').trim()
   const sourceUrl = String(formData.get('sourceUrl') || '').trim() || undefined
   const bytes = Buffer.from(await file.arrayBuffer())
-  const storagePath = `${auth.organizationId}/${Date.now()}-${sanitizeStorageName(file.name || title)}`
+  extractTextFromDocument({ bytes, fileName: file.name, mimeType: file.type })
+  const storagePath = `${auth.organizationId}/${crypto.randomUUID()}-${sanitizeStorageName(file.name || title)}`
 
   const { error: uploadError } = await supabase.storage
     .from(BUSINESS_DOCUMENT_BUCKET)
     .upload(storagePath, bytes, {
       contentType: file.type || 'text/plain',
-      upsert: true,
+      upsert: false,
     })
 
   if (uploadError) throw new Error(`Unable to store document: ${uploadError.message}`)
@@ -100,6 +120,7 @@ export async function uploadBusinessDocumentAction(formData: FormData) {
 
 export async function updateBusinessIntegrationAction(integrationId: string, action: 'disconnect' | 'reconnect' | 'mark-expired') {
   const auth = await getAuthenticatedBusinessContext()
+  assertBusinessRole(auth.role, ['OWNER', 'ADMIN'])
   const store = new SupabaseBusinessDataStore(createClient())
   const actor = { organizationId: auth.organizationId, userId: auth.userId }
   const status = action === 'disconnect' ? 'DISCONNECTED' : action === 'mark-expired' ? 'TOKEN_EXPIRED' : 'RECONNECT_REQUIRED'
@@ -115,6 +136,7 @@ export async function updateBusinessIntegrationAction(integrationId: string, act
 
 export async function inviteBusinessMemberAction(formData: FormData) {
   const auth = await getAuthenticatedBusinessContext()
+  assertBusinessRole(auth.role, ['OWNER'])
   const store = new SupabaseBusinessDataStore(createClient())
   const email = String(formData.get('email') || '').trim()
   const role = String(formData.get('role') || 'MEMBER').trim()
@@ -126,6 +148,7 @@ export async function inviteBusinessMemberAction(formData: FormData) {
 
 export async function updateBusinessMemberRoleAction(memberId: string, role: string) {
   const auth = await getAuthenticatedBusinessContext()
+  assertBusinessRole(auth.role, ['OWNER'])
   const store = new SupabaseBusinessDataStore(createClient())
   const member = await store.updateMemberRole({ organizationId: auth.organizationId, userId: auth.userId }, memberId, role)
   revalidateBusinessPaths()
@@ -134,6 +157,7 @@ export async function updateBusinessMemberRoleAction(memberId: string, role: str
 
 export async function runAgentEvaluationHarnessAction() {
   const auth = await getAuthenticatedBusinessContext()
+  assertBusinessRole(auth.role, ['OWNER', 'ADMIN'])
   const store = new SupabaseBusinessDataStore(createClient())
   const evaluations = await store.runAgentEvaluationHarness({ organizationId: auth.organizationId, userId: auth.userId })
   revalidateBusinessPaths()

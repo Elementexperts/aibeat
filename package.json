@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/reddit/reddit-automation.test.ts tests/newsletter-attribution.test.ts tests/submitted-tools.test.ts tests/submission-automation.test.ts tests/public-form-email.test.ts tests/newsletter-request.test.ts tests/newsletter-unsubscribe.test.ts tests/latest-news-newsletter.test.ts tests/gmail-scheduled-drafts.test.ts tests/news-images.test.ts tests/kit-source-tags.test.ts tests/daily-lead-discovery.test.ts tests/daily-outreach-drafts.test.ts tests/betalist-outreach.test.ts tests/founder-services.test.ts tests/stripe-listing-packages.test.ts tests/linkedin-automation.test.ts tests/aibeat-business.test.ts tests/news-seo.test.ts tests/news-quality.test.ts tests/tool-seo.test.ts tests/seo-coverage.test.ts tests/newsletter-contacts.test.ts",
+    "test": "node --import tsx --test tests/reddit/reddit-automation.test.ts tests/newsletter-attribution.test.ts tests/submitted-tools.test.ts tests/submission-automation.test.ts tests/public-form-email.test.ts tests/newsletter-request.test.ts tests/newsletter-unsubscribe.test.ts tests/latest-news-newsletter.test.ts tests/gmail-scheduled-drafts.test.ts tests/news-images.test.ts tests/kit-source-tags.test.ts tests/daily-lead-discovery.test.ts tests/daily-outreach-drafts.test.ts tests/betalist-outreach.test.ts tests/founder-services.test.ts tests/stripe-listing-packages.test.ts tests/linkedin-automation.test.ts tests/aibeat-business.test.ts tests/c01-compatibility.test.ts tests/c01-invitation-acceptance.test.ts tests/news-seo.test.ts tests/news-quality.test.ts tests/tool-seo.test.ts tests/seo-coverage.test.ts tests/newsletter-contacts.test.ts",
     "kit:setup-source-tags": "tsx scripts/setup-kit-source-tags.ts",
     "news:daily": "tsx scripts/fetch-and-post.ts",
     "news:images": "tsx scripts/prepare-news-images.ts",
@@ -28,7 +28,9 @@
     "news:indexnow": "tsx scripts/notify-indexnow.ts",
     "audit:news": "tsx scripts/audit-news.ts",
     "test:seo-built": "node --import tsx --test tests/seo-built.test.ts",
-    "newsletter:contacts": "tsx scripts/sync-newsletter-contacts.ts"
+    "newsletter:contacts": "tsx scripts/sync-newsletter-contacts.ts",
+    "test:c01-e2e-harness": "node --test tests/c01-e2e-harness.test.cjs",
+    "test:c01-e2e-list": "playwright test --config tests/e2e/playwright.config.ts --list --reporter=list"
   },
   "dependencies": {
     "@google/genai": "^2.20.0",
@@ -50,6 +52,7 @@
     "tailwind-merge": "^2.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@types/node": "^20.12.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
@@ -59,6 +62,7 @@
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.3",
     "tsx": "^4.22.3",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "undici": "8.12.2"
   }
 }

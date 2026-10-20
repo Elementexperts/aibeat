@@ -1,111 +1,62 @@
+import { invitationNext } from './lib/business/invitations'
+import { copyBusinessCookies } from './lib/business/response-cookies'
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import {
-  isAuthenticatedBusinessPath,
-  isBusinessPath,
-  isPrivateBusinessPath,
-  isPublicBusinessPath,
-  sanitizeBusinessNext,
-} from './lib/business/routes'
-
-const CANONICAL_HOST = 'www.aibeat.dev'
+import { isAuthenticatedBusinessPath, isBusinessPath, isPrivateBusinessPath, sanitizeBusinessNext } from './lib/business/routes'
+import { businessHostRoute, isBusinessDatabaseEnvironmentAllowed } from './lib/business/compatibility'
+import { BUSINESS_ORG_COOKIE, loadBusinessSession } from './lib/business/session-state'
 
 export async function middleware(request: NextRequest) {
-  const host = request.headers.get('host')?.toLowerCase() || ''
-
-  if (host === 'aibeat.dev' || host.endsWith('.vercel.app')) {
+  const route = businessHostRoute(request.headers.get('host') || '', process.env)
+  if (route === 'deny') return new NextResponse('Unrecognized application environment or host.', { status: 421 })
+  if (route === 'canonical') {
     const url = request.nextUrl.clone()
-    url.protocol = 'https'
-    url.host = CANONICAL_HOST
+    url.protocol = 'https:'
+    url.host = 'www.aibeat.dev'
     return NextResponse.redirect(url, 308)
   }
-
-  if (isBusinessPath(request.nextUrl.pathname)) {
-    const response = NextResponse.next({ request })
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-
-    if (!isPrivateBusinessPath(request.nextUrl.pathname) && !isAuthenticatedBusinessPath(request.nextUrl.pathname)) {
-      if (request.nextUrl.pathname === '/business/sign-in' || request.nextUrl.pathname === '/business/sign-up') {
-        const auth = await getBusinessAuthState(request, response, supabaseUrl, supabaseKey)
-        if (auth.userId && auth.hasMembership) {
-          return NextResponse.redirect(new URL(sanitizeBusinessNext(request.nextUrl.searchParams.get('next')), request.url))
-        }
-        if (auth.userId && !auth.hasMembership) {
-          return NextResponse.redirect(new URL('/business/onboarding', request.url))
-        }
-      }
+  let response = NextResponse.next({ request })
+  const finish = (target: NextResponse) => copyBusinessCookies(response, target)
+  const path = request.nextUrl.pathname
+  const privatePath = isPrivateBusinessPath(path)
+  const onboarding = isAuthenticatedBusinessPath(path)
+  const authPage = path === '/business/sign-in' || path === '/business/sign-up'
+  if (!isBusinessPath(path) || (!privatePath && !onboarding && !authPage)) return response
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+    if (!isBusinessDatabaseEnvironmentAllowed(process.env)) throw new Error('Database environment mismatch')
+    if (!url || !key) throw new Error('Authentication configuration unavailable')
+    const client = createServerClient(url, key, { cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll: values => {
+        for (const { name, value } of values) request.cookies.set(name, value)
+        response = copyBusinessCookies(response, NextResponse.next({ request }))
+        for (const { name, value, options } of values) response.cookies.set(name, value, options)
+      },
+    } })
+    const cookieName = process.env.AIBEAT_BUSINESS_ORG_COOKIE || BUSINESS_ORG_COOKIE
+    const session = await loadBusinessSession(client, request.cookies.get(cookieName)?.value)
+    const redirect = (path: string) => finish(NextResponse.redirect(new URL(path, request.url)))
+    if (!session.user) {
+      if (authPage) return response
+      return redirect('/business/sign-in?next=' + encodeURIComponent(sanitizeBusinessNext(path + request.nextUrl.search)))
+    }
+    if (session.context) response.cookies.set(cookieName, session.context.organizationId, {
+      httpOnly: true, sameSite: 'lax', secure: request.nextUrl.protocol === 'https:', path: '/',
+    })
+    else response.cookies.delete(cookieName)
+    if (authPage) return redirect(invitationNext(request.nextUrl.searchParams.get('next')) ?? (session.needsOnboarding ? '/business/onboarding' : sanitizeBusinessNext(request.nextUrl.searchParams.get('next'))))
+    if (path === '/business/invitations/accept') return response
+    if (onboarding) {
+      if (!session.needsOnboarding) return redirect('/business/dashboard')
       return response
     }
-
-    if (!isPublicBusinessPath(request.nextUrl.pathname)) {
-      const auth = await getBusinessAuthState(request, response, supabaseUrl, supabaseKey)
-
-      if (!auth.userId) {
-        return redirectToBusinessSignIn(request)
-      }
-
-      if (isAuthenticatedBusinessPath(request.nextUrl.pathname)) {
-        if (auth.hasMembership && request.nextUrl.pathname === '/business/onboarding') {
-          return NextResponse.redirect(new URL(sanitizeBusinessNext(request.nextUrl.searchParams.get('next')), request.url))
-        }
-        return response
-      }
-
-      if (!auth.hasMembership) {
-        const url = new URL('/business/onboarding', request.url)
-        url.searchParams.set('next', sanitizeBusinessNext(`${request.nextUrl.pathname}${request.nextUrl.search}`))
-        return NextResponse.redirect(url)
-      }
-    }
-
+    if (!session.context) return redirect('/business/onboarding?next=' + encodeURIComponent(sanitizeBusinessNext(path + request.nextUrl.search)))
     return response
+  } catch {
+    return finish(new NextResponse('Unable to verify workspace access. Please try again.', { status: 503 }))
   }
-
-  return NextResponse.next()
 }
 
-export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)'],
-}
-
-function redirectToBusinessSignIn(request: NextRequest, error?: string) {
-  const url = request.nextUrl.clone()
-  url.pathname = '/business/sign-in'
-  url.search = ''
-  url.searchParams.set('next', sanitizeBusinessNext(`${request.nextUrl.pathname}${request.nextUrl.search}`))
-  if (error) url.searchParams.set('error', error)
-  return NextResponse.redirect(url)
-}
-
-async function getBusinessAuthState(request: NextRequest, response: NextResponse, supabaseUrl?: string, supabaseKey?: string) {
-  if (!supabaseUrl || !supabaseKey) {
-    return { userId: null, hasMembership: false }
-  }
-
-  const supabase = createServerClient(supabaseUrl, supabaseKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll()
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          request.cookies.set(name, value)
-          response.cookies.set(name, value, options)
-        })
-      },
-    },
-  })
-
-  const { data } = await supabase.auth.getUser()
-  if (!data.user) return { userId: null, hasMembership: false }
-
-  const { data: memberships, error } = await supabase
-    .from('organization_members')
-    .select('id')
-    .eq('user_id', data.user.id)
-    .eq('status', 'ACTIVE')
-    .limit(1)
-
-  return { userId: data.user.id, hasMembership: !error && Boolean(memberships?.length) }
-}
+export const config = { matcher: ['/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)'] }

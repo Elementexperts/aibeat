@@ -1,4 +1,6 @@
 'use server'
+import { invitationNext } from '@/lib/business/invitations'
+
 
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
@@ -51,6 +53,6 @@ export async function signUpBusinessUser(formData: FormData): Promise<SignUpResu
     return { ok: false, error: 'Unable to create an account with those details. Please try signing in or use a different work email.' }
   }
 
-  if (data.session) return { ok: true, status: 'signed-in', redirectTo: '/business/onboarding' }
+  if (data.session) return { ok: true, status: 'signed-in', redirectTo: invitationNext(next) ?? '/business/onboarding' }
   return { ok: true, status: 'check-email', email }
 }

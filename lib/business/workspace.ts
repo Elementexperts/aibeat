@@ -38,6 +38,7 @@ export function getBusinessWorkspaceData(organizationId = DEFAULT_DEMO_ORGANIZAT
 
   return {
     organization,
+    organizations: [{ id: organization.id, name: organization.name }],
     industryProfile: getIndustryProfile(organization.primaryProfile),
     industryLabel: INDUSTRY_PROFILE_LABELS[organization.primaryProfile],
     agents: Object.values(AGENT_REGISTRY),

@@ -5,7 +5,7 @@ import { AlertTriangle, X } from 'lucide-react'
 import { AGENT_REGISTRY } from '@/lib/business/agents'
 import type { Approval } from '@/lib/business/types'
 
-export function ApprovalModal({ approval, open, simulated, onClose, onDecide }: { approval?: Approval; open: boolean; simulated: boolean; onClose: () => void; onDecide: (approval: Approval, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) => void }) {
+export function ApprovalModal({ approval, open, simulated, onClose, onDecide, error, busy = false, canDecide = true }: { error?: string | null; busy?: boolean; canDecide?: boolean; approval?: Approval; open: boolean; simulated: boolean; onClose: () => void; onDecide: (approval: Approval, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) => void }) {
   const [editing, setEditing] = useState(false)
   const [content, setContent] = useState('')
   const closeButton = useRef<HTMLButtonElement>(null)
@@ -34,10 +34,12 @@ export function ApprovalModal({ approval, open, simulated, onClose, onDecide }: 
         <div className="grid gap-3 sm:grid-cols-2"><Detail label="Risk level" value={approval.risk} /><Detail label="Target system" value={approval.targetSystem} /></div>
         <div><label htmlFor="approval-content" className="text-xs font-semibold uppercase tracking-wider text-slate-500">Proposed content</label>{editing ? <textarea id="approval-content" rows={8} value={content} onChange={(event) => setContent(event.target.value)} className="mt-2 w-full resize-y rounded-md border border-cyan-300/30 bg-black/30 p-3 text-sm leading-6 text-white" /> : <p id="approval-content" className="mt-2 whitespace-pre-wrap rounded-md border border-white/10 bg-black/20 p-3 text-sm leading-6 text-slate-200">{approval.generatedContent}</p>}</div>
       </div>
+      {error && <p role="alert" className="px-5 py-3 text-rose-200">{error}</p>}
+      {!canDecide && <p className="px-5 text-sm text-slate-400">Your role cannot decide this request.</p>}
       <footer className="flex flex-col-reverse gap-2 border-t border-white/10 p-4 sm:flex-row sm:justify-end">
-        <button type="button" onClick={() => onDecide(approval, 'REJECTED')} className="rounded-md border border-rose-300/30 px-4 py-2.5 text-sm font-black text-rose-100">Reject</button>
-        {editing ? <button type="button" disabled={!content.trim()} onClick={() => onDecide(approval, 'EDITED', content.trim())} className="rounded-md bg-cyan-300 px-4 py-2.5 text-sm font-black text-slate-950 disabled:bg-slate-700">Submit edited content</button> : <button type="button" onClick={() => setEditing(true)} className="rounded-md border border-cyan-300/30 px-4 py-2.5 text-sm font-black text-cyan-100">Edit</button>}
-        <button type="button" onClick={() => onDecide(approval, 'APPROVED')} className="rounded-md bg-emerald-400 px-4 py-2.5 text-sm font-black text-slate-950">Approve</button>
+        <button type="button" disabled={busy || !canDecide} onClick={() => onDecide(approval, 'REJECTED')} className="rounded-md border border-rose-300/30 px-4 py-2.5 text-sm font-black text-rose-100">Reject</button>
+        {editing ? <button type="button" disabled={busy || !canDecide || !content.trim()} onClick={() => onDecide(approval, 'EDITED', content.trim())} className="rounded-md bg-cyan-300 px-4 py-2.5 text-sm font-black text-slate-950 disabled:bg-slate-700">Submit edited content</button> : <button type="button" disabled={busy || !canDecide} onClick={() => setEditing(true)} className="rounded-md border border-cyan-300/30 px-4 py-2.5 text-sm font-black text-cyan-100">Edit</button>}
+        <button type="button" disabled={busy || !canDecide} onClick={() => onDecide(approval, 'APPROVED')} className="rounded-md bg-emerald-400 px-4 py-2.5 text-sm font-black text-slate-950">Approve</button>
       </footer>
     </section>
   </div>

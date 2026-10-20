@@ -1,8 +1,10 @@
+import { isBusinessDatabaseEnvironmentAllowed } from '@/lib/business/compatibility'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { getSupabasePublishableKey, getSupabaseUrl } from './config'
 
 export function createClient() {
+  if (!isBusinessDatabaseEnvironmentAllowed(process.env)) throw new Error('Supabase environment is not approved for this application environment')
   const cookieStore = cookies()
 
   return createServerClient(getSupabaseUrl(), getSupabasePublishableKey(), {

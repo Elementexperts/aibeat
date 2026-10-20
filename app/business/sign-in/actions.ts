@@ -1,5 +1,6 @@
 'use server'
 
+import { invitationNext } from '@/lib/business/invitations'
 import { createClient } from '@/lib/supabase/server'
 import { sanitizeBusinessNext } from '@/lib/business/routes'
 
@@ -24,14 +25,15 @@ export async function signInBusinessUser(email: string, password: string, nextPa
       return { ok: false, error: 'Sign-in succeeded, but the server session was not established. Please try again.' }
     }
 
-    const { data: memberships } = await supabase
+    const { data: memberships, error: membershipError } = await supabase
       .from('organization_members')
       .select('id')
       .eq('user_id', data.user.id)
       .eq('status', 'ACTIVE')
       .limit(1)
 
-    return { ok: true, redirectTo: memberships?.length ? sanitizeBusinessNext(nextPath) : '/business/onboarding' }
+    if (membershipError) return { ok: false, error: 'Unable to verify workspace membership. Please try again.' }
+    return { ok: true, redirectTo: invitationNext(nextPath) ?? (memberships?.length ? sanitizeBusinessNext(nextPath) : '/business/onboarding') }
   } catch (error) {
     return { ok: false, error: getSafeAuthError(error) }
   }

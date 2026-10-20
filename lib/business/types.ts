@@ -387,6 +387,8 @@ export interface WorkflowScheduleAttempt {
 }
 
 export interface Approval {
+  approverRoles?: Role[]
+
   id: string
   organizationId: string
   workflowRunId: string

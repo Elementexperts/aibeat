@@ -10,7 +10,9 @@ import { getAgentIndustryInstructions } from '../lib/business/industry-profiles'
 import { approveAction, createContext, rejectAction, runWorkflow } from '../lib/business/mutations'
 import { getAgentFindings, getAIStack, getAuditLog, getPendingApprovals, getRecommendations, getRuns, getWorkflows } from '../lib/business/read-services'
 import { computeNextRunAt, runSchedulerTick, upsertWorkflowSchedule } from '../lib/business/scheduler'
-import { classifyActionRisk } from '../lib/business/security'
+import { classifyActionRisk, assertBusinessRole, assertTenantAccess, hasPermission } from '../lib/business/security'
+import { SupabaseBusinessDataStore } from '../lib/business/supabase-store'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveBusinessMembership } from '../lib/business/auth'
 import { isAuthenticatedBusinessPath, isPrivateBusinessPath, isPublicBusinessPath, sanitizeBusinessNext } from '../lib/business/routes'
 import { businessStore } from '../lib/business/store'
@@ -703,13 +705,82 @@ test('demo route renders explicit demo mode without authenticated mutating serve
   assert.doesNotMatch(source, /decideBusinessApprovalAction/)
 })
 
-test('self-serve onboarding migration allows first owner without service role and avoids demo organization', () => {
-  const sql = readFileSync('supabase/migrations/202608240001_business_self_serve_onboarding.sql', 'utf8')
-  const actionSource = readFileSync('app/business/onboarding/actions.ts', 'utf8')
+test('onboarding uses atomic setup and keeps legacy first-owner policy removed', () => {
+  const sql = readFileSync('supabase/migrations/202610140001_business_authorization_hardening.sql', 'utf8')
+  const action = readFileSync('app/business/onboarding/actions.ts', 'utf8')
+  assert.match(action, /complete_business_onboarding/)
+  assert.doesNotMatch(action, /\.insert\(|org-growth-labs/)
+  assert.match(sql, /FIRST_OWNER_MUST_BE_CREATOR/)
+  assert.match(sql, /LAST_ACTIVE_OWNER/)
+  assert.match(sql, /from pg_policies/)
+  assert.match(sql, /business_onboarded_at/)
+})
 
-  assert.match(sql, /organizations authenticated create own/)
-  assert.match(sql, /organization_members first owner insert/)
-  assert.match(sql, /organization_has_no_members/)
-  assert.doesNotMatch(actionSource, /org-growth-labs/)
-  assert.match(actionSource, /create_business_organization/)
+
+test('suspended memberships cannot use role or custom permission grants', () => {
+  const member = { id: 'm', userId: 'u', organizationId: 'o', role: 'OWNER' as const, status: 'SUSPENDED' as const, permissions: ['*'] }
+  assert.equal(hasPermission(member, 'business:write'), false)
+  assert.throws(() => assertTenantAccess(member, 'o'), /Tenant access denied/)
+  assert.throws(() => resolveBusinessMembership({ userId: 'u', members: [member] }), /no active organization membership/)
+})
+
+test('privileged Business roles match persisted authorization boundaries', () => {
+  for (const role of ['MEMBER', 'MANAGER', 'ADMIN', 'OWNER'] as const) {
+    if (role === 'OWNER') assert.doesNotThrow(() => assertBusinessRole(role, ['OWNER']))
+    else assert.throws(() => assertBusinessRole(role, ['OWNER']), /not authorized/)
+    if (role === 'MEMBER') assert.throws(() => assertBusinessRole(role, ['OWNER', 'ADMIN', 'MANAGER']), /not authorized/)
+    else assert.doesNotThrow(() => assertBusinessRole(role, ['OWNER', 'ADMIN', 'MANAGER']))
+  }
+  assert.throws(() => resolveBusinessMembership({ members: [] }), /Authentication required/)
+  assert.throws(() => resolveBusinessMembership({ userId: 'community-only', members: [] }), /no active organization membership/)
+})
+
+function rpcOnlyStore(result: { data: Record<string, unknown> | null; error: { message: string } | null }) {
+  const calls: Array<{ name: string; args: Record<string, unknown> }> = []
+  const client = {
+    rpc: async (name: string, args: Record<string, unknown>) => { calls.push({ name, args }); return result },
+    from: () => { throw new Error('Unexpected nontransactional table access') },
+  } as unknown as SupabaseClient
+  return { store: new SupabaseBusinessDataStore(client), calls }
+}
+
+test('membership operations use one RPC and never trust actor user ID as authority', async () => {
+  const { store, calls } = rpcOnlyStore({ data: { id: 'member', organization_id: 'org', role: 'MEMBER', status: 'INVITED', invited_email: 'test@example.invalid' }, error: null })
+  const actor = { userId: 'forged-client-actor', organizationId: 'org' }
+  const invited = await store.inviteMember(actor, { email: 'test@example.invalid', role: 'MEMBER' })
+  assert.equal(invited.status, 'INVITED')
+  await store.updateMemberRole(actor, 'member', 'ADMIN')
+  assert.deepEqual(calls, [
+    { name: 'invite_business_member', args: { p_organization_id: 'org', p_email: 'test@example.invalid', p_role: 'MEMBER' } },
+    { name: 'change_business_member', args: { p_organization_id: 'org', p_member_id: 'member', p_role: 'ADMIN' } },
+  ])
+})
+
+test('last-owner RPC rejection is surfaced without a fallback table write', async () => {
+  const { store, calls } = rpcOnlyStore({ data: null, error: { message: 'LAST_ACTIVE_OWNER' } })
+  await assert.rejects(store.updateMemberRole({ userId: 'owner', organizationId: 'org' }, 'member', 'MEMBER'), /at least one active owner/)
+  assert.equal(calls.length, 1)
+})
+
+test('approval submits only the decision and edited content to one atomic operation', async () => {
+  const { store, calls } = rpcOnlyStore({ data: { id: 'approval', organization_id: 'org', status: 'EDITED', proposed_payload: {}, edited_payload: { content: 'Reviewed draft' } }, error: null })
+  const result = await store.decideApproval({ userId: 'client-user', organizationId: 'org' }, 'approval', 'EDITED', '  Reviewed draft  ')
+  assert.equal(result.status, 'EDITED')
+  assert.deepEqual(calls, [{ name: 'decide_business_approval', args: { p_organization_id: 'org', p_approval_id: 'approval', p_decision: 'EDITED', p_edited_content: 'Reviewed draft' } }])
+})
+
+test('failed approval RPC never continues workflow or appends a separate audit record', async () => {
+  for (const message of ['APPROVER_REQUIRED', 'TEST_AUDIT_FAILURE', 'APPROVAL_SNAPSHOT_REQUIRED']) {
+    const { store, calls } = rpcOnlyStore({ data: null, error: { message } })
+    await assert.rejects(store.decideApproval({ userId: 'u', organizationId: 'org' }, 'approval', 'APPROVED'), message === 'APPROVAL_SNAPSHOT_REQUIRED' ? /fresh review/ : /Unable to resolve approval/)
+    assert.equal(calls.length, 1)
+  }
+})
+
+test('runtime audit derives actor in the DB and redacts sensitive summary content', async () => {
+  const { store, calls } = rpcOnlyStore({ data: { id: 'event', organization_id: 'org', event_type: 'AI_CONNECTION_TESTED', summary: 'safe', metadata: {} }, error: null })
+  await store.recordRuntimeAuditEvent({ userId: 'forged-user', organizationId: 'org' }, 'AI_CONNECTION_TESTED', 'Bearer secret-token sk-private-key')
+  assert.equal(calls[0].name, 'record_business_runtime_audit')
+  assert.equal('actor_user_id' in calls[0].args, false)
+  assert.doesNotMatch(String(calls[0].args.p_summary), /secret-token|sk-private-key/)
 })

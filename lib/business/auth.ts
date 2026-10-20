@@ -31,7 +31,7 @@ export function resolveBusinessMembership(params: {
 
   const activeMemberships = params.members.filter((member) => {
     return member.userId === params.userId && (member.status ?? 'ACTIVE') === 'ACTIVE'
-  })
+  }).sort((a, b) => a.organizationId.localeCompare(b.organizationId) || a.id.localeCompare(b.id))
 
   if (!activeMemberships.length) {
     throw new BusinessAuthorizationError('Authenticated user has no active organization membership')

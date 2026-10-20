@@ -1,3 +1,4 @@
+import { auditResult } from './compatibility'
 import { executeAgentMock } from './agents'
 import { executeConfiguredAgentRuntime } from './agent-runtime'
 import { buildOAuthStartUrl, connectorRegistry, getEffectiveConnectionStatus, getIntegrationDefinition, integrationDefinitions } from './connectors'
@@ -84,7 +85,7 @@ export class SupabaseBusinessDataStore {
         storage_path: result.document.storagePath,
         byte_size: result.document.byteSize,
         checksum: result.document.checksum,
-        extraction_status: result.document.extractionStatus,
+        extraction_status: 'UPLOADED',
         extracted_text: result.document.extractedText,
         metadata: result.document.metadata,
         created_by: actor.userId,
@@ -93,53 +94,58 @@ export class SupabaseBusinessDataStore {
       .single()
     if (documentError || !documentRow) throw new Error('Unable to persist uploaded document')
 
-    await this.supabase
-      .from('document_chunks')
-      .delete()
-      .eq('organization_id', actor.organizationId)
-      .eq('document_id', result.document.id)
+    try {
+      const { data: chunkRows, error: chunkError } = await this.supabase
+        .from('document_chunks')
+        .insert(result.chunks.map((chunk) => ({
+          id: chunk.id,
+          organization_id: actor.organizationId,
+          document_id: result.document.id,
+          chunk_index: chunk.chunkIndex,
+          title: chunk.title,
+          content: chunk.content,
+          token_estimate: chunk.tokenEstimate,
+          embedding: `[${chunk.embedding.join(',')}]`,
+          metadata: chunk.metadata,
+          status: 'ACTIVE',
+        })))
+        .select('*')
+      if (chunkError) throw new Error('Unable to persist document chunks')
 
-    const { data: chunkRows, error: chunkError } = await this.supabase
-      .from('document_chunks')
-      .insert(result.chunks.map((chunk) => ({
-        id: chunk.id,
-        organization_id: actor.organizationId,
-        document_id: result.document.id,
-        chunk_index: chunk.chunkIndex,
-        title: chunk.title,
-        content: chunk.content,
-        token_estimate: chunk.tokenEstimate,
-        embedding: `[${chunk.embedding.join(',')}]`,
-        metadata: chunk.metadata,
+      const contextItem = await this.createBusinessContextItem(actor, {
+        domain: result.contextItem.domain,
+        category: result.contextItem.category,
+        title: result.contextItem.title,
+        content: result.contextItem.content,
+        structuredData: result.contextItem.structuredData,
+        source: result.contextItem.source,
+        sourceType: result.contextItem.sourceType,
+        sourceUrl: result.contextItem.sourceUrl,
+        sourceDate: result.contextItem.sourceDate,
+        confidence: result.contextItem.confidence,
+        freshUntil: result.contextItem.freshUntil,
+        relatedEntityType: result.contextItem.relatedEntityType,
+        relatedEntityId: result.contextItem.relatedEntityId,
+        humanVerified: false,
+        provenance: result.contextItem.provenance,
         status: 'ACTIVE',
-      })))
-      .select('*')
-    if (chunkError) throw new Error('Unable to persist document chunks')
+      })
+      await this.recordAuditEvent(actor, { eventType: 'DOCUMENT_INGESTED', entityId: result.document.id, summary: `Document ingested: ${result.document.title}` })
 
-    const contextItem = await this.createBusinessContextItem(actor, {
-      domain: result.contextItem.domain,
-      category: result.contextItem.category,
-      title: result.contextItem.title,
-      content: result.contextItem.content,
-      structuredData: result.contextItem.structuredData,
-      source: result.contextItem.source,
-      sourceType: result.contextItem.sourceType,
-      sourceUrl: result.contextItem.sourceUrl,
-      sourceDate: result.contextItem.sourceDate,
-      confidence: result.contextItem.confidence,
-      freshUntil: result.contextItem.freshUntil,
-      relatedEntityType: result.contextItem.relatedEntityType,
-      relatedEntityId: result.contextItem.relatedEntityId,
-      humanVerified: false,
-      provenance: result.contextItem.provenance,
-      status: 'ACTIVE',
-    })
-    await this.recordAuditEvent(actor, { eventType: 'DOCUMENT_INGESTED', entityId: result.document.id, summary: `Document ingested: ${result.document.title}` })
-
-    return {
-      document: mapDocument(documentRow),
-      chunks: (chunkRows ?? []).map(mapDocumentChunk),
-      contextItem,
+      await checkedBusinessWrite(this.supabase.from('documents').update({ extraction_status: 'INDEXED' })
+        .eq('organization_id', actor.organizationId).eq('id', result.document.id).select('id').single())
+      return {
+        document: mapDocument({ ...documentRow, extraction_status: 'INDEXED' }),
+        chunks: (chunkRows ?? []).map(mapDocumentChunk),
+        contextItem,
+      }
+    } catch {
+      const { error } = await this.supabase.from('documents')
+        .update({ extraction_status: 'FAILED' }).eq('organization_id', actor.organizationId).eq('id', result.document.id)
+        .select('id').single()
+      throw new Error(error
+        ? 'Document ingestion was incomplete and its failure marker could not be saved. Refresh and ask an administrator to inspect retained records.'
+        : 'Document ingestion was incomplete. The document is marked FAILED; retained records require review before retrying.')
     }
   }
 
@@ -155,9 +161,15 @@ export class SupabaseBusinessDataStore {
   }
 
   async getDocumentChunks(actor: Actor, documentId?: string): Promise<BusinessDocumentChunk[]> {
+    // Interrupted ingestion must not make partial chunks available to AI retrieval.
+    const documents = await this.getDocuments(actor)
+    const indexed = documents.filter(document => document.extractionStatus === 'INDEXED'
+      && (!documentId || document.id === documentId)).map(document => document.id)
+    if (!indexed.length) return []
     let query = this.supabase
       .from('document_chunks')
       .select('*')
+      .in('document_id', indexed)
       .eq('organization_id', actor.organizationId)
       .eq('status', 'ACTIVE')
       .order('chunk_index', { ascending: true })
@@ -402,40 +414,19 @@ export class SupabaseBusinessDataStore {
   }
 
   async inviteMember(actor: Actor, input: { email: string; role: string }) {
-    const { data, error } = await this.supabase
-      .from('organization_members')
-      .insert({
-        organization_id: actor.organizationId,
-        user_id: null,
-        role: input.role,
-        permissions: [],
-        status: 'INVITED',
-        invited_email: input.email.toLowerCase(),
-        invited_by: actor.userId,
-      })
-      .select('*')
-      .single()
+    const { data, error } = await this.supabase.rpc('invite_business_member', {
+      p_organization_id: actor.organizationId, p_email: input.email, p_role: input.role,
+    })
     if (error || !data) throw new Error('Unable to invite member')
-    await this.recordAuditEvent(actor, { eventType: 'MEMBER_INVITED', entityId: data.id, summary: `Invited ${input.email} as ${input.role}` })
     return mapMembership(data)
   }
 
   async updateMemberRole(actor: Actor, memberId: string, role: string) {
-    const members = await this.getOrganizationMembers(actor)
-    const target = members.find((member) => member.id === memberId)
-    if (!target) throw new Error('Member not found')
-    if (target.role === 'OWNER' && role !== 'OWNER' && members.filter((member) => member.role === 'OWNER' && (member.status ?? 'ACTIVE') === 'ACTIVE').length <= 1) {
-      throw new Error('Workspace must keep at least one active owner')
-    }
-    const { data, error } = await this.supabase
-      .from('organization_members')
-      .update({ role })
-      .eq('id', memberId)
-      .eq('organization_id', actor.organizationId)
-      .select('*')
-      .single()
-    if (error || !data) throw new Error('Unable to update member role')
-    await this.recordAuditEvent(actor, { eventType: 'MEMBER_ROLE_UPDATED', entityId: memberId, summary: `Member role updated to ${role}` })
+    const { data, error } = await this.supabase.rpc('change_business_member', {
+      p_organization_id: actor.organizationId, p_member_id: memberId, p_role: role,
+    })
+    if (error || !data) throw new Error(error?.message?.includes('LAST_ACTIVE_OWNER')
+      ? 'Workspace must keep at least one active owner' : 'Unable to update member role')
     return mapMembership(data)
   }
 
@@ -517,24 +508,29 @@ export class SupabaseBusinessDataStore {
       if (duplicateError) throw new Error('Unable to check for an active workflow run')
       if (activeDuplicate) {
         const [run] = await this.hydrateRuns(actor.organizationId, [activeDuplicate])
-        const { data: approvalRow } = await this.supabase.from('approvals').select('*').eq('organization_id', actor.organizationId).eq('workflow_run_id', run.id).eq('status', 'PENDING').maybeSingle()
-        const { data: findingRow } = await this.supabase.from('agent_findings').select('*').eq('organization_id', actor.organizationId).eq('workflow_run_id', run.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        const { data: approvalRow, error: approvalReadError } = await this.supabase.from('approvals').select('*').eq('organization_id', actor.organizationId).eq('workflow_run_id', run.id).eq('status', 'PENDING').maybeSingle()
+        const { data: findingRow, error: findingReadError } = await this.supabase.from('agent_findings').select('*').eq('organization_id', actor.organizationId).eq('workflow_run_id', run.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        if (approvalReadError || findingReadError) throw new Error('Unable to reload existing workflow run')
+        assertRecoverableRun(run, approvalRow ? mapApproval(approvalRow) : undefined)
         return { run, approval: approvalRow ? mapApproval(approvalRow) : undefined, finding: findingRow ? mapFinding(findingRow) : undefined, auditEvents: [] }
       }
     }
 
     const idempotencyKey = options.idempotencyKey ?? `${workflow.id}:manual:${Date.now()}`
-    const { data: existing } = await this.supabase
+    const { data: existing, error: existingError } = await this.supabase
       .from('workflow_runs')
       .select('*')
       .eq('organization_id', actor.organizationId)
       .eq('workflow_id', workflow.id)
       .eq('idempotency_key', idempotencyKey)
       .maybeSingle()
+    if (existingError) throw new Error('Unable to verify existing workflow run')
     if (existing) {
       const [run] = await this.hydrateRuns(actor.organizationId, [existing])
       const approvals = await this.getApprovals(actor)
-      return { run, approval: approvals.find((approval) => approval.workflowRunId === run.id), auditEvents: [] }
+      const savedApproval = approvals.find((approval) => approval.workflowRunId === run.id)
+      assertRecoverableRun(run, savedApproval)
+      return { run, approval: savedApproval, auditEvents: [] }
     }
 
     const { data: runRow, error: runError } = await this.supabase
@@ -583,7 +579,7 @@ export class SupabaseBusinessDataStore {
       auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_STEP_STARTED', entityId: stepRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: `Workflow step started: ${step.name}` }))
 
       if (step.risk === 'RESTRICTED') {
-        await this.supabase.from('workflow_steps').update({ status: 'FAILED', error: 'Restricted actions are not supported.', completed_at: new Date().toISOString() }).eq('id', stepRow.id)
+        await checkedBusinessWrite(this.supabase.from('workflow_steps').update({ status: 'FAILED', error: 'Restricted actions are not supported.', completed_at: new Date().toISOString() }).eq('organization_id', actor.organizationId).eq('id', stepRow.id).select('id').single())
         finalStatus = 'FAILED'
         resultSummary = 'Restricted actions are not supported.'
         auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_FAILED', entityId: runRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: resultSummary }))
@@ -599,11 +595,20 @@ export class SupabaseBusinessDataStore {
           } catch {
             finalStatus = 'FAILED'
             resultSummary = 'Draft generation failed. No approval was requested.'
-            await this.supabase.from('workflow_steps').update({ status: 'FAILED', error: resultSummary, completed_at: new Date().toISOString() }).eq('id', stepRow.id)
+            await checkedBusinessWrite(this.supabase.from('workflow_steps').update({ status: 'FAILED', error: resultSummary, completed_at: new Date().toISOString() }).eq('organization_id', actor.organizationId).eq('id', stepRow.id).select('id').single())
             auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_FAILED', workflowRunId: runRow.id, agentType: workflow.agentType, summary: resultSummary }))
             break
           }
         }
+        // Publish a valid pause before exposing a pending approval. After insertion,
+        // never overwrite run/step state: another approver may already have resolved it.
+        await checkedBusinessWrite(this.supabase.from('workflow_steps')
+          .update({ status: 'WAITING_FOR_APPROVAL', output_summary: 'Workflow paused pending approval.' })
+          .eq('organization_id', actor.organizationId).eq('id', stepRow.id).select('id').single())
+        await checkedBusinessWrite(this.supabase.from('workflow_runs')
+          .update({ status: 'WAITING_FOR_APPROVAL', current_step_id: stepRow.id, completed_at: null,
+            result_summary: 'Workflow paused at approval boundary.', result_metadata: { workflowInput, connectorExecutions } })
+          .eq('organization_id', actor.organizationId).eq('id', runRow.id).select('id').single())
         const { data: approvalRow, error: approvalError } = await this.supabase
           .from('approvals')
           .insert({
@@ -623,14 +628,14 @@ export class SupabaseBusinessDataStore {
           })
           .select('*')
           .single()
-        if (approvalError || !approvalRow) throw new Error('Unable to persist approval')
+        if (approvalError || !approvalRow) throw new Error('Approval request failed after pausing the workflow. Retained run state needs review before retrying.')
         approval = mapApproval(approvalRow)
-        await this.supabase.from('workflow_steps').update({ status: 'WAITING_FOR_APPROVAL', output_summary: 'Workflow paused pending approval.' }).eq('id', stepRow.id)
-        finalStatus = 'WAITING_FOR_APPROVAL'
-        resultSummary = 'Workflow paused at approval boundary.'
-        currentStepId = stepRow.id
         auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'APPROVAL_REQUESTED', entityId: approval.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: `Approval requested: ${approval.proposedAction}` }))
-        break
+        const [savedRuns, savedApprovals] = await Promise.all([this.getRuns(actor), this.getApprovals(actor)])
+        const savedRun = savedRuns.find(candidate => candidate.id === runRow.id)
+        const savedApproval = savedApprovals.find(candidate => candidate.id === approval!.id)
+        if (!savedRun || !savedApproval) throw new Error('Approval was requested, but authoritative state could not be reloaded. Refresh before retrying.')
+        return { run: savedRun, approval: savedApproval, auditEvents, finding }
       }
 
       let execution: ConnectorExecutionRecord
@@ -649,14 +654,14 @@ export class SupabaseBusinessDataStore {
       } else execution = await this.executeWorkflowStep(actor, step.action, step.risk, step.connectorId)
       connectorExecutions.push(execution)
       if (!execution.ok) {
-        await this.supabase.from('workflow_steps').update({ status: 'FAILED', error: execution.error ?? execution.summary, completed_at: new Date().toISOString(), output_summary: execution.summary }).eq('id', stepRow.id)
+        await checkedBusinessWrite(this.supabase.from('workflow_steps').update({ status: 'FAILED', error: execution.error ?? execution.summary, completed_at: new Date().toISOString(), output_summary: execution.summary }).eq('organization_id', actor.organizationId).eq('id', stepRow.id).select('id').single())
         finalStatus = 'FAILED'
         resultSummary = execution.summary
         auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_FAILED', entityId: runRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: execution.summary }))
         break
       }
 
-      await this.supabase.from('workflow_steps').update({ status: 'COMPLETED', completed_at: new Date().toISOString(), output_summary: execution.summary }).eq('id', stepRow.id)
+      await checkedBusinessWrite(this.supabase.from('workflow_steps').update({ status: 'COMPLETED', completed_at: new Date().toISOString(), output_summary: execution.summary }).eq('organization_id', actor.organizationId).eq('id', stepRow.id).select('id').single())
       auditEvents.push(await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_STEP_COMPLETED', entityId: stepRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary: execution.summary }))
 
       if (workflow.agentType === 'LEAD_RESEARCH' && step.id === 'score-lead') {
@@ -666,8 +671,8 @@ export class SupabaseBusinessDataStore {
           finding = result.finding; modelUsage = result.usage
         } catch (error) {
           const summary = error instanceof ModelConfigurationError ? 'Live AI configuration is incomplete. No finding was persisted.' : error instanceof ModelProviderError && error.code === 'TIMEOUT' ? 'The configured AI provider timed out. No finding was persisted.' : error instanceof ModelProviderError ? 'AIBeat could not reach the configured AI provider. No finding was persisted.' : error instanceof ModelResponseValidationError || (error instanceof Error && /Invalid lead qualification output/.test(error.message)) ? 'The AI provider returned malformed structured output. No finding was persisted.' : 'Lead qualification failed safely. No finding was persisted.'
-          await this.supabase.from('workflow_steps').update({ status: 'FAILED', error: summary, output_summary: summary, completed_at: new Date().toISOString() }).eq('id', stepRow.id)
-          await this.supabase.from('workflow_runs').update({ status: 'FAILED', result_summary: summary, completed_at: new Date().toISOString(), result_metadata: { workflowInput, connectorExecutions } }).eq('id', runRow.id)
+          await checkedBusinessWrite(this.supabase.from('workflow_steps').update({ status: 'FAILED', error: summary, output_summary: summary, completed_at: new Date().toISOString() }).eq('organization_id', actor.organizationId).eq('id', stepRow.id).select('id').single())
+          await checkedBusinessWrite(this.supabase.from('workflow_runs').update({ status: 'FAILED', result_summary: summary, completed_at: new Date().toISOString(), result_metadata: { workflowInput, connectorExecutions } }).eq('organization_id', actor.organizationId).eq('id', runRow.id).select('id').single())
           await this.recordAuditEvent(actor, { eventType: 'AGENT_EXECUTION_FAILED', entityId: stepRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary })
           await this.recordAuditEvent(actor, { eventType: 'WORKFLOW_FAILED', entityId: runRow.id, workflowRunId: runRow.id, agentType: workflow.agentType, summary })
           throw new Error(summary)
@@ -698,67 +703,30 @@ export class SupabaseBusinessDataStore {
     return { run, approval, auditEvents, finding }
   }
 
-  async decideApproval(actor: Actor, approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string): Promise<Approval> {
-    const { data: approvalRow, error: approvalError } = await this.supabase
-      .from('approvals')
-      .update({
-        status: decision,
-        resolved_by: actor.userId,
-        resolved_at: new Date().toISOString(),
-        decision,
-        edited_payload: editedContent ? { content: editedContent } : null,
-        execution_result: decision === 'REJECTED' ? 'Workflow stopped after rejection.' : 'Workflow may continue after approval gate.',
-      })
-      .eq('id', approvalId)
-      .eq('organization_id', actor.organizationId)
-      .eq('status', 'PENDING')
-      .select('*')
-      .single()
-    if (approvalError || !approvalRow) throw new Error('Approval not found')
-
-    const failed = decision === 'REJECTED'
-    await this.supabase.from('workflow_steps').update({
-      status: failed ? 'FAILED' : 'COMPLETED',
-      error: failed ? 'Approval rejected.' : null,
-      output_summary: failed ? null : 'Approval resolved; workflow may continue.',
-      completed_at: new Date().toISOString(),
-    }).eq('id', approvalRow.workflow_step_id).eq('organization_id', actor.organizationId)
-    const { data: runRow } = await this.supabase.from('workflow_runs').select('*').eq('id', approvalRow.workflow_run_id).eq('organization_id', actor.organizationId).single()
-    const workflow = runRow ? await this.getWorkflow(actor, runRow.workflow_id) : undefined
-    const approvedStepIndex = workflow?.steps.findIndex((step) => step.id === approvalRow.proposed_payload?.stepId) ?? -1
-    const remainingSteps = approvedStepIndex >= 0 ? workflow!.steps.slice(approvedStepIndex + 1) : []
-    let resumeFailed = false
-    const connectorExecutions: ConnectorExecutionRecord[] = [...(runRow?.result_metadata?.connectorExecutions ?? [])]
-    if (!failed && workflow) {
-      connectorExecutions.push({ connectorId: approvalRow.target_system === 'crm' ? 'crm' : (approvalRow.target_system ?? 'pilot'), action: approvalRow.proposed_action, ok: true, risk: approvalRow.action_risk, summary: `Approved pilot action recorded as simulated; no external ${approvalRow.target_system ?? 'system'} write occurred.` })
-      for (const step of remainingSteps) {
-        if (!canAutoExecuteRisk(step.risk) || workflow.approvalPolicy.requiredForRisks.includes(step.risk)) {
-          // One approval never authorizes later restricted or approval-gated steps.
-          resumeFailed = true
-          connectorExecutions.push({ connectorId: step.connectorId ?? 'aibeat-runtime', action: step.action, ok: false, risk: step.risk, summary: 'A separate approval is required for this later step.', error: 'ADDITIONAL_APPROVAL_REQUIRED' })
-          break
-        }
-        const execution = await this.executeWorkflowStep(actor, step.action, step.risk, step.connectorId)
-        connectorExecutions.push(execution)
-        const { error: stepError } = await this.supabase.from('workflow_steps').insert({ organization_id: actor.organizationId, workflow_run_id: approvalRow.workflow_run_id, step_definition_id: step.id, name: step.name, risk: step.risk, status: execution.ok ? 'COMPLETED' : 'FAILED', started_at: new Date().toISOString(), completed_at: new Date().toISOString(), output_summary: execution.summary, error: execution.error })
-        if (stepError || !execution.ok) { resumeFailed = true; break }
-      }
+  async decideApprovalAndReload(actor: Actor, approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string) {
+    const approval = await this.decideApproval(actor, approvalId, decision, editedContent)
+    try {
+      const [runs, auditEvents, approvals] = await Promise.all([this.getRuns(actor), this.getAuditEvents(actor), this.getApprovals(actor)])
+      return { approval, runs, auditEvents, approvals }
+    } catch {
+      throw new Error('The decision was recorded, but workspace refresh failed. Reload before taking another action.')
     }
-    const runFailed = failed || resumeFailed
-    await this.supabase.from('workflow_runs').update({
-      status: runFailed ? 'FAILED' : 'COMPLETED', completed_at: new Date().toISOString(), current_step_id: null,
-      result_summary: failed ? 'Workflow stopped after rejection.' : resumeFailed ? 'Workflow failed after approval while resuming remaining steps.' : 'Workflow completed after approval; pilot action was recorded as simulated.',
-      result_metadata: { ...(runRow?.result_metadata ?? {}), connectorExecutions },
-    }).eq('id', approvalRow.workflow_run_id).eq('organization_id', actor.organizationId)
-    await this.recordAuditEvent(actor, {
-      eventType: failed ? 'APPROVAL_REJECTED' : 'APPROVAL_APPROVED',
-      entityId: approvalId,
-      workflowRunId: approvalRow.workflow_run_id,
-      agentType: approvalRow.agent_type,
-      summary: `Approval ${decision.toLowerCase()}: ${approvalRow.proposed_action}`,
+  }
+
+  async decideApproval(actor: Actor, approvalId: string, decision: 'APPROVED' | 'REJECTED' | 'EDITED', editedContent?: string): Promise<Approval> {
+    // The database derives the actor from auth.uid() and commits the approval,
+    // simulated continuation, run state and security audit together. No client
+    // continuation or fallback writes are allowed after a rejected RPC.
+    const { data, error } = await this.supabase.rpc('decide_business_approval', {
+      p_organization_id: actor.organizationId,
+      p_approval_id: approvalId,
+      p_decision: decision,
+      p_edited_content: decision === 'EDITED' ? editedContent?.trim() || null : null,
     })
-    await this.recordAuditEvent(actor, { eventType: runFailed ? 'WORKFLOW_FAILED' : 'WORKFLOW_COMPLETED', entityId: approvalRow.workflow_run_id, workflowRunId: approvalRow.workflow_run_id, agentType: approvalRow.agent_type, summary: runFailed ? 'Workflow ended after approval resolution.' : 'Workflow completed after approval; pilot action was simulated.' })
-    return mapApproval(approvalRow)
+    if (error || !data) throw new Error(error?.message?.includes('APPROVAL_SNAPSHOT_REQUIRED')
+      ? 'This approval predates the security update. Reject it and run the workflow again for a fresh review.'
+      : 'Unable to resolve approval. Check your role and refresh the pending approval.')
+    return mapApproval(data)
   }
 
   private async hydrateRuns(organizationId: string, rows: Row[]): Promise<WorkflowRun[]> {
@@ -909,19 +877,14 @@ export class SupabaseBusinessDataStore {
   }
 
   private async recordAuditEvent(actor: Actor, input: { eventType: string; entityId?: string; workflowRunId?: string; agentType?: string; summary: string }): Promise<AuditEvent> {
-    const { data, error } = await this.supabase
-      .from('audit_events')
-      .insert({
-        organization_id: actor.organizationId,
-        actor_user_id: actor.userId,
-        event_type: input.eventType,
-        entity_id: input.entityId,
-        workflow_run_id: input.workflowRunId,
-        agent_type: input.agentType,
-        summary: sanitizeAuditSummary(input.summary),
-      })
-      .select('*')
-      .single()
+    const { data, error } = await this.supabase.rpc('record_business_runtime_audit', {
+      p_organization_id: actor.organizationId,
+      p_event_type: input.eventType,
+      p_entity_id: input.entityId ?? null,
+      p_workflow_run_id: input.workflowRunId ?? null,
+      p_agent_type: input.agentType ?? null,
+      p_summary: sanitizeAuditSummary(input.summary),
+    })
     if (error || !data) throw new Error('Unable to persist audit event')
     return mapAuditEvent(data)
   }
@@ -1149,6 +1112,7 @@ function mapApproval(row: Row): Approval {
   return {
     id: row.id,
     organizationId: row.organization_id,
+    approverRoles: row.workflow_snapshot?.approvalPolicy?.approverRoles,
     workflowRunId: row.workflow_run_id,
     workflowStepId: row.workflow_step_id,
     agentType: row.agent_type,
@@ -1243,7 +1207,7 @@ function mapAuditEvent(row: Row): AuditEvent {
     action: row.event_type,
     inputSummary: row.summary,
     outputSummary: row.summary,
-    result: 'SUCCESS',
+    result: auditResult(row.event_type),
     timestamp: row.created_at,
   }
 }
@@ -1333,3 +1297,17 @@ function findingToContextItem(finding: AgentFinding): BusinessContextItem {
 }
 
 export { workflowTemplates }
+
+export async function checkedBusinessWrite(operation: PromiseLike<{ error: unknown; data?: unknown }>) {
+  const result = await operation
+  if (result.error || !result.data) throw new Error('Workflow or document write failed. Partial records may remain; reload before retrying.')
+}
+
+export function assertRecoverableRun(run: WorkflowRun, approval?: Approval) {
+  if (run.status === 'RUNNING') throw new Error('This workflow is still running or incomplete. Reload before retrying; no duplicate was started.')
+  if (run.status === 'WAITING_FOR_APPROVAL' && (!approval || approval.status !== 'PENDING'
+    || run.currentStepId !== approval.workflowStepId
+    || !run.steps.some(step => step.id === approval.workflowStepId && step.status === 'WAITING_FOR_APPROVAL'))) {
+    throw new Error('The saved approval boundary is incomplete. An administrator must review it before retrying.')
+  }
+}

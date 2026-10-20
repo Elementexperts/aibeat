@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# Preserve reviewed C01 migration bytes and cross-platform SHA-256 evidence.
+supabase/migrations/202610140001_business_authorization_hardening.sql -text
+supabase/migrations/202610200001_business_invitation_acceptance.sql -text

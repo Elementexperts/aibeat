@@ -51,6 +51,8 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
     store.getAgentEvaluations(actor),
   ])
 
+  const { data: organizations, error: organizationsError } = await createClient().from('organizations').select('id,name').order('name').order('id')
+  if (organizationsError) throw new Error('Unable to load available workspaces')
   const spend = {
     monthlySpend: tools.reduce((sum, tool) => sum + tool.monthlyCost, 0),
     lowUseSeats: tools.reduce((sum, tool) => sum + Math.max(0, tool.seatsPurchased - tool.activeSeats), 0),
@@ -69,6 +71,7 @@ export async function getAuthenticatedBusinessWorkspaceData(): Promise<BusinessW
 
   return {
     organization,
+    organizations: (organizations ?? []) as { id: string; name: string }[],
     industryProfile: getIndustryProfile(organization.primaryProfile),
     industryLabel: INDUSTRY_PROFILE_LABELS[organization.primaryProfile],
     agents: Object.values(AGENT_REGISTRY),

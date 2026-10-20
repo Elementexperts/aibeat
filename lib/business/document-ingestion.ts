@@ -53,7 +53,7 @@ export function ingestBusinessDocument(input: DocumentIngestionInput): BusinessD
   }
 
   const chunks = chunkDocumentText(extractedText).map((content, index): BusinessDocumentChunk => ({
-    id: `chunk-${checksum.slice(0, 12)}-${index + 1}`,
+    id: `chunk-${documentId}-${index + 1}`,
     organizationId: input.organizationId,
     documentId,
     chunkIndex: index,
