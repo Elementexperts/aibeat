@@ -581,5 +581,30 @@
     "logo": "#2563eb",
     "logoInitials": "EF",
     "alternatives": []
+  },
+  {
+    "slug": "how-i-become-a-millionaire-ai",
+    "name": "How I Become a Millionaire AI",
+    "tagline": "Generate personalized 13-second ChatGPT millionaire meme videos featuring your photo or pet.",
+    "description": "How I Become a Millionaire AI generates 13-second meme videos starring uploaded photos of people or pets. Using the viral ChatGPT millionaire skit format, it pairs the user's face with original audio and fixed captions across ten customizable backdrops in 480p or 720p resolution.",
+    "category": "AI Video",
+    "pricing": "Paid credit packs starting at $8.99 for 10 credits (one 480p render) up to $29.99 for 50 credits with no recurring subscription.",
+    "pricingType": "paid",
+    "pros": [
+      "Generates videos without watermarks in 480p or 720p resolution",
+      "Includes free square and silent export options with every purchase",
+      "Unused credits do not expire and failed renders are automatically refunded"
+    ],
+    "cons": [
+      "Limited to a single meme template with unchangeable dialogue and captions",
+      "No free generation tier or trial credits"
+    ],
+    "websiteUrl": "https://howibecomeamillionaireai.com/",
+    "affiliateUrl": "https://howibecomeamillionaireai.com/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "HI",
+    "alternatives": []
   }
 ]
