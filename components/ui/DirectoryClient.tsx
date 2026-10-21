@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { directoryNavigation, filterDirectoryTools, parseDirectoryFilters, type DirectoryFilters } from '@/lib/directory-filters'
 import Link from 'next/link'
 import { getToolRatingLabel, TOOLS, getPopularTools } from '@/lib/data'
 import { PUBLIC_ANALYTICS_EVENTS } from '@/lib/analytics'
@@ -10,32 +12,28 @@ import { ToolAffiliateOffer } from '@/components/ui/ToolAffiliateOffer'
 const ALL = 'All'
 const PRICING_OPTIONS = [ALL, 'Free', 'Freemium', 'Paid'] as const
 
-export default function DirectoryClient({ initialCategory = ALL }: { initialCategory?: string }) {
-  const [search, setSearch] = useState('')
-  const [activeCategory, setActiveCategory] = useState(initialCategory)
-  const [activePricing, setActivePricing] = useState<string>(ALL)
+export default function DirectoryClient({ initialFilters }: { initialFilters: DirectoryFilters }) {
+  const router = useRouter()
+  const { q, category, pricing } = initialFilters
+  const [search, setSearch] = useState(q)
+  // App Router supplies the URL-derived props on navigation, including back/forward.
+  // Keep the input mounted so submitting a search does not discard focus.
+  useEffect(() => { setSearch(q) }, [q, category, pricing])
   const rankedTools = useMemo(() => getPopularTools(), [])
+  const ranks = useMemo(() => new Map(rankedTools.map((tool, i) => [tool.slug, i + 1])), [rankedTools])
+  const categories = useMemo(() => [ALL, ...Array.from(new Set(rankedTools.map(t => t.category)))], [rankedTools])
+  const filtered = useMemo(() => filterDirectoryTools(rankedTools, { q, category, pricing }), [rankedTools, q, category, pricing])
+  const activeCategory = category || ALL
+  const activePricing = pricing ? pricing[0].toUpperCase() + pricing.slice(1) : ALL
+  const isFiltering = Boolean(q || category || pricing)
 
-  const categories = useMemo(() => [ALL, ...Array.from(new Set(rankedTools.map((t) => t.category)))], [rankedTools])
-
-  const filtered = useMemo(() => {
-    return rankedTools.filter((tool) => {
-      const q = search.toLowerCase()
-      const matchSearch = !q ||
-        tool.name.toLowerCase().includes(q) ||
-        tool.tagline.toLowerCase().includes(q) ||
-        tool.category.toLowerCase().includes(q)
-      const matchCat = activeCategory === ALL || tool.category === activeCategory
-      const matchPrice =
-        activePricing === ALL ||
-        (activePricing === 'Free' && tool.pricingType === 'free') ||
-        (activePricing === 'Freemium' && tool.pricingType === 'freemium') ||
-        (activePricing === 'Paid' && tool.pricingType === 'paid')
-      return matchSearch && matchCat && matchPrice
-    })
-  }, [search, activeCategory, activePricing, rankedTools])
-
-  const isFiltering = search || activeCategory !== ALL || activePricing !== ALL
+  function commit(next: DirectoryFilters) {
+    const labels = categories.filter(cat => cat !== ALL)
+    const normalized = parseDirectoryFilters(next, labels)
+    const navigation = directoryNavigation(window.location.href, normalized, labels)
+    if (navigation) router[navigation.method](navigation.href, { scroll: false })
+    setSearch(normalized.q)
+  }
 
   // Group by category for unfiltered browsing
   const groupedCategories = useMemo(() => {
@@ -65,26 +63,34 @@ export default function DirectoryClient({ initialCategory = ALL }: { initialCate
       </div>
 
       {/* SEARCH BAR */}
-      <div className="px-6 py-4 border-b border-border">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search tools by name, category…"
-          className="w-full bg-transparent border border-border text-ink text-sm px-4 py-2.5 outline-none placeholder:text-ink-4 focus:border-ink-2 transition-colors"
-        />
-      </div>
+      <form role="search" className="px-6 py-4 border-b border-border" onSubmit={event => { event.preventDefault(); commit({ q: search, category, pricing }) }}>
+        <label htmlFor="directory-search" className="block text-xs text-ink-3 mb-2">Search tools</label>
+        <div className="flex gap-2">
+          <input
+            id="directory-search"
+            name="q"
+            type="search"
+            value={search}
+            onChange={event => setSearch(event.target.value)}
+            placeholder="Search tools by name, category…"
+            className="min-w-0 flex-1 bg-transparent border border-border text-ink text-sm px-4 py-2.5 placeholder:text-ink-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink"
+          />
+          <button type="submit" className="px-4 py-2 text-sm bg-ink text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-beat-red">Search</button>
+        </div>
+      </form>
 
       {/* FILTER ROWS */}
       <div className="border-b border-border">
         {/* Category filter */}
-        <div className="flex items-center overflow-x-auto border-b border-border">
+        <div role="group" aria-label="Category" className="flex items-center overflow-x-auto border-b border-border">
           <span className="font-mono text-[10px] text-ink-4 px-4 py-2.5 shrink-0 border-r border-border">Category:</span>
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`font-mono text-[10px] px-4 py-2.5 border-r border-border whitespace-nowrap transition-colors shrink-0 ${
+              type="button"
+              aria-pressed={activeCategory === cat}
+              onClick={() => commit({ q, category: cat === ALL ? '' : cat, pricing })}
+              className={`font-mono text-[10px] px-4 py-2.5 border-r border-border whitespace-nowrap transition-colors shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-beat-red focus-visible:-outline-offset-2 ${
                 activeCategory === cat
                   ? 'bg-ink text-white'
                   : 'text-ink-3 hover:bg-paper-2 hover:text-ink'
@@ -95,13 +101,15 @@ export default function DirectoryClient({ initialCategory = ALL }: { initialCate
           ))}
         </div>
         {/* Pricing filter */}
-        <div className="flex items-center overflow-x-auto">
+        <div role="group" aria-label="Pricing" className="flex items-center overflow-x-auto">
           <span className="font-mono text-[10px] text-ink-4 px-4 py-2.5 shrink-0 border-r border-border">Pricing:</span>
           {PRICING_OPTIONS.map((opt) => (
             <button
               key={opt}
-              onClick={() => setActivePricing(opt)}
-              className={`font-mono text-[10px] px-4 py-2.5 border-r border-border whitespace-nowrap transition-colors shrink-0 ${
+              type="button"
+              aria-pressed={activePricing === opt}
+              onClick={() => commit({ q, category, pricing: opt === ALL ? '' : opt.toLowerCase() as DirectoryFilters['pricing'] })}
+              className={`font-mono text-[10px] px-4 py-2.5 border-r border-border whitespace-nowrap transition-colors shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-beat-red focus-visible:-outline-offset-2 ${
                 activePricing === opt
                   ? 'bg-ink text-white'
                   : 'text-ink-3 hover:bg-paper-2 hover:text-ink'
@@ -111,6 +119,16 @@ export default function DirectoryClient({ initialCategory = ALL }: { initialCate
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="px-6 py-3 border-b border-border">
+        <p role="status" aria-live="polite" aria-atomic="true" className="font-mono text-xs text-ink-3">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</p>
+        {isFiltering && <div className="flex flex-wrap gap-3 mt-2 text-xs text-beat-red">
+          {q && <button type="button" onClick={() => commit({ q: '', category, pricing })} className="underline focus-visible:outline focus-visible:outline-2">Clear search</button>}
+          {category && <button type="button" onClick={() => commit({ q, category: '', pricing })} className="underline focus-visible:outline focus-visible:outline-2">Clear category</button>}
+          {pricing && <button type="button" onClick={() => commit({ q, category, pricing: '' })} className="underline focus-visible:outline focus-visible:outline-2">Clear pricing</button>}
+          <button type="button" onClick={() => commit({ q: '', category: '', pricing: '' })} className="underline focus-visible:outline focus-visible:outline-2">Clear all filters</button>
+        </div>}
       </div>
 
       {/* RESULTS */}
@@ -124,8 +142,9 @@ export default function DirectoryClient({ initialCategory = ALL }: { initialCate
             <div className="px-6 py-12 text-center">
               <p className="text-sm text-ink-3">No tools match your filters.</p>
               <button
-                onClick={() => { setSearch(''); setActiveCategory(ALL); setActivePricing(ALL) }}
-                className="font-mono text-xs text-beat-red mt-3 hover:underline"
+                type="button"
+                onClick={() => commit({ q: '', category: '', pricing: '' })}
+                className="font-mono text-xs text-beat-red mt-3 hover:underline focus-visible:outline focus-visible:outline-2"
               >
                 Clear all filters
               </button>
@@ -133,7 +152,7 @@ export default function DirectoryClient({ initialCategory = ALL }: { initialCate
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4">
               {filtered.map((tool, i) => (
-                <ToolCard key={tool.slug} tool={tool} i={i} rank={rankedTools.findIndex((ranked) => ranked.slug === tool.slug) + 1} />
+                <ToolCard key={tool.slug} tool={tool} i={i} rank={ranks.get(tool.slug)!} />
               ))}
             </div>
           )}
@@ -148,7 +167,7 @@ export default function DirectoryClient({ initialCategory = ALL }: { initialCate
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4">
               {tools.map((tool, i) => (
-                <ToolCard key={tool.slug} tool={tool} i={i} rank={rankedTools.findIndex((ranked) => ranked.slug === tool.slug) + 1} />
+                <ToolCard key={tool.slug} tool={tool} i={i} rank={ranks.get(tool.slug)!} />
               ))}
             </div>
           </div>

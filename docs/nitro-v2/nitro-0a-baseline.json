@@ -1,0 +1,1226 @@
+{
+  "base": "d5cc3b9013accd9a17a5fa132c9dd43d926ab255",
+  "initialStatus": "clean",
+  "catalog": [
+    {
+      "slug": "zombieai",
+      "category": "AI Video",
+      "pricingType": "free",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "aicoursify",
+      "category": "Education",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "gender-swap-ai",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "gemini-nano-banana",
+      "category": "AI Image",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "productshot-ai",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "tecadrise-bot",
+      "category": "AI Agents",
+      "pricingType": "free",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "softsync-ai",
+      "category": "Business",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "fiscus-ai",
+      "category": "Business",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "ai-fruit-video",
+      "category": "AI Video",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "arvow",
+      "category": "Marketing",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "photogenerai",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "shopchief",
+      "category": "AI Agents",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "openfate",
+      "category": "Lifestyle",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "pregnancy-ai",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "manhwa-translator",
+      "category": "Productivity",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "nextlerai",
+      "category": "Productivity",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "magic-hour",
+      "category": "AI Video",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "hairforge",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "coanimator",
+      "category": "AI Video",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "astrea",
+      "category": "AI Video",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "sistava",
+      "category": "AI Agents",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "mrrlin",
+      "category": "AI Agents",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "modelrush",
+      "category": "Developer Tools",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "removebgtools",
+      "category": "AI Image",
+      "pricingType": "free",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "reelfluent",
+      "category": "Education",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "aicoolies",
+      "category": "Developer Tools",
+      "pricingType": "free",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "nursevi",
+      "category": "Education",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "pragor",
+      "category": "AI Agents",
+      "pricingType": "free",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "saycraft",
+      "category": "AI Coding",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "solice",
+      "category": "AI Video",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "orkas",
+      "category": "AI Agents",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "sharpniq",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": true
+    },
+    {
+      "slug": "screenpipe",
+      "category": "Productivity",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "cuta",
+      "category": "AI Video",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "ai-tattoo-generator",
+      "category": "AI Image",
+      "pricingType": "free",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "currawong-web",
+      "category": "Business",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "kopai",
+      "category": "AI Agents",
+      "pricingType": "free",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "profileloom",
+      "category": "AI Image",
+      "pricingType": "free",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "my-best-resume",
+      "category": "Productivity",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "ai-workflow-brief-builder",
+      "category": "Productivity",
+      "pricingType": "free",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "ai-room-makeover",
+      "category": "Design",
+      "pricingType": "free",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "rewords-ai",
+      "category": "Marketing",
+      "pricingType": "free",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "agent-forge",
+      "category": "AI Agents",
+      "pricingType": "free",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "muse-video",
+      "category": "AI Video",
+      "pricingType": "free",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "jasper",
+      "category": "AI Writing",
+      "pricingType": "paid",
+      "rating": 4.8,
+      "featured": true
+    },
+    {
+      "slug": "copy-ai",
+      "category": "AI Writing",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "writesonic",
+      "category": "AI Writing",
+      "pricingType": "freemium",
+      "rating": 4.3,
+      "featured": false
+    },
+    {
+      "slug": "rytr",
+      "category": "AI Writing",
+      "pricingType": "freemium",
+      "rating": 4.1,
+      "featured": false
+    },
+    {
+      "slug": "pictory",
+      "category": "AI Video",
+      "pricingType": "paid",
+      "rating": 4.4,
+      "featured": true
+    },
+    {
+      "slug": "monday",
+      "category": "Project Management",
+      "pricingType": "freemium",
+      "rating": 4.7,
+      "featured": true
+    },
+    {
+      "slug": "notion",
+      "category": "Productivity",
+      "pricingType": "freemium",
+      "rating": 4.6,
+      "featured": false
+    },
+    {
+      "slug": "obsidian",
+      "category": "Productivity",
+      "pricingType": "free",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "jpg2excel",
+      "category": "Productivity",
+      "pricingType": "free",
+      "rating": 4,
+      "featured": false
+    },
+    {
+      "slug": "toolsvio",
+      "category": "Productivity",
+      "pricingType": "free",
+      "rating": 4,
+      "featured": true
+    },
+    {
+      "slug": "freshbooks",
+      "category": "Invoicing",
+      "pricingType": "paid",
+      "rating": 4.6,
+      "featured": true
+    },
+    {
+      "slug": "wave",
+      "category": "Invoicing",
+      "pricingType": "free",
+      "rating": 4.2,
+      "featured": false
+    },
+    {
+      "slug": "quickbooks",
+      "category": "Accounting",
+      "pricingType": "paid",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "hubspot",
+      "category": "CRM",
+      "pricingType": "freemium",
+      "rating": 4.8,
+      "featured": true
+    },
+    {
+      "slug": "salesforce",
+      "category": "CRM",
+      "pricingType": "paid",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "pipedrive",
+      "category": "CRM",
+      "pricingType": "paid",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "timbercloud",
+      "category": "Sales",
+      "pricingType": "paid",
+      "rating": 4,
+      "featured": false
+    },
+    {
+      "slug": "cursor",
+      "category": "AI Coding",
+      "pricingType": "freemium",
+      "rating": 4.9,
+      "featured": true
+    },
+    {
+      "slug": "github-copilot",
+      "category": "AI Coding",
+      "pricingType": "freemium",
+      "rating": 4.6,
+      "featured": false
+    },
+    {
+      "slug": "semrush",
+      "category": "SEO",
+      "pricingType": "paid",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "ahrefs",
+      "category": "SEO",
+      "pricingType": "paid",
+      "rating": 4.7,
+      "featured": false
+    },
+    {
+      "slug": "chatgpt",
+      "category": "AI Assistants",
+      "pricingType": "freemium",
+      "rating": 4.8,
+      "featured": false
+    },
+    {
+      "slug": "claude",
+      "category": "AI Assistants",
+      "pricingType": "freemium",
+      "rating": 4.7,
+      "featured": false
+    },
+    {
+      "slug": "gemini",
+      "category": "AI Assistants",
+      "pricingType": "freemium",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "perplexity",
+      "category": "AI Search",
+      "pricingType": "freemium",
+      "rating": 4.6,
+      "featured": false
+    },
+    {
+      "slug": "agentarius",
+      "category": "Research",
+      "pricingType": "free",
+      "rating": 4,
+      "featured": false
+    },
+    {
+      "slug": "partgenie",
+      "category": "AI Agents",
+      "pricingType": "free",
+      "rating": 4.4,
+      "featured": true
+    },
+    {
+      "slug": "replit",
+      "category": "AI Coding",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "windsurf",
+      "category": "AI Coding",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "sourcegraph-cody",
+      "category": "AI Coding",
+      "pricingType": "freemium",
+      "rating": 4.3,
+      "featured": false
+    },
+    {
+      "slug": "v0",
+      "category": "AI Design",
+      "pricingType": "freemium",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "midjourney",
+      "category": "AI Image",
+      "pricingType": "paid",
+      "rating": 4.7,
+      "featured": false
+    },
+    {
+      "slug": "dall-e",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "stable-diffusion",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "leonardo-ai",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "ideogram",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "dzyn-space",
+      "category": "Design",
+      "pricingType": "freemium",
+      "rating": 4,
+      "featured": false
+    },
+    {
+      "slug": "runway",
+      "category": "AI Video",
+      "pricingType": "freemium",
+      "rating": 4.6,
+      "featured": false
+    },
+    {
+      "slug": "synthesia",
+      "category": "AI Video",
+      "pricingType": "paid",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "descript",
+      "category": "AI Video",
+      "pricingType": "freemium",
+      "rating": 4.6,
+      "featured": false
+    },
+    {
+      "slug": "opusclip",
+      "category": "AI Video",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "elevenlabs",
+      "category": "AI Audio",
+      "pricingType": "freemium",
+      "rating": 4.7,
+      "featured": false
+    },
+    {
+      "slug": "suno",
+      "category": "AI Audio",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "otter-ai",
+      "category": "AI Meetings",
+      "pricingType": "freemium",
+      "rating": 4.3,
+      "featured": false
+    },
+    {
+      "slug": "fireflies-ai",
+      "category": "AI Meetings",
+      "pricingType": "freemium",
+      "rating": 4.3,
+      "featured": false
+    },
+    {
+      "slug": "fathom",
+      "category": "AI Meetings",
+      "pricingType": "freemium",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "lindy",
+      "category": "AI Agents",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "gumloop",
+      "category": "AI Automation",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "zapier-ai",
+      "category": "AI Automation",
+      "pricingType": "freemium",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "n8n",
+      "category": "AI Automation",
+      "pricingType": "freemium",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "hugging-face",
+      "category": "AI Infrastructure",
+      "pricingType": "freemium",
+      "rating": 4.7,
+      "featured": false
+    },
+    {
+      "slug": "langchain",
+      "category": "AI Infrastructure",
+      "pricingType": "freemium",
+      "rating": 4.3,
+      "featured": false
+    },
+    {
+      "slug": "pinecone",
+      "category": "AI Infrastructure",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "aio-geo",
+      "category": "AI Infrastructure",
+      "pricingType": "freemium",
+      "rating": 4,
+      "featured": false
+    },
+    {
+      "slug": "openai-api",
+      "category": "AI Infrastructure",
+      "pricingType": "paid",
+      "rating": 4.7,
+      "featured": false
+    },
+    {
+      "slug": "cloudflare",
+      "category": "Developer Platforms",
+      "pricingType": "freemium",
+      "rating": 4.6,
+      "featured": false
+    },
+    {
+      "slug": "vercel",
+      "category": "Developer Platforms",
+      "pricingType": "freemium",
+      "rating": 4.7,
+      "featured": false
+    },
+    {
+      "slug": "supabase",
+      "category": "Developer Platforms",
+      "pricingType": "freemium",
+      "rating": 4.6,
+      "featured": false
+    },
+    {
+      "slug": "git",
+      "category": "Developer Tools",
+      "pricingType": "free",
+      "rating": 4.8,
+      "featured": false
+    },
+    {
+      "slug": "github",
+      "category": "Developer Platforms",
+      "pricingType": "freemium",
+      "rating": 4.8,
+      "featured": false
+    },
+    {
+      "slug": "meta-ai",
+      "category": "AI Assistants",
+      "pricingType": "free",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "meta-llama",
+      "category": "AI Infrastructure",
+      "pricingType": "freemium",
+      "rating": 4.7,
+      "featured": false
+    },
+    {
+      "slug": "meta-ai-studio",
+      "category": "AI Agents",
+      "pricingType": "free",
+      "rating": 4.2,
+      "featured": false
+    },
+    {
+      "slug": "segment-anything",
+      "category": "AI Image",
+      "pricingType": "free",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "video-upscaler",
+      "category": "Video",
+      "pricingType": "paid",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "vedic-astrology-chart",
+      "category": "AI Lifestyle",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "image-describer",
+      "category": "Image",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "blur-background",
+      "category": "Image",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "vidirelay",
+      "category": "Video",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "seamless",
+      "category": "AI Audio",
+      "pricingType": "free",
+      "rating": 4.3,
+      "featured": false
+    },
+    {
+      "slug": "audiocraft",
+      "category": "AI Audio",
+      "pricingType": "free",
+      "rating": 4.2,
+      "featured": false
+    },
+    {
+      "slug": "rizz-invites",
+      "category": "AI Marketing",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "alchemy-leads",
+      "category": "AI Marketing",
+      "pricingType": "paid",
+      "rating": 4.5,
+      "featured": false
+    },
+    {
+      "slug": "vidsyndicate",
+      "category": "AI Marketing",
+      "pricingType": "free",
+      "rating": 4.4,
+      "featured": true
+    },
+    {
+      "slug": "synabot-ai",
+      "category": "AI Agents",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "local-basics",
+      "category": "AI Marketing",
+      "pricingType": "free",
+      "rating": 4.4,
+      "featured": true
+    },
+    {
+      "slug": "wes-marketing",
+      "category": "AI Marketing",
+      "pricingType": "paid",
+      "rating": 4.4,
+      "featured": true
+    },
+    {
+      "slug": "htmlslides",
+      "category": "Productivity",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "avenyora",
+      "category": "AI Lifestyle",
+      "pricingType": "freemium",
+      "rating": 4.3,
+      "featured": false
+    },
+    {
+      "slug": "stream-bot",
+      "category": "Video",
+      "pricingType": "free",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "reverse-image-location",
+      "category": "Research",
+      "pricingType": "freemium",
+      "rating": 4.4,
+      "featured": false
+    },
+    {
+      "slug": "bulin-47-ai",
+      "category": "AI Video",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "creatorvault-ai",
+      "category": "Marketing",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "ai-pigeon-meme",
+      "category": "AI Video",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "hotel-lobby-ai",
+      "category": "AI Video",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "distribb",
+      "category": "Marketing",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "marketowl",
+      "category": "Marketing",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "bpm-finder",
+      "category": "AI Audio",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "pawcinema",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "pikkai",
+      "category": "Productivity",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "removemate",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "verimails",
+      "category": "Marketing",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "build-or-skip",
+      "category": "Business",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "refinely-human",
+      "category": "AI Writing",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "remove-person-from-photo",
+      "category": "AI Image",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "freyavideo",
+      "category": "AI Video",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "orke",
+      "category": "Developer Tools",
+      "pricingType": "free",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "mchils-apex-ai",
+      "category": "Business",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "subtitle-im",
+      "category": "Productivity",
+      "pricingType": "freemium",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "webhub",
+      "category": "Marketing",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "zombie-couple-video",
+      "category": "AI Video",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "a2o-lite-neon-ai-dance-generator",
+      "category": "AI Video",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    },
+    {
+      "slug": "enzo-fernandez-celebration-ai",
+      "category": "AI Video",
+      "pricingType": "paid",
+      "rating": null,
+      "featured": false
+    }
+  ],
+  "rankedSlugs": [
+    "chatgpt",
+    "cursor",
+    "openai-api",
+    "hubspot",
+    "monday",
+    "jasper",
+    "freshbooks",
+    "pictory",
+    "local-basics",
+    "partgenie",
+    "vidsyndicate",
+    "wes-marketing",
+    "github",
+    "claude",
+    "hugging-face",
+    "meta-llama",
+    "vercel",
+    "cloudflare",
+    "descript",
+    "github-copilot",
+    "runway",
+    "supabase",
+    "elevenlabs",
+    "git",
+    "toolsvio",
+    "dall-e",
+    "gemini",
+    "midjourney",
+    "notion",
+    "perplexity",
+    "ideogram",
+    "leonardo-ai",
+    "opusclip",
+    "pinecone",
+    "replit",
+    "segment-anything",
+    "stable-diffusion",
+    "windsurf",
+    "ahrefs",
+    "fathom",
+    "n8n",
+    "v0",
+    "zapier-ai",
+    "langchain",
+    "meta-ai",
+    "sourcegraph-cody",
+    "blur-background",
+    "copy-ai",
+    "gumloop",
+    "htmlslides",
+    "image-describer",
+    "lindy",
+    "obsidian",
+    "reverse-image-location",
+    "rizz-invites",
+    "suno",
+    "synabot-ai",
+    "vedic-astrology-chart",
+    "vidirelay",
+    "synthesia",
+    "alchemy-leads",
+    "avenyora",
+    "fireflies-ai",
+    "otter-ai",
+    "pipedrive",
+    "quickbooks",
+    "semrush",
+    "stream-bot",
+    "writesonic",
+    "salesforce",
+    "seamless",
+    "video-upscaler",
+    "aio-geo",
+    "audiocraft",
+    "meta-ai-studio",
+    "rytr",
+    "wave",
+    "dzyn-space",
+    "agentarius",
+    "jpg2excel",
+    "timbercloud",
+    "astrea",
+    "coanimator",
+    "hairforge",
+    "magic-hour",
+    "pregnancy-ai",
+    "saycraft",
+    "sharpniq",
+    "removebgtools",
+    "manhwa-translator",
+    "openfate",
+    "orkas",
+    "reelfluent",
+    "sistava",
+    "solice",
+    "aicoolies",
+    "pragor",
+    "tecadrise-bot",
+    "modelrush",
+    "mrrlin",
+    "nextlerai",
+    "nursevi",
+    "softsync-ai",
+    "ai-fruit-video",
+    "cuta",
+    "freyavideo",
+    "gender-swap-ai",
+    "pawcinema",
+    "photogenerai",
+    "productshot-ai",
+    "remove-person-from-photo",
+    "removemate",
+    "ai-tattoo-generator",
+    "muse-video",
+    "profileloom",
+    "zombieai",
+    "bpm-finder",
+    "build-or-skip",
+    "currawong-web",
+    "marketowl",
+    "my-best-resume",
+    "pikkai",
+    "refinely-human",
+    "screenpipe",
+    "shopchief",
+    "subtitle-im",
+    "verimails",
+    "a2o-lite-neon-ai-dance-generator",
+    "ai-pigeon-meme",
+    "bulin-47-ai",
+    "enzo-fernandez-celebration-ai",
+    "gemini-nano-banana",
+    "hotel-lobby-ai",
+    "zombie-couple-video",
+    "agent-forge",
+    "ai-room-makeover",
+    "ai-workflow-brief-builder",
+    "kopai",
+    "orke",
+    "rewords-ai",
+    "aicoursify",
+    "arvow",
+    "creatorvault-ai",
+    "distribb",
+    "fiscus-ai",
+    "mchils-apex-ai",
+    "webhub"
+  ],
+  "featuredSlugs": [
+    "tecadrise-bot",
+    "softsync-ai",
+    "openfate",
+    "pregnancy-ai",
+    "manhwa-translator",
+    "nextlerai",
+    "magic-hour",
+    "hairforge",
+    "coanimator",
+    "astrea",
+    "sistava",
+    "mrrlin",
+    "modelrush",
+    "removebgtools",
+    "reelfluent",
+    "aicoolies",
+    "nursevi",
+    "pragor",
+    "saycraft",
+    "solice",
+    "orkas",
+    "sharpniq",
+    "jasper",
+    "pictory",
+    "monday",
+    "toolsvio",
+    "freshbooks",
+    "hubspot",
+    "cursor",
+    "partgenie",
+    "vidsyndicate",
+    "local-basics",
+    "wes-marketing"
+  ],
+  "hashes": {
+    "lib/data.ts": "4b58c754ea8647ebe664239226d1f4197598958f9e08f2f09b6803123923305d",
+    "app/sitemap.ts": "70a7a1845fda475912b6177611cb7f6c36a44009d17d221c9dfb04066575065f",
+    "lib/tool-seo.ts": "dce68d14c35b4279bb402056645f312910a14360e2e2d7211a2f0c63e8008e4e",
+    "app/tools/[slug]/page.tsx": "be5a41bfa020fb998693d6190916e708395bca5a22325ecc04dca20fbd149f2d"
+  },
+  "metadataSource": "import type { Metadata } from 'next'\r\nimport { TOOLS } from '@/lib/data'\r\nimport DirectoryClient from '@/components/ui/DirectoryClient'\r\n\r\nexport function generateMetadata({ searchParams }: { searchParams?: { category?: string; q?: string } }): Metadata { return {\r\n  robots: searchParams?.category || searchParams?.q ? { index: false, follow: true } : { index: true, follow: true },\r\n  alternates: { canonical: '/directory' },\r\n  title: 'AI Tool Directory — AIBeat.dev',\r\n  description: 'Browse AIBeat’s AI tool directory by category, pricing, and rating. Explore product descriptions, features, and alternatives for your next workflow.',\r\n} }\r\n\r\nexport default function DirectoryPage({ searchParams }: { searchParams?: { category?: string } }) {\r\n  return <DirectoryClient key={searchParams?.category || 'all'} initialCategory={TOOLS.some(tool => tool.category === searchParams?.category) ? searchParams?.category : undefined} />\r\n}\r\n"
+}
