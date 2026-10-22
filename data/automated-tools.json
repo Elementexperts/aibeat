@@ -606,5 +606,55 @@
     "logo": "#2563eb",
     "logoInitials": "HI",
     "alternatives": []
+  },
+  {
+    "slug": "makefloorplan",
+    "name": "MakeFloorPlan",
+    "tagline": "Generate 2D and 3D conceptual floor plans from text descriptions, sketches, or an editable canvas.",
+    "description": "Make Floor Plan is an AI layout tool designed to generate conceptual 2D and 3D isometric floor plans from text prompts or rough sketches. It features an editable canvas to manually arrange walls, openings, and furniture, as well as export options in PNG and print-ready PDF formats.",
+    "category": "Design",
+    "pricing": "Free trial allows one 1K floor plan generation without signup; additional generations, higher resolutions, and saved history require paid credits.",
+    "pricingType": "freemium",
+    "pros": [
+      "Generates conceptual floor plans from plain text briefs, uploaded sketches, or a blank canvas",
+      "Provides 3D isometric preview options and manual object-level editing",
+      "Allows testing with one free generation without requiring an account"
+    ],
+    "cons": [
+      "Outputs are conceptual visualizations and not suitable for construction or code compliance without professional review",
+      "Sketch conversion generates static images rather than layered, editable CAD walls"
+    ],
+    "websiteUrl": "https://makefloorplan.com/",
+    "affiliateUrl": "https://makefloorplan.com/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "M",
+    "alternatives": []
+  },
+  {
+    "slug": "sitelemetry",
+    "name": "Sitelemetry",
+    "tagline": "AI website audit tool for security, technical SEO, and AI visibility with MCP support.",
+    "description": "Sitelemetry is an agent-native website audit platform that analyzes web properties across security posture, technical SEO, AI discoverability, accessibility, and performance. It produces verifiable findings with remediation context, supports Model Context Protocol (MCP) clients such as Claude and Codex, and provides scheduled monitoring across verified domains.",
+    "category": "Developer Tools",
+    "pricing": "Free plan with 10 security scans/month; paid plans start at $49/month ($470/year billed annually).",
+    "pricingType": "freemium",
+    "pros": [
+      "Integrates with MCP clients including Codex, Claude Code, and ChatGPT.",
+      "Combines security, SEO, accessibility, and AI visibility in unified audit queues.",
+      "Provides a free tier with 10 security scans per month."
+    ],
+    "cons": [
+      "Free plan is restricted to security checks and excludes SEO, AI visibility, and export features.",
+      "Requires domain verification before background audits can execute."
+    ],
+    "websiteUrl": "https://sitelemetry.com/",
+    "affiliateUrl": "https://sitelemetry.com/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "S",
+    "alternatives": []
   }
 ]
