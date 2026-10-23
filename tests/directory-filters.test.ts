@@ -182,3 +182,101 @@ test('client wiring commits only via submit/buttons, keeps scroll and avoids key
   assert.match(source, /focus-visible:outline/)
   assert.doesNotMatch(readFileSync('app/directory/page.tsx', 'utf8'), /<DirectoryClient key=/)
 })
+
+// These checks describe static SSR markup, not browser layout, focus or AT behavior.
+const cardMarkup = (filters: DirectoryFilters) => Array.from(
+  html(filters).matchAll(/<article\b[^>]*>([\s\S]*?)<\/article>/g), match => match[1])
+const escapedText = (value: string) => renderToStaticMarkup(createElement('span', null, value)).slice(6, -7)
+const groupedTools = () => Array.from(new Set(ranked.map(tool => tool.category)))
+  .flatMap(category => ranked.filter(tool => tool.category === category))
+
+test('directory cards have product headings and one named native detail link in both result modes', () => {
+  const example = ranked[10]
+  for (const filters of [empty, { q: '', category: example.category, pricing: example.pricingType }]) {
+    const selected = filters === empty ? groupedTools() : filterDirectoryTools(ranked, filters)
+    const cards = cardMarkup(filters)
+    assert.equal(cards.length, selected.length)
+    assert.ok(cards.length)
+    cards.forEach((card, index) => {
+      const tool = selected[index]
+      const links = Array.from(card.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g))
+      const [attributes, body] = [links[0][1], links[0][2]]
+      assert.ok(attributes.includes(`href="/tools/${tool.slug}"`))
+      assert.ok(attributes.includes(`aria-label="${escapedText(`View details for ${tool.name}`)}"`))
+      assert.doesNotMatch(attributes, /\b(?:role|tabindex)=/i)
+      const headings = Array.from(body.matchAll(/<h2\b[^>]*>([\s\S]*?)<\/h2>/g))
+      assert.equal(headings.length, 1)
+      assert.equal(headings[0][1], escapedText(tool.name))
+      assert.equal(links.filter(link => link[1].includes('href="/tools/')).length, 1)
+      assert.doesNotMatch(body, /<(?:a|button|input|select|textarea)\b/i)
+      const decorativeLogo = body.match(/<div\b[^>]*aria-hidden="true"[^>]*>([\s\S]*?)<\/div>/)
+      assert.ok(decorativeLogo)
+      assert.doesNotMatch(decorativeLogo[1], /<(?:a|button|input|select|textarea|h2|p)\b/i)
+      assert.ok(card.includes(`>#${ranked.indexOf(tool) + 1}</span>`))
+    })
+  }
+  assert.deepEqual(cardMarkup({ ...empty, q: 'zzzz-no-such-tool' }), [])
+})
+
+test('card presentation retains catalog text, factual score and pricing without new placement labels', () => {
+  const cards = cardMarkup(empty)
+  const selected = groupedTools()
+  assert.equal(cards.length, selected.length)
+  assert.ok(selected.some(tool => tool.rating === null))
+  assert.ok(selected.some(tool => tool.rating !== null))
+  assert.deepEqual(new Set(selected.map(tool => tool.pricingType)), new Set(['free', 'freemium', 'paid']))
+  cards.forEach((card, index) => {
+    const tool = selected[index]
+    assert.ok(card.includes(`>${escapedText(tool.category)}</div>`))
+    assert.ok(card.includes(`>${escapedText(tool.tagline)}</p>`))
+    const spanText = Array.from(card.matchAll(/<span\b[^>]*>([^<]*)<\/span>/g), match => match[1])
+    const score = tool.rating === null ? 'Not yet rated' : `AIBeat Score ${tool.rating}`
+    const pricing = tool.pricingType === 'free' ? 'Free' : tool.pricingType === 'freemium' ? 'Freemium' : tool.pricing
+    assert.ok(spanText.includes(escapedText(score)))
+    assert.ok(spanText.includes(escapedText(pricing)))
+    assert.doesNotMatch(card, />\s*(?:Featured|Sponsored|Editor's Pick)\s*</)
+  })
+})
+
+test('affiliate offers remain separate from the detail link with original destinations and disclosure', () => {
+  const cards = cardMarkup(empty)
+  const selected = groupedTools()
+  assert.ok(selected.some(tool => tool.affiliateOffer))
+  cards.forEach((card, index) => {
+    const tool = selected[index]
+    const links = Array.from(card.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g))
+    assert.equal(links.length, tool.affiliateOffer ? 2 : 1)
+    if (!tool.affiliateOffer) return
+    assert.ok(links[1][1].includes(`href="${escapedText(tool.affiliateUrl)}"`))
+    assert.ok(links[1][1].includes('target="_blank"'))
+    const rel = links[1][1].match(/\brel="([^"]+)"/)![1].split(/\s+/)
+    for (const token of ['noopener', 'noreferrer', 'sponsored']) assert.ok(rel.includes(token))
+    assert.ok(links[1][2].includes(escapedText(`Get ${tool.affiliateOffer.discount} ${tool.name} →`)))
+    assert.ok(card.includes(escapedText(tool.affiliateOffer.code)))
+    assert.ok(card.includes('Affiliate link: AIBeat may earn a commission at no extra cost to you.'))
+    assert.doesNotMatch(links[0][2], /Affiliate link:|Use promo code|target="_blank"/)
+  })
+})
+
+test('directory-only responsive and focus utility contracts are present without claiming computed layout', () => {
+  // No CSS/browser engine is used here; utility tokens are the available static guard.
+  const source = readFileSync('components/ui/DirectoryClient.tsx', 'utf8')
+  const grids = Array.from(source.matchAll(/className="([^"]+)"/g), match => match[1].split(/\s+/))
+    .filter(tokens => tokens.includes('grid'))
+  assert.equal(grids.length, 2)
+  for (const tokens of grids) {
+    for (const token of ['grid-cols-1', 'sm:grid-cols-2', 'md:grid-cols-4']) assert.ok(tokens.includes(token))
+  }
+  const card = cardMarkup(empty)[0]
+  const mainLink = card.match(/<a\b[^>]*\bclass="([^"]+)"/)
+  assert.ok(mainLink)
+  const focusTokens = mainLink[1].split(/\s+/)
+  for (const token of ['focus-visible:outline', 'focus-visible:outline-2', 'focus-visible:outline-ink', 'focus-visible:outline-offset-2']) {
+    assert.ok(focusTokens.includes(token))
+  }
+  const metadataRows = Array.from(card.matchAll(/<div\b[^>]*\bclass="([^"]+)"/g), match => match[1].split(/\s+/))
+    .filter(tokens => tokens.includes('flex-wrap'))
+  assert.equal(metadataRows.length, 1)
+  assert.ok(metadataRows[0].includes('gap-2'))
+  assert.ok(metadataRows[0].includes('items-start'))
+})

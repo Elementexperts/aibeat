@@ -150,7 +150,7 @@ export default function DirectoryClient({ initialFilters }: { initialFilters: Di
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
               {filtered.map((tool, i) => (
                 <ToolCard key={tool.slug} tool={tool} i={i} rank={ranks.get(tool.slug)!} />
               ))}
@@ -165,7 +165,7 @@ export default function DirectoryClient({ initialFilters }: { initialFilters: Di
               <div className="section-label">{cat}</div>
               <span className="font-mono text-[10px] text-ink-4">{tools.length} tool{tools.length !== 1 ? 's' : ''}</span>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
               {tools.map((tool, i) => (
                 <ToolCard key={tool.slug} tool={tool} i={i} rank={ranks.get(tool.slug)!} />
               ))}
@@ -194,18 +194,24 @@ export default function DirectoryClient({ initialFilters }: { initialFilters: Di
 
 function ToolCard({ tool, i, rank }: { tool: typeof TOOLS[number]; i: number; rank: number }) {
   return (
-    <div className={`p-4 border-b border-border ${i % 4 !== 3 ? 'md:border-r' : ''}`}>
-      <Link href={`/tools/${tool.slug}`} className="block card-hover">
+    <article className={`min-w-0 p-4 border-b border-border ${i % 4 !== 3 ? 'md:border-r' : ''}`}>
+      <Link
+        href={`/tools/${tool.slug}`}
+        aria-label={`View details for ${tool.name}`}
+        className="block min-w-0 card-hover hover:bg-paper-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink focus-visible:outline-offset-2"
+      >
         <div className="mb-3 flex items-center justify-between gap-3">
-          <ToolLogo tool={tool} className="w-9 h-9 rounded-md text-sm" />
-          <span className="font-mono text-[10px] text-ink-4">#{rank}</span>
+          <div aria-hidden="true" className="shrink-0">
+            <ToolLogo tool={tool} className="w-9 h-9 rounded-md text-sm" />
+          </div>
+          <span className="shrink-0 font-mono text-xs text-ink-3">#{rank}</span>
         </div>
-        <div className="text-sm font-semibold text-ink mb-0.5">{tool.name}</div>
-        <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1.5">{tool.category}</div>
-        <p className="text-[11px] text-ink-3 leading-relaxed mb-2 line-clamp-2">{tool.tagline}</p>
-        <div className="flex justify-between items-center">
-          <span className="text-[11px] font-semibold text-cyan-700">{getToolRatingLabel(tool)}</span>
-          <span className={`font-mono text-[10px] px-1.5 py-0.5 ${
+        <h2 className="min-w-0 break-words text-base font-semibold leading-snug text-ink mb-0.5">{tool.name}</h2>
+        <div className="min-w-0 break-words font-mono text-xs text-ink-3 uppercase tracking-wide mb-1.5">{tool.category}</div>
+        <p className="break-words text-sm text-ink-3 leading-relaxed mb-2 line-clamp-2">{tool.tagline}</p>
+        <div className="flex flex-wrap justify-between items-start gap-2">
+          <span className="min-w-0 break-words text-xs font-semibold text-cyan-700">{getToolRatingLabel(tool)}</span>
+          <span className={`min-w-0 max-w-full break-words font-mono text-xs px-1.5 py-0.5 ${
             tool.pricingType === 'free'     ? 'bg-beat-green-light text-beat-green' :
             tool.pricingType === 'freemium' ? 'bg-yellow-50 text-yellow-700' :
                                               'bg-paper-3 text-ink-2'
@@ -219,6 +225,6 @@ function ToolCard({ tool, i, rank }: { tool: typeof TOOLS[number]; i: number; ra
           <ToolAffiliateOffer tool={tool} />
         </div>
       )}
-    </div>
+    </article>
   )
 }
