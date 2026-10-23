@@ -5,6 +5,169 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "visual-maker-ai",
+  "logoUrl": "/tool-logos/visual-maker-ai.png",
+  "name": "Visual Maker AI",
+  "tagline": "Create images, videos and script-based film projects in one workspace",
+  "description": "Visual Maker AI combines text and reference-image generation, video creation and a film workspace for scripts, scenes and keyframes. Saved assets and references can be reused across projects. Available input modes, resolution and duration depend on the selected model. Paid subscriptions allocate credits monthly, while one-time packs provide non-expiring credits.",
+  "category": "AI Image",
+  "logo": "#7c3aed",
+  "logoInitials": "VM",
+  "pricing": "Paid subscriptions from $299/year ($24.92/month equivalent); one-time packs from $39.90 for 4,000 credits",
+  "pricingType": "paid",
+  "websiteUrl": "https://visualmakerai.com/",
+  "pros": [
+    "Image, video and film workflows together",
+    "Reusable creative assets and references",
+    "One-time credit packs without renewal"
+  ],
+  "cons": [
+    "Subscription credits expire at the next allocation",
+    "Generation costs vary by model and output settings",
+    "Free signup allowance was not independently verified"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://visualmakerai.com/",
+  "alternatives": []
+},
+{
+  "slug": "destiny-book",
+  "logoUrl": "/tool-logos/destiny-book.png",
+  "name": "Destiny Book",
+  "tagline": "Explore Chinese astrology charts and AI-written personal interpretations",
+  "description": "Destiny Book combines calculated Four Pillars charts with AI-written interpretations of traditional Chinese astrology. It offers free birth-chart tools and optional paid topic reports, with separate products for personal traits, time cycles and relationship comparisons. Interfaces include Traditional and Simplified Chinese. Readings are cultural interpretation and personal reflection, not scientifically established predictions.",
+  "category": "Lifestyle",
+  "logo": "#b45309",
+  "logoInitials": "DB",
+  "pricing": "Free basic charts; optional one-time paid reports; prices depend on region and checkout currency",
+  "pricingType": "freemium",
+  "websiteUrl": "https://mingshu.help/",
+  "pros": [
+    "Free basic chart tools",
+    "Separate personal, timing and relationship reports",
+    "Explains the role of chart calculations and AI text"
+  ],
+  "cons": [
+    "Detailed reports require separate purchases",
+    "Exact prices depend on region and checkout",
+    "Birth-time uncertainty can affect interpretations"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://mingshu.help/",
+  "alternatives": []
+},
+{
+  "slug": "ai-pop-video",
+  "logoUrl": "/tool-logos/ai-pop-video.png",
+  "name": "AI Pop Video",
+  "tagline": "Turn photos into dance clips and creative video effects using templates",
+  "description": "AI Pop Video creates short photo-based videos from dance and creative-effect templates. Users review the required photos, duration and credit cost before generating, then track and download results in their account. It also offers custom motion references and browser video utilities. Generation is credit-based; the weekly subscription renews automatically unless canceled, and additional credit packs require Pro membership.",
+  "category": "AI Video",
+  "logo": "#db2777",
+  "logoInitials": "AP",
+  "pricing": "Weekly Pro: $5.99 first week, then $9.99/week for 200 weekly credits; members-only top-ups from $5/100 credits",
+  "pricingType": "paid",
+  "websiteUrl": "https://aipopvideo.com/",
+  "pros": [
+    "Template previews show photo requirements and costs",
+    "Custom motion-reference workflow",
+    "Failed generations receive automatic credit refunds"
+  ],
+  "cons": [
+    "Weekly plan renews automatically",
+    "Credit requirements vary by duration and template",
+    "Account creation does not guarantee a free video"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://aipopvideo.com/",
+  "alternatives": []
+},
+{
+  "slug": "fomrix",
+  "logoUrl": "/tool-logos/fomrix.png",
+  "name": "Fomrix",
+  "tagline": "Generate 3D assets from images or text and inspect them with browser tools",
+  "description": "Fomrix turns images and text prompts into downloadable GLB assets. Separate browser utilities view, inspect, convert and repair common 3D formats without consuming generation credits. New accounts receive limited welcome credits; paid packs and subscriptions add more capacity. Generation costs vary with input and settings. Users should inspect generated geometry, dimensions and printing requirements before downstream use.",
+  "category": "Design",
+  "logo": "#2563eb",
+  "logoInitials": "FO",
+  "pricing": "Limited welcome credits: up to 90 in the first week; packs from $7.99/200 credits; monthly plans from $12.99",
+  "pricingType": "freemium",
+  "websiteUrl": "https://fomrix.com/",
+  "pros": [
+    "Image and text generation with GLB downloads",
+    "Browser inspection and conversion utilities",
+    "One-time packs and recurring plans available"
+  ],
+  "cons": [
+    "Welcome credits expire seven days after receipt",
+    "Generation settings change credit costs",
+    "Generated meshes need review before printing or manufacturing"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://fomrix.com/",
+  "alternatives": []
+},
+{
+  "slug": "flippie-labs",
+  "name": "Flippie Labs",
+  "listingType": "service",
+  "tagline": "Commission custom dashboards, AI reporting and business web applications",
+  "description": "Flippie Labs is a B2B data and software studio offering custom dashboards, Power BI reporting, Excel automation, AI-written reporting commentary and KPI alerts. It also builds websites, interfaces and client portals around business data. Projects are scoped to a client’s requirements and quoted individually rather than sold as self-serve software. Optional ongoing support is available; the site also offers free browser utilities and business templates.",
+  "category": "Business",
+  "logo": "#0d9488",
+  "logoInitials": "FL",
+  "logoUrl": "/tool-logos/flippie-labs.png",
+  "pricing": "Custom fixed project quotes; focused Power BI dashboards typically start around €300–€600; optional ongoing support quoted separately",
+  "pricingType": "paid",
+  "websiteUrl": "https://flippielabs.com/",
+  "pros": [
+    "Custom reporting and data integrations",
+    "Dashboards, automation and web development in one engagement",
+    "Fixed project quote before work begins"
+  ],
+  "cons": [
+    "Service engagement rather than self-serve software",
+    "Pricing and delivery depend on project scope",
+    "Ongoing support and platform licensing may add costs"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://flippielabs.com/",
+  "alternatives": []
+},
+{
+  "slug": "novastart",
+  "name": "Novastart",
+  "tagline": "Organize apps, files and AI agents on a shared infinite canvas",
+  "description": "Novastart provides an infinite-canvas workspace for arranging applications and files, saving separate workspaces and working alongside AI agents. Its Team plan adds shared canvases with independent participant cursors and keyboards. A limited free plan includes one folder, two canvases and four windows per canvas. Pro and Team remove canvas limits, while AI-agent usage is billed separately on every plan. Installation is required; advertised agent and collaboration capabilities have not been independently tested by AIBeat.",
+  "category": "Productivity",
+  "logo": "#6366f1",
+  "logoInitials": "NS",
+  "logoUrl": "/tool-logos/novastart.png",
+  "pricing": "Free limited plan; Pro $10/month; Team $20/month; AI agents $0.02 per use with credit purchases from $25 on every plan",
+  "pricingType": "freemium",
+  "websiteUrl": "https://novastart.com/",
+  "pros": [
+    "Persistent canvases for apps and files",
+    "AI agents alongside existing workflows",
+    "Shared workspaces on the Team plan"
+  ],
+  "cons": [
+    "AI-agent credits are separate from subscription pricing",
+    "Free plan limits folders, canvases and windows",
+    "Team collaboration requires the Team plan"
+  ],
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://novastart.com/",
+  "alternatives": []
+},
+{
   "slug": "zombieai",
   "name": "ZombieAI",
   "tagline": "Explore zombie reunion story prompts and an early-stage video studio",
