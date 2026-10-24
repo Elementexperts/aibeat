@@ -1,7 +1,8 @@
 import Link from 'next/link'
+import { HomeToolSearch } from '@/components/ui/HomeToolSearch'
 import { NewsImage } from '@/components/ui/NewsImage'
 import type { Metadata } from 'next'
-import { ArrowRight, ArrowUpRight, BriefcaseBusiness, Compass, Megaphone, Newspaper, Rocket, Search, ShieldCheck, Sparkles, Zap } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, BriefcaseBusiness, Compass, Megaphone, Newspaper, Rocket, ShieldCheck, Sparkles, Zap } from 'lucide-react'
 import { TOOLS, getFeaturedTools, getPopularTools } from '@/lib/data'
 import { getArticles } from '@/lib/articles'
 import { NewsletterBox } from '@/components/ui/NewsletterBox'
@@ -18,14 +19,6 @@ export const metadata: Metadata = {
   description: 'Discover curated AI tools, emerging startups, product launches and important AI news. Find useful AI products by category, workflow and AIBeat Score.',
   alternates: { canonical: '/' },
 }
-
-const SEARCH_SUGGESTIONS = [
-  'AI agents for sales',
-  'Best free image generators',
-  'AI coding assistants',
-  'Marketing automation tools',
-  'Research copilots',
-]
 
 const DISCOVERY_ITEMS = ['New today', 'Trending', 'Editor picks', 'Open source', 'Free tools', 'Product Hunt launches', 'Founder launches', 'AIBeat Daily']
 
@@ -131,30 +124,18 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            <div className="mt-8 max-w-2xl rounded-2xl border border-white/10 bg-white/[0.04] p-3 shadow-2xl">
-              <div className="flex items-center gap-3 rounded-xl bg-black/30 px-4 py-3">
-                <Search className="h-5 w-5 text-cyan-200" />
-                <span className="text-sm text-slate-400">Search tools, categories, use cases, or companies</span>
-              </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {SEARCH_SUGGESTIONS.map((suggestion) => (
-                  <Link key={suggestion} href={`/directory?query=${encodeURIComponent(suggestion)}`} className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-slate-300 transition hover:border-cyan-300/40 hover:text-white">
-                    {suggestion}
-                  </Link>
-                ))}
-              </div>
-            </div>
+            <HomeToolSearch tools={TOOLS.map(({ name, slug, tagline, category, description }) => ({ name, slug, tagline, category, description }))} />
 
             <div className="mt-8 grid max-w-2xl grid-cols-3 gap-3">
               {[
-                { value: toolCount, label: 'Tools indexed' },
-                { value: categoryCount, label: 'Categories' },
-                { value: articleCount, label: 'News updates' },
+                { value: toolCount, label: 'Tools indexed', href: '/directory' },
+                { value: categoryCount, label: 'Categories', href: '/directory#directory-categories' },
+                { value: articleCount, label: 'News updates', href: '/news' },
               ].map((stat) => (
-                <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
+                <Link key={stat.label} href={stat.href} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 transition hover:border-cyan-300/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-200">
                   <div className="text-2xl font-black text-white">{stat.value}</div>
                   <div className="mt-1 text-xs text-slate-500">{stat.label}</div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

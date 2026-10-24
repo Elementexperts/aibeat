@@ -82,7 +82,7 @@ export default function DirectoryClient({ initialFilters }: { initialFilters: Di
       {/* FILTER ROWS */}
       <div className="border-b border-border">
         {/* Category filter */}
-        <div role="group" aria-label="Category" className="flex items-center overflow-x-auto border-b border-border">
+        <div id="directory-categories" role="group" aria-label="Category" className="flex items-center overflow-x-auto border-b border-border">
           <span className="font-mono text-[10px] text-ink-4 px-4 py-2.5 shrink-0 border-r border-border">Category:</span>
           {categories.map((cat) => (
             <button

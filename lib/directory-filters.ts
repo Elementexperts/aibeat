@@ -1,3 +1,5 @@
+import { matchesToolSearch } from './tool-search'
+
 export type DirectoryFilters = { q: string; category: string; pricing: '' | 'free' | 'freemium' | 'paid' }
 export type DirectorySearchParams = Record<string, string | string[] | undefined>
 type Params = URLSearchParams | DirectorySearchParams
@@ -42,10 +44,9 @@ export function directoryNavigation(currentHref: string, filters: DirectoryFilte
   return { href, method } as const
 }
 
-export function filterDirectoryTools<T extends { name: string; tagline: string; category: string; pricingType: string }>(tools: readonly T[], filters: DirectoryFilters): T[] {
-  const q = filters.q.toLowerCase()
+export function filterDirectoryTools<T extends { name: string; slug?: string; tagline: string; description?: string; category: string; pricingType: string }>(tools: readonly T[], filters: DirectoryFilters): T[] {
   return tools.filter(tool =>
-    (!q || [tool.name, tool.tagline, tool.category].some(value => value.toLowerCase().includes(q))) &&
+    matchesToolSearch(tool, filters.q) &&
     (!filters.category || tool.category === filters.category) &&
     (!filters.pricing || tool.pricingType === filters.pricing))
 }
