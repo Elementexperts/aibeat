@@ -301,7 +301,7 @@ export const SUBMITTED_TOOLS: Tool[] = [
   "slug": "tecadrise-bot",
   "name": "TecAdRise Bot",
   "tagline": "Run configurable AI agents in a local Windows desktop workspace",
-  "description": "TecAdRise Bot is an open-source Windows desktop application built on the Cursor SDK. It supports multiple agents with separate workspaces, shared memory, MCP connections, inter-agent messages, and scheduled routines. The software is MIT licensed and free to install, while Cursor API usage is billed separately. Setup requires Node.js, npm, and a Cursor API key.",
+  "description": "TecAdRise Bot is a free, MIT-licensed Windows multi-agent desktop workspace built on the Cursor SDK for indie builders, AI tool makers, and power users. Each agent has its own model, instructions, skills, and local workspace, with shared memory, MCP connections, and inter-agent messages through a localhost control plane. Scheduled routines run while the app is open. It is positioned as an independent Grok Bot alternative, not an official Grok or xAI product. Cursor API usage is billed separately; setup requires Windows 10/11, Node.js 22.13+, npm 10+, and a Cursor API key. Source code: https://github.com/tecadrise-ai/TecAdRiseBot",
   "category": "AI Agents",
   "logo": "#2563eb",
   "logoInitials": "TB",
