@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { matchesToolSearch } from '@/lib/tool-search'
 import Link from 'next/link'
 import { getToolRatingLabel, TOOLS, getPopularTools } from '@/lib/data'
 import { PUBLIC_ANALYTICS_EVENTS } from '@/lib/analytics'
@@ -10,21 +11,17 @@ import { ToolAffiliateOffer } from '@/components/ui/ToolAffiliateOffer'
 const ALL = 'All'
 const PRICING_OPTIONS = [ALL, 'Free', 'Freemium', 'Paid'] as const
 
-export default function DirectoryClient({ initialCategory = ALL }: { initialCategory?: string }) {
-  const [search, setSearch] = useState('')
+export default function DirectoryClient({ initialCategory = ALL, initialQuery = '', initialPricing = ALL }: { initialCategory?: string; initialQuery?: string; initialPricing?: string }) {
+  const [search, setSearch] = useState(initialQuery)
   const [activeCategory, setActiveCategory] = useState(initialCategory)
-  const [activePricing, setActivePricing] = useState<string>(ALL)
+  const [activePricing, setActivePricing] = useState<string>(initialPricing)
   const rankedTools = useMemo(() => getPopularTools(), [])
 
   const categories = useMemo(() => [ALL, ...Array.from(new Set(rankedTools.map((t) => t.category)))], [rankedTools])
 
   const filtered = useMemo(() => {
     return rankedTools.filter((tool) => {
-      const q = search.toLowerCase()
-      const matchSearch = !q ||
-        tool.name.toLowerCase().includes(q) ||
-        tool.tagline.toLowerCase().includes(q) ||
-        tool.category.toLowerCase().includes(q)
+      const matchSearch = matchesToolSearch(tool, search)
       const matchCat = activeCategory === ALL || tool.category === activeCategory
       const matchPrice =
         activePricing === ALL ||
@@ -78,7 +75,7 @@ export default function DirectoryClient({ initialCategory = ALL }: { initialCate
       {/* FILTER ROWS */}
       <div className="border-b border-border">
         {/* Category filter */}
-        <div className="flex items-center overflow-x-auto border-b border-border">
+        <div id="directory-categories" role="group" aria-label="Category" className="flex items-center overflow-x-auto border-b border-border">
           <span className="font-mono text-[10px] text-ink-4 px-4 py-2.5 shrink-0 border-r border-border">Category:</span>
           {categories.map((cat) => (
             <button
