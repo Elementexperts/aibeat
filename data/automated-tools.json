@@ -656,5 +656,30 @@
     "logo": "#2563eb",
     "logoInitials": "S",
     "alternatives": []
+  },
+  {
+    "slug": "bluevetaupright",
+    "name": "BlueVetaUpright",
+    "tagline": "Product photo rotation detection API to fix sideways or upside-down images",
+    "description": "BlueVetaUpright is an image orientation detection API built for product photography workflows. It analyzes image pixels to determine if a photo is sideways, upside down, or tilted, providing 4-axis rotation values along with fine-tilt degree measurements and calibrated confidence scores. The API accepts raw image bytes or public URLs in common image formats such as JPEG, PNG, WebP, and HEIC, returning JSON rotation data or an optionally rotated image.",
+    "category": "Developer Tools",
+    "pricing": "Pay as you go at 3¢ per credit ($3 minimum to start); volume packs available at $18 for 1,000 credits and $150 for 10,000 credits. No subscription required.",
+    "pricingType": "paid",
+    "pros": [
+      "Detects 4-axis rotation and fine-tilt angles with calibrated confidence scores",
+      "Pay-as-you-go credit pricing with no recurring monthly subscription and non-expiring credits",
+      "Accepts direct uploads and public image URLs across formats including JPEG, PNG, WebP, and HEIC"
+    ],
+    "cons": [
+      "Requires a $3 minimum credit purchase to start using the API",
+      "May have reduced accuracy on symmetric products or images where hands obscure the product shape"
+    ],
+    "websiteUrl": "https://blueveta.com/upright",
+    "affiliateUrl": "https://blueveta.com/upright",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "B",
+    "alternatives": []
   }
 ]
