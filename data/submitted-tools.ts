@@ -5,6 +5,223 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "bulin-47-ai-pro",
+  "name": "Bulin 47 AI (bulin47aipro.org)",
+  "tagline": "Turn a portrait into a silent street-freestyle character video",
+  "description": "Bulin 47 AI at bulin47aipro.org replaces a performer in a fixed street-freestyle template using one portrait. It produces approximately 15-second, 480p silent videos; users add music separately. This independent tool uses purchased credits and is distinct from the similarly named bulin47videos.com service. Character likeness and background details can vary.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "B4",
+  "logoUrl": "/tool-logos/bulin-47-ai-pro.png",
+  "rating": null,
+  "pricing": "One-time packs from $6.90 for one video; 20 credits per generation",
+  "pricingType": "paid",
+  "websiteUrl": "https://bulin47aipro.org/",
+  "affiliateUrl": "https://bulin47aipro.org/",
+  "featured": false,
+  "pros": [
+    "One portrait input",
+    "Fixed template with no prompt required",
+    "One-time credit packs"
+  ],
+  "cons": [
+    "480p silent output",
+    "Fixed scene and movements",
+    "Likeness may vary"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "jeanphil-ai",
+  "name": "JeanPhil AI",
+  "tagline": "Create character scenes from one or two portrait photos",
+  "description": "JeanPhil AI creates independent Jean Phil-inspired scenes from one or two portraits. Choose street shadowboxing, a cafe terrace, a pink-suit dance or garden comedy, with vertical or landscape framing. The service offers 15-second 720p MP4 videos with generated music and ambience using one-time credit packs. Use photos with permission; generated likeness varies.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "JA",
+  "logoUrl": "/tool-logos/jeanphil-ai.png",
+  "rating": null,
+  "pricing": "$6.90 for 1 video, $29.90 for 5, or $99.90 for 20; no subscription",
+  "pricingType": "paid",
+  "websiteUrl": "https://jeanphilaipro.org/",
+  "affiliateUrl": "https://jeanphilaipro.org/",
+  "featured": false,
+  "pros": [
+    "Solo or two-person inputs",
+    "Four scene styles",
+    "Vertical and landscape framing"
+  ],
+  "cons": [
+    "Fixed scene choices",
+    "Paid generation",
+    "Availability depends on generation service"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "vellm",
+  "name": "Vellm",
+  "tagline": "Create short AI videos from portrait and pet-photo templates",
+  "description": "Vellm turns people and pet photos into short AI videos using dance, comedy, duo and cinematic templates. Its Create Studio offers additional image and video generation workflows. Template duration, input requirements, resolution and credit costs vary and are shown before generation. One-time packs and optional monthly plans are available; check the current checkout price because public pages show differing starting prices.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "V",
+  "logoUrl": "/tool-logos/vellm.png",
+  "rating": null,
+  "pricing": "Paid credit packs and optional monthly plans; no free trial; confirm current checkout pricing",
+  "pricingType": "paid",
+  "websiteUrl": "https://vellm.app/",
+  "affiliateUrl": "https://vellm.app/",
+  "featured": false,
+  "pros": [
+    "People and pet templates",
+    "Costs shown before generation",
+    "Additional Create Studio workflows"
+  ],
+  "cons": [
+    "Credits and duration vary by template",
+    "Public pricing pages show differing starting prices",
+    "Original audio may not be licensed for public posts"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "vricko",
+  "name": "Vricko",
+  "tagline": "Coordinate AI agents for small-business setup and recurring tasks",
+  "description": "Vricko provides AI agents for planning, website creation, growth, sales and support for small businesses. Tasks include evidence of completion, nightly work queues and configurable spending and email caps. The service offers a limited trial, with company counts and monthly task credits depending on the plan. Users should review generated work and approve money-moving actions.",
+  "category": "AI Agents",
+  "logo": "#2563eb",
+  "logoInitials": "V",
+  "logoUrl": "/tool-logos/vricko.png",
+  "rating": null,
+  "pricing": "Trial: 3 days or 8 credits; Solo $49/month, Pro $149/month",
+  "pricingType": "paid",
+  "websiteUrl": "https://app.vricko.app/en",
+  "affiliateUrl": "https://app.vricko.app/en",
+  "featured": false,
+  "pros": [
+    "Specialized business agents",
+    "Task evidence and spending caps",
+    "Recurring night queues"
+  ],
+  "cons": [
+    "Plan-based company and task limits",
+    "Trial ends when time or credits run out",
+    "Business outputs require user review"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "blueveta",
+  "name": "BlueVeta",
+  "tagline": "Turn a product photo into images, video and marketing copy",
+  "description": "BlueVeta builds product-marketing packs from one product photo, including studio shots, lifestyle scenes, a short video and platform-ready copy. It targets brands and sellers preparing assets for multiple channels, with brand context and multilingual copy. Packs are purchased individually without a subscription. A public demo dashboard is available without signup. This is separate from the BlueVetaUpright image-orientation API.",
+  "category": "Marketing",
+  "logo": "#2563eb",
+  "logoInitials": "B",
+  "logoUrl": "/tool-logos/blueveta.png",
+  "rating": null,
+  "pricing": "Campaign packs from $9.99; no subscription; public demo available",
+  "pricingType": "paid",
+  "websiteUrl": "https://blueveta.com/",
+  "affiliateUrl": "https://blueveta.com/",
+  "featured": false,
+  "pros": [
+    "Images, video and copy in one pack",
+    "Multiple platform formats",
+    "No subscription required"
+  ],
+  "cons": [
+    "Paid campaign generation",
+    "Outputs need brand and product-accuracy review",
+    "Separate from BlueVetaUpright API"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "blablascribe",
+  "name": "BlaBlaScribe",
+  "tagline": "Transcribe, subtitle, translate and dub audio and video",
+  "description": "BlaBlaScribe converts uploaded recordings or supported media links into editable transcripts with speaker labels and timed subtitles. It supports transcription in over 120 languages, subtitle translation and paid dubbing in 27 languages. Export options and translation allowances depend on the plan. The free starter allowance is 30 minutes, with limits on long files; dubbing uses separately purchased minute packs.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "B",
+  "logoUrl": "/tool-logos/blablascribe.png",
+  "rating": null,
+  "pricing": "30 starter minutes; Creator $14/month or $132/year; dubbing packs sold separately",
+  "pricingType": "freemium",
+  "websiteUrl": "https://blablascribe.ai/",
+  "affiliateUrl": "https://blablascribe.ai/",
+  "featured": false,
+  "pros": [
+    "Speaker labels and timed subtitles",
+    "Multiple transcript export formats",
+    "Translation and dubbing options"
+  ],
+  "cons": [
+    "Free plan limits long-file transcription",
+    "Translation allowances depend on plan",
+    "Dubbing costs extra"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "bopreel",
+  "name": "Bopreel",
+  "tagline": "Make short meme videos from one or two photos",
+  "description": "Bopreel generates 15-second MP4 meme videos from one or two photos using Hotel Lobby AI or What You Want Me To Do AI templates. The site estimates 10-15 minutes per generation and includes template audio. One-time video packs work across supported trends. It is independent of the original artists and shows; use permitted photos and check music rights before public sharing. Downloads remain available for 30 days.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "B",
+  "logoUrl": "/tool-logos/bopreel.png",
+  "rating": null,
+  "pricing": "$6.99 for 1 video, $14.99 for 3, or $19.99 for 5; no subscription",
+  "pricingType": "paid",
+  "websiteUrl": "https://bopreel.com/",
+  "affiliateUrl": "https://bopreel.com/",
+  "featured": false,
+  "pros": [
+    "One or two photo inputs",
+    "No subscription",
+    "MP4 export with template audio"
+  ],
+  "cons": [
+    "Two current templates",
+    "Generation takes time",
+    "Downloads expire after 30 days"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "horizon-web-group",
+  "name": "Horizon Web Group",
+  "tagline": "Build custom software, AI agents and business automation",
+  "description": "Horizon Web Group is a custom development company led by founder Adebayo Emmanuel. It builds software and web applications, AI agents and chatbot integrations, business automation, internal dashboards, portals and API integrations. Engagements are scoped around each business rather than offered as a self-service software subscription. Contact the team to discuss requirements, delivery scope and pricing.",
+  "category": "Business",
+  "logo": "#2563eb",
+  "logoInitials": "HW",
+  "logoUrl": "/tool-logos/horizon-web-group.png",
+  "rating": null,
+  "pricing": "Custom project quote; contact the team",
+  "pricingType": "paid",
+  "websiteUrl": "https://horizonwebgroup.online/",
+  "affiliateUrl": "https://horizonwebgroup.online/",
+  "featured": true,
+  "pros": [
+    "Custom business applications",
+    "AI agents and workflow integrations",
+    "Dashboards and internal portals"
+  ],
+  "cons": [
+    "Project scoping required",
+    "No public fixed pricing",
+    "Delivery depends on agreed requirements"
+  ],
+  "alternatives": [],
+  "listingType": "service"
+},
+{
   "slug": "visual-maker-ai",
   "logoUrl": "/tool-logos/visual-maker-ai.png",
   "name": "Visual Maker AI",

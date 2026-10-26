@@ -1,14 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { TOOLS, getFeaturedTools, getPopularTools, getToolRatingLabel, getToolPopularityScore } from '../lib/data'
+import { productIdentity } from '../lib/automated-tool-catalog'
 import { SUBMITTED_TOOLS } from '../data/submitted-tools'
 
 test('reviewed submissions are unique listings with valid internal alternatives', () => {
-  assert.equal(SUBMITTED_TOOLS.length, 42)
+  assert.equal(SUBMITTED_TOOLS.length, 50)
   assert.equal(new Set(TOOLS.map(t => t.slug)).size, TOOLS.length)
   for (const tool of SUBMITTED_TOOLS) {
     assert.equal(TOOLS.filter(t => t.slug === tool.slug).length, 1)
-    assert.equal(TOOLS.filter(t => new URL(t.websiteUrl).hostname.replace(/^www\./, '') === new URL(tool.websiteUrl).hostname.replace(/^www\./, '')).length, 1)
+    assert.equal(TOOLS.filter(t => productIdentity(t.websiteUrl) === productIdentity(tool.websiteUrl)).length, 1)
     assert.equal(getFeaturedTools().some(t => t.slug === tool.slug), tool.featured)
     assert.equal(tool.affiliateUrl, tool.websiteUrl)
     assert.equal(new URL(tool.websiteUrl).protocol, 'https:')
