@@ -5,7 +5,7 @@ import { productIdentity } from '../lib/automated-tool-catalog'
 import { SUBMITTED_TOOLS } from '../data/submitted-tools'
 
 test('reviewed submissions are unique listings with valid internal alternatives', () => {
-  assert.equal(SUBMITTED_TOOLS.length, 50)
+  assert.equal(SUBMITTED_TOOLS.length, 53)
   assert.equal(new Set(TOOLS.map(t => t.slug)).size, TOOLS.length)
   for (const tool of SUBMITTED_TOOLS) {
     assert.equal(TOOLS.filter(t => t.slug === tool.slug).length, 1)

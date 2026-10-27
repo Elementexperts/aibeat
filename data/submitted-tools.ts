@@ -5,6 +5,87 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "dime-dime-baby-ai",
+  "name": "Dime Dime Baby AI Generator",
+  "tagline": "Turn portraits into short party-inspired meme videos",
+  "description": "Dime Dime Baby AI creates party-inspired clips from one portrait or two photos for a duet. Choose classic party, friends dancing, garden party or character remix scenes. The workflow requests a nine-second 480p video with AI-generated instrumental backing and ambience, rather than the original recording. This independent tool uses purchased credits; likeness and motion can vary.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "DD",
+  "logoUrl": "/tool-logos/dime-dime-baby-ai.png",
+  "rating": null,
+  "pricing": "$6.90 for 1 video, $29.90 for 5, or $99.90 for 20; no subscription",
+  "pricingType": "paid",
+  "websiteUrl": "https://aidimedimebaby.video/",
+  "affiliateUrl": "https://aidimedimebaby.video/",
+  "featured": true,
+  "pros": [
+    "Solo and duet options",
+    "Four scene variations",
+    "Vertical or landscape framing"
+  ],
+  "cons": [
+    "480p output",
+    "Paid generation",
+    "Reference examples are not guaranteed results"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "crazy-frog-ai",
+  "name": "Crazy Frog AI Video Generator",
+  "tagline": "Preview an invisible-motorcycle chase video studio; checkout coming soon",
+  "description": "Crazy Frog AI is an independent photo-to-video studio for comedic invisible-motorcycle chases. One rider photo guides a roughly 15-second scene with a fictional helmeted officer, original instrumental audio and coastal, neon-city or desert settings. The editor advertises 480p and 720p output in vertical or landscape format. Credit packs are currently a catalog preview: the site says checkout will open after payment setup. It is not affiliated with Crazy Frog or its rights holders.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "CF",
+  "logoUrl": "/tool-logos/crazy-frog-ai.png",
+  "rating": null,
+  "pricing": "Preview pricing: $6.90 / $29.90 / $99.90 credit packs; checkout coming soon",
+  "pricingType": "paid",
+  "websiteUrl": "https://crazyfrogai.art/",
+  "affiliateUrl": "https://crazyfrogai.art/",
+  "featured": true,
+  "pros": [
+    "One rider photo",
+    "Three scene options",
+    "Reusable prompt available"
+  ],
+  "cons": [
+    "Checkout not yet available",
+    "No free video generation promised",
+    "Likeness and complex motion may vary"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "flashcrafter-growth-brief",
+  "name": "FlashCrafter Growth Brief",
+  "tagline": "Research local markets, visibility and practical business growth priorities",
+  "description": "FlashCrafter Growth Brief provides private AI-assisted research for local service businesses. It brings together public evidence on local demand, competitors, online visibility and reputation, with visible assumptions and suggested priorities. One initial report per authenticated account and resolved business is free, with no card required. Optional Google account connections can add business performance context. Owners should review the evidence and assumptions before acting on recommendations.",
+  "category": "Research",
+  "logo": "#2563eb",
+  "logoInitials": "FG",
+  "logoUrl": "/tool-logos/flashcrafter-growth-brief.png",
+  "rating": null,
+  "pricing": "One initial report per account and resolved business is free; account required, no card",
+  "pricingType": "free",
+  "websiteUrl": "https://www.flashcrafter.ai/growth-brief",
+  "affiliateUrl": "https://www.flashcrafter.ai/growth-brief",
+  "featured": true,
+  "pros": [
+    "Local-market and competitor research",
+    "Visible evidence and assumptions",
+    "Private authenticated report"
+  ],
+  "cons": [
+    "Account required",
+    "Free initial-report limits apply",
+    "AI-assisted recommendations require review"
+  ],
+  "alternatives": []
+},
+{
   "slug": "bulin-47-ai-pro",
   "name": "Bulin 47 AI (bulin47aipro.org)",
   "tagline": "Turn a portrait into a silent street-freestyle character video",
