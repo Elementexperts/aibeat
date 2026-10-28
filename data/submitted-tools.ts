@@ -5,6 +5,87 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "inkroom",
+  "name": "InkRoom",
+  "tagline": "Connect references, image generation and editing in reusable creative workflows",
+  "description": "InkRoom is a browser-based AI creative workspace for individual creators and small teams. Its public feature pages describe text-to-image generation, reference-image creation, visual editing, enhancement and reusable workflows for product images, posters and visual series. Image-to-video options depend on the current video catalog. Models, account permissions and credit costs vary; users should check the live estimate before generating. External reference uploads require login.",
+  "category": "AI Image",
+  "logo": "#2563eb",
+  "logoInitials": "I",
+  "logoUrl": "/tool-logos/inkroom.png",
+  "rating": null,
+  "pricing": "Credit-based generation; model access, trial availability and costs depend on current account and catalog settings",
+  "pricingType": "paid",
+  "websiteUrl": "https://inkroom.ai/",
+  "affiliateUrl": "https://inkroom.ai/",
+  "featured": false,
+  "pros": [
+    "Reference-image and visual editing workflows",
+    "Reusable creative processes",
+    "Generation cost estimates"
+  ],
+  "cons": [
+    "Model availability varies",
+    "Reference uploads require login",
+    "No fixed free allowance guaranteed"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "showcasevideos-ai",
+  "name": "ShowcaseVideos.ai",
+  "tagline": "Turn real-estate photos into staged listing videos",
+  "description": "ShowcaseVideos.ai creates real-estate listing videos from up to 30 photos or a supported listing URL. Its director workflow combines AI camera motion, optional virtual staging, address information and music. Landscape, vertical and square outputs are available subject to plan and credit rules. The beta offers starting credits without a card, with a small watermark on free output. Agents should review staging and property details before publication.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "S",
+  "logoUrl": "/tool-logos/showcasevideos-ai.png",
+  "rating": null,
+  "pricing": "120 starting credits, no card; paid credit packs from $20 and optional subscriptions",
+  "pricingType": "freemium",
+  "websiteUrl": "https://showcasevideos.ai/",
+  "affiliateUrl": "https://showcasevideos.ai/",
+  "featured": false,
+  "pros": [
+    "Listing URL or photo inputs",
+    "Virtual staging and camera motion",
+    "Multiple output formats"
+  ],
+  "cons": [
+    "Free output has a watermark",
+    "Additional formats and scoring can cost credits",
+    "Beta pricing and plan rules may change"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "repostit",
+  "name": "Repostit",
+  "tagline": "Automate TikTok cross-posting and manage publishing through AI assistants",
+  "description": "Repostit republishes new or existing TikTok videos and supported image or carousel posts to connected social channels. Workflows offer manual or automatic routes, scheduling and delivery checks. Claude and ChatGPT connectors can create workflows, schedule posts and inspect publishing status. Supported destinations include Instagram, YouTube, Facebook, X, Threads, LinkedIn and Pinterest, with content support varying by destination.",
+  "category": "Marketing",
+  "logo": "#2563eb",
+  "logoInitials": "R",
+  "logoUrl": "/tool-logos/repostit.png",
+  "rating": null,
+  "pricing": "14-day trial without a card; paid plans from $10/month billed annually",
+  "pricingType": "paid",
+  "websiteUrl": "https://repostit.io/",
+  "affiliateUrl": "https://repostit.io/",
+  "featured": false,
+  "pros": [
+    "New and back-catalog workflows",
+    "Image and carousel support",
+    "Claude and ChatGPT connectors"
+  ],
+  "cons": [
+    "Connected platform permissions required",
+    "Trial limited to 10 destination posts and 3 workflows",
+    "Source and destination support varies"
+  ],
+  "alternatives": []
+},
+{
   "slug": "dime-dime-baby-ai",
   "name": "Dime Dime Baby AI Generator",
   "tagline": "Turn portraits into short party-inspired meme videos",
@@ -340,7 +421,7 @@ export const SUBMITTED_TOOLS: Tool[] = [
   "logoInitials": "DB",
   "pricing": "Free basic charts; optional one-time paid reports; prices depend on region and checkout currency",
   "pricingType": "freemium",
-  "websiteUrl": "https://mingshu.help/",
+  "websiteUrl": "https://mymingshu.com/",
   "pros": [
     "Free basic chart tools",
     "Separate personal, timing and relationship reports",
@@ -353,7 +434,7 @@ export const SUBMITTED_TOOLS: Tool[] = [
   ],
   "rating": null,
   "featured": false,
-  "affiliateUrl": "https://mingshu.help/",
+  "affiliateUrl": "https://mymingshu.com/",
   "alternatives": []
 },
 {
