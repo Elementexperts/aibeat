@@ -5,6 +5,60 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "hypemigo",
+  "name": "HypeMigo AI Video Trends",
+  "tagline": "Explore AI video trends and prepare local photo drafts",
+  "description": "HypeMigo is an independent AI video trend studio with meme, dance, duo and pet templates. Users browse references, review photo requirements, save favorites and prepare drafts in their browser. Video generation is available only when the service is enabled for a template. The site describes 20 credits for a reference-length 480p scene; results and audio are newly generated rather than exact copies of the examples.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "HY",
+  "logoUrl": "/tool-logos/hypemigo.png",
+  "rating": null,
+  "pricing": "Browsing and local drafts are free; generation uses 20 site credits per 480p scene when enabled",
+  "pricingType": "freemium",
+  "websiteUrl": "https://hypemigo.com/",
+  "affiliateUrl": "https://hypemigo.com/",
+  "featured": false,
+  "pros": [
+    "Template references and photo guidance",
+    "Local drafts and favorites",
+    "No prompt needed to prepare a template"
+  ],
+  "cons": [
+    "Generation availability varies",
+    "Drafts are limited to the current browser and device",
+    "Results can differ from reference examples"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "timefolk",
+  "name": "Timefolk",
+  "tagline": "Find local Experts for practical in-person learning sessions",
+  "description": "Timefolk is a marketplace for practical in-person sessions, including interview practice, language conversation, feedback and learning AI tools for work. Clients describe a skill through smart search, choose a local Expert, and schedule a meeting in a public place. The platform says Experts pass document and face checks. An optional Folk companion can attend for a separate fee. Availability depends on local Experts and supported locations.",
+  "category": "Education",
+  "logo": "#2563eb",
+  "logoInitials": "TI",
+  "logoUrl": "/tool-logos/timefolk.png",
+  "rating": null,
+  "pricing": "Free to join; Expert session and card fees apply; optional memberships and Folk companion fees",
+  "pricingType": "freemium",
+  "websiteUrl": "https://timefolk.com/",
+  "affiliateUrl": "https://timefolk.com/",
+  "featured": false,
+  "pros": [
+    "Skill-based local Expert discovery",
+    "Public meeting places",
+    "Optional companion and session messaging"
+  ],
+  "cons": [
+    "Adults 18 and over only",
+    "Local Expert availability varies",
+    "Sessions and optional companions cost extra"
+  ],
+  "alternatives": []
+},
+{
   "slug": "inkroom",
   "name": "InkRoom",
   "tagline": "Connect references, image generation and editing in reusable creative workflows",
