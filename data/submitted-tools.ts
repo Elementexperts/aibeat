@@ -5,6 +5,33 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "ai-compare-ninja",
+  "name": "AI Compare Ninja",
+  "tagline": "Compare AI tools, explore prompts and estimate AI costs",
+  "description": "AI Compare Ninja is a free research directory for comparing AI tools, vendor-sourced prices and usage limits. It offers side-by-side comparisons, reusable prompts, skill templates and agent guides, plus subscription and API cost calculators. Results are organized by task match or browsing preferences rather than a quality ranking. Prices can vary by region and promotion, so users should confirm current terms with the original provider.",
+  "category": "Research",
+  "logo": "#2563eb",
+  "logoInitials": "AN",
+  "logoUrl": "/tool-logos/ai-compare-ninja.png",
+  "rating": null,
+  "pricing": "Free browsing, prompts, skills and cost calculators; third-party AI services have their own pricing",
+  "pricingType": "free",
+  "websiteUrl": "https://www.aicompare.ninja/en/",
+  "affiliateUrl": "https://www.aicompare.ninja/en/",
+  "featured": false,
+  "pros": [
+    "Vendor sources and check dates for pricing information",
+    "Reusable prompts, skills and agent guides",
+    "Subscription and API cost estimation"
+  ],
+  "cons": [
+    "Vendor pricing and limits can change",
+    "Comparisons are not hands-on quality ratings",
+    "Third-party tools may require separate paid accounts"
+  ],
+  "alternatives": []
+},
+{
   "slug": "hypemigo",
   "name": "HypeMigo AI Video Trends",
   "tagline": "Explore AI video trends and prepare local photo drafts",
