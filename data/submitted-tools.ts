@@ -5,6 +5,87 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "seamlessify",
+  "name": "Seamlessify",
+  "tagline": "Create repeating patterns with local seam blending and optional AI generation",
+  "description": "Seamlessify turns images into repeating patterns and tileable textures. Its browser workspace supports edge blending, repeat previews, cropping and batch exports in PNG, JPG or ZIP format. Direct image processing runs locally without signup. Optional AI generation uses prompts or reference images and consumes credits. Detailed lettering, faces and geometric edges may still need manual editing.",
+  "category": "Design",
+  "logo": "#2563eb",
+  "logoInitials": "SE",
+  "logoUrl": "/tool-logos/seamlessify.png",
+  "rating": null,
+  "pricing": "Free local stitching; 2 one-time AI credits after email verification; paid AI credit plans",
+  "pricingType": "freemium",
+  "websiteUrl": "https://seamlessify.com/",
+  "affiliateUrl": "https://seamlessify.com/",
+  "featured": false,
+  "pros": [
+    "Local image processing without signup",
+    "Repeat previews and adjustable edge blending",
+    "Batch export for pattern workflows"
+  ],
+  "cons": [
+    "AI generation requires credits and an account",
+    "Complex edges may need manual editing",
+    "Generated images are retained for 30 days"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "inwista",
+  "name": "Inwista",
+  "tagline": "Create multilingual subtitles and edit video through transcripts",
+  "description": "Inwista creates transcripts with speaker labels and subtitles from audio or video files. Users can import cloud files, style captions, translate into more than 70 languages and edit video through transcript text. The workspace also offers summaries, chapters and shared projects. Exports include subtitle files, documents and captioned video, with an Adobe Premiere integration for editing workflows.",
+  "category": "Productivity",
+  "logo": "#2563eb",
+  "logoInitials": "IN",
+  "logoUrl": "/tool-logos/inwista.png",
+  "rating": null,
+  "pricing": "Free plan includes 45 minutes per month; paid subscriptions for additional usage",
+  "pricingType": "freemium",
+  "websiteUrl": "https://inwista.ai",
+  "affiliateUrl": "https://inwista.ai",
+  "featured": false,
+  "pros": [
+    "Speaker labels and multilingual subtitles",
+    "Transcript-based video editing",
+    "Cloud imports and subtitle export workflows"
+  ],
+  "cons": [
+    "Automatic transcripts and translations need review",
+    "Free usage is capped at 45 minutes per month",
+    "Advanced usage depends on subscription limits"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "airapvideo1",
+  "name": "AirapVideo1",
+  "tagline": "Turn photos and lyrics into short AI rap duets",
+  "description": "AirapVideo1 generates short rap performances from uploaded photos, with AI-created vocals and music. Users choose cat, human or robot duet scenes and supply lyrics or let the system write a verse. The public creation form offers 15-second clips, resolution settings and portrait or landscape formats. Generation consumes credits, with costs shown before submission and credits returned for failed renders.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "AI",
+  "logoUrl": "/tool-logos/airapvideo1.png",
+  "rating": null,
+  "pricing": "Credit-based generation; cost depends on selected settings and is shown before generation",
+  "pricingType": "paid",
+  "websiteUrl": "https://airapvideo1.com",
+  "affiliateUrl": "https://airapvideo1.com",
+  "featured": false,
+  "pros": [
+    "Photo-based duet scenes",
+    "Custom lyrics or AI-written verses",
+    "AI vocals and music in a short video"
+  ],
+  "cons": [
+    "Generation requires credits",
+    "Results and lyric delivery can vary",
+    "Users need permission for uploaded photos and lyrics"
+  ],
+  "alternatives": []
+},
+{
   "slug": "ai-compare-ninja",
   "name": "AI Compare Ninja",
   "tagline": "Compare AI tools, explore prompts and estimate AI costs",
