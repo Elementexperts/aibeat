@@ -48,6 +48,14 @@ const FOOTER_GROUPS = [
 
 const FEATURED_BADGES = [
   {
+    href: 'https://peerpush.com/p/aibeat',
+    label: 'AIBeat on PeerPush',
+    src: 'https://peerpush.com/p/aibeat/badge.png',
+    width: 230,
+    height: 65,
+    tone: 'light',
+  },
+  {
     href: 'https://www.truetier.app/upvote/aibeat-dev?via=badge',
     label: 'Checked daily by TrueTier',
     src: 'https://www.truetier.app/badge.php?s=aibeat-dev&style=bar&theme=dark',
