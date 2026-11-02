@@ -5,6 +5,181 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "myenhancer",
+  "name": "MyEnhancer",
+  "tagline": "Enhance, upscale, restore and colorize photos",
+  "description": "MyEnhancer is an online photo toolkit for improving clarity, reducing noise, adjusting lighting and color, upscaling, restoration and colorization. Users compare results with the original and download PNG, JPG or WebP. Eligible single-image Standard tasks can use daily credits; Pro and batch operations require paid credits. Images are sent to external processing services, and generated detail should be checked against the original.",
+  "category": "AI Image",
+  "logo": "#2563eb",
+  "logoInitials": "M",
+  "logoUrl": "/tool-logos/myenhancer.png",
+  "rating": null,
+  "pricing": "Daily credits for eligible Standard tasks; paid credits for Pro and batches",
+  "pricingType": "freemium",
+  "websiteUrl": "https://myenhancer.com",
+  "affiliateUrl": "https://myenhancer.com",
+  "featured": false,
+  "pros": [
+    "Before-and-after comparison",
+    "Multiple photo restoration and enhancement tools"
+  ],
+  "cons": [
+    "AI can alter fine details",
+    "External processing and service limits apply"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "image2-5",
+  "name": "Image2.5",
+  "tagline": "Generate and edit images with prompts and reference photos",
+  "description": "Image2.5 is an independent image creation and editing service. Users describe an image, upload references, combine images or select a region for edits. The site advertises multiple processing modes and high-resolution output. Its advertised model branding is a vendor claim, not an independently verified model identity or OpenAI affiliation.",
+  "category": "AI Image",
+  "logo": "#2563eb",
+  "logoInitials": "I",
+  "logoUrl": "/tool-logos/image2-5.png",
+  "rating": null,
+  "pricing": "New accounts receive trial credits; continued generation uses paid plan credits",
+  "pricingType": "freemium",
+  "websiteUrl": "https://image2-5.io/",
+  "affiliateUrl": "https://image2-5.io/",
+  "featured": false,
+  "pros": [
+    "Prompt-based image creation and editing",
+    "Reference blending and selected-area edits"
+  ],
+  "cons": [
+    "Credits and plan limits apply",
+    "Model identity and output quality are not independently verified"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "british-accent-generator",
+  "name": "British Accent Generator",
+  "tagline": "Create UK English speech with regional voice previews",
+  "description": "British Accent Generator is a text-to-speech workspace with a regionally labelled voice library, including RP, Scottish, Welsh and Northern Irish options. Users preview voices, enter a script, generate speech and review the audio before downloading. The site advertises 315 voices; availability and script limits depend on the plan.",
+  "category": "AI Audio",
+  "logo": "#2563eb",
+  "logoInitials": "BA",
+  "logoUrl": "/tool-logos/british-accent-generator.png",
+  "rating": null,
+  "pricing": "Free daily credits with short-script limits; paid plans for higher usage",
+  "pricingType": "freemium",
+  "websiteUrl": "https://britishaccent.pro/",
+  "affiliateUrl": "https://britishaccent.pro/",
+  "featured": false,
+  "pros": [
+    "Regional voice previews",
+    "Generate and download speech from scripts"
+  ],
+  "cons": [
+    "Free scripts are limited to 100 characters",
+    "Accent quality should be reviewed for the intended use"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "riffwise",
+  "name": "Riffwise",
+  "tagline": "Draft replies from the conversation open in desktop Chrome",
+  "description": "Riffwise is a desktop Chrome extension that drafts replies and quote text for supported social platforms and Gmail. It uses relevant conversation context and writing preferences, then lets the user review, edit, insert or copy the draft. It does not automatically post or send messages. An account is required, and selected writing-request context is sent for AI processing.",
+  "category": "Productivity",
+  "logo": "#2563eb",
+  "logoInitials": "R",
+  "logoUrl": "/tool-logos/riffwise.png",
+  "rating": null,
+  "pricing": "Free: 40 successful generations per month; Pro offers higher limits",
+  "pricingType": "freemium",
+  "websiteUrl": "https://riffwise.app",
+  "affiliateUrl": "https://riffwise.app",
+  "featured": false,
+  "pros": [
+    "User reviews every draft before sending",
+    "Tone and reply-length preferences"
+  ],
+  "cons": [
+    "Desktop Chrome and an account required",
+    "Conversation context is sent for processing"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "nyan-parlor",
+  "name": "Nyan Parlor",
+  "tagline": "Explore AI interpretations of Tarot, I Ching and BaZi",
+  "description": "Nyan Parlor offers AI interpretations of Tarot cards, I Ching hexagrams and BaZi charts, with follow-up conversation through its Geumeum character. It supports multilingual readings and free introductory content. These readings are for entertainment and personal reflection, not reliable predictions or professional advice.",
+  "category": "Other",
+  "logo": "#2563eb",
+  "logoInitials": "NP",
+  "logoUrl": "/tool-logos/nyan-parlor.png",
+  "rating": null,
+  "pricing": "Free introductory readings and meanings; paid packs for additional access",
+  "pricingType": "freemium",
+  "websiteUrl": "https://www.tarotoper.com/en",
+  "affiliateUrl": "https://www.tarotoper.com/en",
+  "featured": false,
+  "pros": [
+    "Several divination traditions in one interface",
+    "Follow-up conversation and multilingual support"
+  ],
+  "cons": [
+    "Interpretations are not factual predictions",
+    "Extended access requires paid packs"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "ai-music-mastering",
+  "name": "AI Music Mastering",
+  "tagline": "Preview automated mastering for finished mixes and AI-generated songs",
+  "description": "AI Music Mastering processes finished audio with eight sound profiles, intensity and EQ controls, and original-versus-mastered comparison. It accepts WAV, MP3, FLAC and AIFF. The vendor explicitly describes preset-based digital signal processing rather than a trained AI mastering model; AI refers to the source music. Membership unlocks downloads and reference-track matching.",
+  "category": "AI Audio",
+  "logo": "#2563eb",
+  "logoInitials": "AM",
+  "logoUrl": "/tool-logos/ai-music-mastering.png",
+  "rating": null,
+  "pricing": "Free previews; membership $9.90/month for downloads and reference matching",
+  "pricingType": "freemium",
+  "websiteUrl": "https://aimusicmastering.app/",
+  "affiliateUrl": "https://aimusicmastering.app/",
+  "featured": false,
+  "pros": [
+    "Free original-versus-mastered preview",
+    "Eight profiles with intensity and EQ controls"
+  ],
+  "cons": [
+    "Downloads require membership",
+    "Cannot reliably repair severe generation artifacts"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "book-cover-generator",
+  "name": "Book Cover Generator",
+  "tagline": "Explore book cover directions from your title, genre and story",
+  "description": "Book Cover Generator helps authors develop cover concepts from a title, author name, genre and story summary. Users compare two visual directions, refine typography or composition through written instructions and export front-cover, ebook or audiobook formats. Generated covers still need review for text accuracy, genre fit and publishing specifications.",
+  "category": "Design",
+  "logo": "#2563eb",
+  "logoInitials": "BC",
+  "logoUrl": "/tool-logos/book-cover-generator.png",
+  "rating": null,
+  "pricing": "One-time credit packs; no subscription; check current free-credit availability",
+  "pricingType": "paid",
+  "websiteUrl": "https://bookcovergenerator.net/",
+  "affiliateUrl": "https://bookcovergenerator.net/",
+  "featured": false,
+  "pros": [
+    "Story-led cover concepts",
+    "Written revisions and multiple export formats"
+  ],
+  "cons": [
+    "Generation consumes credits",
+    "Front-cover exports are not complete print wraparound layouts"
+  ],
+  "alternatives": []
+},
+{
   "slug": "seamlessify",
   "name": "Seamlessify",
   "tagline": "Create repeating patterns with local seam blending and optional AI generation",
