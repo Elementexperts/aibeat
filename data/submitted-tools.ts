@@ -81,7 +81,7 @@ export const SUBMITTED_TOOLS: Tool[] = [
 },
 {
   "slug": "riffwise",
-  "chromeWebStoreUrl": "https://chromewebstore.google.com/detail/riffwise-%E2%80%94-ai-reply-gener/nmnmflphiibhdnnbghffjhclhlehelle",
+  "chromeWebStoreUrl": "https://chromewebstore.google.com/detail/riffwise-%E2%80%94-ai-reply-gener/nmnmflphiibhdnnbghffjhclhlehelle?utm_source=aibeat&utm_medium=directory&utm_campaign=riffwise_202611&utm_content=install_button",
   "name": "Riffwise",
   "tagline": "Draft replies from the conversation open in desktop Chrome",
   "description": "Riffwise is a desktop Chrome extension that drafts replies and quote text for supported social platforms and Gmail. It uses relevant conversation context and writing preferences, then lets the user review, edit, insert or copy the draft. It does not automatically post or send messages. An account is required, and selected writing-request context is sent for AI processing.",
