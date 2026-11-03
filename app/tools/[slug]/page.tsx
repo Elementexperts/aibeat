@@ -101,6 +101,15 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
             </div>
           </div>
 
+          {tool.demoUrl && (
+            <div className="border-t border-border p-5">
+              <a href={tool.demoUrl} target="_blank" rel="noopener noreferrer" className="text-beat-red font-semibold hover:underline">
+                Watch product demo →
+              </a>
+              {tool.demoDescription && <p className="mt-2 text-sm text-ink-3">{tool.demoDescription}</p>}
+            </div>
+          )}
+
           {/* CTA */}
           <div className="bg-ink p-5 flex flex-wrap items-center justify-between gap-4">
             <div>

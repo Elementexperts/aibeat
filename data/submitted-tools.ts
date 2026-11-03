@@ -81,6 +81,8 @@ export const SUBMITTED_TOOLS: Tool[] = [
 },
 {
   "slug": "riffwise",
+  "demoUrl": "https://riffwise.app/#demo",
+  "demoDescription": "Maker-provided X workflow demo. Music only, without narration; it does not demonstrate the other supported platforms or establish measured performance.",
   "chromeWebStoreUrl": "https://chromewebstore.google.com/detail/riffwise-%E2%80%94-ai-reply-gener/nmnmflphiibhdnnbghffjhclhlehelle?utm_source=aibeat&utm_medium=directory&utm_campaign=riffwise_202611&utm_content=install_button",
   "name": "Riffwise",
   "tagline": "Draft replies from the conversation open in desktop Chrome",

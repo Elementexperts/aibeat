@@ -34,6 +34,8 @@ export interface Tool {
   pricingType: 'free' | 'freemium' | 'paid'
   affiliateUrl: string
   websiteUrl: string
+  demoUrl?: string
+  demoDescription?: string
   chromeWebStoreUrl?: string
   affiliateOffer?: { discount: string; code: string }
   featured: boolean
