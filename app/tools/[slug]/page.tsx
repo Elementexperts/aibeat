@@ -102,21 +102,33 @@ export default function ToolPage({ params }: { params: { slug: string } }) {
           </div>
 
           {/* CTA */}
-          <div className="bg-ink p-5 flex items-center justify-between gap-4">
+          <div className="bg-ink p-5 flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="text-white text-sm font-semibold mb-0.5">Try {tool.name}</div>
               <div className="text-ink-4 text-xs">
                 {tool.pricing} · {hasAffiliateLink ? 'Affiliate link — we earn a commission' : 'Official website'}
               </div>
             </div>
-            <a
-              href={tool.affiliateUrl}
-              target="_blank"
-              rel={`noopener noreferrer${hasAffiliateLink ? ' sponsored' : ''}`}
-              className="bg-beat-red text-white px-5 py-2 text-sm font-semibold hover:bg-red-700 transition-colors whitespace-nowrap"
-            >
-              {hasAffiliateLink ? 'Get' : 'Visit'} {tool.name} →
-            </a>
+            <div className="flex flex-wrap items-center gap-3">
+              {tool.chromeWebStoreUrl && (
+                <a
+                  href={tool.chromeWebStoreUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="border border-white/30 text-white px-5 py-2 text-sm font-semibold hover:bg-white/10 transition-colors whitespace-nowrap"
+                >
+                  Install for Chrome →
+                </a>
+              )}
+              <a
+                href={tool.affiliateUrl}
+                target="_blank"
+                rel={`noopener noreferrer${hasAffiliateLink ? ' sponsored' : ''}`}
+                className="bg-beat-red text-white px-5 py-2 text-sm font-semibold hover:bg-red-700 transition-colors whitespace-nowrap"
+              >
+                {hasAffiliateLink ? 'Get' : 'Visit'} {tool.name} →
+              </a>
+            </div>
           </div>
         </div>
 
