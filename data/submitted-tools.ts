@@ -5,6 +5,31 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "ai-calculators",
+  "name": "AI Calculators",
+  "tagline": "Estimate AI costs, token budgets, hardware needs and ROI",
+  "description": "AI Calculators is a free collection of browser-based planning tools for AI engineers, founders and business teams. It covers LLM API costs, prompt caching savings, RAG token budgets, VRAM sizing, automation ROI and image, audio and video generation costs. Calculators provide formulas, worked examples and editable rates. Results are estimates rather than provider quotes; check current vendor pricing and workload assumptions before making spending decisions.",
+  "category": "Productivity",
+  "logo": "#2563eb",
+  "logoInitials": "AC",
+  "logoUrl": "/tool-logos/ai-calculators.png",
+  "rating": null,
+  "pricing": "Free browser-based calculators",
+  "pricingType": "free",
+  "websiteUrl": "https://aicalculators.xyz/",
+  "affiliateUrl": "https://aicalculators.xyz/",
+  "featured": false,
+  "pros": [
+    "Editable rates with formulas and worked examples",
+    "Covers technical AI budgets and business cost planning"
+  ],
+  "cons": [
+    "Default rates may differ from current provider pricing",
+    "Estimates depend on workload and usage assumptions"
+  ],
+  "alternatives": []
+},
+{
   "slug": "myenhancer",
   "name": "MyEnhancer",
   "tagline": "Enhance, upscale, restore and colorize photos",
