@@ -5,6 +5,56 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "tiny-desk-ai",
+  "name": "Tiny Desk AI",
+  "tagline": "Turn photos into short AI desk-concert videos",
+  "description": "Tiny Desk AI creates 15-second desk-concert videos from one to five photos, with a small band and generated music. Seven templates cover solo performers, duos, groups and cats, with 720p MP4 downloads in vertical or widescreen format. Use permitted photos of consenting adults and label shared output as AI-generated. It is independent of NPR, Tiny Desk Concerts and artists; generated likeness and results can vary.",
+  "category": "AI Video",
+  "logoInitials": "TD",
+  "logoUrl": "/tool-logos/tiny-desk-ai.png",
+  "pricing": "Paid one-time credit packs from $9.99; one credit per video",
+  "pricingType": "paid",
+  "websiteUrl": "https://tinydeskai.co/",
+  "affiliateUrl": "https://tinydeskai.co/",
+  "pros": [
+    "Seven performance templates with generated music",
+    "Vertical and widescreen MP4 downloads"
+  ],
+  "cons": [
+    "Fixed 15-second duration and 720p output",
+    "Paid generation; photo permissions and likeness limitations apply"
+  ]
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "askmed",
+  "name": "AskMed",
+  "tagline": "Explore medical questions with cited sources",
+  "description": "AskMed is an educational medical research and reference assistant for healthcare professionals, students and researchers. It provides answers with references to journals, clinical guidelines and official drug labels, with source filters and follow-up questions. The service is available on web and mobile in seven languages. AI answers and citations can contain errors or outdated information; check original sources and apply professional judgment rather than treating output as a clinical decision.",
+  "category": "Research",
+  "logoInitials": "AM",
+  "logoUrl": "/tool-logos/askmed.png",
+  "pricing": "Paid subscription; submitted pricing starts at $24.99/month, subject to platform and plan",
+  "pricingType": "paid",
+  "websiteUrl": "https://getaskmed.com",
+  "affiliateUrl": "https://getaskmed.com",
+  "pros": [
+    "References to journals, guidelines and drug labels",
+    "Source filters and follow-up questions"
+  ],
+  "cons": [
+    "Answers and citations require independent verification",
+    "Paid subscription; not a substitute for clinical supervision"
+  ]
+},
+{
   "slug": "ai-calculators",
   "name": "AI Calculators",
   "tagline": "Estimate AI costs, token budgets, hardware needs and ROI",
