@@ -9,6 +9,106 @@ export const SUBMITTED_TOOLS: Tool[] = [
   "rating": null,
   "featured": false,
   "alternatives": [],
+  "slug": "pixtale-growth",
+  "name": "Pixtale Growth",
+  "tagline": "Analyze Instagram and YouTube accounts and research reels",
+  "description": "Pixtale Growth provides public-account analytics for Instagram and YouTube, including engagement, top content, audience-quality estimates and reel research. Paid plans add AI explanations, content ideas, competitor comparisons and reports; agency features include client workspaces and white-label exports. Audience scores and recommendations are estimates from available data, not guarantees of follower authenticity or growth.",
+  "category": "Marketing",
+  "logoInitials": "PG",
+  "pricing": "Free limited analytics; paid subscriptions and one-time reports",
+  "pricingType": "freemium",
+  "websiteUrl": "https://thepixtale.com/",
+  "pros": [
+    "Instagram and YouTube analysis in one workspace",
+    "Reel research and plan-dependent reporting tools"
+  ],
+  "cons": [
+    "Analysis limits and features depend on plan",
+    "Audience-quality and growth suggestions require judgment"
+  ],
+  "logoUrl": "/tool-logos/pixtale-growth.png",
+  "affiliateUrl": "https://thepixtale.com/"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "image26",
+  "name": "Image26",
+  "tagline": "Generate and edit images from prompts and reference photos",
+  "description": "Image26 is an independent image-generation and photo-editing service for posters, logos, infographics, covers and other visuals. Users enter a brief, upload references or mark an area to edit, with advertised output options up to 4K plus GIF and SVG generation. The site markets GPT Image 2.6 access through third-party platforms; model identity and performance are vendor claims, not independently verified by AIBeat or evidence of OpenAI affiliation.",
+  "category": "AI Image",
+  "logoInitials": "I",
+  "pricing": "New-account trial credits; paid plans or credit packs for continued use",
+  "pricingType": "freemium",
+  "websiteUrl": "https://image26.ai/",
+  "pros": [
+    "Prompt and reference-image workflows",
+    "Advertised marked-area editing and multiple output formats"
+  ],
+  "cons": [
+    "Generation consumes credits",
+    "Model branding and output accuracy are not independently verified"
+  ],
+  "logoUrl": "/tool-logos/image26.png",
+  "affiliateUrl": "https://image26.ai/"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "oldroll",
+  "name": "OldRoll",
+  "tagline": "Edit photos with vintage camera looks and film-inspired effects",
+  "description": "OldRoll Web is a browser-based photo editor with retro looks such as film, digicam, Y2K, VHS and instant-print effects. Users adjust light, color and effect strength, crop photographs, add frames or stickers and build collages before downloading. The web editor focuses on styling existing photos and is offered free; it is distinct from the mobile app and does not require an app installation.",
+  "category": "Design",
+  "logoInitials": "OR",
+  "pricing": "Free web editor and available creative assets; mobile app terms may differ",
+  "pricingType": "free",
+  "websiteUrl": "https://www.oldroll.io/",
+  "pros": [
+    "Retro filters with manual adjustment controls",
+    "Browser editing, frames and collage layouts"
+  ],
+  "cons": [
+    "Focused on editing existing photos rather than generating new images",
+    "Filter results depend on the source photo and settings"
+  ],
+  "logoUrl": "/tool-logos/oldroll.png",
+  "affiliateUrl": "https://www.oldroll.io/"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "prettyup",
+  "name": "PrettyUp",
+  "tagline": "Retouch portraits and adjust looks in photos and videos",
+  "description": "PrettyUp offers online photo and video editing with face and body adjustments, skin retouching and makeup controls. Additional AI tools change clothing, expressions and portrait lighting. Users can adjust effect strength and preview edits before export. The site offers free web editing and daily AI credits after sign-in; AI usage limits and mobile subscriptions are separate considerations. Review generated details and video consistency before sharing.",
+  "category": "Design",
+  "logoInitials": "PU",
+  "pricing": "Free web editing; sign-in for daily AI credits; mobile paid options vary",
+  "pricingType": "freemium",
+  "websiteUrl": "https://www.prettyupapp.com/",
+  "pros": [
+    "Photo and video portrait editing",
+    "Adjustable effects with outfit and expression tools"
+  ],
+  "cons": [
+    "AI features require credits and account access",
+    "Retouching and generated edits can alter likeness or introduce artifacts"
+  ],
+  "logoUrl": "/tool-logos/prettyup.png",
+  "affiliateUrl": "https://www.prettyupapp.com/"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
   "slug": "tiny-desk-ai",
   "name": "Tiny Desk AI",
   "tagline": "Turn photos into short AI desk-concert videos",
