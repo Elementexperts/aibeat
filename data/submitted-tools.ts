@@ -9,6 +9,156 @@ export const SUBMITTED_TOOLS: Tool[] = [
   "rating": null,
   "featured": false,
   "alternatives": [],
+  "slug": "sandbase",
+  "name": "SandBase",
+  "tagline": "Connect AI models, data APIs and agent sandboxes through one account",
+  "description": "SandBase is a developer platform for accessing AI models, data APIs, agent workflows and code sandboxes through one account and API key. It advertises OpenAI-compatible agent interfaces and E2B-compatible sandboxes, with a shared balance and usage records. Eligible data APIs have a daily free allowance and sandboxes are currently free subject to fair-use limits. Model and API calls use metered pricing; confirm provider availability, compatibility and data handling before integration.",
+  "category": "Developer Tools",
+  "logoInitials": "SB",
+  "pricing": "Starter credits and eligible free API calls; metered model/API usage; sandbox fair-use limits apply",
+  "pricingType": "freemium",
+  "websiteUrl": "https://www.sandbase.ai",
+  "pros": [
+    "Unified model, API and sandbox access",
+    "Usage-based billing and activity records"
+  ],
+  "cons": [
+    "Compatibility and provider coverage need integration testing",
+    "Third-party processing and per-call costs vary"
+  ],
+  "logoUrl": "/tool-logos/sandbase.png",
+  "affiliateUrl": "https://www.sandbase.ai"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "stylelatex",
+  "name": "styleLatex",
+  "tagline": "Convert documents, images and handwritten notes into editable LaTeX",
+  "description": "styleLatex uses AI to convert PDFs, photos, screenshots, handwriting and Word documents into editable LaTeX. The service compiles generated pages with XeLaTeX and attempts repairs from compiler errors, then provides source editing and a PDF preview. Exports include LaTeX, PDF, Word and extracted figures. Free utilities cover tables and several markup conversions; AI page conversion uses credits. Compilation does not establish transcription accuracy, so review equations and layout against the original.",
+  "category": "Education",
+  "logoInitials": "SL",
+  "pricing": "Free format-conversion utilities; AI document/page conversion uses credits",
+  "pricingType": "freemium",
+  "websiteUrl": "https://stylelatex.com/",
+  "pros": [
+    "Editable source with compiled preview",
+    "Document exports and extracted figures"
+  ],
+  "cons": [
+    "Equations and handwriting require source comparison",
+    "Some document elements and complex layouts may not carry over"
+  ],
+  "logoUrl": "/tool-logos/stylelatex.png",
+  "affiliateUrl": "https://stylelatex.com/"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "image-to-calendar",
+  "name": "Image to Calendar",
+  "tagline": "Turn schedule images and PDFs into editable calendar events",
+  "description": "Image to Calendar extracts event details from schedule photos, screenshots, flyers and PDFs. Review titles, dates, times, timezones, locations and recurrence before downloading an ICS file for Google Calendar, Apple Calendar or Outlook. It does not connect to your calendar or import events automatically. Uploaded content is sent to external AI processors; extraction can be incomplete or incorrect, so check every event before importing.",
+  "category": "Productivity",
+  "logoInitials": "IC",
+  "pricing": "One guest conversion and two signup credits; one-time packs for additional conversions",
+  "pricingType": "freemium",
+  "websiteUrl": "https://imagetocalendar.app/",
+  "pros": [
+    "Editable events before export",
+    "Standard ICS output for common calendar apps"
+  ],
+  "cons": [
+    "External AI processing of uploaded schedules",
+    "Dates, timezones and repeat rules require review"
+  ],
+  "logoUrl": "/tool-logos/image-to-calendar.png",
+  "affiliateUrl": "https://imagetocalendar.app/"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "remove-music-from-video",
+  "name": "Remove Music From Video",
+  "tagline": "Separate voices from video soundtracks and export cleaned clips",
+  "description": "Remove Music From Video separates speech, singing or narration from background audio in MP4, MOV and WebM files up to 500 MB and 30 minutes. The browser extracts audio and later reassembles the clip; audio and selected still frames are uploaded for processing and checks. Compare the result and download a voice-only video or separate tracks. Nonvoice sound effects may also be removed, separation can leave artifacts, and removing music does not grant rights to the footage.",
+  "category": "AI Audio",
+  "logoInitials": "RM",
+  "pricing": "Minute-based credits; paid packs from $4.99 and subscriptions; trial availability is limited",
+  "pricingType": "freemium",
+  "websiteUrl": "https://removemusicfromvideo.com/?utm_source=aibeat.dev&utm_medium=referral&utm_campaign=directory",
+  "pros": [
+    "Exports cleaned video and separate audio tracks",
+    "Before-and-after playback comparison"
+  ],
+  "cons": [
+    "Removes nonvoice effects as well as music",
+    "Audio and still frames leave the device; separation quality varies"
+  ],
+  "logoUrl": "/tool-logos/remove-music-from-video.png",
+  "affiliateUrl": "https://removemusicfromvideo.com/?utm_source=aibeat.dev&utm_medium=referral&utm_campaign=directory"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "image-to-image",
+  "name": "Image to Image",
+  "tagline": "Edit photos with text instructions and reference images",
+  "description": "Image to Image is a prompt-based photo editor for restyling portraits, changing backgrounds and creating product scenes. Upload JPG, PNG or WebP files, add up to three references and choose a processing mode, then compare and download the result or edit it again. The service aims to preserve the subject and composition, but generated details, text and likeness can change. Review outputs against the original before publishing.",
+  "category": "AI Image",
+  "logoInitials": "II",
+  "pricing": "Two signup credits while the daily allowance lasts; paid subscriptions or credit packs",
+  "pricingType": "freemium",
+  "websiteUrl": "https://imagetoimage.tools/?utm_source=aibeat.dev&utm_medium=referral&utm_campaign=directory",
+  "pros": [
+    "Prompt templates and multiple reference images",
+    "Iterative editing with before-and-after comparison"
+  ],
+  "cons": [
+    "Edits consume credits based on mode",
+    "Subject identity, product detail and text may change"
+  ],
+  "logoUrl": "/tool-logos/image-to-image.png",
+  "affiliateUrl": "https://imagetoimage.tools/?utm_source=aibeat.dev&utm_medium=referral&utm_campaign=directory"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "twitch-emote-maker",
+  "name": "Twitch Emote Maker",
+  "tagline": "Create static and animated emotes with chat-size previews",
+  "description": "Twitch Emote Maker, branded Emote Studio, generates static PNG emotes from text or permitted reference images and animates character images into GIFs. Choose a style, inspect previews at 112, 56 and 28 pixels, and download the original plus resized files in a ZIP. It creates files without connecting to Twitch or uploading them. Review transparency, animation, file requirements and content rights; platform acceptance is not guaranteed.",
+  "category": "AI Image",
+  "logoInitials": "TE",
+  "pricing": "30 signup credits for one static emote; GIFs cost 80 credits; packs from $5.99",
+  "pricingType": "freemium",
+  "websiteUrl": "https://twitchemotemaker.app/",
+  "pros": [
+    "Static PNG and animated GIF creation",
+    "Small-size previews and resized download bundles"
+  ],
+  "cons": [
+    "Animation exceeds the free signup allowance",
+    "No automatic upload or guarantee of Twitch approval"
+  ],
+  "logoUrl": "/tool-logos/twitch-emote-maker.png",
+  "affiliateUrl": "https://twitchemotemaker.app/"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
   "slug": "pixtale-growth",
   "name": "Pixtale Growth",
   "tagline": "Analyze Instagram and YouTube accounts and research reels",
