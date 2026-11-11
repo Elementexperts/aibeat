@@ -9,6 +9,81 @@ export const SUBMITTED_TOOLS: Tool[] = [
   "rating": null,
   "featured": false,
   "alternatives": [],
+  "slug": "seedance-3",
+  "name": "Seedance 3.0 (tryseedance3.com)",
+  "tagline": "Browser-based video generation from prompts and references",
+  "description": "tryseedance3.com is a video-generation website branded Seedance 3.0. Its site advertises text, image, video and audio references, short clips with sound, and prompt-based edits. At review, the embedded generator displayed Seedance 2.5 despite the page branding. Model identity, advertised duration and resolution limits, and any affiliation with the model developer have not been independently verified by AIBeat. Review the active model, credit cost and output before using it in a project.",
+  "category": "AI Video",
+  "logoInitials": "S3",
+  "pricing": "Advertised signup credits; paid plans or packs; commercial-use terms depend on plan",
+  "pricingType": "freemium",
+  "websiteUrl": "https://tryseedance3.com/",
+  "pros": [
+    "Prompt and reference-based video workflow",
+    "Browser preview and download interface"
+  ],
+  "cons": [
+    "Page branding and embedded model label differ",
+    "Advertised capabilities and model access are not independently verified"
+  ],
+  "logoUrl": "/tool-logos/seedance-3.png",
+  "affiliateUrl": "https://tryseedance3.com/"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "seedance-2-5",
+  "name": "Seedance 2.5 (seedance-2-5.io)",
+  "tagline": "Create short videos using prompts and multimedia references",
+  "description": "seedance-2-5.io is a browser-based video-generation service marketed under the Seedance 2.5 name. Users enter prompts, add references, choose duration, aspect ratio and resolution, then preview and download results. The provider advertises clips up to 30 seconds, output up to 1080p, synced audio and prompt-based editing. These are vendor claims; AIBeat has not independently verified the underlying model, maximum limits or affiliation with the model developer.",
+  "category": "AI Video",
+  "logoInitials": "S2",
+  "pricing": "Advertised signup credits; paid packs or subscriptions for more usage and commercial-use terms",
+  "pricingType": "freemium",
+  "websiteUrl": "https://seedance-2-5.io/",
+  "pros": [
+    "Reference-based video creation interface",
+    "Aspect-ratio and resolution controls"
+  ],
+  "cons": [
+    "Credits and plan conditions apply",
+    "Model identity and advertised performance are not independently verified"
+  ],
+  "logoUrl": "/tool-logos/seedance-2-5.png",
+  "affiliateUrl": "https://seedance-2-5.io/"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
+  "slug": "cantian-ai",
+  "name": "Cantian AI",
+  "tagline": "Explore BaZi, divination and naming traditions with AI",
+  "description": "Cantian AI offers AI-assisted BaZi chart interpretations, Liuyao divination, feng shui and naming features through web and mobile experiences. It combines traditional Chinese cultural frameworks with generated readings and reports. AIBeat lists it for cultural exploration, reflection and entertainment, not as an evidence-based prediction or productivity system. Readings should not be treated as factual forecasts or used in place of qualified financial, medical or other professional advice.",
+  "category": "Lifestyle",
+  "logoInitials": "CA",
+  "pricing": "Free basic experience; paid deeper reports and additional AI skills",
+  "pricingType": "freemium",
+  "websiteUrl": "https://cantian.ai/",
+  "pros": [
+    "Several traditional reading and naming formats",
+    "Web and mobile access with a basic free experience"
+  ],
+  "cons": [
+    "Interpretations are not scientifically established forecasts",
+    "Deeper reports and features require payment"
+  ],
+  "logoUrl": "/tool-logos/cantian-ai.png",
+  "affiliateUrl": "https://cantian.ai/"
+},
+{
+  "logo": "#2563eb",
+  "rating": null,
+  "featured": false,
+  "alternatives": [],
   "slug": "sandbase",
   "name": "SandBase",
   "tagline": "Connect AI models, data APIs and agent sandboxes through one account",
