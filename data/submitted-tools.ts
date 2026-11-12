@@ -5,6 +5,156 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "topview-t1",
+  "name": "Topview T1",
+  "tagline": "Create AI videos and images in an independent web workspace",
+  "description": "Topview T1 at topviewt1.org is an independent browser workspace for creating videos and images from prompts and reference images. The interface offers model selection, generation settings and credit quotes for short creative clips and social visuals. Model names, access and advertised output limits are provider claims and have not been independently verified by AIBeat; this listing does not imply affiliation with a model developer. Commercial-use permissions depend on the purchased plan.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "TT",
+  "logoUrl": "/tool-logos/topview-t1.png",
+  "rating": null,
+  "pricing": "Paid credit plans and packs; a paid trial pack is offered",
+  "pricingType": "paid",
+  "websiteUrl": "https://topviewt1.org/",
+  "affiliateUrl": "https://topviewt1.org/",
+  "featured": false,
+  "pros": [
+    "Prompt and reference-image creation",
+    "Credit quotes before generation"
+  ],
+  "cons": [
+    "Generation requires purchased credits",
+    "Model availability and commercial-use terms vary"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "shapeweld",
+  "name": "Shapeweld",
+  "tagline": "Convert, inspect and repair 3D assets with browser tools",
+  "description": "Shapeweld provides browser-accessible converters, viewers and mesh utilities for formats including FBX, GLB, OBJ, STL, VRM and USDZ. It supports tasks such as compression, mesh repair and preparing avatars, with MCP access advertised for AI-agent workflows. These are 3D utilities, not a generative 3D model. Viewers run locally; conversions upload files to its server, with deletion after three days stated by the provider. Format limitations can prevent some textures, rigs or animation from carrying over.",
+  "category": "Developer Tools",
+  "logo": "#2563eb",
+  "logoInitials": "S",
+  "logoUrl": "/tool-logos/shapeweld.png",
+  "rating": null,
+  "pricing": "Free browser tools with no account; upload and format limits apply",
+  "pricingType": "free",
+  "websiteUrl": "https://shapeweld.com/",
+  "affiliateUrl": "https://shapeweld.com/",
+  "featured": false,
+  "pros": [
+    "Multiple conversion and inspection tools",
+    "Local viewers and advertised MCP integration"
+  ],
+  "cons": [
+    "Conversions upload files to a server",
+    "Not every target format preserves all model features"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "vocal-remover-ai",
+  "name": "Vocal Remover AI",
+  "tagline": "Separate audio into vocal and instrumental tracks",
+  "description": "Vocal Remover AI at vocalremove.net separates an uploaded recording into vocal and instrumental tracks for preview and download. It accepts common audio formats up to 50 MB or a direct public audio URL, and displays processing-time costs before separation. The site identifies WaveSpeed as its processing provider. It can help with rehearsal, transcription preparation and permitted remix work, but results may contain bleed or artifacts. Users need appropriate rights to use and share source recordings.",
+  "category": "AI Audio",
+  "logo": "#2563eb",
+  "logoInitials": "VR",
+  "logoUrl": "/tool-logos/vocal-remover-ai.png",
+  "rating": null,
+  "pricing": "One-time free trial; monthly plans from $9.99 and one-time packs",
+  "pricingType": "freemium",
+  "websiteUrl": "https://vocalremove.net/",
+  "affiliateUrl": "https://vocalremove.net/",
+  "featured": false,
+  "pros": [
+    "Two-track preview and download",
+    "File upload or public audio URL"
+  ],
+  "cons": [
+    "Ongoing processing is paid",
+    "Separation quality depends on the source recording"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "contentrocket",
+  "name": "ContentRocket",
+  "tagline": "AI-assisted content marketing with human review and approval",
+  "description": "ContentRocket is a managed content marketing service from Brixxs that combines AI assistance with human editorial review. Customers provide topics and expertise, review drafts through an app, and approve content before agreed publication. Monthly packages combine blogs, videos and short social clips. It is a delivered service rather than a free self-service generator. Search indexing requests may be included, but rankings, AI citations, traffic and new customers are not guaranteed.",
+  "category": "Marketing",
+  "logo": "#2563eb",
+  "logoInitials": "C",
+  "logoUrl": "/tool-logos/contentrocket.png",
+  "rating": null,
+  "pricing": "Packages from EUR 129/month excluding VAT; monthly cancellation",
+  "pricingType": "paid",
+  "websiteUrl": "https://contentrocket.io/en/",
+  "affiliateUrl": "https://contentrocket.io/en/",
+  "featured": false,
+  "pros": [
+    "Human review and client approval",
+    "Coordinated blog, video and short-form content"
+  ],
+  "cons": [
+    "Recurring service cost excluding VAT",
+    "Scope and publishing channels depend on the agreement"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "paevon-ai",
+  "name": "Paevon AI",
+  "tagline": "Generate images and videos from prompts and references",
+  "description": "Paevon AI brings image and video generation into one browser workspace. Users choose an available model, add prompts or references, inspect the credit quote, then preview, download or reuse the inputs of a creation. The provider advertises welcome credits for eligible new accounts and daily check-in credits, with paid subscriptions and packs for additional usage. Free creations are public by default and free exports include a watermark; privacy and watermark controls require eligible paid access. AIBeat has not independently verified the underlying model identities or advertised performance.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "PA",
+  "logoUrl": "/tool-logos/paevon-ai.png",
+  "rating": null,
+  "pricing": "Eligible signup and daily check-in credits; paid subscriptions from $19.99/month and credit packs",
+  "pricingType": "freemium",
+  "websiteUrl": "https://paevon.com/",
+  "affiliateUrl": "https://paevon.com/",
+  "featured": false,
+  "pros": [
+    "Image and video creation in one workspace",
+    "Visible credit quotes and reusable inputs"
+  ],
+  "cons": [
+    "Free creations are public and exports watermarked",
+    "Model settings and generation costs vary"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "token-thrift",
+  "name": "Token Thrift",
+  "tagline": "Compare AI rollout experiences, tool deals and startup credits",
+  "description": "Token Thrift is an AI adoption research and community resource with practitioner discussions, source-linked summaries, tool deals and startup credit guides. Its Ask feature uses random handles and model-assisted redaction to reduce identifying details, which is not a guarantee of anonymity. Readers can browse without signup and optionally receive a weekly briefing. The provider checks offers against vendor pages, but eligibility and terms still need confirmation with each vendor. Some links earn affiliate commissions and separate paid resources are offered.",
+  "category": "Research",
+  "logo": "#2563eb",
+  "logoInitials": "TT",
+  "logoUrl": "/tool-logos/token-thrift.png",
+  "rating": null,
+  "pricing": "Free public reading, deals and optional newsletter; paid Startup Credits Kit available",
+  "pricingType": "freemium",
+  "websiteUrl": "https://tokenthrift.io/",
+  "affiliateUrl": "https://tokenthrift.io/",
+  "featured": false,
+  "pros": [
+    "Source-linked AI adoption resources",
+    "Deals and startup credit eligibility guides"
+  ],
+  "cons": [
+    "Automated redaction cannot guarantee anonymity",
+    "Offer terms change and some links are affiliate links"
+  ],
+  "alternatives": []
+},
+{
   "logo": "#2563eb",
   "rating": null,
   "featured": false,
