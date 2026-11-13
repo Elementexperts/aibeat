@@ -5,6 +5,56 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "look-atlas",
+  "name": "Look Atlas",
+  "tagline": "Create on-model product images and editorial campaigns",
+  "description": "Look Atlas helps apparel, jewelry and accessories brands turn product photos into AI-generated catalog and campaign imagery. Users upload products, select models and styling, and adjust backgrounds and camera direction. Reference images can guide product details, but generated stitching, logos, jewelry and fit still need checking against the real item. The provider offers a free first shoot and paid plans with differing credits, model access and human touch-up allowances. AIBeat has not independently verified fidelity, speed or conversion claims.",
+  "category": "AI Image",
+  "pricing": "Free first shoot; paid plans from $49/month; submission specifies 15 watermarked 2K trial images",
+  "pricingType": "freemium",
+  "websiteUrl": "https://lookatlas.com/",
+  "pros": [
+    "Product-reference and on-model image workflow",
+    "Styling controls and plan-dependent human touch-ups"
+  ],
+  "cons": [
+    "Generated product details require manual review",
+    "Ongoing generation and advanced features require a paid plan"
+  ],
+  "logo": "#2563eb",
+  "logoInitials": "LA",
+  "logoUrl": "/tool-logos/look-atlas.png",
+  "rating": null,
+  "affiliateUrl": "https://lookatlas.com/",
+  "featured": false,
+  "alternatives": []
+},
+{
+  "slug": "astrodir",
+  "name": "AstroDir",
+  "tagline": "Discover traditional and AI-assisted astrology resources",
+  "description": "AstroDir is an English and Chinese discovery directory for astrology, tarot, BaZi, I Ching and related cultural resources. It organizes websites, apps, calculators and learning materials using categories and product notes, including an AI-tools section. AstroDir is a resource directory rather than an AI model or a personal-reading service. Browsing is free; promoted listings are a separate offering and linked products set their own prices. Its contents are best approached as cultural exploration, reflection or entertainment, not evidence-based predictions or professional advice.",
+  "category": "Lifestyle",
+  "pricing": "Free browsing; optional paid listing promotion; linked resources have separate prices",
+  "pricingType": "free",
+  "websiteUrl": "https://astrodir.com/",
+  "pros": [
+    "English and Chinese resource discovery",
+    "Traditional and AI-assisted tools organized by topic"
+  ],
+  "cons": [
+    "Linked products have separate terms and costs",
+    "Directory inclusion does not validate predictive claims"
+  ],
+  "logo": "#2563eb",
+  "logoInitials": "AD",
+  "logoUrl": "/tool-logos/astrodir.png",
+  "rating": null,
+  "affiliateUrl": "https://astrodir.com/",
+  "featured": false,
+  "alternatives": []
+},
+{
   "slug": "topview-t1",
   "name": "Topview T1",
   "tagline": "Create AI videos and images in an independent web workspace",
