@@ -5,6 +5,282 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "futuro-ai",
+  "name": "Futuro AI",
+  "tagline": "Custom voice agents for business calls and follow-up",
+  "description": "Futuro AI provides configured voice agents for answering business calls, qualifying leads, booking appointments and handling support workflows. Businesses can choose missed-call forwarding, after-hours coverage or broader call handling, with integrations and human-transfer rules tailored to their operations. The service includes setup and management rather than just a generic chatbot. Vendor claims about human indistinguishability, zero hallucinations, certifications and conversion performance have not been independently verified by AIBeat. Review disclosure, escalation and data-handling requirements before deployment.",
+  "category": "AI Agents",
+  "logo": "#2563eb",
+  "logoInitials": "FA",
+  "logoUrl": "/tool-logos/futuro-ai.png",
+  "rating": null,
+  "pricing": "Advertised seven-day trial; small-business plans from $200/month; custom deployments quoted",
+  "pricingType": "paid",
+  "websiteUrl": "https://www.futurocorp.com/",
+  "affiliateUrl": "https://www.futurocorp.com/",
+  "featured": true,
+  "pros": [
+    "Configured phone workflows and human handoff",
+    "Calendar and CRM integration options"
+  ],
+  "cons": [
+    "Requires business-specific setup and ongoing monitoring",
+    "Performance and compliance claims need independent evaluation"
+  ],
+  "alternatives": [],
+  "listingType": "service"
+},
+{
+  "slug": "delibora",
+  "name": "Delibora",
+  "tagline": "Stress-test ideas through structured multi-agent discussions",
+  "description": "Delibora stages discussions between AI participants with separate briefs and controlled turn-taking. Formats include debates, expert panels, pitch critiques, focus groups and chained workflows, producing transcripts, scorecards or reports depending on the format and plan. Users can inspect the exchange and compare perspectives rather than rely on a single generated answer. Synthetic audiences are simulations, not recruited customers or representative research samples; a model verdict does not establish that an idea is correct or will succeed.",
+  "category": "Research",
+  "logo": "#2563eb",
+  "logoInitials": "D",
+  "logoUrl": "/tool-logos/delibora.png",
+  "rating": null,
+  "pricing": "Paid subscriptions; Basic advertised at $24/month billed annually; formats and model access vary by plan",
+  "pricingType": "paid",
+  "websiteUrl": "https://delibora.com/",
+  "affiliateUrl": "https://delibora.com/",
+  "featured": true,
+  "pros": [
+    "Inspectable transcripts and separate participant briefs",
+    "Multiple critique and audience-simulation formats"
+  ],
+  "cons": [
+    "Synthetic opinions do not measure real audiences",
+    "Advanced formats and exports depend on plan"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "saymorph",
+  "name": "SayMorph",
+  "tagline": "Rewrite English messages in different tones and styles",
+  "description": "SayMorph is an English-first tone rewriter for emails, messages and posts. Paste text or import a text file, choose a style, and compare Safe, Balanced and Bold versions. Its meaning-preservation checks aim to retain details such as names and numbers, but rewrites can still add or soften a point, so review the full meaning before sending. The site states that text is sent to DeepSeek for processing and advises against entering confidential or sensitive information.",
+  "category": "Writing",
+  "logo": "#2563eb",
+  "logoInitials": "S",
+  "logoUrl": "/tool-logos/saymorph.png",
+  "rating": null,
+  "pricing": "Free without signup; advertised limit of 10 rewrites/day and 2,000 characters per rewrite",
+  "pricingType": "free",
+  "websiteUrl": "https://saymorph.com/",
+  "affiliateUrl": "https://saymorph.com/",
+  "featured": false,
+  "pros": [
+    "Three rewrite strengths for comparison",
+    "No account needed for the free allowance"
+  ],
+  "cons": [
+    "English-first rather than a translation service",
+    "Rewrites require factual review and external text processing"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "you-never-let-her-pay",
+  "name": "You Never Let Her Pay",
+  "tagline": "Create a personalized dinner-comedy video from a portrait",
+  "description": "You Never Let Her Pay is an independent browser studio that turns a consenting adult portrait into the diner in a wallet-and-sponge comedy scene. The site advertises 11-second 480p clips in vertical or landscape format, generated using purchased credits. Its FAQ says generated clips use newly generated audio; reference TikTok sounds must be checked separately in the original platform. Free portrait preview is not free video rendering. Model access, output quality and provider watermark behavior have not been independently verified.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "YN",
+  "logoUrl": "/tool-logos/you-never-let-her-pay.png",
+  "rating": null,
+  "pricing": "Free browser portrait preview; paid video packs from $6.90 for 20 credits; no subscription",
+  "pricingType": "paid",
+  "websiteUrl": "https://youneverletherpay.video/",
+  "affiliateUrl": "https://youneverletherpay.video/",
+  "featured": false,
+  "pros": [
+    "Single-portrait browser workflow",
+    "One-time packs and format selection"
+  ],
+  "cons": [
+    "Full video rendering requires payment",
+    "Provider watermark behavior remains unverified"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "ozil-goal-ai",
+  "name": "Ozil Goal AI",
+  "tagline": "Turn an authorized adult portrait into a football clip",
+  "description": "Ozil Goal AI creates personalized football videos from a photo of the user or another consenting adult. Presets include goal scenes and a fake-rabona move, with duration and aspect ratio varying by template. Each verified account is offered one free reference image; full videos require purchased credits and may differ from that preview. The site prohibits public-figure photos and says its presets avoid real players and club branding. It is an independent product, not affiliated with a football player, club or league.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "OG",
+  "logoUrl": "/tool-logos/ozil-goal-ai.png",
+  "rating": null,
+  "pricing": "One free reference image per verified account; video packs from $4.90 at 480p; selected 720p packs from $5.99",
+  "pricingType": "paid",
+  "websiteUrl": "https://ozilgoalai.io/",
+  "affiliateUrl": "https://ozilgoalai.io/",
+  "featured": false,
+  "pros": [
+    "Preset football actions without prompt writing",
+    "Reference-image preview before paid video creation"
+  ],
+  "cons": [
+    "Preview does not guarantee an identical final video",
+    "Adult consent and photo rights are required"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "styleqrcode",
+  "name": "StyleQRCode",
+  "tagline": "Design QR codes with logos, scan checks and optional AI art",
+  "description": "StyleQRCode creates styled QR codes for links, contacts, WiFi details and other supported content. Static codes can be made in the browser without signup, with logo, color and export controls plus a scan check. Optional dynamic codes support editable destinations and analytics, and AI QR art uses credits. A static code stores its content directly; dynamic redirects depend on the hosted service. Test the downloaded design with real devices and at its intended print size before distribution.",
+  "category": "Design",
+  "logo": "#2563eb",
+  "logoInitials": "S",
+  "logoUrl": "/tool-logos/styleqrcode.png",
+  "rating": null,
+  "pricing": "Free static codes and limited dynamic/AI allowances; paid Pro, lifetime and AI credit options",
+  "pricingType": "freemium",
+  "websiteUrl": "https://styleqrcode.com/",
+  "affiliateUrl": "https://styleqrcode.com/",
+  "featured": false,
+  "pros": [
+    "Logo and visual customization with scan feedback",
+    "Static codes without account or watermark"
+  ],
+  "cons": [
+    "Dynamic features depend on the hosting service",
+    "Complex art and print conditions can affect scanning"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "crealo-ai",
+  "name": "Crealo AI",
+  "tagline": "Create marketing text and visual assets in one workspace",
+  "description": "Crealo AI combines AI-assisted writing, image creation and other content workflows for marketers and creators. Users choose a tool or template, describe the intended content, then edit and download results. The site also advertises video, avatar, voice and chatbot capabilities. Availability, usage limits and provider access should be checked in the active plan; AIBeat has not independently verified all advertised models or performance claims. Review facts, branding and asset rights before publishing generated content.",
+  "category": "Marketing",
+  "logo": "#2563eb",
+  "logoInitials": "CA",
+  "logoUrl": "/tool-logos/crealo-ai.png",
+  "rating": null,
+  "pricing": "Advertised free start without a card; paid plans and usage limits apply",
+  "pricingType": "freemium",
+  "websiteUrl": "https://crealo.ai/",
+  "affiliateUrl": "https://crealo.ai/",
+  "featured": false,
+  "pros": [
+    "Writing and visual workflows in one platform",
+    "Templates and editing for marketing content"
+  ],
+  "cons": [
+    "Model and feature availability depend on plan",
+    "Generated assets require editorial review"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "images-upscale",
+  "name": "Images Upscale",
+  "tagline": "Enlarge images 2x or 4x with cloud AI enhancement",
+  "description": "Images Upscale enlarges JPG, PNG and WebP images with 2x and 4x options and presets for photos, anime and screenshots. The provider states that it uses Real-ESRGAN on cloud GPUs, accepts files up to 25 MB and supports multiple files or ZIP uploads. Users can compare results and download without a watermark. Guest results are retained for seven days according to the FAQ, while signed-in results remain until deletion. Enhancement can alter fine details and text rather than recover the original information exactly.",
+  "category": "AI Image",
+  "logo": "#2563eb",
+  "logoInitials": "IU",
+  "logoUrl": "/tool-logos/images-upscale.png",
+  "rating": null,
+  "pricing": "Two free daily credits; one-time credit packs from $9.99; no subscription",
+  "pricingType": "freemium",
+  "websiteUrl": "https://www.images-upscale.com/en/image-upscaler",
+  "affiliateUrl": "https://www.images-upscale.com/en/image-upscaler",
+  "featured": false,
+  "pros": [
+    "Batch inputs and before/after comparison",
+    "Free daily usage across enhancement modes"
+  ],
+  "cons": [
+    "Files are uploaded for cloud processing",
+    "Generated details and text need checking"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "video-translate",
+  "name": "Video Translate",
+  "tagline": "Translate and dub uploaded videos in the browser",
+  "description": "Video Translate at videotranslators.com translates spoken dialogue and generates a dubbed MP4 using voice synthesis intended to resemble the source voice. Users upload one MP4, MOV or WebM file, explicitly choose source and target languages, and follow the job online. The site advertises 23 languages and uploads up to 500 MB, with background audio mixed back into the result. Review translation, pronunciation and timing before release, and use only footage and voices you are authorized to process. Batch jobs and link imports are not currently advertised as available.",
+  "category": "AI Video",
+  "logo": "#2563eb",
+  "logoInitials": "VT",
+  "logoUrl": "/tool-logos/video-translate.png",
+  "rating": null,
+  "pricing": "One-time 30 starter credits after Google sign-in; paid subscriptions and packs; billed per output second",
+  "pricingType": "freemium",
+  "websiteUrl": "https://videotranslators.com/",
+  "affiliateUrl": "https://videotranslators.com/",
+  "featured": false,
+  "pros": [
+    "Translated speech and downloadable video output",
+    "Explicit language selection and job history"
+  ],
+  "cons": [
+    "Cloud upload and account required for generation",
+    "Voice rights, translation and timing require review"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "scientific-figure-ai",
+  "name": "Scientific Figure AI",
+  "tagline": "Draft scientific diagrams with editable labels and shapes",
+  "description": "Scientific Figure AI turns a text brief, sketch or abstract into an illustration, flowchart or graphical abstract. Users review a proposed figure plan, generate the image, then adjust labels, arrows, colors and layout. The provider advertises PNG, JPG, SVG and PowerPoint exports with editable elements. Automated label checks do not establish scientific accuracy: researchers must verify structures, mechanisms and annotations, and follow their journal's disclosure and image policies. Free exports are watermarked; publication licensing depends on plan.",
+  "category": "Research",
+  "logo": "#2563eb",
+  "logoInitials": "SF",
+  "logoUrl": "/tool-logos/scientific-figure-ai.png",
+  "rating": null,
+  "pricing": "Signup and daily-check-in credits; paid subscriptions and packs; free exports watermarked",
+  "pricingType": "freemium",
+  "websiteUrl": "https://scientificfigureai.com/",
+  "affiliateUrl": "https://scientificfigureai.com/",
+  "featured": false,
+  "pros": [
+    "Plan review before generation",
+    "Editable annotations and multiple export formats"
+  ],
+  "cons": [
+    "Scientific accuracy requires expert verification",
+    "Watermark removal and publication licensing depend on plan"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "jev-agent",
+  "name": "Jev Agent (Jagent)",
+  "tagline": "Structured text judgments through a hosted API and MCP server",
+  "description": "Jev Agent, branded Jagent at jev-agent.com, is an independent service offering structured text judgments through REST and a hosted MCP endpoint. Its documented tools cover yes/no questions, choices, scoring, version comparison and essay, rubric or resume grading. Results include probabilities or scores rather than generated prose. The hosted service requires its own API key, separate from a TypeSafe first-party key, and states that it is not affiliated with TypeSafe AI. Model judgments can be wrong and should not replace human review in consequential decisions.",
+  "category": "Developer Tools",
+  "logo": "#2563eb",
+  "logoInitials": "JA",
+  "logoUrl": "/tool-logos/jev-agent.png",
+  "rating": null,
+  "pricing": "Free playground/key access advertised; hosted MCP usage billed in credits per input tokens",
+  "pricingType": "freemium",
+  "websiteUrl": "https://jev-agent.com/",
+  "affiliateUrl": "https://jev-agent.com/",
+  "featured": false,
+  "pros": [
+    "REST and hosted MCP integration",
+    "Bounded judgments and grading outputs"
+  ],
+  "cons": [
+    "Independent service with separate credentials and billing",
+    "Confidence scores do not guarantee correct decisions"
+  ],
+  "alternatives": []
+},
+{
   "slug": "look-atlas",
   "name": "Look Atlas",
   "tagline": "Create on-model product images and editorial campaigns",
