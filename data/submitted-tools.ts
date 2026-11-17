@@ -5,6 +5,131 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "shadow-lamp-generator",
+  "name": "Shadow Lamp Generator",
+  "tagline": "Design printable shadow lamps from photos and silhouettes",
+  "description": "Shadow Lamp Generator turns an image into a printable projection lamp with wall and 3D previews, downloadable STL parts and assembly notes. Standard image tracing runs on your device; an optional paid AI photo-to-stencil feature sends the selected image to a server and AI provider. Signed-in users receive one free STL download daily. Free and credit-pack downloads are for personal use and gifts; selling printed lamps requires the Pro commercial license. Physical results depend on printing, lighting and assembly.",
+  "category": "Design",
+  "logo": "#2563eb",
+  "logoInitials": "SL",
+  "logoUrl": "/tool-logos/shadow-lamp-generator.png",
+  "rating": null,
+  "pricing": "Free design and preview; one free STL download/day with signup; credit packs from $2.99; Pro subscription available",
+  "pricingType": "freemium",
+  "websiteUrl": "https://shadowlampgenerator.com/",
+  "affiliateUrl": "https://shadowlampgenerator.com/",
+  "featured": false,
+  "pros": [
+    "Wall projection and assembled-model previews",
+    "STL parts and print notes; optional AI stencil conversion"
+  ],
+  "cons": [
+    "A 3D printer and suitable lighting components are needed",
+    "Commercial sales require Pro; AI stencil conversion uses cloud processing"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "mystylelens",
+  "name": "MyStyleLens",
+  "tagline": "Explore face geometry and personal styling ideas",
+  "description": "MyStyleLens offers browser-based face-shape, symmetry and proportion analysis, plus hairstyle, color and glasses guidance. Basic geometry scans run on-device without an account. Optional AI analysis and paid styling reports require separate permission to send photos for cloud processing. Results are styling suggestions rather than medical assessments or universal attractiveness scores, and camera angle and lighting can affect measurements.",
+  "category": "Design",
+  "logo": "#2563eb",
+  "logoInitials": "M",
+  "logoUrl": "/tool-logos/mystylelens.png",
+  "rating": null,
+  "pricing": "Free geometry scans; full report advertised at $16.88 one-time; optional AI features have separate consent and limits",
+  "pricingType": "freemium",
+  "websiteUrl": "https://mystylelens.com/",
+  "affiliateUrl": "https://mystylelens.com/",
+  "featured": false,
+  "pros": [
+    "On-device geometry scans without signup",
+    "Face-shape and styling guidance with optional detailed reports"
+  ],
+  "cons": [
+    "Photo conditions can change measurements",
+    "Optional AI features process photos externally; suggestions are not guaranteed outcomes"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "rapvideogo",
+  "name": "RapVideoGo",
+  "tagline": "Create short rap videos from portraits and editable lyrics",
+  "description": "RapVideoGo creates short solo or duet rap videos from one or two reference photos, editable lyrics and scene prompts. Users can adapt templates for greetings, friendly rap battles and celebrations, then choose video settings before spending credits. AI generates the vocals and beat; the studio does not accept uploaded songs or clone a voice from a photo. Use photos of consenting adults. Generated words, assigned parts and likeness may vary, and long lyrics may be truncated by the chosen duration.",
+  "category": "Video",
+  "logo": "#2563eb",
+  "logoInitials": "R",
+  "logoUrl": "/tool-logos/rapvideogo.png",
+  "rating": null,
+  "pricing": "Prepaid generation credits; cost varies by duration and quality; lyric templates are free; no subscription advertised",
+  "pricingType": "paid",
+  "websiteUrl": "https://rapvideogo.com/",
+  "affiliateUrl": "https://rapvideogo.com/",
+  "featured": false,
+  "pros": [
+    "Editable lyrics and solo or duet scenes",
+    "Generated vocals and beat without recording a voice"
+  ],
+  "cons": [
+    "Generation uses paid credits",
+    "Lyrics, timing and likeness may differ from the requested performance"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "no-scrubs-ai",
+  "name": "No Scrubs AI",
+  "tagline": "Turn consenting adult portraits into a short music-video scene",
+  "description": "No Scrubs AI is an independent photo-to-video tool for a prepared three-person music-video scene. Upload a lead portrait and up to two supporting portraits; unfilled supporting roles use fictional performers. The site advertises roughly 16-second MP4 output in 4:3 at a 720p generation setting, with an included soundtrack described by the submitter as original licensed music. It is not affiliated with TLC. Generation requires an account, paid credits and consent from every depicted adult; exact likeness, motion and lip sync are not guaranteed.",
+  "category": "Video",
+  "logo": "#2563eb",
+  "logoInitials": "NS",
+  "logoUrl": "/tool-logos/no-scrubs-ai.png",
+  "rating": null,
+  "pricing": "$6.99 for one video, $19.99 for three or $29 for five; one-time credits; no free generation",
+  "pricingType": "paid",
+  "websiteUrl": "https://noscrubsai.net/",
+  "affiliateUrl": "https://noscrubsai.net/",
+  "featured": false,
+  "pros": [
+    "Lead and supporting-role controls for up to three portraits",
+    "Prepared scene and included soundtrack"
+  ],
+  "cons": [
+    "Fixed scene format rather than a general video editor",
+    "Photos are processed by an external AI provider; generated results vary"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "i-love-the-smiths-ai",
+  "name": "I Love The Smiths AI",
+  "tagline": "Cast two portraits in an AI-generated elevator scene",
+  "description": "I Love The Smiths AI is an independent fan project that casts two consenting adult portraits as listener and speaker in a short elevator scene inspired by (500) Days of Summer. Preview and swap roles locally for free, then use purchased credits for a 15-second video in landscape or vertical format. The site states that exports use AI-generated dialogue and elevator ambience, not the original film audio or The Smiths recording. Face likeness and dialogue timing can vary; celebrity and public-figure photos are not supported.",
+  "category": "Video",
+  "logo": "#2563eb",
+  "logoInitials": "IL",
+  "logoUrl": "/tool-logos/i-love-the-smiths-ai.png",
+  "rating": null,
+  "pricing": "Free local portrait preview; video generation from $8.90 for 20 credits; 480p uses 20 credits and 720p uses 45",
+  "pricingType": "paid",
+  "websiteUrl": "https://ilovethesmiths.video/",
+  "affiliateUrl": "https://ilovethesmiths.video/",
+  "featured": false,
+  "pros": [
+    "Separate listener and speaker portraits with role swapping",
+    "Landscape or vertical framing and two resolution settings"
+  ],
+  "cons": [
+    "Free preview does not include video generation",
+    "Independent fan project; rights and likeness permissions remain the user's responsibility"
+  ],
+  "alternatives": []
+},
+{
   "slug": "futuro-ai",
   "name": "Futuro AI",
   "tagline": "Custom voice agents for business calls and follow-up",
