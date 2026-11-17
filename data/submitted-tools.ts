@@ -5,6 +5,57 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "seedream-5-5",
+  "name": "Seedream 5.5 AI Image Generator",
+  "tagline": "Generate and edit images with prompts and multiple references",
+  "description": "AI Image Editor offers a third-party image-generation and editing interface marketed as Seedream 5.5. Start from text or combine up to ten reference images, then revise the result with additional instructions. The site advertises transparent PNG output, text rendering, fifteen aspect ratios and resolutions up to 2K. Model identity and fidelity claims have not been independently verified by AIBeat; review generated text, faces and unchanged areas rather than assume perfect consistency. Free outputs are described as personal-use only, with commercial use available after purchasing a plan or credits.",
+  "category": "AI Image",
+  "pricing": "Free signup credits; paid credit packs and subscriptions; cost varies by resolution and reference count",
+  "pricingType": "freemium",
+  "websiteUrl": "https://ai-image-editor.com/seedream-5-5",
+  "pros": [
+    "Text-to-image and multi-reference editing in one interface",
+    "Advertised transparent PNG output and multiple aspect ratios"
+  ],
+  "cons": [
+    "Editing consistency and rendered text require review",
+    "Commercial use requires a paid purchase under the site terms"
+  ],
+  "logo": "#7c3aed",
+  "logoInitials": "S5",
+  "logoUrl": "/tool-logos/seedream-5-5.png",
+  "rating": null,
+  "affiliateUrl": "https://ai-image-editor.com/seedream-5-5",
+  "featured": false,
+  "alternatives": []
+},
+{
+  "slug": "tinycommand",
+  "name": "TinyCommand",
+  "tagline": "Connect forms, tables, workflows and AI steps without code",
+  "description": "TinyCommand combines forms, tables, workflows and AI-assisted automation in one workspace. Teams can collect information, call connected apps from dynamic forms, process documents, branch on results and trigger follow-up actions. AI agent steps run inside workflows on every plan, while creating custom agents starts on Professional. Form responses are unlimited, but automation and AI operations consume credits. Configure integration permissions and review automated actions before using workflows with business data.",
+  "category": "Productivity",
+  "pricing": "Free plan: 1,000 credits/month, one seat and unlimited forms/responses; paid plans from $19/month billed monthly",
+  "pricingType": "freemium",
+  "websiteUrl": "https://tinycommand.com/",
+  "pros": [
+    "Forms, structured data and automation in a shared workspace",
+    "Free plan includes workflow AI steps and unlimited responses"
+  ],
+  "cons": [
+    "Automation and AI actions consume plan credits",
+    "Custom agent creation requires Professional or above"
+  ],
+  "logo": "#7c3aed",
+  "logoInitials": "TC",
+  "logoUrl": "/tool-logos/tinycommand.png",
+  "rating": null,
+  "affiliateUrl": "https://tinycommand.com/",
+  "featured": false,
+  "alternatives": []
+},
+
+{
   "slug": "shadow-lamp-generator",
   "name": "Shadow Lamp Generator",
   "tagline": "Design printable shadow lamps from photos and silhouettes",
