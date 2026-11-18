@@ -55,9 +55,17 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_MODEL: ${{ vars.GROQ_MODEL || 'openai/gpt-oss-120b' }}
-          ARTICLE_LIMIT: 1
-          FAIL_ON_NEWS_ERROR: 'false'
+          ARTICLE_LIMIT: 2
         run: npm run news:daily
+
+      - name: Report generation outcome
+        env:
+          PUBLISHED_COUNT: ${{ steps.news.outputs.published_count }}
+        run: |
+          echo "Articles generated: ${PUBLISHED_COUNT}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$PUBLISHED_COUNT" = "0" ]; then
+            echo "::warning::No articles generated. See the news automation step for provider errors and editorial rejection reasons."
+          fi
 
       - name: Prepare recent article images
         if: steps.news.outputs.published_count != '' && steps.news.outputs.published_count != '0'

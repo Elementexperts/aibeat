@@ -998,14 +998,26 @@ test('source discovery time reduces shared cooldown rather than adding a fresh f
   await m('facts', {})
   assert.deepEqual(waits, [11000, 11000, 4000]); assert.equal(calls, 4)
 })
-test('published stories are removed before the six-slot selection; broad coverage remains', () => {
+test('Groq structured HTTP 400 retries in JSON object mode and validates the response', async () => {
+  const formats: string[] = []
+  const m = createModel('key', 'openai/gpt-oss-120b', (async (_url, options) => {
+    formats.push(JSON.parse(String(options?.body)).response_format.type)
+    if (formats.length === 1) return new Response(null, { status: 400 })
+    return completion(JSON.stringify(draft))
+  }) as typeof fetch, () => {}, noWait)
+  assert.deepEqual(await m('draft', {}), draft)
+  assert.deepEqual(formats, ['json_schema', 'json_object'])
+})
+
+test('candidate selection prioritizes AI, excludes published URLs and retains broad coverage', () => {
   const old = Array.from({ length: 6 }, (_, i) => ({ ...candidate, url: `https://theverge.com/old-${i}`, publishedAt: '2026-09-16T11:00:00Z' }))
-  const pending = ['AI tool launches', 'New game announced', 'Camera release', 'Streaming service update', 'Laptop launch', 'Display update', 'Phone launch'].map((title, i) => ({ ...candidate, title, url: `https://theverge.com/new-${i}` }))
+  const pending = ['New game announced', 'Camera release', 'Streaming service update', 'Laptop launch', 'Display update', 'Phone launch', 'Tablet launch', 'Accessory launch', 'AI tool launches'].map((title, i) => ({ ...candidate, title, url: `https://theverge.com/new-${i}` }))
   const history = old.map((c, i) => ({ slug: `old-${i}`, title: c.title, publishedAt: c.publishedAt, sources: [{ name: 'The Verge', url: c.url + '?utm_source=feed' }] }))
   const selected = selectCandidates([...old, ...pending], history)
-  assert.equal(selected.length, 6); assert.ok(selected.every(c => c.url.includes('/new-')))
+  assert.equal(selected.length, 8); assert.ok(selected.every(c => c.url.includes('/new-')))
+  assert.equal(selected[0].title, 'AI tool launches')
   assert.ok(selected.some(c => c.title === 'New game announced')); assert.ok(selected.some(c => c.title === 'Camera release'))
-  assert.equal(QUALITY.maxCandidates, 6); assert.equal(QUALITY.maxModelCalls, 30)
+  assert.equal(QUALITY.maxCandidates, 8); assert.equal(QUALITY.maxModelCalls, 30)
 })
 
 
@@ -1126,11 +1138,11 @@ test('editorial candidates keep priority when official feeds contain many recent
   const editorial = Array.from({ length: 7 }, (_, i) => ({ ...candidate, url: `https://techcrunch.com/2026/09/15/story-${i}`, publishedAt: '2026-09-15T09:00:00Z' }))
   const official = Array.from({ length: 10 }, (_, i) => ({ ...candidate, url: `https://openai.com/index/story-${i}`, publishedAt: '2026-09-16T09:00:00Z' }))
   const selected = selectCandidates([...official, ...editorial], [])
-  assert.equal(selected.length, 6)
+  assert.equal(selected.length, 8)
   assert.ok(selected.slice(0, 4).every(c => classifySource(c.url).tier === 2))
-  assert.equal(selected.filter(c => classifySource(c.url).tier === 1).length, 2)
-  assert.equal(selectCandidates(editorial, []).length, 6)
-  assert.equal(selectCandidates(official, []).length, 6)
+  assert.ok(selected.slice(4).every(c => classifySource(c.url).tier === 1))
+  assert.equal(selectCandidates(editorial, []).length, 7)
+  assert.equal(selectCandidates(official, []).length, 8)
 })
 
 test('verified staff reporting does not require a second model endorsement of its publisher', async () => {

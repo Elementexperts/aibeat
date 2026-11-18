@@ -41,6 +41,7 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
   return async (stage, input) => {
     let attempt = 0, repairRequests = 0, repairing = false
     let repairInstruction = ''
+    let format = responseFormat(model, stage)
     while (true) {
       if (calls >= QUALITY.maxModelCalls) {
         log(`[AIBeat Model] Stage: ${stage} | Calls used: ${calls}/${QUALITY.maxModelCalls} | Request not sent: BUDGET_EXHAUSTED`)
@@ -62,12 +63,12 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
       let finish = 'unavailable', chars = 0, json = 'NOT_RUN', schema = 'NOT_RUN', jsonType = 'NOT_RUN'
       let usage = 'Prompt tokens: unavailable | Completion tokens: unavailable | Total tokens: unavailable'
       let issue: { field: string; problem: string } | undefined
-      const emit = (failure?: string) => log(`[AIBeat Model] Provider: Groq | Stage: ${stage} | Model: ${safeModelName(model, key)} | HTTP status: ${status} | Finish reason: ${finish} | Content chars: ${chars} | JSON parse: ${json} | Schema validation: ${schema} | Attempt: ${repairing ? repairRequests + '/3' : attempt + '/3'}${repairing ? ' | Repair attempt: 1/1 | Repair JSON parse: ' + json + ' | Repair schema validation: ' + schema : ''} | ${usage} | Max output tokens: ${QUALITY.maxOutputTokens} | Global call: ${calls}/${QUALITY.maxModelCalls} | Response format: ${responseFormat(model, stage).type} | Parsed JSON type: ${jsonType}${failure ? ' | Failure: ' + failure : ''}${issue ? ' | Field: ' + issue.field + ' | Problem: ' + issue.problem : ''}`)
+      const emit = (failure?: string) => log(`[AIBeat Model] Provider: Groq | Stage: ${stage} | Model: ${safeModelName(model, key)} | HTTP status: ${status} | Finish reason: ${finish} | Content chars: ${chars} | JSON parse: ${json} | Schema validation: ${schema} | Attempt: ${repairing ? repairRequests + '/3' : attempt + '/3'}${repairing ? ' | Repair attempt: 1/1 | Repair JSON parse: ' + json + ' | Repair schema validation: ' + schema : ''} | ${usage} | Max output tokens: ${QUALITY.maxOutputTokens} | Global call: ${calls}/${QUALITY.maxModelCalls} | Response format: ${format.type} | Parsed JSON type: ${jsonType}${failure ? ' | Failure: ' + failure : ''}${issue ? ' | Field: ' + issue.field + ' | Problem: ' + issue.problem : ''}`)
       try {
         const response = await fetcher('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST', signal: AbortSignal.timeout(QUALITY.timeoutMs),
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-          body: JSON.stringify({ model, temperature: 0.1, max_tokens: QUALITY.maxOutputTokens, response_format: responseFormat(model, stage), messages: [{ role: 'system', content: common + '\n' + (stage === 'draft' ? '' : riskPolicy + '\n') + prompts[stage] + repairInstruction }, { role: 'user', content: JSON.stringify(input) }] }),
+          body: JSON.stringify({ model, temperature: 0.1, max_tokens: QUALITY.maxOutputTokens, response_format: format, messages: [{ role: 'system', content: common + '\n' + (stage === 'draft' ? '' : riskPolicy + '\n') + prompts[stage] + repairInstruction }, { role: 'user', content: JSON.stringify(input) }] }),
         })
         status = response.status
         if (response.status === 429) {
@@ -135,6 +136,11 @@ export function createModel(key: string, model: string, fetcher: typeof fetch = 
       } catch (error) {
         const failure = error instanceof ModelFailure ? error : new ModelFailure(error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name) ? 'MODEL_TIMEOUT' : 'MODEL_UNEXPECTED_ERROR')
         emit(failure.category)
+        if (status === 400 && format.type === 'json_schema' && calls < QUALITY.maxModelCalls) {
+          format = { type: 'json_object' }
+          log(`[AIBeat Model] Stage: ${stage} | Structured request returned HTTP 400; retrying in JSON object mode with local validation`)
+          continue
+        }
         if (failure.category === 'MODEL_RATE_LIMITED' && (repairing ? repairRequests : attempt) < 3 && calls < QUALITY.maxModelCalls) {
           log(`[AIBeat Model] Stage: ${stage} | Failure: MODEL_RATE_LIMITED | Attempt: ${repairing ? repairRequests : attempt}/3 | Retrying after: ${delay / 1000} seconds`)
           continue

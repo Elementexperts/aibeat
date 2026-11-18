@@ -41,22 +41,30 @@ export async function discoverFeed(feed: string, fetcher: SourceFetcher, log: (m
   }
 }
 
-// Broad technology coverage is retained. Already-published URLs must not consume
-// one of the six evidence/model candidate slots. Final event dedup stays intact.
+function aiRelevance(candidate: Candidate) {
+  const url = new URL(candidate.url)
+  return Number(
+    /\b(?:ai|llms?|artificial intelligence|chatgpt|gemini|copilot|openai|anthropic|claude|deepmind|gpt|mistral)\b/i.test(candidate.title) ||
+    /^(?:www\.)?(?:openai\.com|deepmind\.google)$/.test(url.hostname) ||
+    /\/(?:ai-artificial-intelligence|artificial-intelligence)\//.test(url.pathname),
+  )
+}
+
+// Broad technology coverage can fill spare slots after AI coverage.
 export function selectCandidates(candidates: Candidate[], history: HistoricalStory[]) {
   const published = new Set(history.flatMap(article => (article.sources || []).flatMap(source => {
     try { return [canonicalSource(source.url)] } catch { return [] }
   })))
   const pending = candidates.filter(candidate => !published.has(candidate.url))
-    .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
+    .sort((a, b) => aiRelevance(b) - aiRelevance(a) || Date.parse(b.publishedAt) - Date.parse(a.publishedAt))
   const editorial = pending.filter(candidate => classifySource(candidate.url).tier === 2)
   const official = pending.filter(candidate => classifySource(candidate.url).tier === 1)
   // Prioritize independent reporting. Reserve up to two remaining slots for
-  // official announcements, then backfill without reducing the six-slot limit.
+  // official announcements, then backfill by relevance across all feeds.
   // Host eligibility here never bypasses article-level trust validation.
   const selected = [...editorial.slice(0, 4), ...official.slice(0, 2)]
   const seen = new Set(selected.map(candidate => candidate.url))
-  for (const candidate of [...editorial.slice(4), ...official.slice(2), ...pending]) {
+  for (const candidate of pending) {
     if (selected.length >= QUALITY.maxCandidates) break
     if (!seen.has(candidate.url)) { selected.push(candidate); seen.add(candidate.url) }
   }
