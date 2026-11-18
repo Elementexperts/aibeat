@@ -55,7 +55,7 @@ export default async function NewsPage({
   if (articles.length === 0) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-20 text-center">
-        <h1 className="font-serif text-3xl font-bold text-ink mb-4">First articles coming soon</h1>
+        <h1 className="display-section text-ink mb-4">First articles coming soon</h1>
         <p className="text-ink-3 text-sm">The automation runs 3x daily - check back shortly.</p>
       </div>
     )
@@ -89,7 +89,7 @@ export default async function NewsPage({
             <span className="mx-1">/</span>
             <span>News</span>
           </div>
-          <h1 className="font-serif text-3xl font-bold text-ink">AI News</h1>
+          <h1 className="display-section text-ink">AI News</h1>
         </div>
         <p className="text-xs text-ink-3 max-w-xs text-right hidden md:block">
           Breaking AI news, tool launches, and analysis - updated daily.

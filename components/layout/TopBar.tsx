@@ -16,17 +16,17 @@ export function TopBar() {
   }, [])
 
   return (
-    <div className="border-b border-white/10 bg-black/35 px-6 py-1.5 text-[11px] font-mono text-slate-400">
-      <div className="mx-auto flex max-w-[1380px] items-center justify-between gap-4">
-        <div className="flex gap-4">
+    <div className="border-b border-[var(--aibeat-border)] bg-[var(--aibeat-card)] py-1.5 font-mono text-[11px] tracking-[0.01em] text-[var(--aibeat-text-secondary)]">
+      <div className="site-shell flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3">
           <span>{date}</span>
-          <span>|</span>
+          <span aria-hidden="true">|</span>
           <span className="flex items-center gap-1.5">
             <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-cyan-300" />
             AI discovery desk
           </span>
         </div>
-        <div className="hidden sm:block">
+        <div className="hidden lg:block">
           {TOOLS.length} indexed tools - daily news - founder submissions open
         </div>
       </div>

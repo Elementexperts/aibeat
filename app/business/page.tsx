@@ -22,7 +22,7 @@ export default function BusinessPage() {
               <Sparkles className="h-4 w-4" />
               AIBeat Business
             </p>
-            <h1 className="mt-5 text-4xl font-black leading-tight tracking-tight md:text-6xl">
+            <h1 className="mt-5 display-hero">
               One company memory. Five specialized AI workflows. Fewer disconnected AI tools.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">

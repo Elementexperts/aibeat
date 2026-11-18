@@ -15,6 +15,7 @@
   --aibeat-purple: #8b5cf6;
   --aibeat-blue: #3b82f6;
   --aibeat-cyan: #22d3ee;
+  --aibeat-link-accent: #cffafe;
   --aibeat-green: #34d399;
   --aibeat-amber: #f59e0b;
   --aibeat-gradient: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 52%, #22d3ee 100%);
@@ -28,6 +29,7 @@
   --aibeat-text: #0f172a;
   --aibeat-text-secondary: #475569;
   --aibeat-text-muted: #64748b;
+  --aibeat-link-accent: #155e75;
   --aibeat-border: rgba(15, 23, 42, 0.1);
   --aibeat-border-strong: rgba(15, 23, 42, 0.18);
 }
@@ -38,6 +40,7 @@
   }
   body {
     @apply bg-midnight text-white font-sans antialiased;
+    line-height: 1.55;
     min-height: 100vh;
     background:
       radial-gradient(circle at top left, rgba(139, 92, 246, 0.18), transparent 30rem),
@@ -62,17 +65,25 @@
 }
 
 @layer components {
+  .display-hero {
+    @apply font-display font-bold leading-[1.08] tracking-[-0.04em];
+    font-size: clamp(2.375rem, calc(1.4rem + 3.45vw), 4.5rem);
+  }
+  .display-section {
+    @apply font-display font-semibold leading-[1.14] tracking-[-0.035em];
+    font-size: clamp(2rem, 3vw, 2.5rem);
+  }
   .cat-tag {
     @apply font-mono text-[10px] font-medium tracking-widest uppercase px-2 py-0.5 border;
   }
   .headline-hero {
-    @apply font-serif text-2xl md:text-3xl font-bold leading-tight;
+    @apply font-display text-2xl md:text-3xl font-bold leading-tight tracking-[-0.035em];
   }
   .headline-lg {
-    @apply font-serif text-xl font-bold leading-tight;
+    @apply font-display text-xl font-bold leading-tight tracking-[-0.03em];
   }
   .headline-md {
-    @apply font-serif text-base font-bold leading-snug;
+    @apply font-display text-base font-bold leading-snug tracking-[-0.02em];
   }
   .btn-primary {
     @apply bg-beat-red text-white px-4 py-2 text-sm font-semibold hover:bg-red-700 transition-colors;
@@ -100,6 +111,9 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+  :root[data-site-theme='light'] .display-hero .gradient-text {
+    background-image: linear-gradient(135deg, #6d28d9, #1d4ed8 55%, #0e7490);
   }
   .gradient-button {
     background: var(--aibeat-gradient);
@@ -160,6 +174,17 @@
   :root[data-site-theme='light'] footer {
     background: rgba(255, 255, 255, 0.9) !important;
   }
+  :root[data-site-theme='light'] .hero-discovery {
+    background: transparent !important;
+  }
+  :root[data-site-theme='light'] .hero-discovery a {
+    background: var(--aibeat-bg-elevated);
+    border-color: var(--aibeat-border-strong);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+  }
+  :root[data-site-theme='light'] .hero-discovery a > span:first-child {
+    background: #172133;
+  }
   :root[data-site-theme='light'] .glass-card,
   :root[data-site-theme='light'] .premium-card {
     background: rgba(255, 255, 255, 0.74) !important;
@@ -206,10 +231,10 @@
 
 /* Article body content rendering */
 .article-body h2 {
-  @apply font-serif text-2xl font-bold text-ink mt-8 mb-4;
+  @apply font-display text-2xl font-semibold text-ink mt-8 mb-4;
 }
 .article-body h3 {
-  @apply font-serif text-lg font-bold text-ink mt-5 mb-2;
+  @apply font-display text-lg font-semibold text-ink mt-5 mb-2;
 }
 .article-body p {
   @apply text-base text-ink-2 leading-relaxed mb-4;
@@ -366,12 +391,51 @@
   transform-origin: center;
 }
 
-.discovery-marquee {
-  animation: marquee 28s linear infinite;
+.ticker-viewport {
+  overflow-x: auto;
 }
 
-.discovery-marquee:hover {
-  animation-play-state: paused;
+.ticker-track {
+  display: flex;
+  width: max-content;
+}
+
+.ticker-group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem 0.25rem 0;
+}
+
+.ticker-copy {
+  display: none;
+}
+
+.ticker-motion-control {
+  display: none;
+}
+
+@media (max-width: 767px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .ticker-motion-control {
+    display: inline-flex;
+  }
+  .ticker-motion-control:has(:focus-visible) {
+    outline: 2px solid var(--aibeat-cyan);
+    outline-offset: 2px;
+  }
+  .ticker-motion-control:not(:has(:checked)) + .ticker-viewport:not(:focus-within) {
+    overflow: hidden;
+  }
+  .ticker-motion-control:not(:has(:checked)) + .ticker-viewport:not(:focus-within) .ticker-track {
+    animation: marquee 36s linear infinite;
+  }
+  .ticker-motion-control:not(:has(:checked)) + .ticker-viewport:not(:focus-within) .ticker-copy {
+    display: flex;
+  }
+  .ticker-viewport:hover .ticker-track {
+    animation-play-state: paused;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

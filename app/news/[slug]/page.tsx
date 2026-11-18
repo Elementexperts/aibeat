@@ -57,7 +57,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
             <span className="font-mono text-[10px] text-ink-4">· {article.readTime} min read</span>
           </div>
 
-          <h1 className="font-serif text-3xl md:text-4xl font-bold leading-tight text-ink mb-4">
+          <h1 className="display-section text-ink mb-4">
             {article.title}
           </h1>
           <p className="text-base text-ink-2 leading-relaxed border-l-2 border-beat-red pl-4 mb-6">

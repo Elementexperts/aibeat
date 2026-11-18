@@ -38,7 +38,7 @@ export function ThemeViewToggle() {
       aria-pressed={theme === 'light'}
     >
       {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      <span className="hidden sm:inline">{theme === 'dark' ? 'White' : 'Dark'}</span>
+      <span className="hidden sm:inline min-[1440px]:hidden">{theme === 'dark' ? 'White' : 'Dark'}</span>
     </button>
   )
 }

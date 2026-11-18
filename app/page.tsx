@@ -81,18 +81,19 @@ export default async function HomePage() {
           <div className="absolute right-0 top-24 h-72 w-72 rounded-full bg-purple-500/15 blur-3xl" />
         </div>
 
-        <div className="site-shell grid min-h-[720px] items-center gap-12 py-16 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="site-shell grid items-center gap-10 py-12 sm:py-16 lg:min-h-[680px] lg:grid-cols-[1.05fr_0.95fr]">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-sm text-cyan-100">
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-sm text-[var(--aibeat-link-accent)]">
               <Sparkles className="h-4 w-4" />
               Less noise. Better AI discovery.
             </div>
 
-            <h1 className="mt-6 max-w-5xl text-balance text-6xl font-black leading-[0.95] tracking-tight text-white md:text-7xl lg:text-8xl">
-              Discover <span className="gradient-text">Tomorrow&apos;s AI</span> Today
+            <h1 className="display-hero mt-6 max-w-5xl text-balance text-white xl:text-wrap">
+              Discover{' '}
+              <span className="xl:block xl:whitespace-nowrap"><span className="gradient-text">Tomorrow&apos;s AI</span> Today</span>
             </h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 md:text-xl">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-300 md:text-lg">
               Curated AI tools, verified launches and independent AI intelligence - helping you discover what is actually worth using.
             </p>
 
@@ -118,7 +119,7 @@ export default async function HomePage() {
                 href="/submit"
                 data-analytics-event={PUBLIC_ANALYTICS_EVENTS.heroSubmitProduct}
                 data-analytics-destination="/submit"
-                className="inline-flex items-center justify-center rounded-full px-2 py-3 text-sm font-semibold text-cyan-200 transition hover:text-white"
+                className="inline-flex items-center justify-center rounded-full px-2 py-3 text-sm font-semibold text-[var(--aibeat-link-accent)] transition-colors hover:text-[var(--aibeat-text)]"
               >
                 Submit Your Product
               </Link>
@@ -133,14 +134,14 @@ export default async function HomePage() {
                 { value: articleCount, label: 'News updates', href: '/news' },
               ].map((stat) => (
                 <Link key={stat.label} href={stat.href} className="rounded-2xl border border-white/10 bg-white/[0.035] p-4 transition hover:border-cyan-300/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-200">
-                  <div className="text-2xl font-black text-white">{stat.value}</div>
-                  <div className="mt-1 text-xs text-slate-500">{stat.label}</div>
+                  <div className="font-mono text-lg font-medium text-white sm:text-xl">{stat.value}</div>
+                  <div className="mt-1 text-xs text-[var(--aibeat-text-secondary)]">{stat.label}</div>
                 </Link>
               ))}
             </div>
           </div>
 
-          <nav className="relative hidden min-h-[560px] lg:block" aria-label="Explore AIBeat">
+          <nav className="hero-discovery relative hidden min-h-[560px] lg:block" aria-label="Explore AIBeat">
             <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-300/15 bg-cyan-300/[0.03]" />
             <div aria-hidden="true" className="pointer-events-none hero-orbit absolute left-1/2 top-1/2 h-[22rem] w-[22rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-purple-300/15" />
             <div aria-hidden="true" className="pointer-events-none hero-core absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-cyan-300 p-px shadow-[0_0_120px_rgba(34,211,238,0.28)]">
@@ -170,9 +171,9 @@ export default async function HomePage() {
       </section>
 
       <section className="overflow-hidden border-b border-white/10 py-4">
-        <div className="discovery-marquee flex w-max gap-3 px-4">
-          {[...DISCOVERY_ITEMS, ...DISCOVERY_ITEMS].map((item, index) => (
-            <span key={`${item}-${index}`} className="rounded-full border border-white/10 bg-white/[0.035] px-4 py-2 text-sm text-slate-300">
+        <div className="site-shell flex flex-wrap gap-2">
+          {DISCOVERY_ITEMS.map((item) => (
+            <span key={item} className="rounded-full border border-white/10 bg-white/[0.035] px-4 py-2 text-sm text-slate-300">
               {item}
             </span>
           ))}
@@ -183,10 +184,10 @@ export default async function HomePage() {
         <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Popular Now</p>
-            <h2 className="mt-3 text-balance text-4xl font-black text-white md:text-5xl">AI products people are exploring now</h2>
+            <h2 className="mt-3 display-section text-balance text-white">AI products people are exploring now</h2>
             <p className="mt-4 max-w-2xl text-slate-400">A ranked snapshot of practical AI tools and platforms with strong category fit, broad usefulness, and AIBeat editorial signal.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Link href="/launches" className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-cyan-300/40">View All Launches</Link>
             <Link href="/ai-score" data-analytics-event={PUBLIC_ANALYTICS_EVENTS.aiScoreLearnMore} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-black">How AIBeat Score works</Link>
           </div>
@@ -204,7 +205,7 @@ export default async function HomePage() {
           <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Trending Tools</p>
-              <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Tools worth comparing this week</h2>
+              <h2 className="mt-3 display-section text-white">Tools worth comparing this week</h2>
             </div>
             <div className="flex overflow-x-auto rounded-full border border-white/10 bg-black/20 p-1 text-sm text-slate-400">
               {['Today', 'This Week', 'This Month', 'All Time'].map((tab, index) => (
@@ -235,7 +236,7 @@ export default async function HomePage() {
       <section className="site-shell py-20">
         <div className="mb-10">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Category Discovery</p>
-          <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Browse AI by workflow</h2>
+          <h2 className="mt-3 display-section text-white">Browse AI by workflow</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {categories.slice(0, 12).map((item, index) => (
@@ -261,7 +262,7 @@ export default async function HomePage() {
       <section className="site-shell py-20">
         <div className="mb-10 max-w-3xl">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Why AIBeat?</p>
-          <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">AI discovery with stronger editorial signal</h2>
+          <h2 className="mt-3 display-section text-white">AI discovery with stronger editorial signal</h2>
           <p className="mt-4 text-slate-400">
             AIBeat is built for people who want useful products, relevant launches, and important AI developments without endless directory noise.
           </p>
@@ -283,7 +284,7 @@ export default async function HomePage() {
             <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Latest Launches</p>
-                <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Emerging AI products to watch</h2>
+                <h2 className="mt-3 display-section text-white">Emerging AI products to watch</h2>
                 <p className="mt-4 max-w-2xl text-slate-400">A curated launch surface for new products, founder stories, and practical AI workflows.</p>
               </div>
               <Link href="/launches" className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-cyan-300/40">Discover Launches</Link>
@@ -303,7 +304,7 @@ export default async function HomePage() {
             <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">AI News</p>
-                <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Editorial signal for the AI industry</h2>
+                <h2 className="mt-3 display-section text-white">Editorial signal for the AI industry</h2>
               </div>
               <Link href="/news" className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-cyan-300/40">Read the Latest AI News</Link>
             </div>
@@ -336,7 +337,7 @@ export default async function HomePage() {
       <section className="site-shell grid gap-6 py-20 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="premium-card p-6 md:p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">AIBeat Daily</p>
-          <h2 className="mt-3 text-4xl font-black text-white">The most useful AI developments, delivered clearly.</h2>
+          <h2 className="display-section mt-3 text-white">The most useful AI developments, delivered clearly.</h2>
           <p className="mt-4 text-slate-400">Get selected AI tools, important launches, and industry news without spending hours searching.</p>
           <div className="mt-6">
             <NewsletterBox dark />
@@ -358,7 +359,7 @@ export default async function HomePage() {
           <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-200">For Founders</p>
-              <h2 className="mt-3 text-4xl font-black text-white md:text-5xl">Launching an AI product?</h2>
+              <h2 className="mt-3 display-section text-white">Launching an AI product?</h2>
               <p className="mt-4 text-slate-400">Reach people actively searching for new AI tools, products, and solutions.</p>
               <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:flex-col">
                 <Link href="/submit" className="gradient-button inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold">List for Free</Link>

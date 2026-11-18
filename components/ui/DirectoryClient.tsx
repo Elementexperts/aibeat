@@ -54,7 +54,7 @@ export default function DirectoryClient({ initialCategory = ALL, initialQuery = 
             <span className="mx-1">/</span>
             <span>Directory</span>
           </div>
-          <h1 className="font-serif text-3xl font-bold text-ink">Tool Directory</h1>
+          <h1 className="display-section text-ink">Tool Directory</h1>
         </div>
         <p className="text-xs text-ink-3 text-right hidden md:block">
           {TOOLS.length} tools reviewed · <Link href="/ai-score" data-analytics-event={PUBLIC_ANALYTICS_EVENTS.aiScoreLearnMore} className="hover:text-beat-red">AIBeat Score</Link>
@@ -68,7 +68,8 @@ export default function DirectoryClient({ initialCategory = ALL, initialQuery = 
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search tools by name, category…"
-          className="w-full bg-transparent border border-border text-ink text-sm px-4 py-2.5 outline-none placeholder:text-ink-4 focus:border-ink-2 transition-colors"
+          aria-label="Search tools by name or category"
+          className="w-full border border-border bg-transparent px-4 py-2.5 text-sm text-ink placeholder:text-ink-3 transition-colors focus:border-ink-2"
         />
       </div>
 
@@ -76,12 +77,12 @@ export default function DirectoryClient({ initialCategory = ALL, initialQuery = 
       <div className="border-b border-border">
         {/* Category filter */}
         <div id="directory-categories" role="group" aria-label="Category" className="flex items-center overflow-x-auto border-b border-border">
-          <span className="font-mono text-[10px] text-ink-4 px-4 py-2.5 shrink-0 border-r border-border">Category:</span>
+          <span className="shrink-0 border-r border-border px-4 py-2.5 text-xs text-ink-3">Category:</span>
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`font-mono text-[10px] px-4 py-2.5 border-r border-border whitespace-nowrap transition-colors shrink-0 ${
+              className={`shrink-0 whitespace-nowrap border-r border-border px-4 py-2.5 text-[13px] font-medium transition-colors ${
                 activeCategory === cat
                   ? 'bg-ink text-white'
                   : 'text-ink-3 hover:bg-paper-2 hover:text-ink'
@@ -93,12 +94,12 @@ export default function DirectoryClient({ initialCategory = ALL, initialQuery = 
         </div>
         {/* Pricing filter */}
         <div className="flex items-center overflow-x-auto">
-          <span className="font-mono text-[10px] text-ink-4 px-4 py-2.5 shrink-0 border-r border-border">Pricing:</span>
+          <span className="shrink-0 border-r border-border px-4 py-2.5 text-xs text-ink-3">Pricing:</span>
           {PRICING_OPTIONS.map((opt) => (
             <button
               key={opt}
               onClick={() => setActivePricing(opt)}
-              className={`font-mono text-[10px] px-4 py-2.5 border-r border-border whitespace-nowrap transition-colors shrink-0 ${
+              className={`shrink-0 whitespace-nowrap border-r border-border px-4 py-2.5 text-[13px] font-medium transition-colors ${
                 activePricing === opt
                   ? 'bg-ink text-white'
                   : 'text-ink-3 hover:bg-paper-2 hover:text-ink'
@@ -178,9 +179,9 @@ function ToolCard({ tool, i, rank }: { tool: typeof TOOLS[number]; i: number; ra
           <ToolLogo tool={tool} className="w-9 h-9 rounded-md text-sm" />
           <span className="font-mono text-[10px] text-ink-4">#{rank}</span>
         </div>
-        <div className="text-sm font-semibold text-ink mb-0.5">{tool.name}</div>
-        <div className="font-mono text-[10px] text-ink-4 uppercase tracking-wide mb-1.5">{tool.category}</div>
-        <p className="text-[11px] text-ink-3 leading-relaxed mb-2 line-clamp-2">{tool.tagline}</p>
+        <div className="mb-0.5 truncate text-lg font-semibold leading-snug tracking-tight text-ink">{tool.name}</div>
+        <div className="mb-1.5 text-xs text-ink-3">{tool.category}</div>
+        <p className="mb-2 line-clamp-2 text-sm leading-relaxed text-ink-3">{tool.tagline}</p>
         <div className="flex justify-between items-center">
           <span className="text-[11px] font-semibold text-cyan-700">{getToolRatingLabel(tool)}</span>
           <span className={`font-mono text-[10px] px-1.5 py-0.5 ${

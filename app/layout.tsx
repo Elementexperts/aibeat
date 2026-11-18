@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { IBM_Plex_Mono, Inter, Space_Grotesk } from 'next/font/google'
 import Script from 'next/script'
 import { organizationSchema, websiteSchema, jsonLd } from '@/lib/site-seo'
 import './globals.css'
@@ -8,6 +9,12 @@ import { BreakingTicker } from '@/components/layout/BreakingTicker'
 import { Footer } from '@/components/layout/Footer'
 import { SubscribePopup } from '@/components/subscribe/SubscribePopup'
 import { PublicAnalytics } from '@/components/analytics/PublicAnalytics'
+
+const displayFont = Space_Grotesk({ subsets: ['latin'], variable: '--font-display', display: 'swap' })
+const bodyFont = Inter({ subsets: ['latin'], variable: '--font-body', display: 'swap' })
+const monoFont = IBM_Plex_Mono({
+  subsets: ['latin'], weight: ['400', '500'], variable: '--font-mono', display: 'swap', preload: false,
+})
 
 const siteUrl = 'https://www.aibeat.dev'
 const previewImage = '/og-image.png'
@@ -87,7 +94,7 @@ export default function RootLayout({
   const structuredData = { '@context': 'https://schema.org', '@graph': [organizationSchema, websiteSchema] }
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable}`}>
       <head>
         <link rel="alternate" type="application/rss+xml" title="AIBeat AI News" href="https://www.aibeat.dev/feed.xml" />
         <Script

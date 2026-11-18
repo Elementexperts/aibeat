@@ -57,7 +57,7 @@ export default function NewsletterPage() {
               <span className="h-2 w-2 rounded-full bg-beat-red" />
               Independent AI briefing
             </div>
-            <h1 className="font-serif text-4xl md:text-6xl font-black leading-[1.02] tracking-tight max-w-2xl">
+            <h1 className="display-hero max-w-2xl">
               Understand AI.<br />Before your first coffee.
             </h1>
             <p className="mt-6 text-base md:text-lg text-white/70 leading-relaxed max-w-xl">

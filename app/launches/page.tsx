@@ -18,7 +18,7 @@ export default function LaunchesPage() {
         <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-200">Launches</p>
-            <h1 className="mt-4 text-5xl font-black text-white md:text-6xl">AI products launching now</h1>
+            <h1 className="mt-4 display-hero text-white">AI products launching now</h1>
             <p className="mt-5 max-w-2xl text-slate-400">
               A future-ready launch surface for tools, founder stories, and editorial product coverage.
             </p>

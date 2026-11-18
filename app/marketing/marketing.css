@@ -13,8 +13,8 @@
   --muted-light: #9499b0;
   --border: #e4e7f0;
   --border-dark: rgba(255,255,255,0.1);
-  --ff-serif: Georgia, serif;
-  --ff-sans: system-ui, sans-serif;
+  --ff-serif: var(--font-display, Georgia), serif;
+  --ff-sans: var(--font-body, system-ui), sans-serif;
 }
 
 .marketing-page {

@@ -45,18 +45,9 @@ module.exports = {
       },
       fontFamily: {
         serif: ['Playfair Display', 'Georgia', 'serif'],
-        sans: ['IBM Plex Sans', 'system-ui', 'sans-serif'],
-        mono: ['IBM Plex Mono', 'monospace'],
-      },
-      typography: {
-        DEFAULT: {
-          css: {
-            fontFamily: 'IBM Plex Sans, system-ui, sans-serif',
-            h1: { fontFamily: 'Playfair Display, Georgia, serif' },
-            h2: { fontFamily: 'Playfair Display, Georgia, serif' },
-            h3: { fontFamily: 'Playfair Display, Georgia, serif' },
-          },
-        },
+        display: ['var(--font-display, "Playfair Display")', 'Georgia', 'serif'],
+        sans: ['var(--font-body, "IBM Plex Sans")', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono, "IBM Plex Mono")', 'monospace'],
       },
     },
   },

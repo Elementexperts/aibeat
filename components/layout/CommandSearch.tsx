@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { Search, X } from 'lucide-react'
 import { TOOLS, TRENDING } from '@/lib/data'
@@ -17,6 +18,15 @@ const PAGES = [
 export function CommandSearch() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
+  const trigger = useRef<HTMLButtonElement>(null)
+  const dialog = useRef<HTMLDialogElement>(null)
+  const searchField = useRef<HTMLInputElement>(null)
+
+  function closeSearch() {
+    dialog.current?.close()
+    setOpen(false)
+    trigger.current?.focus()
+  }
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -24,11 +34,17 @@ export function CommandSearch() {
         event.preventDefault()
         setOpen(true)
       }
-      if (event.key === 'Escape') setOpen(false)
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
+
+  useEffect(() => {
+    if (open && dialog.current && !dialog.current.open) {
+      dialog.current.showModal()
+      searchField.current?.focus()
+    }
+  }, [open])
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -44,29 +60,38 @@ export function CommandSearch() {
   return (
     <>
       <button
+        ref={trigger}
         type="button"
         onClick={() => setOpen(true)}
-        className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-300 transition hover:border-cyan-300/40 hover:text-white lg:flex"
+        className="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-2.5 text-sm text-slate-300 transition-colors hover:border-cyan-300/40 hover:text-white"
         aria-label="Search AIBeat"
+        aria-keyshortcuts="Control+K Meta+K"
+        title="Search AIBeat (Ctrl or ⌘ + K)"
       >
         <Search className="h-4 w-4" />
-        <span>Search AIBeat</span>
-        <span className="rounded-md border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-500">Ctrl K</span>
+        <span className="hidden lg:inline min-[1440px]:hidden">Search AIBeat</span>
+        <kbd className="hidden whitespace-nowrap rounded-md border border-white/10 px-1.5 py-0.5 font-mono text-[10px] text-slate-400 xl:inline min-[1440px]:hidden">Ctrl K</kbd>
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 bg-black/70 px-4 py-20 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Search AIBeat">
-          <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-[#0d0f14] shadow-2xl">
-            <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
-              <Search className="h-5 w-5 text-cyan-300" />
+      {open && createPortal(
+        <dialog
+          ref={dialog}
+          className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none overflow-y-auto bg-black/70 px-4 py-12 backdrop-blur-sm backdrop:bg-transparent sm:py-20"
+          aria-label="Search AIBeat"
+          onCancel={(event) => { event.preventDefault(); closeSearch() }}
+        >
+          <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-[var(--aibeat-border-strong)] bg-[var(--aibeat-bg-elevated)] text-[var(--aibeat-text)] shadow-2xl">
+            <div className="flex items-center gap-3 border-b border-[var(--aibeat-border)] px-4 py-3">
+              <Search className="h-5 w-5 shrink-0 text-[var(--aibeat-text-secondary)]" />
               <input
-                autoFocus
+                ref={searchField}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
+                aria-label="Search tools, categories, use cases, or pages"
                 placeholder="Search tools, categories, use cases, or pages"
-                className="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-slate-500"
+                className="min-w-0 flex-1 rounded bg-transparent text-base placeholder:text-[var(--aibeat-text-muted)]"
               />
-              <button type="button" onClick={() => setOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Close search">
+              <button type="button" onClick={closeSearch} className="rounded-full p-2 text-[var(--aibeat-text-secondary)] hover:bg-[var(--aibeat-card)]" aria-label="Close search">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -79,25 +104,26 @@ export function CommandSearch() {
                       key={`${result.type}-${result.href}`}
                       href={result.href}
                       onClick={() => setOpen(false)}
-                      className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3 text-sm text-slate-200 transition hover:border-cyan-300/30 hover:bg-white/[0.07]"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-[var(--aibeat-border)] bg-[var(--aibeat-card)] px-4 py-3 text-sm transition-colors hover:border-cyan-500"
                     >
                       <span>{result.title}</span>
-                      <span className="text-xs text-slate-500">{result.type}</span>
+                      <span className="text-xs text-[var(--aibeat-text-secondary)]">{result.type}</span>
                     </Link>
                   ))}
                 </div>
               ) : (
-                <div className="rounded-xl border border-white/10 px-4 py-10 text-center text-sm text-slate-400">
+                <div className="rounded-xl border border-[var(--aibeat-border)] px-4 py-10 text-center text-sm text-[var(--aibeat-text-secondary)]">
                   No matching tools found. Try another category or search by use case.
                 </div>
               )}
             </div>
 
-            <div className="border-t border-white/10 px-4 py-3 text-xs text-slate-500">
+            <div className="border-t border-[var(--aibeat-border)] px-4 py-3 text-xs text-[var(--aibeat-text-secondary)]">
               Trending: {TRENDING.slice(0, 3).map((item) => item.query).join(' / ')}
             </div>
           </div>
-        </div>
+        </dialog>,
+        document.body,
       )}
     </>
   )

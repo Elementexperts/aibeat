@@ -41,11 +41,11 @@ export function PremiumToolCard({ tool, variant = 'standard' }: PremiumToolCardP
           )}
         </div>
 
-        <Link href={`/tools/${tool.slug}`} className="mt-4 block">
-          <h3 className={`${featured ? 'text-3xl' : 'text-lg'} font-semibold leading-tight text-white transition group-hover:text-cyan-100`}>
+        <Link href={`/tools/${tool.slug}`} className="mt-4 block min-w-0">
+          <h3 className={`${featured ? 'text-xl' : 'text-lg'} truncate font-sans font-semibold leading-snug tracking-tight text-white transition group-hover:text-cyan-100`}>
             {tool.name}
           </h3>
-          <p className={`mt-3 leading-6 text-slate-400 ${featured ? 'text-base' : 'text-sm line-clamp-2'}`}>{tool.tagline}</p>
+          <p className={`mt-2 leading-relaxed text-slate-400 ${featured ? 'text-base' : 'text-sm line-clamp-2'}`}>{tool.tagline}</p>
         </Link>
 
         {featured && (
