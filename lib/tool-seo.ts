@@ -8,6 +8,7 @@ const DESCRIPTION_MIN = 120
 const DESCRIPTION_MAX = 160
 const TITLE_MAX = 65
 const TITLE_SUFFIX = ' | AIBeat.dev'
+const TOOL_TITLE_MAX = TITLE_MAX - TITLE_SUFFIX.length
 
 function cleanText(value: string) {
   return value.replace(/\s+/g, ' ').trim()
@@ -46,7 +47,14 @@ export function toolMetadata(tool: Tool): Metadata {
   let title = tool.rating === null
     ? tool.name + ' — Features, Pricing & Alternatives'
     : tool.name + ' Review (2026) — Is It Worth It?'
-  if ((title + TITLE_SUFFIX).length > TITLE_MAX) title = tool.name + ' — Features & Pricing'
+  if (title.length > TOOL_TITLE_MAX) title = tool.name + ' — Features & Pricing'
+  if (title.length > TOOL_TITLE_MAX) title = tool.name + ' — Features'
+  if (title.length > TOOL_TITLE_MAX) title = tool.name
+  if (title.length > TOOL_TITLE_MAX) {
+    const prefix = title.slice(0, TOOL_TITLE_MAX - 1).replace(/[\uD800-\uDBFF]$/, '')
+    const space = prefix.lastIndexOf(' ')
+    title = (space > 0 ? prefix.slice(0, space) : prefix) + '…'
+  }
   const url = canonicalUrl('/tools/' + tool.slug)
   return {
     title,

@@ -21,6 +21,13 @@ test('all catalog descriptions are unique, bounded and based on product data', (
   }
 })
 
+test('title fallback handles a product name longer than the available title space', () => {
+  const name = 'A'.repeat(80)
+  const { title } = toolMetadata({ ...TOOLS[0], name })
+  assert.equal(String(title), 'A'.repeat(51) + '…')
+  assert.equal((String(title) + ' | AIBeat.dev').length, 65)
+})
+
 test('supplied failing tool URLs now have product-specific descriptions', () => {
   const rows = evidence.filter(row => new URL(row.url).pathname.startsWith('/tools/'))
   assert.equal(rows.length, 37)
