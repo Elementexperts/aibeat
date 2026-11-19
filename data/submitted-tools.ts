@@ -5,6 +5,81 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "stylesvg",
+  "name": "StyleSVG",
+  "tagline": "Convert raster artwork into editable vectors for making and print",
+  "description": "StyleSVG traces PNG, JPG, WebP and GIF images into editable SVG shapes, with presets for cutting, engraving, print and embroidery. Adjust colors, remove backgrounds and inspect the result before unlocking exports such as SVG, PDF, EPS and DXF. The site offers a daily preview without signup and one free downloadable conversion after signing in. Photos become stylized flat-color artwork rather than exact photographic copies, so review small lettering and machine dimensions before production.",
+  "category": "Design",
+  "logo": "#6366f1",
+  "logoInitials": "ST",
+  "logoUrl": "/tool-logos/stylesvg.png",
+  "rating": null,
+  "pricing": "One free preview/day; one free conversion after signup; $6.99 per additional file or plans from $49/year",
+  "pricingType": "freemium",
+  "websiteUrl": "https://stylesvg.com/",
+  "affiliateUrl": "https://stylesvg.com/",
+  "featured": false,
+  "pros": [
+    "Color controls and machine-oriented presets",
+    "Preview before paying; multiple export formats"
+  ],
+  "cons": [
+    "Detailed photos become stylized vector art",
+    "Fine details and cutter settings need manual review"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "denoisa",
+  "name": "Denoisa",
+  "tagline": "Reduce background noise in recorded audio and video",
+  "description": "Denoisa cleans speech recordings and video soundtracks in a browser. Standard processing runs locally, while optional Enhanced processing uploads audio to the service when selected. Preview both modes before choosing; Standard full downloads for files up to five minutes are free. Longer files and Enhanced use credits. It works on recorded files, not live calls, and cannot reliably separate overlapping speakers, repair clipping or eliminate strong room echo. Listen for artifacts before using the result.",
+  "category": "Audio",
+  "logo": "#6366f1",
+  "logoInitials": "DE",
+  "logoUrl": "/tool-logos/denoisa.png",
+  "rating": null,
+  "pricing": "Free previews and Standard files up to 5 minutes; packs from $4.99; optional subscriptions from $16.99/month",
+  "pricingType": "freemium",
+  "websiteUrl": "https://denoisa.com/",
+  "affiliateUrl": "https://denoisa.com/",
+  "featured": false,
+  "pros": [
+    "Local Standard processing with free short-file downloads",
+    "Audio and video support with before/after preview"
+  ],
+  "cons": [
+    "Enhanced processing sends audio to servers",
+    "Overlapping speech, clipping and strong echo remain limitations"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "sheru-bhai-ai",
+  "name": "Sheru Bhai AI Video Generator",
+  "tagline": "Create fictional lion-companion scenes from consenting adult portraits",
+  "description": "Sheru Bhai Hub creates short videos or still images from one or two adult portraits and prepared fictional scenes. Choose a human companion beside a suited lion, a couple scene or a stylized lion persona. The site advertises 10-second 720p videos in portrait or landscape format, requesting generated instrumental audio without dialogue. Preview clips illustrate settings and are not submitted as motion references. Use portraits with permission and review faces, anatomy and sound; a lion persona does not promise a literal facial likeness.",
+  "category": "Video",
+  "logo": "#6366f1",
+  "logoInitials": "SH",
+  "logoUrl": "/tool-logos/sheru-bhai-ai.png",
+  "rating": null,
+  "pricing": "One-time packs from $5.99 for 60 credits; videos cost 50 credits and 2K stills cost 5; no subscription",
+  "pricingType": "paid",
+  "websiteUrl": "https://sherubhaihub.com/",
+  "affiliateUrl": "https://sherubhaihub.com/",
+  "featured": false,
+  "pros": [
+    "Fourteen fictional scene templates",
+    "Human-companion, couple and stylized lion-persona options"
+  ],
+  "cons": [
+    "Paid generation with variable likeness and motion",
+    "Adults only; consent and output review required"
+  ],
+  "alternatives": []
+},
+{
   "slug": "seedream-5-5",
   "name": "Seedream 5.5 AI Image Generator",
   "tagline": "Generate and edit images with prompts and multiple references",
