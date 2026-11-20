@@ -33,7 +33,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Check newsletter formatting and draft behavior
-        run: node --import tsx --test tests/gmail-scheduled-drafts.test.ts tests/latest-news-newsletter.test.ts
+        run: node --import tsx --test tests/gmail-scheduled-drafts.test.ts tests/latest-news-newsletter.test.ts tests/email-suppression-preflight.test.ts
   create-draft:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     needs: test
@@ -48,6 +48,13 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - name: Verify suppression configuration and database RPC
+        if: vars.GMAIL_WEEKLY_TOOLS_DRAFT_ENABLED == 'true'
+        env:
+          SUBMISSIONS_SUPABASE_URL: ${{ vars.SUBMISSIONS_SUPABASE_URL }}
+          EMAIL_SUPPRESSION_SUPABASE_URL: ${{ vars.EMAIL_SUPPRESSION_SUPABASE_URL }}
+          EMAIL_SUPPRESSION_SERVICE_ROLE_KEY: ${{ secrets.EMAIL_SUPPRESSION_SERVICE_ROLE_KEY }}
+        run: npm run newsletter:suppression-check
       - name: Create unsent weekly tools draft
         env:
           EMAIL_SUPPRESSION_SUPABASE_URL: ${{ vars.EMAIL_SUPPRESSION_SUPABASE_URL }}

@@ -1,8 +1,20 @@
 // Backend/CLI only: node:crypto also prevents inclusion in a browser bundle.
 import { createHash } from 'node:crypto'
 
+export type SuppressionFailureCode = 'missing_configuration' | 'invalid_url' | 'credentials_rejected' | 'migration_unavailable' | 'database_unavailable' | 'invalid_response'
+const failureGuidance: Record<SuppressionFailureCode, string> = {
+  missing_configuration: 'Configure the EMAIL_SUPPRESSION_SUPABASE_URL Actions variable and EMAIL_SUPPRESSION_SERVICE_ROLE_KEY secret.',
+  invalid_url: 'EMAIL_SUPPRESSION_SUPABASE_URL must be the verified HTTPS Supabase project URL.',
+  credentials_rejected: 'The suppression backend credential was rejected. Verify its project pairing and RPC permission.',
+  migration_unavailable: 'The suppression RPC was not found. Verify the target project and apply the reviewed suppression migration before retrying.',
+  database_unavailable: 'The suppression service could not be reached or returned an error. Retry only after verifying service availability.',
+  invalid_response: 'The suppression RPC returned an unexpected response. Verify the reviewed migration and backend configuration.',
+}
 export class SuppressionUnavailableError extends Error {
-  constructor() { super('Marketing suppression could not be verified; operation blocked.'); this.name = 'SuppressionUnavailableError' }
+  constructor(public readonly code: SuppressionFailureCode = 'database_unavailable') {
+    super('Marketing suppression could not be verified; operation blocked. [' + code + '] ' + failureGuidance[code])
+    this.name = 'SuppressionUnavailableError'
+  }
 }
 export class RecipientSuppressedError extends Error {
   constructor() { super('Marketing recipient is suppressed; operation blocked.'); this.name = 'RecipientSuppressedError' }
@@ -28,7 +40,8 @@ export class EmailSuppressionService implements SuppressionGuard {
     // Deliberately no NEXT_PUBLIC or Business database fallback.
     const url = env.EMAIL_SUPPRESSION_SUPABASE_URL?.replace(/\/$/, '')
     const key = env.EMAIL_SUPPRESSION_SERVICE_ROLE_KEY?.trim()
-    if (!url || !/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url) || !key) throw new SuppressionUnavailableError()
+    if (!url || !key) throw new SuppressionUnavailableError('missing_configuration')
+    if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url)) throw new SuppressionUnavailableError('invalid_url')
     return { url, key }
   }
   async rpc(name: 'check_marketing_recipients' | 'list_marketing_suppressions' | 'record_email_unsubscribe' | 'claim_unsubscribe_automation' | 'step_unsubscribe_automation', body: Record<string, unknown>): Promise<unknown> {
@@ -38,9 +51,15 @@ export class EmailSuppressionService implements SuppressionGuard {
         method: 'POST', headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body), cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000),
       })
-      if (!r.ok) throw new SuppressionUnavailableError()
-      return await r.json()
-    } catch { throw new SuppressionUnavailableError() }
+      if (!r.ok) {
+        const code = r.status === 401 || r.status === 403 ? 'credentials_rejected' : r.status === 404 ? 'migration_unavailable' : 'database_unavailable'
+        throw new SuppressionUnavailableError(code)
+      }
+      try { return await r.json() } catch { throw new SuppressionUnavailableError('invalid_response') }
+    } catch (error) {
+      if (error instanceof SuppressionUnavailableError) throw error
+      throw new SuppressionUnavailableError()
+    }
   }
   async blocked(emails: string[]) {
     const normalized = Array.from(new Set(emails.map(normalizeEmail)))
@@ -49,7 +68,7 @@ export class EmailSuppressionService implements SuppressionGuard {
     for (let i = 0; i < normalized.length; i += 200) {
       const batch = normalized.slice(i, i + 200)
       const result = await this.rpc('check_marketing_recipients', { recipient_emails: batch })
-      if (!Array.isArray(result) || result.some(e => typeof e !== 'string' || !batch.includes(e))) throw new SuppressionUnavailableError()
+      if (!Array.isArray(result) || result.some(e => typeof e !== 'string' || !batch.includes(e))) throw new SuppressionUnavailableError('invalid_response')
       for (const email of result) blocked.add(email)
     }
     return blocked
