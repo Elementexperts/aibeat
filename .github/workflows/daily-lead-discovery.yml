@@ -83,6 +83,8 @@ jobs:
         if: github.event_name == 'schedule' || inputs.dry_run != true
         continue-on-error: true
         env:
+          EMAIL_SUPPRESSION_SUPABASE_URL: ${{ vars.EMAIL_SUPPRESSION_SUPABASE_URL }}
+          EMAIL_SUPPRESSION_SERVICE_ROLE_KEY: ${{ secrets.EMAIL_SUPPRESSION_SERVICE_ROLE_KEY }}
           GMAIL_OUTREACH_DRAFTS_ENABLED: ${{ vars.GMAIL_OUTREACH_DRAFTS_ENABLED || 'false' }}
           GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
           GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}

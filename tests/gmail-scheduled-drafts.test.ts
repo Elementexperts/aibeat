@@ -1,3 +1,4 @@
+import { allowMarketing } from './helpers/suppression'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFileSync } from 'node:fs'
@@ -107,7 +108,7 @@ test('rerunning this week updates the existing draft, including a legacy slug-su
   for (const suffix of ['', '-old-tool-selection']) {
     const calls: Array<{ url: string; init?: RequestInit }> = []
     const key = 'aibeat-weekly-tools-2026-W37'
-    const result = await createGmailDraft({
+    const result = await createGmailDraft({ suppression: allowMarketing,
       message: { key, to: 'hello@aibeat.dev', subject: 'Updated tools', plainText: 'Astrea and Sistava', html: '<p>Astrea and Sistava</p>' },
       config: { clientId: 'client', clientSecret: 'secret', refreshToken: 'refresh', to: 'hello@aibeat.dev', fromEmail: 'hello@aibeat.dev' },
       updateExisting: true,

@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
       onNotificationResult: (status) => { notificationStatus = status },
     })
     return NextResponse.json({ success: true, submissionId, notificationStatus })
-  } catch (err) {
-    console.error('Unsubscribe storage failed:', err instanceof Error ? err.message : 'Unknown error')
+  } catch {
+    console.error('Unsubscribe storage failed; no success response returned.')
     return NextResponse.json({ error: 'Could not save your unsubscribe request right now' }, { status: 502 })
   }
 }

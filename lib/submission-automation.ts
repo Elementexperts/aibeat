@@ -169,6 +169,7 @@ export class SubmissionDrafts {
       return header('x-aibeat-newsletter-key') === `aibeat-submission-${key}` || (header('to').toLowerCase().includes(to.toLowerCase()) && text(d.message.payload).includes(`https://www.aibeat.dev/tools/${tool.slug}`))
     })?.id
   }
+  // Transactional response to a requested listing; intentionally contains no paid upsell.
   async create(key: string, to: string, tool: Tool) {
     validateWeeklyReviewRecipient(to)
     const url = `https://www.aibeat.dev/tools/${tool.slug}`

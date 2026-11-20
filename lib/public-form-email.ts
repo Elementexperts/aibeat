@@ -1,3 +1,4 @@
+import { deliverEmail } from './email-suppression'
 import type { PublicFormKind } from './public-form-submissions'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -70,12 +71,12 @@ export async function sendPublicFormNotification(input: {
     '',
     Buffer.from(text, 'utf8').toString('base64').match(/.{1,76}/g)!.join('\r\n'),
   ].join('\r\n')
-  const response = await fetchImpl('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+  const response = await deliverEmail('internal-form-notification', getPublicFormRecipients(input.kind), () => fetchImpl('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token.access_token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ raw: Buffer.from(mime, 'utf8').toString('base64url') }),
     signal: AbortSignal.timeout(10_000),
-  })
+  }))
   if (!response.ok) {
     const error = await response.json().catch(() => ({})) as { error?: { errors?: Array<{ reason?: string }> } }
     const reason = error.error?.errors?.[0]?.reason?.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 80)

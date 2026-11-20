@@ -1,3 +1,4 @@
+import { EmailSuppressionService } from './email-suppression'
 import type { OutreachLead } from './outreach-types'
 import { buildOutreachDraft } from './gmail-outreach-drafts'
 
@@ -50,16 +51,7 @@ export async function processDailyDrafts(input: {
   return counts
 }
 
+// Legacy name retained for callers; the authoritative set now includes central suppressions.
 export async function fetchUnsubscribes(url: string, key: string, fetchImpl: typeof fetch = fetch) {
-  if (!url || !key) throw new Error('Suppression check requires SUBMISSIONS_SUPABASE_URL and SUBMISSIONS_SUPABASE_KEY; no drafts created.')
-  const excluded = new Set<string>()
-  for (let offset = 0; ; offset += 500) {
-    const response = await fetchImpl(`${url.replace(/\/$/, '')}/rest/v1/public_form_submissions?kind=eq.unsubscribe&select=email&order=id.asc&limit=500&offset=${offset}`, {
-      headers: { apikey: key, Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(20000),
-    })
-    if (!response.ok) throw new Error(`Suppression check failed: HTTP ${response.status}; no drafts created.`)
-    const rows = await response.json() as Array<{ email: string | null }>
-    for (const row of rows) if (row.email) excluded.add(row.email.trim().toLowerCase())
-    if (rows.length < 500) return excluded
-  }
+  return new EmailSuppressionService({ env: { EMAIL_SUPPRESSION_SUPABASE_URL: url, EMAIL_SUPPRESSION_SERVICE_ROLE_KEY: key }, fetchImpl }).list()
 }

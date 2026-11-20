@@ -1,3 +1,4 @@
+import { EmailSuppressionService, RecipientSuppressedError } from '@/lib/email-suppression'
 import { NextRequest, NextResponse } from 'next/server'
 import {
   getKitReferrer,
@@ -63,11 +64,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const suppression = new EmailSuppressionService()
     const headers = {
       'Content-Type': 'application/json',
       'X-Kit-Api-Key': apiKey,
     }
 
+    await suppression.assertAllowed([normalizedEmail])
     const subscriberRes = await fetch(`${KIT_API_BASE}/subscribers`, {
       method: 'POST',
       headers,
@@ -87,6 +90,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Could not subscribe right now' }, { status: 502 })
     }
 
+    await suppression.assertAllowed([normalizedEmail])
     const formRes = await fetch(`${KIT_API_BASE}/forms/${formId}/subscribers/${subscriberId}`, {
       method: 'POST',
       headers,
@@ -98,6 +102,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Could not subscribe right now' }, { status: 502 })
     }
 
+    await suppression.assertAllowed([normalizedEmail])
     await applySourceTag({
       headers,
       subscriberId,
@@ -106,7 +111,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error('Kit subscribe error:', err instanceof Error ? err.message : 'Unknown error')
+    if (err instanceof RecipientSuppressedError) return NextResponse.json({ success: true })
+    console.error('Newsletter signup could not be completed.')
     return NextResponse.json({ error: 'Could not subscribe right now' }, { status: 502 })
   }
 }

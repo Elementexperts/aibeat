@@ -1,0 +1,35 @@
+name: AIBeat Unsubscribe Reconciliation
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: aibeat-unsubscribe-reconciliation
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    if: vars.UNSUBSCRIBE_AUTOMATION_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Offline safety tests
+        run: node --import tsx --test tests/unsubscribe-automation.test.ts tests/email-suppression.test.ts
+      - name: Reconcile suppressions and prepare unsent drafts
+        env:
+          UNSUBSCRIBE_AUTOMATION_ENABLED: 'true'
+          UNSUBSCRIBE_CREATE_DRAFTS: ${{ vars.UNSUBSCRIBE_CREATE_DRAFTS }}
+          UNSUBSCRIBE_REPAIR_SUPPRESSIONS: ${{ vars.UNSUBSCRIBE_REPAIR_SUPPRESSIONS }}
+          EMAIL_SUPPRESSION_SUPABASE_URL: ${{ vars.EMAIL_SUPPRESSION_SUPABASE_URL }}
+          EMAIL_SUPPRESSION_SERVICE_ROLE_KEY: ${{ secrets.EMAIL_SUPPRESSION_SERVICE_ROLE_KEY }}
+          GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}
+          GMAIL_CLIENT_SECRET: ${{ secrets.GMAIL_CLIENT_SECRET }}
+          UNSUBSCRIBE_GMAIL_REFRESH_TOKEN: ${{ secrets.UNSUBSCRIBE_GMAIL_REFRESH_TOKEN }}
+        run: npx tsx scripts/reconcile-unsubscribes.ts

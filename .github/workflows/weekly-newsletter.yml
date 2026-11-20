@@ -27,6 +27,8 @@ jobs:
         run: npm run newsletter:preview
       - name: Create Gmail draft when explicitly enabled
         env:
+          EMAIL_SUPPRESSION_SUPABASE_URL: ${{ vars.EMAIL_SUPPRESSION_SUPABASE_URL }}
+          EMAIL_SUPPRESSION_SERVICE_ROLE_KEY: ${{ secrets.EMAIL_SUPPRESSION_SERVICE_ROLE_KEY }}
           NEWSLETTER_ARTICLE_LIMIT: '3'
           NEXT_PUBLIC_SITE_URL: 'https://www.aibeat.dev'
           GMAIL_CREATE_DRAFT_ENABLED: ${{ vars.GMAIL_CREATE_DRAFT_ENABLED || 'false' }}

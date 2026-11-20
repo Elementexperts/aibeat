@@ -1,3 +1,4 @@
+import { EmailSuppressionService, type SuppressionGuard } from './email-suppression'
 import { randomUUID } from 'node:crypto'
 import type { LatestNewsNewsletter } from './latest-news-newsletter'
 
@@ -20,17 +21,21 @@ export interface GmailDraftMessage {
   key: string
 }
 
-export async function createGmailNewsletterDraft(input: { newsletter: LatestNewsNewsletter; config: GmailDraftConfig; fetchImpl?: typeof fetch }) {
+export async function createGmailNewsletterDraft(input: { newsletter: LatestNewsNewsletter; config: GmailDraftConfig; suppression?: SuppressionGuard; fetchImpl?: typeof fetch }) {
   const key = newsletterDraftKey(input.newsletter)
   return createGmailDraft({
     message: { to: input.config.to, subject: input.newsletter.subject, plainText: input.newsletter.plainText, html: input.newsletter.html, key },
     config: input.config,
     fetchImpl: input.fetchImpl,
+    suppression: input.suppression,
   })
 }
 
-export async function createGmailDraft(input: { message: GmailDraftMessage; config: GmailDraftConfig; fetchImpl?: typeof fetch; updateExisting?: boolean; lookupOnly?: boolean; beforeCreate?: () => Promise<void> }) {
+export async function createGmailDraft(input: { message: GmailDraftMessage; config: GmailDraftConfig; suppression?: SuppressionGuard; fetchImpl?: typeof fetch; updateExisting?: boolean; lookupOnly?: boolean; beforeCreate?: () => Promise<void> }) {
   const fetchImpl = input.fetchImpl ?? fetch
+  validateWeeklyReviewRecipient(input.message.to)
+  const suppression = input.suppression ?? new EmailSuppressionService({ fetchImpl })
+  await suppression.assertAllowed([input.message.to])
   const accessToken = await refreshGmailAccessToken(input.config, fetchImpl)
   const existingDraftId = await findExistingDraft(accessToken, input.message.key, fetchImpl, input.updateExisting, input.message.to)
   if (existingDraftId && !input.updateExisting) return { created: false as const, draftId: existingDraftId, duplicate: true as const }
@@ -39,6 +44,7 @@ export async function createGmailDraft(input: { message: GmailDraftMessage; conf
   const raw = buildGenericMimeMessage(input.message, input.config)
   const draftUrl = 'https://gmail.googleapis.com/gmail/v1/users/me/drafts'
   await input.beforeCreate?.()
+  await suppression.assertAllowed([input.message.to])
   const response = await fetchImpl(existingDraftId ? `${draftUrl}/${encodeURIComponent(existingDraftId)}` : draftUrl, {
     method: existingDraftId ? 'PUT' : 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },

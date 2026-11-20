@@ -1,3 +1,4 @@
+import { suppressionEnv } from './helpers/suppression'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
@@ -37,6 +38,7 @@ function setupKitFetch(options?: { failTag?: boolean }) {
 
   globalThis.fetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
     const url = input.toString()
+    if (url.includes('/rpc/check_marketing_recipients')) return Response.json([])
     calls.push({ url, init })
 
     if (url.includes('/v4/subscribers')) {
@@ -60,7 +62,7 @@ function setupKitFetch(options?: { failTag?: boolean }) {
 }
 
 function resetEnv() {
-  process.env = { ...originalEnv }
+  process.env = { ...originalEnv, ...suppressionEnv }
 }
 
 test.beforeEach(() => {

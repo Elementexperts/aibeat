@@ -1,3 +1,4 @@
+import { allowMarketing } from './helpers/suppression'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { processDailyDrafts, fetchUnsubscribes, type DraftLedger } from '../lib/daily-outreach-drafts'
@@ -58,20 +59,20 @@ test('campaign keys survive week changes without truncation collisions', () => {
 })
 test('unsubscribe lookup paginates and fails closed on errors', async () => {
   let calls = 0
-  const set = await fetchUnsubscribes('https://example.test', 'fake', async () => {
+  const set = await fetchUnsubscribes('https://suppression-test.supabase.co', 'fake', async () => {
     calls++
-    return Response.json(calls === 1 ? Array.from({ length: 500 }, (_, i) => ({ email: `p${i}@example.com` })) : [{ email: ' LAST@example.com ' }])
+    return Response.json(calls === 1 ? Array.from({ length: 500 }, (_, i) => `p${i}@example.com`) : [' LAST@example.com '])
   })
   assert.equal(set.size, 501)
   assert.ok(set.has('last@example.com'))
-  await assert.rejects(fetchUnsubscribes('https://example.test', 'fake', async () => new Response('', { status: 503 })), /Suppression check failed/)
+  await assert.rejects(fetchUnsubscribes('https://suppression-test.supabase.co', 'fake', async () => new Response('', { status: 503 })), /suppression could not be verified/)
 })
 
 test('legacy weekly draft is reused; uncertain missing draft never invokes Gmail POST', async () => {
   const lead = leads(1)[0]
   for (const found of [true, false]) {
     let posts = 0
-    const promise = createGmailDraft({ message: buildOutreachDraft(lead), lookupOnly: true,
+    const promise = createGmailDraft({ suppression: allowMarketing, message: buildOutreachDraft(lead), lookupOnly: true,
       config: { to: lead.email, fromEmail: 'hello@aibeat.dev', clientId: 'c', clientSecret: 's', refreshToken: 'r' },
       fetchImpl: async (url, init) => {
         if (String(url).includes('oauth2')) return Response.json({ access_token: 'token' })

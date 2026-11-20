@@ -22,7 +22,7 @@ async function main() {
   const enabled = process.env.GMAIL_OUTREACH_DRAFTS_ENABLED === 'true'
   const ledger: DraftLedger = existsSync(ledgerPath) ? JSON.parse(readFileSync(ledgerPath, 'utf8')) : {}
   const archived = new Set(readLeadRows(leadHistoryPath(inputPath)).map(row => row.email.trim().toLowerCase()))
-  const excluded = enabled ? await fetchUnsubscribes(process.env.SUBMISSIONS_SUPABASE_URL || '', process.env.SUBMISSIONS_SUPABASE_KEY || '') : new Set<string>()
+  const excluded = enabled ? await fetchUnsubscribes(process.env.EMAIL_SUPPRESSION_SUPABASE_URL || '', process.env.EMAIL_SUPPRESSION_SERVICE_ROLE_KEY || '') : new Set<string>()
   for (const lead of readOutreachStore().leads) {
     if (blockedStatuses.has(lead.status) || lead.suppressed_at || lead.unsubscribed_at || lead.last_contacted_at || lead.replied_at) excluded.add(lead.email.trim().toLowerCase())
   }

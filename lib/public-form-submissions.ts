@@ -1,3 +1,4 @@
+import { EmailSuppressionService } from './email-suppression'
 import { sendPublicFormNotification } from './public-form-email'
 import { getSupabasePublishableKey, getSupabaseUrl } from '@/lib/supabase/config'
 
@@ -11,28 +12,33 @@ export async function recordPublicFormSubmission(input: {
   onNotificationResult?: (status: 'sent' | 'failed') => void
   fetchImpl?: typeof fetch
 }) {
-  const url = `${getSupabaseUrl()}/rest/v1/rpc/record_public_form_submission`
-  const key = getSupabasePublishableKey()
-  const response = await (input.fetchImpl ?? fetch)(url, {
-    method: 'POST',
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      submission_kind: input.kind,
-      submission_email: input.email || null,
-      submission_payload: input.payload,
-    }),
-  })
+  let result: string | null
+  if (input.kind === 'unsubscribe') {
+    result = await new EmailSuppressionService({ fetchImpl: input.fetchImpl }).unsubscribe(input.email || '', input.payload)
+  } else {
+    const url = `${getSupabaseUrl()}/rest/v1/rpc/record_public_form_submission`
+    const key = getSupabasePublishableKey()
+    const response = await (input.fetchImpl ?? fetch)(url, {
+      method: 'POST',
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        submission_kind: input.kind,
+        submission_email: input.email || null,
+        submission_payload: input.payload,
+      }),
+    })
 
-  if (!response.ok) {
-    throw new Error(`Supabase form storage failed (${response.status}): ${(await response.text()).slice(0, 240)}`)
+    if (!response.ok) {
+      throw new Error(`Supabase form storage failed (${response.status}).`)
+    }
+
+    result = await response.json() as string | null
+    if (!result) throw new Error('Supabase form storage did not return a submission ID.')
   }
-
-  const result = await response.json() as string | null
-  if (!result) throw new Error('Supabase form storage did not return a submission ID.')
   try {
     const messageId = await sendPublicFormNotification({ ...input, submissionId: result })
     console.info('Public form notification accepted by Gmail:', { submissionId: result, messageId })

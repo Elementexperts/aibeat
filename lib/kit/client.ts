@@ -1,3 +1,4 @@
+import { EmailSuppressionService, type SuppressionGuard, normalizeEmail } from '../email-suppression'
 export type KitRequestMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 export class KitApiError extends Error {
@@ -55,6 +56,7 @@ export type KitSubscriberFilter = Array<{
 }>
 
 type ClientOptions = {
+  suppression?: SuppressionGuard
   apiKey?: string
   fetchImpl?: typeof fetch
   timeoutMs?: number
@@ -112,19 +114,23 @@ export class KitClient {
   private fetchImpl: typeof fetch
   private timeoutMs: number
   private maxRetries: number
+  private suppression: SuppressionGuard
 
   constructor(options: ClientOptions = {}) {
     const apiKey = options.apiKey || process.env.KIT_API_KEY
     if (!apiKey) throw new KitApiError('KIT_API_KEY is unavailable', 0, 'missing_api_key')
+    this.suppression = options.suppression ?? new EmailSuppressionService({ fetchImpl: options.fetchImpl })
     this.apiKey = apiKey
     this.fetchImpl = options.fetchImpl || fetch
     this.timeoutMs = options.timeoutMs || 12000
     this.maxRetries = options.maxRetries ?? 2
   }
 
-  private async request<T>(path: string, options: { method?: KitRequestMethod; body?: unknown } = {}): Promise<T> {
+  private async request<T>(path: string, options: { method?: KitRequestMethod; body?: unknown; beforeRequest?: () => Promise<void> } = {}): Promise<T> {
     let attempt = 0
     while (true) {
+      // Outside retry catch: suppression failures must never reach the provider.
+      await options.beforeRequest?.()
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), this.timeoutMs)
       try {
@@ -177,7 +183,7 @@ export class KitClient {
   }
 
   async createOrUpdateSubscriber(input: { email_address: string; first_name?: string; fields?: Record<string, string> }): Promise<KitSubscriber> {
-    const payload = await this.request<{ subscriber?: Record<string, unknown> }>('/subscribers', { method: 'POST', body: input })
+    const payload = await this.request<{ subscriber?: Record<string, unknown> }>('/subscribers', { method: 'POST', body: { ...input, email_address: normalizeEmail(input.email_address) }, beforeRequest: () => this.suppression.assertAllowed([input.email_address]) })
     const subscriber = payload.subscriber || {}
     const id = parseKitId(subscriber.id)
     if (!id) throw new KitApiError('Kit returned no subscriber id', 502, 'missing_subscriber_id')
@@ -185,7 +191,11 @@ export class KitClient {
   }
 
   async tagSubscriber(tagId: string, subscriberId: string): Promise<void> {
-    await this.request(`/tags/${encodeURIComponent(tagId)}/subscribers/${encodeURIComponent(subscriberId)}`, { method: 'POST' })
+    await this.request(`/tags/${encodeURIComponent(tagId)}/subscribers/${encodeURIComponent(subscriberId)}`, { method: 'POST', beforeRequest: async () => {
+      const data = await this.request<{ subscriber?: KitSubscriber }>(`/subscribers/${encodeURIComponent(subscriberId)}`)
+      if (!data.subscriber?.email_address) throw new Error('Kit recipient identity unavailable; tagging blocked.')
+      await this.suppression.assertAllowed([data.subscriber.email_address])
+    } })
   }
 
   async removeSubscriberTag(tagId: string, subscriberId: string): Promise<void> {
@@ -204,7 +214,8 @@ export class KitClient {
   }
 
   async createBroadcast(input: { email_template_id?: string; subject: string; content: string; description?: string; preview_text?: string; public: boolean; send_at: string | null; subscriber_filter: KitSubscriberFilter }): Promise<KitBroadcast> {
-    const payload = await this.request<{ broadcast?: Record<string, unknown> }>('/broadcasts', { method: 'POST', body: input })
+    if (input.send_at !== null || input.public !== false) throw new Error('Provider-side marketing scheduling is blocked: no delivery-time suppression hook.')
+    const payload = await this.request<{ broadcast?: Record<string, unknown> }>('/broadcasts', { method: 'POST', body: input, beforeRequest: () => this.checkBroadcastAudience(input.subscriber_filter) })
     const broadcast = payload.broadcast || {}
     const id = parseKitId(broadcast.id)
     if (!id) throw new KitApiError('Kit returned no broadcast id', 502, 'missing_broadcast_id')
@@ -212,9 +223,34 @@ export class KitClient {
   }
 
   async updateBroadcast(broadcastId: string, input: Record<string, unknown>): Promise<KitBroadcast> {
-    const payload = await this.request<{ broadcast?: Record<string, unknown> }>(`/broadcasts/${encodeURIComponent(broadcastId)}`, { method: 'PATCH', body: input })
-    const id = parseKitId(payload.broadcast?.id) || broadcastId
-    return { id, status: typeof payload.broadcast?.status === 'string' ? payload.broadcast.status : undefined }
+    // This legacy scheduling API cannot recheck Supabase at Kit delivery time.
+    // Never hand a future send to the provider, even when old send flags are enabled.
+    void broadcastId; void input
+    throw new Error('Provider-side marketing scheduling is blocked: no delivery-time suppression hook.')
+  }
+
+  private async checkBroadcastAudience(filter: KitSubscriberFilter) {
+    // Current callers use one positive tag. Reject unknown/all-subscriber filters.
+    if (filter.length !== 1 || filter[0].any || filter[0].none || filter[0].all?.length !== 1 || filter[0].all[0].type !== 'tag' || filter[0].all[0].ids.length !== 1) {
+      throw new Error('Ambiguous Kit audience; draft blocked.')
+    }
+    const tag = encodeURIComponent(String(filter[0].all[0].ids[0]))
+    const emails: string[] = []
+    const cursors = new Set<string>()
+    let after = ''
+    do {
+      const page = await this.request<{ subscribers?: KitSubscriber[]; pagination?: { has_next_page?: boolean; end_cursor?: string } }>(`/tags/${tag}/subscribers?per_page=100${after ? '&after=' + encodeURIComponent(after) : ''}`)
+      if (!Array.isArray(page.subscribers) || !page.pagination || typeof page.pagination.has_next_page !== 'boolean') throw new Error('Incomplete Kit audience; draft blocked.')
+      for (const subscriber of page.subscribers) {
+        if (!subscriber.email_address) throw new Error('Missing Kit recipient; draft blocked.')
+        emails.push(normalizeEmail(subscriber.email_address))
+      }
+      after = page.pagination.has_next_page ? page.pagination.end_cursor || '' : ''
+      if (page.pagination.has_next_page && (!after || cursors.has(after))) throw new Error('Incomplete Kit audience; draft blocked.')
+      cursors.add(after)
+    } while (after)
+    if (!emails.length) throw new Error('Empty Kit audience; draft blocked.')
+    await this.suppression.assertAllowed(emails)
   }
 
   async getBroadcast(broadcastId: string): Promise<KitBroadcast> {

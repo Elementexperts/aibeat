@@ -1,3 +1,4 @@
+import { EmailSuppressionService, filterMarketingRecipients, type SuppressionGuard } from './email-suppression'
 import { KitApiError, KitClient, type KitTag } from './kit/client'
 import { REQUIRED_CUSTOM_FIELDS, DEFAULT_CAMPAIGN_TAG, type OutreachCampaign, type OutreachLead, type OutreachStore } from './outreach-types'
 import { canSyncLead, validateFutureSendAt } from './outreach-validation'
@@ -47,7 +48,9 @@ function subscriberFields(lead: OutreachLead, allowed: Set<string>) {
   return Object.fromEntries(Object.entries(raw).filter(([key, value]) => allowed.has(key) && value)) as Record<string, string>
 }
 
-export async function syncApprovedLeadsToKit(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient }) {
+export async function syncApprovedLeadsToKit(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient; suppression?: SuppressionGuard }) {
+  const suppression = input.suppression ?? new EmailSuppressionService()
+  const blocked = await suppression.blocked(input.store.leads.map(lead => lead.email))
   const tag = await resolveOutreachTag(input.client, input.campaign)
   const fields = await ensureCustomFields(input.client)
   const synced: string[] = []
@@ -56,11 +59,13 @@ export async function syncApprovedLeadsToKit(input: { store: OutreachStore; camp
   input.campaign.kit_tag_id = tag.id
 
   for (const lead of input.store.leads) {
+    if (blocked.has(lead.email.trim().toLowerCase())) { skipped.push({ email: lead.email, reasons: ['Marketing suppressed'] }); continue }
     const allowed = canSyncLead(lead)
     if (!allowed.ok) {
       skipped.push({ email: lead.email, reasons: allowed.errors })
       continue
     }
+    await suppression.assertAllowed([lead.email])
     if (!lead.kit_subscriber_id) {
       const subscriber = await input.client.createOrUpdateSubscriber({ email_address: lead.email, first_name: lead.first_name, fields: subscriberFields(lead, fields) })
       lead.kit_subscriber_id = subscriber.id
@@ -83,10 +88,10 @@ export function previewCampaign(campaign: OutreachCampaign, lead: OutreachLead) 
   return { subject: subject.text, html: body.html, text: body.text, missing: [...subject.missing, ...body.missing], unknown: [...subject.unknown, ...body.unknown] }
 }
 
-export async function createCampaignDraft(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient }) {
+export async function createCampaignDraft(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient; suppression?: SuppressionGuard }) {
   if (input.campaign.initial_broadcast_id) return { reused: true, broadcastId: input.campaign.initial_broadcast_id }
   const tag = await resolveOutreachTag(input.client, input.campaign)
-  const recipients = input.store.leads.filter((lead) => lead.kit_tag_id === tag.id && !lead.suppressed_at && !lead.unsubscribed_at)
+  const recipients = await filterMarketingRecipients(input.store.leads.filter((lead) => lead.kit_tag_id === tag.id && !lead.suppressed_at && !lead.unsubscribed_at), lead => lead.email, input.suppression)
   if (recipients.length === 0) throw new Error('No recipients match this campaign tag.')
   if (recipients.length > input.campaign.safety_limit) throw new Error('Recipient count exceeds the campaign safety limit.')
 
@@ -116,11 +121,12 @@ function individualTagName(lead: OutreachLead) {
   return `AIBeat Outreach - ${readable || lead.id} - ${lead.id}`
 }
 
-export async function createIndividualLeadDraft(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient; lead: OutreachLead }) {
+export async function createIndividualLeadDraft(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient; suppression?: SuppressionGuard; lead: OutreachLead }) {
   if (process.env.OUTREACH_SEND_ENABLED === 'true' || process.env.AUTOMATED_KIT_SEND_ENABLED === 'true') {
     throw new Error('Individual outreach automation requires sending flags to remain disabled.')
   }
 
+  await (input.suppression ?? new EmailSuppressionService()).assertAllowed([input.lead.email])
   const allowed = canSyncLead(input.lead)
   if (!allowed.ok) throw new Error(`Lead cannot be drafted: ${allowed.errors.join('; ')}`)
   if (input.lead.initial_broadcast_id) return { reused: true, broadcastId: input.lead.initial_broadcast_id, tagId: input.lead.kit_individual_tag_id }
@@ -170,7 +176,7 @@ export async function createIndividualLeadDraft(input: { store: OutreachStore; c
   return { reused: false, broadcastId: broadcast.id, tagId: individualTag.id }
 }
 
-export async function createIndividualLeadDrafts(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient; limit?: number; source?: string; emails?: string[] }) {
+export async function createIndividualLeadDrafts(input: { store: OutreachStore; campaign: OutreachCampaign; client: KitClient; suppression?: SuppressionGuard; limit?: number; source?: string; emails?: string[] }) {
   const limit = Math.min(input.limit || input.campaign.safety_limit, input.campaign.safety_limit)
   const source = input.source?.trim().toLowerCase()
   const emails = input.emails ? new Set(input.emails.map((email) => email.trim().toLowerCase())) : undefined
@@ -179,7 +185,7 @@ export async function createIndividualLeadDrafts(input: { store: OutreachStore; 
     if (emails && !emails.has(lead.email.toLowerCase())) return false
     return true
   })
-  const eligible = scopedLeads.filter((lead) => canSyncLead(lead).ok && !lead.initial_broadcast_id).slice(0, limit)
+  const eligible = (await filterMarketingRecipients(scopedLeads.filter((lead) => canSyncLead(lead).ok && !lead.initial_broadcast_id), lead => lead.email, input.suppression)).slice(0, limit)
   const results: Array<{ email: string; toolName: string; broadcastId: string; tagId?: string; reused: boolean }> = []
 
   for (const lead of eligible) {

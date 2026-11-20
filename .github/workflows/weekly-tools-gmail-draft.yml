@@ -50,6 +50,8 @@ jobs:
       - run: npm ci
       - name: Create unsent weekly tools draft
         env:
+          EMAIL_SUPPRESSION_SUPABASE_URL: ${{ vars.EMAIL_SUPPRESSION_SUPABASE_URL }}
+          EMAIL_SUPPRESSION_SERVICE_ROLE_KEY: ${{ secrets.EMAIL_SUPPRESSION_SERVICE_ROLE_KEY }}
           GMAIL_WEEKLY_TOOLS_DRAFT_ENABLED: ${{ vars.GMAIL_WEEKLY_TOOLS_DRAFT_ENABLED || 'false' }}
           # Scheduled runs always use the latest featured directory entries.
           WEEKLY_TOOL_SLUGS: ${{ inputs.tool_slugs || '' }}

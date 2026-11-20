@@ -43,6 +43,8 @@ jobs:
 
       - name: Run outreach action
         env:
+          EMAIL_SUPPRESSION_SUPABASE_URL: ${{ vars.EMAIL_SUPPRESSION_SUPABASE_URL }}
+          EMAIL_SUPPRESSION_SERVICE_ROLE_KEY: ${{ secrets.EMAIL_SUPPRESSION_SERVICE_ROLE_KEY }}
           KIT_API_KEY: ${{ secrets.KIT_API_KEY }}
           KIT_OUTREACH_TAG_ID: ${{ vars.KIT_OUTREACH_TAG_ID }}
           KIT_DEFAULT_EMAIL_TEMPLATE_ID: ${{ vars.KIT_DEFAULT_EMAIL_TEMPLATE_ID }}

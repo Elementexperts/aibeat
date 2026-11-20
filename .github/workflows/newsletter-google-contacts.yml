@@ -28,6 +28,8 @@ jobs:
       - run: node --import tsx --test tests/newsletter-contacts.test.ts tests/newsletter-request.test.ts
       - name: Sync saved newsletter requests and suppressions
         env:
+          EMAIL_SUPPRESSION_SUPABASE_URL: ${{ vars.EMAIL_SUPPRESSION_SUPABASE_URL }}
+          EMAIL_SUPPRESSION_SERVICE_ROLE_KEY: ${{ secrets.EMAIL_SUPPRESSION_SERVICE_ROLE_KEY }}
           SUBMISSIONS_SUPABASE_URL: ${{ vars.SUBMISSIONS_SUPABASE_URL }}
           SUBMISSIONS_SUPABASE_KEY: ${{ secrets.SUBMISSIONS_SUPABASE_KEY }}
           GMAIL_CLIENT_ID: ${{ secrets.GMAIL_CLIENT_ID }}

@@ -1,3 +1,4 @@
+import { EmailSuppressionService } from '../lib/email-suppression'
 import dotenv from 'dotenv'
 import { newsletterAudience, syncNewsletterContacts, type AudienceRow } from '../lib/newsletter-contacts'
 dotenv.config({ path: '.env.local', quiet: true })
@@ -14,7 +15,8 @@ async function main() {
     const batch = await r.json() as AudienceRow[]; rows.push(...batch)
     if (batch.length < 500) break
   }
-  const audience = newsletterAudience(rows)
+  const suppression = new EmailSuppressionService()
+  const audience = newsletterAudience(rows, await suppression.list())
   console.log('Audience:', { eligible: audience.subscribers.size, suppressed: audience.suppressed.size })
   if (process.argv.includes('--dry-run')) return
   const clientId = process.env.GMAIL_CLIENT_ID, clientSecret = process.env.GMAIL_CLIENT_SECRET, refreshToken = process.env.GOOGLE_CONTACTS_REFRESH_TOKEN

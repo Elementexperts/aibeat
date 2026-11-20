@@ -1,3 +1,4 @@
+import { suppressionEnv } from './helpers/suppression'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { NextRequest } from 'next/server'
@@ -12,14 +13,14 @@ function request(body: unknown) {
 function setup(options: { storageFailure?: boolean; gmailFailure?: boolean } = {}) {
   globalThis.fetch = async (url, init) => {
     calls.push({ url: String(url), init })
-    if (String(url).includes('/rpc/record_public_form_submission')) return Response.json('submission_123', { status: options.storageFailure ? 503 : 200 })
+    if (String(url).includes('/rpc/record_email_unsubscribe')) return Response.json('00000000-0000-4000-8000-000000000123', { status: options.storageFailure ? 503 : 200 })
     if (String(url).includes('oauth2.googleapis.com')) return Response.json({ access_token: 'token' })
     if (String(url).includes('gmail.googleapis.com')) return Response.json({ id: 'email_123' }, { status: options.gmailFailure ? 503 : 200 })
     throw new Error('Unexpected external service: ' + url)
   }
 }
 test.beforeEach(() => {
-  process.env = { NODE_ENV: 'test', NEXT_PUBLIC_SUPABASE_URL: 'https://project.supabase.co', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'test', GMAIL_CLIENT_ID: 'client', GMAIL_CLIENT_SECRET: 'secret', GMAIL_REFRESH_TOKEN: 'refresh' }
+  process.env = { ...suppressionEnv, NODE_ENV: 'test', NEXT_PUBLIC_SUPABASE_URL: 'https://project.supabase.co', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'test', GMAIL_CLIENT_ID: 'client', GMAIL_CLIENT_SECRET: 'secret', GMAIL_REFRESH_TOKEN: 'refresh' }
   calls.length = 0
   setup()
 })
@@ -27,10 +28,10 @@ test.afterEach(() => { process.env = { ...originalEnv }; globalThis.fetch = orig
 test('stores unsubscribe without Kit or Resend and notifies through Gmail', async () => {
   const response = await POST(request({ email: ' Reader@Example.com ', reason: ' Too frequent ', page_url: 'https://www.aibeat.dev/unsubscribe' }))
   assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { success: true, submissionId: 'submission_123', notificationStatus: 'sent' })
+  assert.deepEqual(await response.json(), { success: true, submissionId: '00000000-0000-4000-8000-000000000123', notificationStatus: 'sent' })
   assert.equal(calls.length, 3)
   const stored = JSON.parse(String(calls[0].init?.body))
-  assert.equal(stored.submission_kind, 'unsubscribe')
+  assert.match(calls[0].url, /record_email_unsubscribe$/)
   assert.equal(stored.submission_email, 'reader@example.com')
   assert.equal(stored.submission_payload.reason, 'Too frequent')
   assert.match(calls[2].url, /gmail.googleapis.com/)

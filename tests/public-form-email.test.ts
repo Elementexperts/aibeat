@@ -1,3 +1,4 @@
+import { suppressionEnv } from './helpers/suppression'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { NextRequest } from 'next/server'
@@ -12,7 +13,7 @@ const originalEnv = { ...process.env }
 const originalFetch = globalThis.fetch
 
 test.beforeEach(() => {
-  process.env = { NODE_ENV: 'test', NEXT_PUBLIC_SUPABASE_URL: 'https://project.supabase.co', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'test', GMAIL_CLIENT_ID: 'client', GMAIL_CLIENT_SECRET: 'secret', GMAIL_REFRESH_TOKEN: 'refresh' }
+  process.env = { ...suppressionEnv, NODE_ENV: 'test', NEXT_PUBLIC_SUPABASE_URL: 'https://project.supabase.co', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'test', GMAIL_CLIENT_ID: 'client', GMAIL_CLIENT_SECRET: 'secret', GMAIL_REFRESH_TOKEN: 'refresh' }
 })
 test.afterEach(() => { process.env = { ...originalEnv }; globalThis.fetch = originalFetch })
 
@@ -28,18 +29,19 @@ for (const [index, kind] of Array.from(kinds.entries())) {
   })
   test(`${kind}: stores before sending and preserves reply-to`, async () => {
     const calls: string[] = []
+    const storedId = kind === 'unsubscribe' ? '00000000-0000-4000-8000-000000000001' : 'submission_123'
     await recordPublicFormSubmission({ kind, email: 'reader@example.com', payload: { note: 'hello' }, fetchImpl: async (url, init) => {
       if (String(url).includes('oauth2.googleapis.com')) return Response.json({ access_token: 'token' })
       calls.push(String(url))
-      if (calls.length === 1) return Response.json('submission_123')
+      if (calls.length === 1) return Response.json(storedId)
       const mime = Buffer.from(JSON.parse(String(init?.body)).raw, 'base64url').toString('utf8')
       assert.match(mime, /To: hello@aibeat.dev/)
       assert.match(mime, /Reply-To: reader@example.com/)
       assert.match(mime, /From: AIBeat <hello@aibeat.dev>/)
-      assert.match(Buffer.from(mime.split('\r\n\r\n')[1], 'base64').toString(), /submission_123/)
+      assert.ok(Buffer.from(mime.split('\r\n\r\n')[1], 'base64').toString().includes(storedId))
       return Response.json({ id: 'email_123' })
     } })
-    assert.deepEqual(calls, ['https://project.supabase.co/rest/v1/rpc/record_public_form_submission', 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'])
+    assert.deepEqual(calls, [kind === 'unsubscribe' ? suppressionEnv.EMAIL_SUPPRESSION_SUPABASE_URL + '/rest/v1/rpc/record_email_unsubscribe' : 'https://project.supabase.co/rest/v1/rpc/record_public_form_submission', 'https://gmail.googleapis.com/gmail/v1/users/me/messages/send'])
   })
 }
 

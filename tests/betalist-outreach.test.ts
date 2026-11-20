@@ -1,3 +1,4 @@
+import { allowMarketing } from './helpers/suppression'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
@@ -128,7 +129,7 @@ test('individual drafts can be limited to BetaList leads only', async () => {
   }
   const { client, broadcasts } = mockKitClient()
 
-  const result = await createIndividualLeadDrafts({
+  const result = await createIndividualLeadDrafts({ suppression: allowMarketing,
     store,
     campaign: campaign(),
     client,

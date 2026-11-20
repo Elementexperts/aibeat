@@ -1,3 +1,4 @@
+import { allowMarketing } from './helpers/suppression'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { Article } from '../lib/articles'
@@ -61,7 +62,7 @@ test('Gmail integration builds a multipart draft and never calls the send endpoi
     if (url.includes('/drafts?')) return Response.json({ drafts: [] })
     return Response.json({ id: 'draft-123' })
   }
-  const result = await createGmailNewsletterDraft({ newsletter, config, fetchImpl: fetchImpl as typeof fetch })
+  const result = await createGmailNewsletterDraft({ suppression: allowMarketing, newsletter, config, fetchImpl: fetchImpl as typeof fetch })
   assert.deepEqual(result, { created: true, draftId: 'draft-123', duplicate: false })
   assert.equal(calls.some((call) => call.url.includes('/drafts/send')), false)
   assert.equal(calls.at(-1)?.url, 'https://gmail.googleapis.com/gmail/v1/users/me/drafts')
@@ -81,7 +82,7 @@ test('Gmail integration skips a draft with the same newsletter key', async () =>
     if (url.includes('/drafts?')) return Response.json({ drafts: [{ id: 'existing-1' }] })
     return Response.json({ message: { payload: { headers: [{ name: 'X-AIBeat-Newsletter-Key', value: 'aibeat-weekly-same-story' }] } } })
   }
-  const result = await createGmailNewsletterDraft({ newsletter, config: { clientId: 'client', clientSecret: 'secret', refreshToken: 'refresh', to: 'editor@example.com', fromEmail: 'newsletter@example.com' }, fetchImpl: fetchImpl as typeof fetch })
+  const result = await createGmailNewsletterDraft({ suppression: allowMarketing, newsletter, config: { clientId: 'client', clientSecret: 'secret', refreshToken: 'refresh', to: 'editor@example.com', fromEmail: 'newsletter@example.com' }, fetchImpl: fetchImpl as typeof fetch })
   assert.deepEqual(result, { created: false, draftId: 'existing-1', duplicate: true })
   assert.equal(calls.some((url) => url === 'https://gmail.googleapis.com/gmail/v1/users/me/drafts'), false)
 })
