@@ -5,6 +5,181 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "nano-banana-2-1",
+  "name": "Nano Banana 2.1 by AI Image Editor",
+  "tagline": "Generate and edit images with prompts and reference photos",
+  "description": "AI Image Editor offers an independent browser interface marketed as Nano Banana 2.1 for text-to-image generation and reference-based editing. Upload photos, describe a local change and choose output settings for product imagery, illustrations or wider compositions. It is a third-party service, not an official Google page. Free signup credits support personal use; paid plans add commercial-use rights and higher-resolution options. Check lettering, faces and fine details before publishing.",
+  "category": "Image",
+  "logo": "#6366f1",
+  "logoInitials": "NB",
+  "logoUrl": "/tool-logos/nano-banana-2-1.png",
+  "rating": null,
+  "pricing": "Free signup credits for personal use; paid plans from $9.90/month",
+  "pricingType": "freemium",
+  "websiteUrl": "https://ai-image-editor.com/nano-banana-2-1",
+  "affiliateUrl": "https://ai-image-editor.com/nano-banana-2-1",
+  "featured": false,
+  "pros": [
+    "Prompt-based generation and reference-image editing",
+    "Aspect ratio and resolution controls"
+  ],
+  "cons": [
+    "Higher-resolution output and commercial use require a paid plan",
+    "Generated details and text need review"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "datacircle",
+  "name": "Datacircle",
+  "tagline": "Compare GTM API providers, pricing and benchmark results",
+  "description": "Datacircle is a research resource for comparing go-to-market APIs across data enrichment, email verification, social platforms, search and other developer workflows. Browse provider plans, adjust comparison filters and download CSV or JSON data. It publishes its own benchmark methodology and results; AIBeat has not independently reproduced those scores. Datacircle does not sell the APIs itself, so access terms, permissions and usage charges remain with each provider.",
+  "category": "Developer Tools",
+  "logo": "#6366f1",
+  "logoInitials": "D",
+  "logoUrl": "/tool-logos/datacircle.png",
+  "rating": null,
+  "pricing": "Free comparison site and downloadable data; third-party API charges vary",
+  "pricingType": "free",
+  "websiteUrl": "https://datacircle.dev/",
+  "affiliateUrl": "https://datacircle.dev/",
+  "featured": false,
+  "pros": [
+    "Filter API plans and export comparison data",
+    "Pricing and methodology are available for review"
+  ],
+  "cons": [
+    "Benchmarks reflect the publisher’s testing conditions",
+    "API access and compliance must be checked with each provider"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "text-to-video",
+  "name": "Text to Video",
+  "tagline": "Create short AI video clips from written prompts and images",
+  "description": "Text to Video is a browser-based creative workspace for generating clips from written prompts, still images and reference material. It brings supported video models together with image, avatar and audio workflows, allowing creators to choose settings for social posts, concept previews or promotional assets. Free starter credits are available, with subscriptions and credit packs for further use. Costs and available outputs depend on the selected model, duration and resolution; review results and usage rights before publishing.",
+  "category": "Video",
+  "logo": "#6366f1",
+  "logoInitials": "TT",
+  "logoUrl": "/tool-logos/text-to-video.png",
+  "rating": null,
+  "pricing": "Free starter credits; paid subscriptions and credit packs",
+  "pricingType": "freemium",
+  "websiteUrl": "https://texttovideo.com/",
+  "affiliateUrl": "https://texttovideo.com/",
+  "featured": false,
+  "pros": [
+    "Text, image and reference-based video workflows",
+    "Multiple generation settings in one browser workspace"
+  ],
+  "cons": [
+    "Credit costs vary with model and output settings",
+    "Generated motion and likeness need review"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "homework-helper",
+  "name": "Homework Helper by Math AI",
+  "tagline": "Work through study questions with text, images and PDFs",
+  "description": "Homework Helper by Math AI accepts typed questions or uploaded JPG, PNG, WebP and PDF files and produces step-by-step explanations. Its subject tools cover areas such as mathematics, physics, chemistry and biology. Use it to explore a method, compare an approach or identify a point that needs further study. The pricing page lists three free credits per day and paid plans for more usage. Answers can be incorrect, so verify reasoning and follow your course’s rules for AI assistance.",
+  "category": "Education",
+  "logo": "#6366f1",
+  "logoInitials": "HH",
+  "logoUrl": "/tool-logos/homework-helper.png",
+  "rating": null,
+  "pricing": "Free plan with 3 credits/day; paid plans for additional usage",
+  "pricingType": "freemium",
+  "websiteUrl": "https://math-gpt.ai/ai-homework-helper",
+  "affiliateUrl": "https://math-gpt.ai/ai-homework-helper",
+  "featured": false,
+  "pros": [
+    "Text, image and PDF question input",
+    "Step-by-step explanations across study subjects"
+  ],
+  "cons": [
+    "Free daily usage is limited",
+    "Answers require independent checking"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "matterseek",
+  "name": "MatterSeek",
+  "tagline": "Explore material properties and candidate compositions for R&D",
+  "description": "MatterSeek is a beta materials-research platform from Yuyao Technology. It describes workflows for estimating material properties and proposing candidate compositions from target properties, elemental constraints and processing requirements. Researchers can use predictions and visualizations to prioritize experiments rather than treating generated candidates as validated materials. The public site links to a separate sign-in portal for the application. Availability, access terms and pricing should be confirmed directly with the provider; prediction accuracy and industrial performance have not been independently tested by AIBeat.",
+  "category": "Research",
+  "logo": "#6366f1",
+  "logoInitials": "M",
+  "logoUrl": "/tool-logos/matterseek.png",
+  "rating": null,
+  "pricing": "Beta access: contact the provider for availability and pricing",
+  "pricingType": "paid",
+  "websiteUrl": "https://www.yuyaomatterseek.net/matterseek",
+  "affiliateUrl": "https://www.yuyaomatterseek.net/matterseek",
+  "featured": false,
+  "pros": [
+    "Forward property prediction and inverse-design workflows",
+    "Element and target-property constraints"
+  ],
+  "cons": [
+    "Experimental validation is required",
+    "Beta access and pricing require provider confirmation"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "rapbooth",
+  "name": "RapBooth",
+  "tagline": "Turn two consenting adult portraits into an AI rap duet",
+  "description": "RapBooth creates short template-based rap videos with generated vocals and music from two portraits. Upload a separate photo for each adult performer, choose a supported quality setting and download the finished MP4. The service requires sign-in and purchased credits; a 480p video uses 10 credits and 720p uses 20. Use portraits with permission and review faces, movement and audio before sharing. The generated performance follows the template rather than providing a recording of the people’s real voices or actions.",
+  "category": "Video",
+  "logo": "#6366f1",
+  "logoInitials": "R",
+  "logoUrl": "/tool-logos/rapbooth.png",
+  "rating": null,
+  "pricing": "One-time packs from $4.99 for 10 credits; 10 credits at 480p or 20 at 720p",
+  "pricingType": "paid",
+  "websiteUrl": "https://rap-video-ai.app/",
+  "affiliateUrl": "https://rap-video-ai.app/",
+  "featured": false,
+  "pros": [
+    "Two-photo duet with generated vocals and music",
+    "One-time credit packs without a subscription"
+  ],
+  "cons": [
+    "Paid credits and sign-in are required",
+    "Adult portrait consent and output review are needed"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "pixtexta",
+  "name": "PixTexta",
+  "tagline": "Replace existing lettering in finished images",
+  "description": "PixTexta detects text in a JPG, PNG or WebP and lets you replace a selected word or line while retaining the surrounding image. Preview the result, adjust its appearance and export a PNG at the original canvas size. It is useful for correcting owned product graphics, posters and instructional screenshots when the editable source is unavailable. One guest edit exports with a watermark; new accounts receive three credits. Complex backgrounds or crowded lettering may need additional adjustment.",
+  "category": "Image",
+  "logo": "#6366f1",
+  "logoInitials": "P",
+  "logoUrl": "/tool-logos/pixtexta.png",
+  "rating": null,
+  "pricing": "One free watermarked guest edit; 3 signup credits; packs from $4.90 for 15 credits",
+  "pricingType": "freemium",
+  "websiteUrl": "https://pixtexta.com/",
+  "affiliateUrl": "https://pixtexta.com/",
+  "featured": false,
+  "pros": [
+    "Edit detected text in an existing image",
+    "Original-size PNG export and appearance controls"
+  ],
+  "cons": [
+    "Complex lettering and backgrounds can need manual adjustment",
+    "Use only for legitimate edits, not misleading records or screenshots"
+  ],
+  "alternatives": []
+},
+{
   "slug": "stylesvg",
   "name": "StyleSVG",
   "tagline": "Convert raster artwork into editable vectors for making and print",
@@ -1419,28 +1594,28 @@ export const SUBMITTED_TOOLS: Tool[] = [
 },
 {
   "slug": "hypemigo",
-  "name": "HypeMigo AI Video Trends",
-  "tagline": "Explore AI video trends and prepare local photo drafts",
-  "description": "HypeMigo is an independent AI video trend studio with meme, dance, duo and pet templates. Users browse references, review photo requirements, save favorites and prepare drafts in their browser. Video generation is available only when the service is enabled for a template. The site describes 20 credits for a reference-length 480p scene; results and audio are newly generated rather than exact copies of the examples.",
+  "name": "HypeMigo",
+  "tagline": "Turn photos into short AI meme, dance and pet videos",
+  "description": "HypeMigo lets users choose a trend template, add photos for the required roles and generate a short video without writing a prompt. Its templates include dance, duo, comedy and pet scenes, with portrait or landscape output. Browsing and local drafts are free; generation requires sign-in and 20 eligible credits per video at 480p or 720p. Download the completed MP4 with template-specific audio. Results are newly generated scenes rather than exact reproductions of the reference choreography or music.",
   "category": "AI Video",
   "logo": "#2563eb",
   "logoInitials": "HY",
   "logoUrl": "/tool-logos/hypemigo.png",
   "rating": null,
-  "pricing": "Browsing and local drafts are free; generation uses 20 site credits per 480p scene when enabled",
+  "pricing": "Free browsing and local drafts; one-time packs from $8.90; 20 credits per generated video",
   "pricingType": "freemium",
   "websiteUrl": "https://hypemigo.com/",
   "affiliateUrl": "https://hypemigo.com/",
   "featured": false,
   "pros": [
-    "Template references and photo guidance",
-    "Local drafts and favorites",
-    "No prompt needed to prepare a template"
+    "Photo-based templates for people and pets",
+    "480p or 720p MP4 downloads",
+    "One-time packs without automatic renewal"
   ],
   "cons": [
-    "Generation availability varies",
-    "Drafts are limited to the current browser and device",
-    "Results can differ from reference examples"
+    "Generation requires paid credits and sign-in",
+    "Results can differ from reference scenes and audio",
+    "Local drafts remain on the current browser and device"
   ],
   "alternatives": []
 },
