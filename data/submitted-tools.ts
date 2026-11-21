@@ -5,6 +5,156 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "rap-blaze",
+  "name": "Rap Blaze",
+  "tagline": "Create short rap and trend videos from photos",
+  "description": "Rap Blaze turns portrait photos into vertical rap videos, duets and template-based trend clips. Users select a scene, upload an image and choose output settings. Original rap videos include generated sound, while some trend remakes export silently for adding music in the destination app. One limited, watermarked original-rap preview is available per account; downloadable full videos use one-time credit packs. Use photos with permission and review likeness and lip sync before sharing.",
+  "category": "AI Video",
+  "logo": "#6366f1",
+  "logoInitials": "RB",
+  "logoUrl": "/tool-logos/rap-blaze.png",
+  "rating": null,
+  "pricing": "Limited free original-rap preview; one-time credit packs from $6.99; no subscription",
+  "pricingType": "freemium",
+  "websiteUrl": "https://rapblaze.com/?utm_source=aibeat.dev",
+  "affiliateUrl": "https://rapblaze.com/?utm_source=aibeat.dev",
+  "featured": false,
+  "pros": [
+    "Photo-based rap and trend templates",
+    "One-time credit purchases without subscription"
+  ],
+  "cons": [
+    "Free preview is limited and not downloadable",
+    "Some trend outputs require adding sound separately"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "voice-ai-canva",
+  "name": "Voice AI for Canva",
+  "tagline": "Add text-to-speech narration to Canva designs",
+  "description": "Voice AI converts scripts into voiceovers inside Canva for videos, presentations and other designs. The app offers a large multilingual voice catalog and speed controls on supported voices. Its website provides prerecorded samples; audio generation takes place in the Canva app. A limited free allowance is described in the submission, while the published paid plans start at $10.99 per month. Voice availability, usage allowances and commercial rights depend on the selected plan.",
+  "category": "Audio",
+  "logo": "#6366f1",
+  "logoInitials": "VA",
+  "logoUrl": "/tool-logos/voice-ai-canva.png",
+  "rating": null,
+  "pricing": "Limited free Canva app allowance; paid plans from $10.99/month",
+  "pricingType": "freemium",
+  "websiteUrl": "https://www.voicesai.app/",
+  "affiliateUrl": "https://www.voicesai.app/",
+  "featured": false,
+  "pros": [
+    "Voiceover generation within Canva",
+    "Multilingual voice selection and supported speed controls"
+  ],
+  "cons": [
+    "Website offers samples rather than audio generation",
+    "Character allowances and voice features vary by plan"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "menuforma",
+  "name": "MenuForma",
+  "tagline": "Import restaurant menus and share them through QR codes",
+  "description": "MenuForma uses AI to extract dishes, prices and descriptions from a PDF, photo or website into an editable restaurant menu. Restaurants can share QR codes, manage enabled ordering channels and translate menus on eligible plans. The free plan covers one restaurant and one primary language with limited AI credits. Paid plans add multilingual menus and advanced ordering options. Imported prices, translations and allergen information need restaurant review before publication.",
+  "category": "Business",
+  "logo": "#6366f1",
+  "logoInitials": "M",
+  "logoUrl": "/tool-logos/menuforma.png",
+  "rating": null,
+  "pricing": "Free plan with limited AI credits; Regular from $9.99/month and Pro from $49.99/month",
+  "pricingType": "freemium",
+  "websiteUrl": "https://menuforma.com/",
+  "affiliateUrl": "https://menuforma.com/",
+  "featured": false,
+  "pros": [
+    "Menu import from PDF, photos or websites",
+    "QR menus with plan-dependent ordering and translation"
+  ],
+  "cons": [
+    "Free plan is limited to one restaurant and primary language",
+    "Advanced ordering, payments and translations depend on plan"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "imagesvg-for-chatgpt",
+  "name": "ImageSVG for ChatGPT",
+  "tagline": "Convert raster logos and icons into editable SVG in ChatGPT",
+  "description": "ImageSVG provides a ChatGPT MCP integration for converting PNG, JPEG and WebP images into SVG through an interactive panel. It is best suited to logos, icons and flat illustrations. Users connect their ImageSVG account, adjust conversion settings and download the result. The integration shares the website allowance of up to three free conversions per UTC day and fifteen per month. Custom connections must be permitted by the ChatGPT account or workspace; small text and fine detail need inspection.",
+  "category": "Design",
+  "logo": "#6366f1",
+  "logoInitials": "If",
+  "logoUrl": "/tool-logos/imagesvg-for-chatgpt.png",
+  "rating": null,
+  "pricing": "Up to 3 free conversions per UTC day and 15 per month; paid website passes available",
+  "pricingType": "freemium",
+  "websiteUrl": "https://imagesvg.com/en/developers",
+  "affiliateUrl": "https://imagesvg.com/en/developers",
+  "featured": false,
+  "pros": [
+    "SVG conversion within a ChatGPT panel",
+    "Shared website and integration allowance"
+  ],
+  "cons": [
+    "Requires a permitted custom MCP connection",
+    "Text becomes vector shapes and fine detail needs review"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "talescene",
+  "name": "TaleScene",
+  "tagline": "Turn short stories into storyboards and voiced multi-scene films",
+  "description": "TaleScene develops a short written story into a script, storyboard and voiced multi-scene video. It offers visual style choices and aims to retain character appearance across shots. New accounts receive twenty credits without a card, with script and storyboard creation available to try before purchasing video credits. Finished-film generation uses paid credit packs. AIBeat has not independently tested the advertised character consistency; generated scenes, speech and subtitles should be reviewed.",
+  "category": "AI Video",
+  "logo": "#6366f1",
+  "logoInitials": "T",
+  "logoUrl": "/tool-logos/talescene.png",
+  "rating": null,
+  "pricing": "20 signup credits without a card; video credit packs from $19.90",
+  "pricingType": "freemium",
+  "websiteUrl": "https://www.talescene.com/",
+  "affiliateUrl": "https://www.talescene.com/",
+  "featured": false,
+  "pros": [
+    "Story-to-script and storyboard workflow",
+    "Multi-scene film generation with style choices"
+  ],
+  "cons": [
+    "Voiced video generation uses paid credits",
+    "Character consistency and generated details need review"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "ai-rap-video-generator",
+  "name": "AI Rap Video Generator",
+  "tagline": "Turn two portraits into a short lip-synced rap duet",
+  "description": "AI Rap Video Generator creates a rap duo from two portraits or one photo containing both subjects. Users select a stage and occasion, then review and edit original lyrics before rendering. The site currently offers a first five-second watermarked clip in a queue without a card. Paid twelve-second videos use credits and remove the watermark. Subjects must agree to appear, and users should check generated lyrics, likeness and lip sync before sharing.",
+  "category": "AI Video",
+  "logo": "#6366f1",
+  "logoInitials": "AR",
+  "logoUrl": "/tool-logos/ai-rap-video-generator.png",
+  "rating": null,
+  "pricing": "First 5-second watermarked clip free; paid 12-second renders use credits",
+  "pricingType": "freemium",
+  "websiteUrl": "https://www.airapvideogenerator.app/",
+  "affiliateUrl": "https://www.airapvideogenerator.app/",
+  "featured": false,
+  "pros": [
+    "Editable lyrics before paid rendering",
+    "Two-photo or shared-photo input"
+  ],
+  "cons": [
+    "Free output is shorter, watermarked and queued",
+    "Paid output is a fixed short format"
+  ],
+  "alternatives": []
+},
+{
   "slug": "nano-banana-2-1",
   "name": "Nano Banana 2.1 by AI Image Editor",
   "tagline": "Generate and edit images with prompts and reference photos",
