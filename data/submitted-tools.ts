@@ -5,6 +5,56 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "ai-haircut",
+  "name": "AI Haircut",
+  "tagline": "Preview hairstyles and hair colors on your own photo",
+  "description": "AI Haircut generates hairstyle previews from an uploaded portrait. Browse cuts, bangs, braids and colors, select up to five looks for one photo, and download results to discuss with a stylist. Each successful preview uses a purchased try-on; no account or subscription is required. The previews are illustrative rather than a prediction of a salon result. Uploaded photos are processed by an AI provider, whose retention rules may differ from the site’s stated thirty-day upload retention.",
+  "category": "Image",
+  "logo": "#6366f1",
+  "logoInitials": "AH",
+  "logoUrl": "/tool-logos/ai-haircut.png",
+  "rating": null,
+  "pricing": "One-time packs: $4.99 for 1 try-on, $9.99 for 3, $14.99 for 5 or $24.99 for 10; valid for 365 days",
+  "pricingType": "paid",
+  "websiteUrl": "https://aihaircut.net/",
+  "affiliateUrl": "https://aihaircut.net/",
+  "featured": false,
+  "pros": [
+    "Compare several hairstyles from one portrait",
+    "One-time packs without account or subscription"
+  ],
+  "cons": [
+    "Personal-photo generation requires paid try-ons",
+    "Results vary with the photo and are not a guaranteed salon outcome"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "comicory",
+  "name": "Comicory",
+  "tagline": "Develop written stories into editable comic pages",
+  "description": "Comicory turns stories into editable panel scripts and illustrated comic pages. Users set character and location references, choose page layouts and styles, revise dialogue, and regenerate panels or repaint a selected area. It supports continuing a story with the same cast and exporting comic pages in several reading and print formats. New accounts receive ten one-time credits without a card. Higher resolutions and other capabilities depend on the plan or credit pack. Reference images help continuity but do not eliminate visual inconsistencies.",
+  "category": "Image",
+  "logo": "#6366f1",
+  "logoInitials": "C",
+  "logoUrl": "/tool-logos/comicory.png",
+  "rating": null,
+  "pricing": "10 one-time starter credits; credit packs from $4.99 and monthly plans from $9.99; check current offers",
+  "pricingType": "freemium",
+  "websiteUrl": "https://www.comicory.com/",
+  "affiliateUrl": "https://www.comicory.com/",
+  "featured": false,
+  "pros": [
+    "Editable scripts, speech bubbles and panel layouts",
+    "Character references and targeted panel corrections"
+  ],
+  "cons": [
+    "Higher-resolution generation uses more credits and may require a higher plan",
+    "Characters, text and visual continuity still need review"
+  ],
+  "alternatives": []
+},
+{
   "slug": "rap-blaze",
   "name": "Rap Blaze",
   "tagline": "Create short rap and trend videos from photos",
