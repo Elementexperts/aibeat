@@ -5,6 +5,81 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "open-atelier",
+  "name": "Open Atelier",
+  "tagline": "Improve fiction with craft checks, lessons and optional AI coaching",
+  "description": "Open Atelier helps fiction writers examine chapters for habits such as dialogue-tag adverbs, filter words, tense changes and backstory dumps. Findings connect to lessons and exercises. Its Human only mode uses rules rather than a language model; optional Coach and Co-write modes provide feedback or suggestions that the writer chooses to accept. Import and export tools and a text-source record support manuscript work. The source record documents activity but is not proof of authorship.",
+  "category": "Writing",
+  "logo": "#6366f1",
+  "logoInitials": "OA",
+  "logoUrl": "/tool-logos/open-atelier.png",
+  "rating": null,
+  "pricing": "Free writing tools and 3 Coach reads/month; Atelier $21/month or $189/year",
+  "pricingType": "freemium",
+  "websiteUrl": "https://openatelier.co/",
+  "affiliateUrl": "https://openatelier.co/",
+  "featured": false,
+  "pros": [
+    "Rule-based checks linked to lessons and practice",
+    "Optional AI modes with writer-controlled acceptance"
+  ],
+  "cons": [
+    "AI coaching and co-writing have usage limits",
+    "Rule-based findings still require editorial judgment"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "rapsong-ai",
+  "name": "RapSong AI",
+  "tagline": "Create a short solo or duet rap video from adult portraits",
+  "description": "RapSong AI turns a topic and authorized adult portraits into a twelve-second vertical rap video with vocals. Choose solo or duo mode, select one of four stages and review the four-line verse before rendering. Output is a 720p MP4 rather than a full song or standalone audio track. Videos use prepaid credits, with no subscription or free tier; even lyric preview requires a sufficient credit balance. Subjects must be consenting adults, and the service excludes public figures.",
+  "category": "AI Video",
+  "logo": "#6366f1",
+  "logoInitials": "RA",
+  "logoUrl": "/tool-logos/rapsong-ai.png",
+  "rating": null,
+  "pricing": "10 credits per video; one-time packs from $6.99 plus applicable tax; no free tier",
+  "pricingType": "paid",
+  "websiteUrl": "https://rapsongai.com/",
+  "affiliateUrl": "https://rapsongai.com/",
+  "featured": false,
+  "pros": [
+    "Solo and duo portrait inputs",
+    "Verse preview and four stage choices"
+  ],
+  "cons": [
+    "Fixed twelve-second video format",
+    "Paid credit balance required before lyric preview"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "video-transcriber",
+  "name": "Video Transcriber",
+  "tagline": "Turn recorded speech into editable transcripts and subtitles",
+  "description": "Video Transcriber converts supported audio and video uploads or accessible public links into searchable transcripts. Users can review text, work with speaker labels where supported and export text or subtitle files for editing, research and publishing. The workspace also offers AI notes and summaries. Free usage has monthly, daily-file and per-file limits; paid plans expand capacity. Available exports and source access vary, and transcripts should be checked against the recording before publication.",
+  "category": "Audio",
+  "logo": "#6366f1",
+  "logoInitials": "VT",
+  "logoUrl": "/tool-logos/video-transcriber.png",
+  "rating": null,
+  "pricing": "Free 90 minutes/month, up to 1 file/day and 30 minutes/file; paid plans and minute packs available",
+  "pricingType": "freemium",
+  "websiteUrl": "https://videotranscriber.pro/",
+  "affiliateUrl": "https://videotranscriber.pro/",
+  "featured": true,
+  "pros": [
+    "Transcript review and subtitle export in one workspace",
+    "File uploads and supported public video links"
+  ],
+  "cons": [
+    "Free tier has file and monthly usage limits",
+    "Restricted links and noisy recordings can limit results"
+  ],
+  "alternatives": []
+},
+{
   "slug": "ai-haircut",
   "name": "AI Haircut",
   "tagline": "Preview hairstyles and hair colors on your own photo",
