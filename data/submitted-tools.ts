@@ -5,6 +5,131 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "ai-photo-editor",
+  "name": "AI Photo Editor",
+  "tagline": "Edit photos with prompts for removal, restoration and expansion",
+  "description": "AI Photo Editor is a browser workspace for changing images with text instructions. Upload a photo to remove an object or background, adjust a portrait, restore an older image or extend the canvas. A limited guest experience allows edits without signing in; paid credits and subscriptions expand usage and model access. Review generated edges, faces and fine details before publishing, and edit only images you have permission to use.",
+  "category": "Image",
+  "logo": "#6366f1",
+  "logoInitials": "AP",
+  "logoUrl": "/tool-logos/ai-photo-editor.png",
+  "rating": null,
+  "pricing": "Limited free guest editing; paid credit packs and subscriptions available",
+  "pricingType": "freemium",
+  "websiteUrl": "https://aiphoto-editor.org/",
+  "affiliateUrl": "https://aiphoto-editor.org/",
+  "featured": false,
+  "pros": [
+    "Prompt-based editing with several specialized tools",
+    "Limited guest access without registration"
+  ],
+  "cons": [
+    "Free usage is limited",
+    "Generated edits may alter details you intended to preserve"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "refract",
+  "name": "Refract",
+  "tagline": "Adapt and schedule social posts across connected networks",
+  "description": "Refract turns a source note into network-specific social posts for review and scheduling. It combines a composer, calendar and media studio with plan-dependent team approvals, plus API and MCP access for supported workflows. Users connect social accounts and review adapted copy before publication. Network availability, account limits, AI credits and X posting allowances vary; check the current platform list rather than assuming every advertised integration is live.",
+  "category": "Marketing",
+  "logo": "#6366f1",
+  "logoInitials": "R",
+  "logoUrl": "/tool-logos/refract.png",
+  "rating": null,
+  "pricing": "14-day trial without a card; paid plans, with Creator advertised at $120/year",
+  "pricingType": "paid",
+  "websiteUrl": "https://refract.social?ref=aibeat",
+  "affiliateUrl": "https://refract.social?ref=aibeat",
+  "featured": false,
+  "pros": [
+    "Network-specific drafts and scheduling calendar",
+    "Media studio and API/MCP integration"
+  ],
+  "cons": [
+    "AI usage and connected-account allowances depend on plan",
+    "Some networks are marked coming soon; team approvals are plan-dependent"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "everygen-ai",
+  "name": "EveryGen AI",
+  "tagline": "Generate videos from text or images with visible credit estimates",
+  "description": "EveryGen AI provides a browser workbench for text-to-video and image-to-video generation across multiple third-party models. Users can develop an idea, choose supported reference and output settings, and inspect the credit quote before generating. A small free Inspiration allowance covers planning replies and one image; full video generation is paid separately. Output resolution, sound, duration and credit use vary by model. Download completed results within the stated retention window.",
+  "category": "AI Video",
+  "logo": "#6366f1",
+  "logoInitials": "EA",
+  "logoUrl": "/tool-logos/everygen-ai.png",
+  "rating": null,
+  "pricing": "Free Inspiration trial: 3 replies and 1 image; video generation requires paid credits or plans",
+  "pricingType": "freemium",
+  "websiteUrl": "https://everygenai.live/",
+  "affiliateUrl": "https://everygenai.live/",
+  "featured": false,
+  "pros": [
+    "Several model choices in one workbench",
+    "Generation credit quote before submission"
+  ],
+  "cons": [
+    "Free trial does not include full video generation",
+    "Model capabilities, costs and download retention vary"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "christmas-dancely",
+  "name": "Christmas Dancely",
+  "tagline": "Create a personalized two-person holiday dance video",
+  "description": "Christmas Dancely uses two authorized photos to create a two-person Christmas pajama dance video. Choose among three dance references, select a festive room or the original setting, and render at 480p or 720p. One-time credit packs fund generation without a subscription. The showcased creator clips are dance references rather than evidence of personalized generated results. Check likeness and motion in the output before sharing.",
+  "category": "AI Video",
+  "logo": "#6366f1",
+  "logoInitials": "CD",
+  "logoUrl": "/tool-logos/christmas-dancely.png",
+  "rating": null,
+  "pricing": "One-time packs from $3.99 for 10 credits; 480p uses 10 credits and 720p uses 20",
+  "pricingType": "paid",
+  "websiteUrl": "https://christmasdancely.com/",
+  "affiliateUrl": "https://christmasdancely.com/",
+  "featured": false,
+  "pros": [
+    "Two-person photo input with scene choices",
+    "One-time packs and two output resolutions"
+  ],
+  "cons": [
+    "Limited to preset dance references",
+    "Creator reference clips are not generated customer results"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "focus-100",
+  "name": "Focus 100",
+  "tagline": "Turn selected messages into tasks, due dates and reply drafts",
+  "description": "Focus 100 helps convert requests in messages into tasks, reminders and suggested replies. On Android it uses permission-based access to selected notifications and other enabled sources; the iPhone and desktop web version accepts pasted or imported messages. Reply drafts await approval, while optional Android sending can act on an explicit request. Tasks are stored on the device, but message content is sent to servers and AI providers for processing. Review permissions and privacy settings before connecting sensitive communications.",
+  "category": "Productivity",
+  "logo": "#6366f1",
+  "logoInitials": "F1",
+  "logoUrl": "/tool-logos/focus-100.png",
+  "rating": null,
+  "pricing": "Free; no required account or ads according to the developer",
+  "pricingType": "free",
+  "websiteUrl": "https://focus100.app/get?ref=s-aibeat",
+  "affiliateUrl": "https://focus100.app/get?ref=s-aibeat",
+  "featured": false,
+  "pros": [
+    "Tasks and due dates derived from selected messages",
+    "Android app and browser-based workflow"
+  ],
+  "cons": [
+    "Notification access is Android-specific and misses messages without notifications",
+    "AI processing sends message content off-device"
+  ],
+  "alternatives": []
+},
+{
   "slug": "open-atelier",
   "name": "Open Atelier",
   "tagline": "Improve fiction with craft checks, lessons and optional AI coaching",
