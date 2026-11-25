@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { IBM_Plex_Mono, Inter, Space_Grotesk } from 'next/font/google'
 import Script from 'next/script'
+import { Analytics } from '@vercel/analytics/next'
 import { organizationSchema, websiteSchema, jsonLd } from '@/lib/site-seo'
 import './globals.css'
 import { Navbar } from '@/components/layout/Navbar'
@@ -128,6 +129,7 @@ export default function RootLayout({
         <Footer />
         <SubscribePopup />
         <PublicAnalytics />
+        <Analytics />
       </body>
     </html>
   )
