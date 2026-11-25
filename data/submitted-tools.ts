@@ -5,6 +5,81 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "citation-rocket",
+  "name": "Citation Rocket",
+  "tagline": "Audit website readiness and brand mentions in AI answers",
+  "description": "Citation Rocket checks public website content and crawler access, then runs on-demand brand-visibility questions across supported AI models. Reports include competitor mentions, prioritized fixes and generated website support files such as schema and llms.txt. The paid audit workflow uses your own OpenRouter key, with model usage billed separately. Agency licensing adds branded reports. Results describe sampled answers and site checks rather than guaranteeing citations, rankings or traffic.",
+  "category": "Marketing",
+  "logo": "#6366f1",
+  "logoInitials": "CR",
+  "logoUrl": "/tool-logos/citation-rocket.png",
+  "rating": null,
+  "pricing": "Free comparison; one-time paid licenses with separate OpenRouter usage charges; standard advertised tiers $99 Lifetime and $149 Agency",
+  "pricingType": "freemium",
+  "websiteUrl": "https://www.citationrocket.com/",
+  "affiliateUrl": "https://www.citationrocket.com/",
+  "featured": false,
+  "pros": [
+    "Crawler checks and prioritized website fixes",
+    "On-demand brand comparisons and exportable reports"
+  ],
+  "cons": [
+    "Own OpenRouter key and usage charges required for AI audits",
+    "Recommendations cannot guarantee AI citations"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "vocal-separator",
+  "name": "Vocal Separator",
+  "tagline": "Separate recordings into vocals, backing tracks or four stems",
+  "description": "Vocal Separator splits audio into vocals and instrumental tracks, with a four-stem option for vocals, drums, bass and other sound. Preview and download WAV results for recordings you own or are permitted to process. Limited free cloud jobs and an on-device separation option are available; paid minute packs add batch handling and larger files. Local processing depends on device resources, while cloud results have download windows. Separation quality varies with the recording.",
+  "category": "Audio",
+  "logo": "#6366f1",
+  "logoInitials": "VS",
+  "logoUrl": "/tool-logos/vocal-separator.png",
+  "rating": null,
+  "pricing": "Up to 2 free cloud jobs/browser/UTC day; local option available; $9.99 one-time pack for 90 minutes",
+  "pricingType": "freemium",
+  "websiteUrl": "https://vocalseparator.com/",
+  "affiliateUrl": "https://vocalseparator.com/",
+  "featured": false,
+  "pros": [
+    "Two-track and four-stem WAV output",
+    "Local processing option alongside cloud separation"
+  ],
+  "cons": [
+    "Free cloud files limited to 10 minutes and 100 MB",
+    "Free cloud downloads expire after 55 minutes"
+  ],
+  "alternatives": []
+},
+{
+  "slug": "anywear-studio",
+  "name": "Anywear Studio",
+  "tagline": "Preview clothing in motion with a camera-based fitting room",
+  "description": "Anywear Studio combines a garment image and your camera feed to preview an outfit in a live browser fitting room. Compatible phones and desktop browsers can use the website, while a desktop Chrome extension places the room beside a shopping page. Eligible new accounts receive three introductory Passes once. Sessions and garment changes use Pass allowances. The output is a visual styling preview, not a body measurement, size recommendation or guarantee that clothing will fit.",
+  "category": "Image",
+  "logo": "#6366f1",
+  "logoInitials": "AS",
+  "logoUrl": "/tool-logos/anywear-studio.png",
+  "rating": null,
+  "pricing": "3 introductory Passes for eligible accounts; subscriptions from $9.99/month plus one-time options",
+  "pricingType": "freemium",
+  "websiteUrl": "https://anywear.studio/",
+  "affiliateUrl": "https://anywear.studio/",
+  "featured": false,
+  "pros": [
+    "Browser fitting room and desktop Chrome extension",
+    "Visual outfit exploration while moving"
+  ],
+  "cons": [
+    "Preview does not measure fit or recommend a size",
+    "Rooms last up to 30 seconds; each garment change uses a Pass"
+  ],
+  "alternatives": []
+},
+{
   "slug": "ai-photo-editor",
   "name": "AI Photo Editor",
   "tagline": "Edit photos with prompts for removal, restoration and expansion",
