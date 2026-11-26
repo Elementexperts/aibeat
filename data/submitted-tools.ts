@@ -5,6 +5,141 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "ai-object-remover",
+  "name": "AI Object Remover",
+  "tagline": "Brush away unwanted objects, people and text from photos",
+  "description": "AI Object Remover is a browser-based photo cleanup tool for removing selected distractions from still images. Upload a JPG, PNG or WebP, brush over the area to edit, and download a PNG at the working-image dimensions. Guests can make two edits per network IP every 24 hours; signed-in users can use credits after that allowance. Images above 4 MP are resized, and complex backgrounds or large subjects may need further editing. Use images you own or have permission to edit.",
+  "category": "Image",
+  "pricing": "Two free edits per network IP every 24 hours; sign in to use credits after the allowance",
+  "pricingType": "freemium",
+  "websiteUrl": "https://aiobjectremover.art/",
+  "pros": [
+    "Guest editing without signup",
+    "Brush-based selection and PNG downloads",
+    "Supports JPG, PNG and WebP"
+  ],
+  "cons": [
+    "Working images limited to 4 MP",
+    "No video or full-background removal",
+    "Selected edit areas are processed by an external service"
+  ],
+  "logo": "#6366f1",
+  "logoInitials": "AO",
+  "logoUrl": "/tool-logos/ai-object-remover.png",
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://aiobjectremover.art/",
+  "alternatives": []
+},
+{
+  "slug": "edform",
+  "name": "Edform",
+  "tagline": "Create quizzes, interactive worksheets and AI teaching materials",
+  "description": "Edform combines quizzes, interactive worksheets, lessons and classroom games with AI tools for teachers. Teachers can turn PDFs into activities, assign homework, run live sessions and review automatically graded answers. Classroom utilities include timers and name pickers, while AI tools help draft lesson plans, quizzes and rubrics. Basic includes the teaching features and 15 one-time AI points. Pro adds a monthly AI allowance, with school plans available for teams. Teachers should review generated materials and grading before relying on them.",
+  "category": "Education",
+  "pricing": "Free Basic with 15 one-time AI points; Pro $3 per teacher/month with 300 AI points/month; school plans from five seats",
+  "pricingType": "freemium",
+  "websiteUrl": "https://edform.com/?utm_source=aibeat&utm_medium=directory&utm_campaign=listing",
+  "pros": [
+    "Quizzes, worksheets and live games in one platform",
+    "Automatic grading and student reports",
+    "Free classroom tools with optional paid AI allowance"
+  ],
+  "cons": [
+    "Free AI points do not replenish",
+    "Unused Pro AI points do not roll over",
+    "AI-generated content needs teacher review"
+  ],
+  "logo": "#6366f1",
+  "logoInitials": "E",
+  "logoUrl": "/tool-logos/edform.png",
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://edform.com/?utm_source=aibeat&utm_medium=directory&utm_campaign=listing",
+  "alternatives": []
+},
+{
+  "slug": "christmas-pajama-dance",
+  "name": "Christmas Pajama Dance",
+  "tagline": "Create solo or duet holiday dance videos from portraits",
+  "description": "Christmas Pajama Dance turns one portrait into a solo holiday clip or two separate portraits into a duet. Its browser studio provides photo-layout previews, video settings and optional matching pajamas, alongside free guides to the dance and photo-framing workflow. Rendering uses purchased credits and sends the photos to a video service. The studio requests original instrumental audio rather than automatically supplying the TikTok trend song. Use photos of consenting adults and check facial consistency and movement before sharing.",
+  "category": "AI Video",
+  "pricing": "Free guides and photo-layout previews; video rendering requires purchased credits, with the default 15-second 480p clip quoted at 20 credits",
+  "pricingType": "paid",
+  "websiteUrl": "https://christmasdanceai.video/",
+  "pros": [
+    "Solo and two-portrait duet modes",
+    "Photo-layout previews before rendering",
+    "Resolution and aspect-ratio options"
+  ],
+  "cons": [
+    "Video rendering is not free",
+    "Trend-song licensing is separate",
+    "Delivery links expire; download finished clips promptly"
+  ],
+  "logo": "#6366f1",
+  "logoInitials": "CP",
+  "logoUrl": "/tool-logos/christmas-pajama-dance.png",
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://christmasdanceai.video/",
+  "alternatives": []
+},
+{
+  "slug": "audjust-ai-song-cover-generator",
+  "name": "Audjust AI Song Cover Generator",
+  "tagline": "Restyle authorized recordings with a new genre and arrangement",
+  "description": "Audjust AI Song Cover Generator creates a new style version from uploaded audio and a description of the desired genre, instruments and mood. It aims to follow the source melodic direction while rebuilding the arrangement, rather than automatically cloning a named singer. The workflow accepts common audio formats up to eight minutes and 50 MB, with sign-in and credits required for generation. It sits within the wider Audjust audio workspace. Users must own or have permission to transform the source recording; output and retained melody can vary.",
+  "category": "Audio",
+  "pricing": "30 credits per cover generation; credit packs from $19.99 for 200 credits, with subscription options available",
+  "pricingType": "paid",
+  "websiteUrl": "https://audjust.ai/ai-song-cover-generator",
+  "pros": [
+    "Audio upload plus detailed style prompts",
+    "Supports MP3, WAV, M4A, AAC, OGG and FLAC",
+    "Part of a broader audio creation workspace"
+  ],
+  "cons": [
+    "Sign-in and credits required for generation",
+    "Source limited to eight minutes and 50 MB",
+    "Does not clear third-party music rights"
+  ],
+  "logo": "#6366f1",
+  "logoInitials": "AA",
+  "logoUrl": "/tool-logos/audjust-ai-song-cover-generator.png",
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://audjust.ai/ai-song-cover-generator",
+  "alternatives": []
+},
+{
+  "slug": "faceswapjoy",
+  "name": "FaceSwapJoy",
+  "tagline": "Swap one face in photos and preview short video swaps",
+  "description": "FaceSwapJoy offers single-face editing for photos and short videos in a browser. Try the built-in examples, or sign in to use your own files with credits. Video users can preview a selected 0.5-to-3-second range before purchasing a separate full-clip swap; source clips must be 1 to 15 seconds. Photo exports are JPG, while video exports are MP4. Use consenting adults and authorized images. Photo jobs require consent for fal.ai processing; results can vary with head angle, lighting and motion.",
+  "category": "AI Video",
+  "pricing": "Free samples; eligible new accounts receive three starter credits while available; photos cost 1 credit, video previews 3 and full swaps 12; paid credit packs available",
+  "pricingType": "freemium",
+  "websiteUrl": "https://faceswapjoy.com/",
+  "pros": [
+    "Built-in examples before using personal files",
+    "Short video previews before full export",
+    "Original-versus-result comparison controls"
+  ],
+  "cons": [
+    "One visible face at a time",
+    "Own-file generation requires sign-in and credits",
+    "Results expire after 24 hours; cloud-provider retention also applies"
+  ],
+  "logo": "#6366f1",
+  "logoInitials": "F",
+  "logoUrl": "/tool-logos/faceswapjoy.png",
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://faceswapjoy.com/",
+  "alternatives": []
+},
+{
   "slug": "citation-rocket",
   "name": "Citation Rocket",
   "tagline": "Audit website readiness and brand mentions in AI answers",
