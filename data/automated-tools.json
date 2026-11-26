@@ -681,5 +681,30 @@
     "logo": "#2563eb",
     "logoInitials": "B",
     "alternatives": []
+  },
+  {
+    "slug": "airap2video",
+    "name": "AIRap2Video",
+    "tagline": "Turn still images into animated rap performance clips using customizable templates.",
+    "description": "AIRap 2 Video generates short rap performance videos from a single uploaded image. Users can select from 27 templates covering solo performers, duos, pets, and animated characters, and generate 5-, 10-, or 15-second 720p MP4 clips. Outputs can be produced silently for custom audio overlays or paired with an AI-generated hip-hop instrumental backing track.",
+    "category": "AI Video",
+    "pricing": "Credit packs start at $9.90 for 1,000 credits (no subscription). Silent video costs 15 credits/sec, while AI instrumental video costs 20 credits/sec.",
+    "pricingType": "paid",
+    "pros": [
+      "Offers 27 preset performance templates for people, duos, pets, and characters",
+      "Supports both silent output for adding custom vocals and AI-generated hip-hop instrumentals",
+      "One-time credit pack purchase model without recurring subscriptions"
+    ],
+    "cons": [
+      "Does not offer audio-to-mouth lip-syncing for custom vocal tracks",
+      "Video output is limited to 720p resolution and a maximum duration of 15 seconds"
+    ],
+    "websiteUrl": "https://airap2video.site/",
+    "affiliateUrl": "https://airap2video.site/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "A",
+    "alternatives": []
   }
 ]
