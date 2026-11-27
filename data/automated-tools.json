@@ -705,6 +705,7 @@
     "featured": false,
     "logo": "#2563eb",
     "logoInitials": "A",
-    "alternatives": []
+    "alternatives": [],
+    "logoUrl": "/tool-logos/airap2video.png"
   }
 ]

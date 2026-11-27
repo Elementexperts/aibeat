@@ -5,6 +5,167 @@ import type { Tool } from '@/lib/data'
 // No hands-on score has been assigned.
 export const SUBMITTED_TOOLS: Tool[] = [
 {
+  "slug": "ai-finder-plus",
+  "name": "AI Finder Plus",
+  "tagline": "Browse an AI tool directory, collections and affiliate programs",
+  "description": "AI Finder Plus is a discovery directory for browsing AI products across categories such as writing, design, coding and business. Visitors can search tools, explore featured selections and collections, and find affiliate-program information and editorial articles. Makers can submit products for review. It is a directory rather than an AI generation service; individual products have their own pricing and terms, and promoted placements should not be treated as independent performance testing.",
+  "category": "Productivity",
+  "pricing": "Free to browse; maker listing and promotional options have separate terms",
+  "pricingType": "free",
+  "websiteUrl": "https://aifinderplus.com/",
+  "pros": [
+    "Search and category-based discovery",
+    "Collections and affiliate-program information",
+    "Product submission workflow for makers"
+  ],
+  "cons": [
+    "Third-party tool prices and availability can change",
+    "Promoted placement is not a product-quality guarantee"
+  ],
+  "logo": "#6366f1",
+  "logoInitials": "AF",
+  "logoUrl": "/tool-logos/ai-finder-plus.png",
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://aifinderplus.com/",
+  "alternatives": []
+},
+{
+  "slug": "nano-banana-ai-nanobananas",
+  "name": "Nano Banana AI (nanobananas.site)",
+  "tagline": "Edit images with text prompts and consistent visual references",
+  "description": "Nano Banana AI at nanobananas.site is an independent image-editing website, not affiliated with Google. Users describe changes to a photo, such as a new background, lighting or pose, with tools intended to retain a character or product appearance across edits. The service uses credits and offers annual plans and top-ups. Its public gallery illustrates editing possibilities rather than guaranteeing identical results. Some advertised additional models and canvas features are marked as in integration or coming soon.",
+  "category": "Image",
+  "pricing": "Paid plans: Basic $69/year, Pro $199/year and Max $399/year; introductory credit pack $5; larger top-ups require a subscription",
+  "pricingType": "paid",
+  "websiteUrl": "https://nanobananas.site/",
+  "pros": [
+    "Natural-language image editing",
+    "Character and product consistency workflows",
+    "Small credit pack available without a subscription"
+  ],
+  "cons": [
+    "Results and visual consistency vary",
+    "Some advertised features are not yet available",
+    "Independent service rather than an official Google product"
+  ],
+  "logo": "#6366f1",
+  "logoInitials": "NB",
+  "logoUrl": "/tool-logos/nano-banana-ai-nanobananas.png",
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://nanobananas.site/",
+  "alternatives": []
+},
+{
+  "slug": "perdon-studio",
+  "name": "Perdón Studio",
+  "tagline": "Build a four-image reveal story as a short vertical video",
+  "description": "Perdón Studio is a Spanish-first editor for photo-reveal stories inspired by the Perdón trend. Combine three edited images with the original, add captions, and export a 14-second vertical MP4 at 720 × 1280 or download PNG images. Editing, previews and export are free when using existing images; generating AI edits consumes purchased credits. Users can work with portraits, pets and other supported templates. Example transformations are illustrative, and AI results should be reviewed before sharing.",
+  "category": "Image",
+  "pricing": "Free editor and export; AI packs from $5.99 for 45 credits, enough for five three-edit carousels; no subscription",
+  "pricingType": "freemium",
+  "websiteUrl": "https://perdontrend.org/",
+  "pros": [
+    "Free assembly and export with existing images",
+    "Editable captions and original-photo reveal",
+    "MP4 and PNG export options"
+  ],
+  "cons": [
+    "AI image generation requires credits",
+    "Fixed four-frame, 14-second reveal format",
+    "Generated edits may differ from examples"
+  ],
+  "logo": "#6366f1",
+  "logoInitials": "PS",
+  "logoUrl": "/tool-logos/perdon-studio.png",
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://perdontrend.org/",
+  "alternatives": []
+},
+{
+  "slug": "tikpal",
+  "name": "Tikpal",
+  "tagline": "Keep conversations, reminders and personal context across devices",
+  "description": "Tikpal is an AI companion for conversations, reminders and everyday assistance across phone, Mac and web. It retains personal context across devices and can help draft calendar events, documents, slides and sheets. The product describes approval prompts before actions involving connected accounts. The app offers a free daily allowance, with an optional Tikpal Voice device sold separately. Review proposed actions and generated content, and check current platform support and usage limits before relying on a particular workflow.",
+  "category": "Productivity",
+  "pricing": "Free app with a daily allowance; optional Tikpal Voice hardware listed at $129",
+  "pricingType": "freemium",
+  "websiteUrl": "https://tikpal.ai/",
+  "pros": [
+    "Conversation continuity across devices",
+    "Reminders and drafting assistance",
+    "Optional dedicated voice device"
+  ],
+  "cons": [
+    "Free use is subject to a daily allowance",
+    "Connected-account capabilities depend on permissions",
+    "Optional voice hardware costs extra"
+  ],
+  "logo": "#6366f1",
+  "logoInitials": "T",
+  "logoUrl": "/tool-logos/tikpal.png",
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://tikpal.ai/",
+  "alternatives": []
+},
+{
+  "slug": "separatevocals",
+  "name": "SeparateVocals",
+  "tagline": "Separate vocals locally or use optional cloud stem processing",
+  "description": "SeparateVocals separates vocals and instrumentals from local media files in a browser. Compatible desktop browsers can use a local WebGPU AI model, while other devices use an STFT-based stereo method; local exports are 16-bit WAV. Optional Demucs cloud processing provides two- or four-stem separation with a short free preview and paid full-track processing. Local mode keeps audio on the device, while cloud mode uploads it and uses separate retention rules. Results depend on the recording and selected engine.",
+  "category": "Audio",
+  "pricing": "Free local separation; optional 20-second cloud previews; full cloud processing uses credits, with packs from $4.90 and subscription options",
+  "pricingType": "freemium",
+  "websiteUrl": "https://separatevocals.com/",
+  "pros": [
+    "Free local processing without signup",
+    "Local WAV downloads",
+    "Optional cloud four-stem separation"
+  ],
+  "cons": [
+    "Local AI depends on WebGPU support",
+    "STFT separation is less suitable for mono and complex mixes",
+    "Cloud mode uploads audio and has separate limits and retention"
+  ],
+  "logo": "#6366f1",
+  "logoInitials": "S",
+  "logoUrl": "/tool-logos/separatevocals.png",
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://separatevocals.com/",
+  "alternatives": []
+},
+{
+  "slug": "its-my-life-dog-ai",
+  "name": "It's My Life Dog AI",
+  "tagline": "Turn a pet portrait into a short singing-car video",
+  "description": "It's My Life Dog AI turns one pet photo into a 15-second vertical car-seat performance video. Users choose a template, upload an authorized image and generate a 720p MP4 with highway scenery, sunglasses and original AI rock audio. A guest can purchase a single video, while signed-in users can use credit packs or monthly plans. The independent service is inspired by a viral format and is not affiliated with the original creators or song rights holders. Pet likeness and motion can vary.",
+  "category": "AI Video",
+  "pricing": "Single guest video $4.99; 25 credits per video; packs from $12.99 for 100 credits and monthly plans from $11.99",
+  "pricingType": "paid",
+  "websiteUrl": "https://itsmylifedogai.com/",
+  "pros": [
+    "Single-video purchase without an account",
+    "Pet-focused templates with original AI audio",
+    "720p vertical MP4 output"
+  ],
+  "cons": [
+    "Generation requires payment",
+    "Fixed 15-second car-seat format",
+    "Does not license the original trend song"
+  ],
+  "logo": "#6366f1",
+  "logoInitials": "IM",
+  "logoUrl": "/tool-logos/its-my-life-dog-ai.png",
+  "rating": null,
+  "featured": false,
+  "affiliateUrl": "https://itsmylifedogai.com/",
+  "alternatives": []
+},
+{
   "slug": "ai-object-remover",
   "name": "AI Object Remover",
   "tagline": "Brush away unwanted objects, people and text from photos",
