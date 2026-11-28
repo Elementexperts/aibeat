@@ -707,5 +707,30 @@
     "logoInitials": "A",
     "alternatives": [],
     "logoUrl": "/tool-logos/airap2video.png"
+  },
+  {
+    "slug": "newyougo",
+    "name": "NewYouGo",
+    "tagline": "Generate AI images, videos, and music in a single creative studio.",
+    "description": "NewYouGo is an AI-powered creative platform combining image generation, video creation, and music synthesis alongside practical editing tools. Users can craft visuals across multiple AI models, generate short video performances, create background soundtracks, upscale images, and remove backgrounds using a unified credit-based system.",
+    "category": "AI Image",
+    "pricing": "Free tier with 20 FLUX.1 Schnell images daily; paid plans start at $9.90/month for 2,000 credits.",
+    "pricingType": "freemium",
+    "pros": [
+      "Unifies image, video, and music generation within a single creative platform",
+      "Provides 20 free FLUX.1 Schnell image generations per day with sign-in",
+      "Includes editing utilities such as background removal and image upscaling"
+    ],
+    "cons": [
+      "Video and music generation features consume credits that require paid plans or top-ups",
+      "Credit consumption rates vary widely depending on the chosen model and resolution"
+    ],
+    "websiteUrl": "https://newyougo.com/",
+    "affiliateUrl": "https://newyougo.com/",
+    "rating": null,
+    "featured": false,
+    "logo": "#2563eb",
+    "logoInitials": "N",
+    "alternatives": []
   }
 ]
